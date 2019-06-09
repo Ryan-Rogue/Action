@@ -1,18 +1,15 @@
----
---- DateTime: 12.04.2019
----
---- ============================ HEADER ============================
 if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
-local pairs = pairs
+local type, pairs, print = type, pairs, Action.Print
 
 local UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs = 
 UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs
 
-local GetSpellInfo = Action.GetSpellInfo
+local GetNumEvents, GetSpellInfo = GetNumEvents, Action.GetSpellInfo
+local cLossOfControl = _G.C_LossOfControl
 
 local InCombatLockdown, CombatLogGetCurrentEventInfo = InCombatLockdown, CombatLogGetCurrentEventInfo
 
@@ -593,8 +590,8 @@ function incdmgmagic(unit)
 end
 
 --- ========================== LOS OF CONTROL ============================
-local GetEventInfo = C_LossOfControl.GetEventInfo
-local GetNumEvents = C_LossOfControl.GetNumEvents
+local GetEventInfo = cLossOfControl.GetEventInfo
+local GetNumEvents = cLossOfControl.GetNumEvents
 local LossOfControl = {} 
 --[[ 
 Hex Schools:

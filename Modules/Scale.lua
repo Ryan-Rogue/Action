@@ -1,7 +1,3 @@
----
---- 07.06.2019
----
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -17,7 +13,7 @@ BlackBackground.texture:SetAllPoints(true)
 BlackBackground.texture:SetColorTexture(0, 0, 0, 1)
 
 local function UpdateFrames()
-    if not TellMeWhen_Group1 or (not strfind(TellMeWhen_Group1.Name, '[GGL]') and not strfind(TellMeWhen_Group1.Name, 'Main')) then 
+    if not TellMeWhen_Group1 or (not strfind(TellMeWhen_Group1.Name, "[GGL]") and not strfind(TellMeWhen_Group1.Name, "Main")) then 
         if BlackBackground:IsShown() then
             BlackBackground:Hide()
         end        
@@ -102,7 +98,7 @@ function Env.BlackBackgroundSet(bool)
     BlackBackground:SetShown(bool)
 end
 
--- TODO: Remove in profiles until June 2019 and then replace in Action
+-- TODO: Remove in profiles until June 2019
 function Env.chat()
     return ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible())
 end

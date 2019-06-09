@@ -1,8 +1,4 @@
 --- 2.0
---- DateTime: 26.04.2019
----
---- ============================ HEADER ============================
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env

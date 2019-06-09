@@ -1,7 +1,3 @@
----
---- 01.04.2019
----
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env

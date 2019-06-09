@@ -1,8 +1,4 @@
----
---- 01.04.2019
---- 
 --- TODO: Delete this after all profile upgrade for Action
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env

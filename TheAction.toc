@@ -15,13 +15,13 @@ Action.lua
 Modules\Stuff.lua
 Modules\AzeriteTraits.lua
 Modules\BossMods.lua
-Modules\HybridProfile.lua
-Modules\TMW Monitor.lua
+Modules\Hybrid Profile.lua
+Modules\TellMeWhen Monitor.lua
 Modules\PMultiplier.lua 
 Modules\CombatTracker.lua
-Modules\LibPvP.lua
+Modules\PvPLib.lua
 Modules\MultiUnits.lua
-Modules\Scale and Chat.lua
+Modules\Scale.lua
 Modules\MSGEvents.lua
 Modules\PetLib.lua
 Modules\HealingEngine.lua

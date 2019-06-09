@@ -1,5 +1,4 @@
---- 07.06.2019
-if not TMW then return end 
+-- TODO: Remove ALL this for old profile which until June 2019
 ptgroup = 3
 local TMW = TMW
 local CNDT = TMW.CNDT

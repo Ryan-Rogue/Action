@@ -1,8 +1,4 @@
---- 2.0
---- DateTime: 06.06.2019
----
---- ============================ HEADER ============================
-if not TMW then return end 
+--- Version 2.0
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -142,6 +138,7 @@ function Env.IsIconEnabled(icon)
 end
 
 --- ToolTip
+--[[
 local scanTip = CreateFrame("GameTooltip", "Scanner", UIParent, "GameTooltipTemplate")
 local scanLine
 function ScanToolTip(spellID)
@@ -165,6 +162,7 @@ function ScanToolTip(spellID)
     scanTip:Hide()
     return numbers
 end
+]]
 
 --- ============================= MOUSE =============================
 local GetMouseFocus = GetMouseFocus

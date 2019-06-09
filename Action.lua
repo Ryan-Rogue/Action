@@ -1,5 +1,5 @@
 --- 
-local DateTime = "08.06.2019"
+local DateTime = "09.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -15,9 +15,9 @@ local LibDBIcon = LibStub("LibDBIcon-1.0")
 local LSM = LibStub("LibSharedMedia-3.0")
 LSM:Register(LSM.MediaType.STATUSBAR, "Flat",				[[Interface\Addons\TheAction\Media\Flat]])
 
-Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0") -- I actually don't use AceEvent but might be in the future will need  
+Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
 
-local UnitName, UnitClass = UnitName, UnitClass
+local UnitName, UnitClass, UnitExists, UnitIsUnit = UnitName, UnitClass, UnitExists, UnitIsUnit
 local GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
 	  GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate	  
 local GameLocale = GetLocale()	 
@@ -2719,7 +2719,7 @@ local function DispelPurgeEnrageRemap()
 	end 
 end
 
--- TMW Global Snippets
+-- Modules (old name "TMW Global Snippets")
 local function GlobalsRemap()
 	local specID = GetSpecializationInfo(GetSpecialization()) 
 	_G.HE_Toggle = TMW.db.profile.ActionDB[1][specID].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][specID].HE_Toggle or nil
@@ -2789,6 +2789,7 @@ local function ActionDB_Initialization()
 		if Action.Minimap and LibDBIcon then 
 			LibDBIcon:Hide("ActionUI")
 		end 
+		Action.QueueEventReset()
 		return 
 	end 	 
 	
@@ -2851,6 +2852,9 @@ local function ActionDB_Initialization()
 	Action.Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])		
 	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ActionDB_TMW_SAFESETUP_COMPLETE")
 
+	-- Initialization ReTarget ReFocus 
+	Action.ReInit()
+	
 	-- Initialization SpellLevelCheck if it was selected in db
 	Action.SpellLevelInit()
 	
@@ -3615,8 +3619,62 @@ function Action.ToggleHE(fixed)
 	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
 end 
 
+--- [[ ReTarget ReFocus ]]
+local Re = {
+	Units = { "arena1", "arena2", "arena3" },
+	-- Textures (already converted from spellID)
+	["Target"] = {
+		["arena1"] = 607512, -- spellID: 111771
+		["arena2"] = 136057, -- spellID: 45993
+		["arena3"] = 535593, -- spellID: 107141
+	},
+	["Focus"] = {
+		["arena1"] = 136243, -- spellID: 111
+		["arena2"] = 135805, -- spellID: 22200
+		["arena3"] = 135848, -- spellID: 40875
+	},
+}
+
+local function RETARGET()
+	if Env.InPvP() and UnitExists("target") then 
+		for i = 1, #Re.Units do 
+			if UnitIsUnit("target", Re.Units[i]) then 
+				Action.LastTarget = Re.Units[i]
+			end 
+		end 
+	end 
+end 
+
+local function REFOCUS()
+	if Env.InPvP() and UnitExists("focus") then 
+		for i = 1, #Re.Units do 
+			if UnitIsUnit("focus", Re.Units[i]) then 
+				Action.LastFocus = Re.Units[i]
+			end 
+		end 
+	end 
+end 
+
+function Action.ReInit()
+	if Action.GetToggle(1, "ReTarget") then 
+		Listener:Add("RE_Events", "PLAYER_TARGET_CHANGED", RETARGET)
+	else 
+		Listener:Remove("RE_Events", "PLAYER_TARGET_CHANGED")
+	end 
+	
+	if Action.GetToggle(1, "ReFocus") then 
+		Listener:Add("RE_Events", "PLAYER_FOCUS_CHANGED", REFOCUS)
+	else 
+		Listener:Remove("RE_Events", "PLAYER_FOCUS_CHANGED")
+	end 
+end 
+
 --- [[ MSG ]]
 local function UpdateChat(...)
+	if not Action.IsInitialized then 
+		return 
+	end 
+	
 	local msgList = Action.GetToggle(7, "msgList")
 	if next(msgList) == nil then 
 		return 
@@ -4197,8 +4255,9 @@ function Action.ToggleMainUI()
 					TMW.db.profile.ActionDB[tab.name][specID].ReTarget = not TMW.db.profile.ActionDB[tab.name][specID].ReTarget
 					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReTarget)	
 					Action.Print("ReTarget" .. ": ", TMW.db.profile.ActionDB[tab.name][specID].ReTarget)	
+					Action.ReInit()
 				elseif button == "RightButton" then 
-					CraftMacro("ReTarget", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReTarget", "]] .. "ReTarget" .. [[: "})]])	
+					CraftMacro("ReTarget", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReTarget", "]] .. "ReTarget" .. [[: "}); Action.ReInit()]])	
 				end 
 			end)
 			ReTarget.Identify = { Type = "Checkbox", Toggle = "ReTarget" }
@@ -4213,9 +4272,10 @@ function Action.ToggleMainUI()
 				if button == "LeftButton" then 
 					TMW.db.profile.ActionDB[tab.name][specID].ReFocus = not TMW.db.profile.ActionDB[tab.name][specID].ReFocus
 					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReFocus)	
-					Action.Print("ReFocus" .. ": ", TMW.db.profile.ActionDB[tab.name][specID].ReFocus)	
+					Action.Print("ReFocus" .. ": ", TMW.db.profile.ActionDB[tab.name][specID].ReFocus)
+					Action.ReInit()					
 				elseif button == "RightButton" then 
-					CraftMacro("ReFocus", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReFocus", "]] .. "ReFocus" .. [[: "})]])	
+					CraftMacro("ReFocus", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReFocus", "]] .. "ReFocus" .. [[: "}); Action.ReInit()]])	
 				end 
 			end)
 			ReFocus.Identify = { Type = "Checkbox", Toggle = "ReFocus" }
@@ -4419,10 +4479,10 @@ function Action.ToggleMainUI()
 			HealthStone.OnValueChanged = function(self, value)
 				local value = math.floor(value) 
 				TMW.db.profile.ActionDB[tab.name][specID].HealthStone = value
-				self.FontStringTitle:SetText(L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value))
+				self.FontStringTitle:SetText(L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= 100 and "|cff00ff00AUTO|r" or value))
 			end
 			StdUi:FrameTooltip(HealthStone, L["TAB"][tab.name]["HEALTHSTONETOOLTIP"], nil, "TOPLEFT", true)	
-			HealthStone.FontStringTitle = StdUi:FontString(tab.childs[spec], L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].HealthStone < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone))
+			HealthStone.FontStringTitle = StdUi:FontString(tab.childs[spec], L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].HealthStone < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone >= 100 and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone))
 			StdUi:GlueAbove(HealthStone.FontStringTitle, HealthStone)
 
 			local PauseChecksPanel = StdUi:PanelWithTitle(tab.childs[spec], tab.frame:GetWidth() - 30, 200, L["TAB"][tab.name]["PAUSECHECKS"])
@@ -6699,6 +6759,19 @@ function Action:OnInitialize()
 	SlashCmdList.ACTION = SlashCommands	
 end
 
+function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
+	if not Action.IsInitialized or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") then
+		return
+	end
+	-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
+	GlobalsRemap()
+	Action.ToggleMSG(true)	
+	Action.ReInit()
+end
+Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANGED")
+
 --------------------------------------
 -- APL 
 --------------------------------------
@@ -6707,7 +6780,8 @@ local GetSpellTexture, GetSpellLink, GetSpellInfo = TMW.GetSpellTexture, GetSpel
 local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
 local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
 
-local UnitCastingInfo, UnitChannelInfo, UnitAura = UnitCastingInfo, UnitChannelInfo, UnitAura
+local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace
+local _, prace = UnitRace("player")
 local IsMouseButtonDown = IsMouseButtonDown
 
 --- Spell  
@@ -6982,18 +7056,18 @@ local function QueueEvent(...)
     end 
 end 
 
-local function QueueEventReset()
+function Action.QueueEventReset()
 	if #Action.Data.Q > 0 then 
 		for i = 1, #Action.Data.Q do 
 			if Action.Data.Q[i].Queued then 
 				Action.Data.Q[i]:SetQueue({ Silence = true })
 			end 
-		end 
-		wipe(Action.Data.Q) 
-		Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
-		Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
-		Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")		
+		end 		
 	end 
+	wipe(Action.Data.Q) 
+	Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
+	Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
+	Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")	
 end 
 
 function Action:IsQueued()
@@ -7097,8 +7171,8 @@ function Action:SetQueue(args)
 	end 	
 	
     Listener:Add("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED", QueueEvent)
-    Listener:Add("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED", QueueEventReset)
-	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", QueueEventReset)
+    Listener:Add("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED", Action.QueueEventReset)
+	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", Action.QueueEventReset)
 end
 
 function Action.ShowQueue(...)
@@ -7414,15 +7488,12 @@ local Cache = {
 }
 
 local PauseChecks = Cache:WrapStatic(function()  
-	if not Action.IsInitialized then 
-		return "state", 0 
-	elseif not Action[Env.PlayerSpec] then 
-		--Action.TimerSet("NotSupported", 10, function() Action.Print(TMW.db:GetCurrentProfile() .. "  " .. L["NOSUPPORT"]) end)
+	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
 		return "state", 0 
 	end 	
 	
-	-- TellMeWhen, BindPad, ACTIVE_CHAT_EDIT_BOX 
-	if Env.chat() then 
+	-- ACTIVE_CHAT_EDIT_BOX, BindPad, TellMeWhen
+	if ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible()) or not TMW.Locked then 
 		return "texture", 397907 -- @return Levelupicon-lfd same with GetSpellTexture(236254)
 	end 
 	
@@ -7458,7 +7529,114 @@ end)
 --------------------------------------
 -- ROTATION
 --------------------------------------
+-- Trinkets (Racial and (H)G.Medallion)
+local LOC = {
+	["GladiatorMedallion"] = {
+		Applied = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT", "SNARE", "STUN"},	
+		SpellID = 208683,
+		isValid = function()
+			return Env.InPvP() and 
+			(
+				(
+					Env.PvPTalentLearn(208683) and -- Gladiator
+					Env.SpellCD(208683) <= 0.02
+				) or 
+				(
+					not Env.PvPTalentLearn(208683) and
+					Env.SpellExists(195710) and -- Honor
+					Env.SpellCD(195710) <= 0.02
+				)
+			)		
+		end,
+	},
+	["Human"] = { 
+		Applied = {"STUN"},
+		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT"},
+		SpellID = 59752,
+	},
+	["Dwarf"] = {
+		Applied = {"POLYMORPH", "SLEEP", "SHACKLE_UNDEAD"},
+		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "STUN", "FEAR", "HORROR", "CHARM", "ROOT"},
+		SpellID = 20594,
+	},
+	["Scourge"] = {
+		Applied = {"FEAR", "HORROR", "SLEEP", "CHARM"},
+		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "STUN", "SHACKLE_UNDEAD", "ROOT"},
+		SpellID = 7744,
+	},
+	["Gnome"] = {
+		Applied = {"ROOT", "SNARE"},
+		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "STUN", "SHACKLE_UNDEAD", "FEAR", "HORROR"},
+		SpellID = 20589,
+	},		
+}
+function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
+	local isApplied = false 
+	local result = isApplied
+	
+	for i = 1, #MustBeApplied do 
+		if LossOfControlGet(MustBeApplied[i]) > 0 then 
+			isApplied = true 
+			result = isApplied
+			break 
+		end 
+	end 
+	
+	-- Exception 
+	if Exception and not isApplied then 
+		-- Dwarf in DeBuffs
+		if prace == "Dwarf" then 
+			isApplied = Env.Unit("player"):HasDeBuffs("Poison") > 0 or Env.Unit("player"):HasDeBuffs("Curse") > 0 or Env.Unit("player"):HasDeBuffs("Magic") > 0
+		end
+	end 
+	
+	if isApplied and MustBeMissed then 
+		for i = 1, #MustBeMissed do 
+			if LossOfControlGet(MustBeMissed[i]) > 0 then 
+				result = false 
+				break 
+			end
+		end
+	end 
+	
+	return result, isApplied
+end 
+-- Healthstone Item create 
+local HS = TMW.Classes.ItemByID:New(5512)
 function Action.Rotation(meta, ...)
+	-- Shared (Trinket)
+	if meta == 5 then 
+		-- Use racial available trinkets if we don't have additional LOS 
+		if Action.GetToggle(1, "Racial") and LOC[prace] and Env.SpellCD(LOC[prace].SpellID) <= 0.02 and Env.SpellExists(Action.GetSpellInfo(LOC[prace].SpellID)) then 
+			local result, isApplied = Action.LossOfControlIsValid(LOC[prace].Applied, LOC[prace].Missed, prace == "Dwarf")
+			if result then 
+				Action.TMWAPL(..., "texture", GetSpellTexture(LOC[prace].SpellID))
+				return 
+			end 
+		end 		
+		
+		-- Use specialization spell trinkets
+		-- Note: FUNCTION MUST HAVE RETURN TRUE TO SKIP BELOW CODE
+		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then  
+			return 			
+		end 	
+
+		-- Use (H)G.Medallion
+		if LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(LOC["GladiatorMedallion"].Applied) then 
+			Action.TMWAPL(..., "texture", GetSpellTexture(LOC["GladiatorMedallion"].SpellID))
+			return 
+		end 		
+		
+		-- Use racial if nothing is not available 
+		if isApplied then 
+			Action.TMWAPL(..., "texture", GetSpellTexture(LOC[prace].SpellID))
+			return 
+		end 
+			
+		Action.Hide(...)
+		return 
+	end 
+	
 	if PauseChecks() then 
 		if meta == 3 then 
 			Action.TMWAPL(..., PauseChecks())	
@@ -7466,9 +7644,11 @@ function Action.Rotation(meta, ...)
 			Action.Hide(...)
 		end 
 		return 
-	end 	
+	end 		
 	
+	-- Shared (Passive): @player, @raid1, @arena1 
 	if meta == 6 then 
+		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
 			if Action.GameTooltipClick == "LEFT" then 
 				Action.TMWAPL(..., "texture", 237586) -- GetSpellTexture(98008)
@@ -7477,6 +7657,44 @@ function Action.Rotation(meta, ...)
 				Action.TMWAPL(..., "texture", 132487) -- GetSpellTexture(34976)
 				return 
 			end 
+		end 
+		
+		-- ReTarget ReFocus 
+		if Env.InPvP() then 
+			if Action.GetToggle(1, "ReTarget") and Action.LastTarget and not UnitExists("target") then 
+				Action.TMWAPL(..., "texture", Re["Target"][Action.LastTarget]) 
+				return 
+			end 
+			
+			if Action.GetToggle(1, "ReFocus") and Action.LastFocus and not UnitExists("focus") then 
+				Action.TMWAPL(..., "texture", Re["Focus"][Action.LastFocus]) 
+				return 
+			end 
+		end 
+		
+		-- Healthstone 
+		local Healthstone = Action.GetToggle(1, "HealthStone") 
+		if Healthstone >= 0 and HS:GetCount() > 0 and HS:GetCooldownDurationNoGCD() == 0 and not Env.global_invisible() then 
+			if Healthstone >= 100 then -- AUTO 
+				if TimeToDie("player") <= 7 then 
+					Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
+					return 
+				end 
+			elseif Env.UNITHP("player") <= Healthstone then 
+				Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
+				return 
+			end 
+		end 
+		
+		-- AutoTarget 
+		if Action.GetToggle(1, "AutoTarget") and not Env.IamHealer and CombatTime("player") > 0 
+			-- No existed or switch in PvE if we accidentally selected out of combat unit  
+			and (not UnitExists("target") or (Env.Zone ~= "none" and not Env.InPvP() and CombatTime("target") == 0)) 
+			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
+			and ((not Env.InPvP() and CombatUnits(1)) or Env.Zone == "pvp")
+		then 
+			Action.TMWAPL(..., "texture", 133015) -- SpellID: 153911
+			return 
 		end 
 	end 
 	

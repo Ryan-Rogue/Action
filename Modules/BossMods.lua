@@ -1,7 +1,3 @@
----
---- 06.06.2019
----
---- ============================ HEADER ============================
 if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
@@ -9,6 +5,7 @@ local Env = CNDT.Env
 
 local pairs, type = pairs, type
 local UnitName = UnitName
+
 --- ============================= CORE ==============================
 local function DBM_timer_init()
     DBM_timer_init = true

@@ -1,15 +1,11 @@
---- 2.0
---- DateTime: 02.04.2019
----
---- ============================ HEADER ============================
-if not TMW then return end 
+-- Version 2.0
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
 local pairs, next = pairs, next
 local UnitIsPlayer, UnitExists, UnitGUID = UnitIsPlayer, UnitExists, UnitGUID
-local GetNamePlateForUnit = C_NamePlate.GetNamePlateForUnit
+local GetNamePlateForUnit = _G.C_NamePlate.GetNamePlateForUnit
 local activeUnitPlates = dynamic_array(2)
 
 --- ============================ CONTENT ============================
