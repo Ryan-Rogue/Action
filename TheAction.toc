@@ -1,0 +1,27 @@
+## Interface: 80100
+## Title: TellMeWhen |cff00ccff The Action|r
+## Notes: (\/)O_O(\/)
+## RequiredDeps: TellMeWhen
+## DefaultState: enabled
+## LoadWith: TellMeWhen
+
+Lib\LibSharedMedia-3.0\lib.xml
+Lib\ForAllIndentsAndPurposes.lua
+Lib\LibDBIcon-1.0.lua
+Lib\StdUI.lua
+
+Action.lua
+
+Modules\Stuff.lua
+Modules\AzeriteTraits.lua
+Modules\BossMods.lua
+Modules\HybridProfile.lua
+Modules\TMW Monitor.lua
+Modules\PMultiplier.lua 
+Modules\CombatTracker.lua
+Modules\LibPvP.lua
+Modules\MultiUnits.lua
+Modules\Scale and Chat.lua
+Modules\MSGEvents.lua
+Modules\PetLib.lua
+Modules\HealingEngine.lua
