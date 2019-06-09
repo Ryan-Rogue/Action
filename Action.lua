@@ -25,36 +25,6 @@ local BuildInfo = select(2, GetBuildInfo())
 	  BuildInfo = tonumber(BuildInfo)
 local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, IsAttackSpell
 
-----------------------------------
--- Clear old global snippets
-----------------------------------
-local function ClearTrash()
-	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and (not TMW.db.global.ActionDB or not TMW.db.global.ActionDB.oldCleaned) then 
-		local isRemove = {
-			["Stuff"] = true, 
-			["TMW Monitor"] = true,
-			["CombatTracker"] = true,
-			["LibPvP"] = true,
-			["MultiUnits"] = true,
-			["Scale and Chat"] = true,
-			["MSGEvents"] = true,
-			["AzeriteTraits"] = true,
-			["Hybrid profile"] = true,
-			["PMultiplier"] = true,
-			["HealingEngine"] = true, 
-			["PetLib"] = true, 
-			["BossMods"] = true, 
-			["DEV"] = true,
-		}
-		for _, snippet in ipairs(TMW.db.global.CodeSnippets) do
-			if isRemove[snippet.Name] then
-				snippet = nil 
-				TMW.db.global.CodeSnippets["n"] = TMW.db.global.CodeSnippets["n"] - 1
-			end
-		end
-	end 
-end 
-hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 
 --------------------------------------
 -- Localization
@@ -1227,6 +1197,35 @@ Action.Data = {
 	-- Auras 
 	Auras = {},
 }
+
+-- Clear old global snippets
+local function ClearTrash()
+	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and (not TMW.db.global.ActionDB or not TMW.db.global.ActionDB.oldCleaned) then 
+		local isRemove = {
+			["Stuff"] = true, 
+			["TMW Monitor"] = true,
+			["CombatTracker"] = true,
+			["LibPvP"] = true,
+			["MultiUnits"] = true,
+			["Scale and Chat"] = true,
+			["MSGEvents"] = true,
+			["AzeriteTraits"] = true,
+			["Hybrid profile"] = true,
+			["PMultiplier"] = true,
+			["HealingEngine"] = true, 
+			["PetLib"] = true, 
+			["BossMods"] = true, 
+			["DEV"] = true,
+		}
+		for _, snippet in ipairs(TMW.db.global.CodeSnippets) do
+			if isRemove[snippet.Name] then
+				snippet = nil 
+				TMW.db.global.CodeSnippets["n"] = TMW.db.global.CodeSnippets["n"] - 1
+			end
+		end
+	end 
+end 
+hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 
 -- Templates
 -- Important: If there is any fail with Factory on preset LUA only ResetDB can help, otherwise will need write for each mistake own fix 
@@ -2742,8 +2741,10 @@ local function ActionDB_Initialization()
 		-- TMW owner has trouble with ICON and GROUP PRE SETUP, he trying :setup() frames before lua snippets would be loaded 
 		-- Yeah he has callback ON PROFILE to run it but it's POST handler which triggers AFTER :setup() and it cause errors for nil objects (coz they are in snippets :D which couldn't be loaded before frames)
 		local function OnProfileFix()
-			wipe(Action.Data.ProfileUI)
-			wipe(Action.Data.ProfileDB)
+			if not TMW.Initialized or not TMW.InitializedDatabase then
+				return
+			end		
+			
 			local snippets = {}
 			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
 				snippets[#snippets + 1] = v
@@ -2790,6 +2791,8 @@ local function ActionDB_Initialization()
 			LibDBIcon:Hide("ActionUI")
 		end 
 		Action.QueueEventReset()
+		wipe(Action.Data.ProfileUI)
+		wipe(Action.Data.ProfileDB)		
 		return 
 	end 	 
 	
@@ -4228,7 +4231,7 @@ function Action.ToggleMainUI()
 			end)
 			HeartOfAzeroth.Identify = { Type = "Checkbox", Toggle = "HeartOfAzeroth" }		
 			StdUi:FrameTooltip(HeartOfAzeroth, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
-			if BuildInfo < 30170 then 
+			if BuildInfo < 30706 then 
 				HeartOfAzeroth:Disable()
 			end 
 
@@ -4635,14 +4638,14 @@ function Action.ToggleMainUI()
 					local CL = (config.L and (TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and config.L[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or config.L[GameLocale] and GameLocale)) or "enUS"
 					local obj					
 					if config.E == "Label" then 
-						obj = StdUi:Label(tab.childs[spec], config.L[CL], config.S or 14)
+						obj = StdUi:Label(tab.childs[spec], config.L.ANY or config.L[CL], config.S or 14)
 					elseif config.E == "Header" then 
-						obj = StdUi:Header(tab.childs[spec], config.L[CL])
+						obj = StdUi:Header(tab.childs[spec], config.L.ANY or config.L[CL])
 						obj:SetAllPoints()			
 						obj:SetJustifyH("MIDDLE")						
 						obj:SetFontSize(config.S or 14)	
 					elseif config.E == "Checkbox" then 						
-						obj = StdUi:Checkbox(tab.childs[spec], config.L[CL])
+						obj = StdUi:Checkbox(tab.childs[spec], config.L.ANY or config.L[CL])
 						obj:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])
 						obj:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 						obj:SetScript("OnClick", function(self, button, down)	
@@ -4650,14 +4653,14 @@ function Action.ToggleMainUI()
 								if button == "LeftButton" then 
 									TMW.db.profile.ActionDB[tab.name][specID][config.DB] = not TMW.db.profile.ActionDB[tab.name][specID][config.DB]
 									self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])					
-									Action.Print(config.L[CL] .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB])	
+									Action.Print((config.L.ANY or config.L[CL]) .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB])	
 								elseif button == "RightButton" and config.M then 
-									CraftMacro( config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )	
+									CraftMacro( config.L.ANY or config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )	
 								end 
 							end
 						end)
 						obj.Identify = { Type = config.E, Toggle = config.DB }
-						StdUi:FrameTooltip(obj, config.TT and config.TT[CL] or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)
 						if config.isDisabled then 
 							obj:Disable()
 						end 
@@ -4674,7 +4677,7 @@ function Action.ToggleMainUI()
 								for i = 1, #self.optsFrame.scrollChild.items do 					
 									if TMW.db.profile.ActionDB[tab.name][specID][config.DB][i] ~= self.optsFrame.scrollChild.items[i]:GetChecked() then
 										TMW.db.profile.ActionDB[tab.name][specID][config.DB][i] = self.optsFrame.scrollChild.items[i]:GetChecked()
-										Action.Print(config.L[CL] .. " " .. i .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB][i])
+										Action.Print((config.L.ANY or config.L[CL]) .. " " .. i .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB][i])
 									end 				
 								end 				
 							end
@@ -4685,7 +4688,7 @@ function Action.ToggleMainUI()
 								if (config.isNotEqualVal and val ~= config.isNotEqualVal) or (config.isNotEqualVal == nil and val ~= "Off" and val ~= "OFF" and val ~= 0) then 
 									Action.Data.TG[config.DB] = val
 								end 
-								Action.Print(config.L[CL] .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB])
+								Action.Print((config.L.ANY or config.L[CL]) .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB])
 							end
 						end 
 						obj:RegisterForClicks("LeftButtonUp", "RightButtonUp")
@@ -4694,15 +4697,15 @@ function Action.ToggleMainUI()
 								if button == "LeftButton" then 
 									self:ToggleOptions()
 								elseif button == "RightButton" and config.M then 
-									CraftMacro( config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )								
+									CraftMacro( config.L.ANY or config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )								
 								end
 							end
 						end)
 						obj.Identify = { Type = config.E, Toggle = config.DB }
-						obj.FontStringTitle = StdUi:FontString(obj, config.L[CL])
+						obj.FontStringTitle = StdUi:FontString(obj, config.L.ANY or config.L[CL])
 						obj.text:SetJustifyH("CENTER")
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, config.TT and config.TT[CL] or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
 						if config.isDisabled then 
 							obj:Disable()
 						end 
@@ -4725,17 +4728,17 @@ function Action.ToggleMainUI()
 								value = config.MIN or -1
 							end
 							TMW.db.profile.ActionDB[tab.name][specID][config.DB] = value
-							self.FontStringTitle:SetText(config.L[CL] .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= config.MAX and "|cff00ff00AUTO|r" or value))
+							self.FontStringTitle:SetText((config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= config.MAX and "|cff00ff00AUTO|r" or value))
 						end
 						obj.Identify = { Type = config.E, Toggle = config.DB }
-						obj.FontStringTitle = StdUi:FontString(obj, config.L[CL] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID][config.DB] < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB] >= config.MAX and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB]))						
+						obj.FontStringTitle = StdUi:FontString(obj, (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID][config.DB] < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB] >= config.MAX and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB]))						
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, config.TT and config.TT[CL] or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)						
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)						
 					elseif config.E == "LayoutSpace" then	
 						obj = LayoutSpace(tab.childs[spec])
 					end 
 					
-					local margin = config.ElementOptions and config.ElementOptions.margin or nil 					
+					local margin = config.ElementOptions and config.ElementOptions.margin or { top = 10 } 					
 					SpecRow:AddElement(obj, { column = math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), margin = margin })
 				end
 			end
@@ -7375,6 +7378,50 @@ end
 --- [[ MSG ]]
 --- Moved above
 
+--- Racial Util 
+function Action:LazyRacial(unit)
+	local thisunit = unit or "target"
+	
+	if self.Race == "Kul Tiran" then 
+		return 	Env.SpellInRange(unit, self.ID) and 
+				Action.InterruptIsValid(unit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, unit)) > 1 + Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))
+	end 
+	
+	if self.Race == "Pandaren" then
+		return 	Env.SpellInRange(unit, self.ID) and 
+				Action.InterruptIsValid(unit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	
+	end 
+	
+	if self.Race == "Tauren" then 
+		return 	Env.Unit(unit):GetRange() <= 8 and 
+				Action.InterruptIsValid(unit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, unit)) > 0.5 + Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	
+	end 
+	
+	if self.Race == "Highmountain Tauren" then
+		return 	Env.Unit(unit):GetRange() <= 6 and 
+				Action.InterruptIsValid(unit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.25 and 
+				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	 
+	end 
+	
+	if self.Race == "Nightborne" then 
+		return 	Env.Unit(unit):GetRange() <= 5 and 
+				((Env.InPvP() and Env.UNITCurrentSpeed(unit) >= 100) or AoE(3, 5))	 
+	end 
+	
+	return true 
+end 
+
+function Action:IsRacialReady(unit, lazy)
+	return Action.GetToggle(1, "Racial") and IsPlayerSpell(self.ID) and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and (lazy == false or self:LazyRacial(unit))
+end 
+
 --------------------------------------
 -- DISPLAY FUNCTIONAL
 --------------------------------------
@@ -7602,7 +7649,7 @@ function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
 	return result, isApplied
 end 
 -- Healthstone Item create 
-local HS = TMW.Classes.ItemByID:New(5512)
+local HS 
 function Action.Rotation(meta, ...)
 	-- Shared (Trinket)
 	if meta == 5 then 
@@ -7674,15 +7721,21 @@ function Action.Rotation(meta, ...)
 		
 		-- Healthstone 
 		local Healthstone = Action.GetToggle(1, "HealthStone") 
-		if Healthstone >= 0 and HS:GetCount() > 0 and HS:GetCooldownDurationNoGCD() == 0 and not Env.global_invisible() then 
-			if Healthstone >= 100 then -- AUTO 
-				if TimeToDie("player") <= 7 then 
+		if Healthstone >= 0 then 
+			if not HS then 
+				HS = TMW.Classes.ItemByID:New(5512)
+			end 
+			
+			if HS:GetCount() > 0 and HS:GetCooldownDurationNoGCD() == 0 and not Env.global_invisible() then 			
+				if Healthstone >= 100 then -- AUTO 
+					if TimeToDie("player") <= 7 then 
+						Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
+						return 
+					end 
+				elseif Env.UNITHP("player") <= Healthstone then 
 					Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
 					return 
 				end 
-			elseif Env.UNITHP("player") <= Healthstone then 
-				Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
-				return 
 			end 
 		end 
 		
