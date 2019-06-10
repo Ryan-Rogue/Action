@@ -1,5 +1,5 @@
 --- 
-local DateTime = "09.06.2019"
+local DateTime = "10.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -17,7 +17,7 @@ LSM:Register(LSM.MediaType.STATUSBAR, "Flat",				[[Interface\Addons\TheAction\Me
 
 Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
 
-local UnitName, UnitClass, UnitExists, UnitIsUnit = UnitName, UnitClass, UnitExists, UnitIsUnit
+local UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID = UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID
 local GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
 	  GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate	  
 local GameLocale = GetLocale()	 
@@ -2858,6 +2858,9 @@ local function ActionDB_Initialization()
 	-- Initialization ReTarget ReFocus 
 	Action.ReInit()
 	
+	-- Initialization LOS 
+	Action.LOSInit()
+	
 	-- Initialization SpellLevelCheck if it was selected in db
 	Action.SpellLevelInit()
 	
@@ -3434,7 +3437,7 @@ function Action.SetToggle(arg, custom)
 	if TMW.db.global.ActionDB[toggle] ~= nil then 
 		TMW.db.global.ActionDB[toggle] = custom or not TMW.db.global.ActionDB[toggle]		
 		bool = TMW.db.global.ActionDB[toggle] 		
-	elseif Factory[n][toggle] ~= nil then 
+	elseif Factory[n] and Factory[n][toggle] ~= nil then 
 		TMW.db.profile.ActionDB[n][toggle] = custom or not TMW.db.profile.ActionDB[n][toggle]		
 		bool = TMW.db.profile.ActionDB[n][toggle] 
 	elseif TMW.db.profile.ActionDB[n] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] == nil then
@@ -3585,7 +3588,7 @@ function Action.GetToggle(n, toggle)
 		bool = TMW.db.global.ActionDB[toggle] 		
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 	
 		bool = TMW.db.profile.ActionDB[n][toggle] 
-	else 
+	elseif TMW.db.profile.ActionDB[n] and TMW.db.profile.ActionDB[n][Env.PlayerSpec] then 
 		bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
 	end 
 	
@@ -3669,6 +3672,39 @@ function Action.ReInit()
 		Listener:Add("RE_Events", "PLAYER_FOCUS_CHANGED", REFOCUS)
 	else 
 		Listener:Remove("RE_Events", "PLAYER_FOCUS_CHANGED")
+	end 
+end 
+
+--- [[ LOS ]]
+local LOS = setmetatable({}, { __mode == "kv" })
+function Action.UnitInLOS(unit)
+	if not Action.GetToggle(1, "LOSCheck") then 
+		return false 
+	end 
+	local GUID = UnitGUID(unit)
+	return LOS[GUID] and TMW.time < LOS[GUID] or false
+end 
+function Action.LOSInit()
+	GlobalsRemap()
+	if Action.GetToggle(1, "LOSCheck") then 
+		Listener:Add("ACTION_LOS", "UI_ERROR_MESSAGE", function(...)
+			if Env.IamHealer and ... == 50 and Action.IsUnitDMG("targettarget") then          
+				LOS[UnitGUID("targettarget")] = TMW.time + 5
+			end 
+		end)
+		Listener:Add("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
+            local _, event, _, SourceGUID, _,_,_, DestGUID = CombatLogGetCurrentEventInfo()
+            if Env.IamHealer and event == "SPELL_CAST_SUCCESS" and LOS[DestGUID] and SourceGUID == UnitGUID("player") then 
+				LOS[DestGUID] = nil 
+			end 
+		end)
+		Listener:Add("ACTION_LOS", "PLAYER_REGEN_ENABLED", function() wipe(LOS) end)
+		Listener:Add("ACTION_LOS", "PLAYER_REGEN_DISABLED", function() wipe(LOS) end)
+	else 
+		Listener:Remove("ACTION_LOS", "UI_ERROR_MESSAGE")
+		Listener:Remove("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED")
+		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_ENABLED")
+		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_DISABLED")
 	end 
 end 
 
@@ -4231,7 +4267,7 @@ function Action.ToggleMainUI()
 			end)
 			HeartOfAzeroth.Identify = { Type = "Checkbox", Toggle = "HeartOfAzeroth" }		
 			StdUi:FrameTooltip(HeartOfAzeroth, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
-			if BuildInfo < 30706 then 
+			if BuildInfo <= 30706 then 
 				HeartOfAzeroth:Disable()
 			end 
 
@@ -4294,7 +4330,7 @@ function Action.ToggleMainUI()
 					LOSCheck = TMW.db.profile.ActionDB[tab.name][specID].LOSCheck
 					Action.Print(L["TAB"][tab.name]["LOSSYSTEM"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].LOSCheck)	
 				elseif button == "RightButton" then 
-					CraftMacro(L["TAB"][tab.name]["LOSSYSTEM"], [[/run Action.SetToggle({]] .. tab.name .. [[, "LOSCheck", "]] .. L["TAB"][tab.name]["LOSSYSTEM"] .. [[: "})]])	
+					CraftMacro(L["TAB"][tab.name]["LOSSYSTEM"], [[/run Action.SetToggle({]] .. tab.name .. [[, "LOSCheck", "]] .. L["TAB"][tab.name]["LOSSYSTEM"] .. [[: "}); Action.LOSInit()]])	
 				end 
 			end)
 			LosSystem.Identify = { Type = "Checkbox", Toggle = "LOSCheck" }				
@@ -4396,7 +4432,7 @@ function Action.ToggleMainUI()
 			StdUi:GlueAbove(HE_ToggleFrame.FontStringTitle, HE_ToggleFrame)	
 			HE_ToggleFrame.text:SetJustifyH("CENTER")			
 			
-			local FPS = StdUi:Slider(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 5.8), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].FPS, false, -0.01, 0.4)
+			local FPS = StdUi:Slider(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 5.8), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].FPS, false, -0.01, 1.5)
 			FPS:SetPrecision(2)
 			FPS:SetScript('OnMouseUp', function(self, button, down)
 					if button == "RightButton" then 
@@ -6738,7 +6774,7 @@ function Action:OnInitialize()
 	----------------------------------	
 	local function OnSwap(event, profileEvent, arg2, arg3)
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
-		-- Note: Can cause issues with there loops, timers, frames or hooks 
+		-- Note: Can cause issues if there loops, timers, frames or hooks 
 		if profileEvent == "OnProfileChanged" then
 			local snippets = {}
 			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
@@ -6770,6 +6806,7 @@ function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
 	GlobalsRemap()
 	Action.ToggleMSG(true)	
 	Action.ReInit()
+	Action.LOSInit()
 end
 Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
@@ -6785,7 +6822,7 @@ local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRan
 
 local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace
 local _, prace = UnitRace("player")
-local IsMouseButtonDown = IsMouseButtonDown
+local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
 --- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
@@ -6813,7 +6850,10 @@ function Action:GetSpellIcon()
 	return select(3, self:GetSpellInfo())
 end
 function Action:GetSpellTexture()
-    return "texture", self.Type == "HeartOfAzeroth" and GetSpellTexture(280431) or GetSpellTexture(self.ID)
+	if self.SubType == "HeartOfAzeroth" then 
+		return "texture", 1869493 -- GetSpellTexture(280431)
+	end
+    return "texture", GetSpellTexture(self.ID)
 end 
 --- SpellColor
 function Action:GetColorTexture()
@@ -6849,12 +6889,12 @@ function Action:GetItemTexture()
 	local texture
 	if self.Type == "Trinket" then 
 		if GetInventoryItemID("player", 13) == self.ID then 
-			texture = GetSpellTexture(179071)
+			texture = 1030902 -- GetSpellTexture(179071)
 		else 
-			texture = GetSpellTexture(224540)
+			texture = 1030910 -- GetSpellTexture(224540)
 		end
 	elseif self.Type == "Potion" then 
-		texture = GetSpellTexture(176108)
+		texture = 967532 -- GetSpellTexture(176108)
 	else 
 		texture = self:GetItemIcon()
 	end
@@ -6983,7 +7023,8 @@ function Action.Create(attributes)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
 	elseif attributes.Type == "HeartOfAzeroth" then
 		s = setmetatable(s, {__index = Action})	
-		s.Type = "HeartOfAzeroth"
+		s.Type = "Spell"
+		s.SubType = "HeartOfAzeroth"
 		-- Methods (metakey:Link())	
 		s.Info = Action.GetSpellInfo
 		s.Link = Action.GetSpellLink		
@@ -7228,7 +7269,10 @@ end
 
 --- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA ]]
 function Action:IsReady(thisunit)
-    return not self:IsBlocked() and not self:IsBlockedByQueue() and not SpellLevel.IsBlocked(self) and RunLua(self:GetLUA(), thisunit)
+    return 	not self:IsBlocked() and 
+			not self:IsBlockedByQueue() and 
+			not SpellLevel.IsBlocked(self) and 
+			RunLua(self:GetLUA(), thisunit) 
 end 
 
 --- [[ INTERRUPTS ]]
@@ -7383,42 +7427,42 @@ function Action:LazyRacial(unit)
 	local thisunit = unit or "target"
 	
 	if self.Race == "Kul Tiran" then 
-		return 	Env.SpellInRange(unit, self.ID) and 
-				Action.InterruptIsValid(unit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, unit)) > 1 + Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))
+		return 	Env.SpellInRange(thisunit, self.ID) and 
+				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, thisunit)) > 1 + Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))
 	end 
 	
 	if self.Race == "Pandaren" then
-		return 	Env.SpellInRange(unit, self.ID) and 
-				Action.InterruptIsValid(unit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	
+		return 	Env.SpellInRange(thisunit, self.ID) and 
+				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, thisunit)) > Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	
 	end 
 	
 	if self.Race == "Tauren" then 
-		return 	Env.Unit(unit):GetRange() <= 8 and 
-				Action.InterruptIsValid(unit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, unit)) > 0.5 + Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	
+		return 	Env.Unit(thisunit):GetRange() <= 8 and 
+				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, thisunit)) > 0.5 + Env.CurrentTimeGCD() + 0.1 and 
+				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	
 	end 
 	
 	if self.Race == "Highmountain Tauren" then
-		return 	Env.Unit(unit):GetRange() <= 6 and 
-				Action.InterruptIsValid(unit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.25 and 
-				(not Env.InPvP() or (Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(unit):HasBuffs("TotalImun") == 0))	 
+		return 	Env.Unit(thisunit):GetRange() <= 6 and 
+				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
+				select(2, Env.CastTime(nil, thisunit)) > Env.CurrentTimeGCD() + 0.25 and 
+				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	 
 	end 
 	
 	if self.Race == "Nightborne" then 
-		return 	Env.Unit(unit):GetRange() <= 5 and 
-				((Env.InPvP() and Env.UNITCurrentSpeed(unit) >= 100) or AoE(3, 5))	 
+		return 	Env.Unit(thisunit):GetRange() <= 5 and 
+				((Env.InPvP() and Env.UNITCurrentSpeed(thisunit) >= 100) or AoE(3, 5))	 
 	end 
 	
 	return true 
 end 
 
-function Action:IsRacialReady(unit, lazy)
+function Action:IsRacialReady(lazy, unit)
 	return Action.GetToggle(1, "Racial") and IsPlayerSpell(self.ID) and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and (lazy == false or self:LazyRacial(unit))
 end 
 
@@ -7511,28 +7555,59 @@ function Action.TimerDestroy(name)
 end 
 
 local Cache = { 
-	bufer = {},
-	newVal = function(self, func, ...)
+	bufer = setmetatable({}, { __mode == "v" }),
+	newVal = function(self, interval, keyArg, func, ...)
 		local obj = {
-		  t = TMW.time + 0.01,               
+		  t = TMW.time + (interval or 0.01),               
 		  v = { func(...) },     
-		}        
-		self.bufer[func] = obj
+		}      
+		if keyArg then 
+			self.bufer[func][keyArg] = obj
+		else 
+			self.bufer[func] = obj
+		end 
 		return unpack(obj.v)
 	end,	
-	WrapStatic = function(t, func)
+	-- Static without arguments in func
+	WrapStatic = function(t, func, interval)
 		if not t.bufer[func] then 
 			t.bufer[func] = {}
 		end 	
 		return function()  
 			if TMW.time > (t.bufer[func].t or 0) then			
-				return t:newVal(func)
+				return t:newVal(interval, nil, func)
 			else
 				return unpack(t.bufer[func].v)
 			end      
 		end
 	end,	
+	-- Dynamic with unlimited arguments in func 
+	WrapDynamic = function(t, func, interval)
+		if not t.bufer[func] then 
+			t.bufer[func] = {}
+		end 	
+		return function(...) 
+			local arg = {...} 
+            local keyArg = ""
+            for i = 1, #arg do
+                keyArg = keyArg .. tostring(arg[i])            
+            end 			
+			if TMW.time > (t.bufer[func][keyArg] and t.bufer[func][keyArg].t or 0) then			
+				return t:newVal(interval, keyArg, func, ...)
+			else
+				return unpack(t.bufer[func][keyArg].v)
+			end      
+		end
+	end,		
 }
+
+function Action.MakeFunctionCachedStatic(func, interval)
+	return Cache:WrapStatic(func, interval)
+end 
+
+function Action.MakeFunctionCachedDynamic(func, interval)
+	return Cache:WrapDynamic(func, interval)
+end 
 
 local PauseChecks = Cache:WrapStatic(function()  
 	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
@@ -7573,9 +7648,69 @@ local PauseChecks = Cache:WrapStatic(function()
 	end	
 end)
 
+-- MOUSE 
+MouseHasFrame = Cache:WrapStatic(function()
+    local focus = UnitExists("mouseover") and GetMouseFocus()
+    if focus then
+        local frame = not focus:IsForbidden() and focus:GetName()
+        return not frame or (frame and frame ~= "WorldFrame")
+    end
+    return false
+end)
+
 --------------------------------------
 -- ROTATION
 --------------------------------------
+function Action.IsUnitHeal(thisunit)
+	if thisunit == "mouseover" then 
+		return 	Action.GetToggle(2, "mouseover") and 
+				MouseHasFrame() and
+				not Env.Unit("mouseover"):IsEnemy() 
+	else
+		return 	(
+					not Action.GetToggle(2, "mouseover") or 
+					not UnitExists("mouseover") or 
+					Env.Unit("mouseover"):IsEnemy()
+				) and 
+				not Env.Unit(thisunit):IsEnemy() 
+	end 
+end 
+Action.IsUnitHeal = Action.MakeFunctionCachedDynamic(Action.IsUnitHeal, 0.001)
+
+function Action.IsUnitDMG(thisunit)
+	if thisunit == "mouseover" then 
+		return  Action.GetToggle(2, "mouseover") and 
+				Env.Unit("mouseover"):IsEnemy() 
+	elseif thisunit == "targettarget" then
+		return 	Action.GetToggle(2, "targettarget") and 
+				(
+					not Action.GetToggle(2, "mouseover") or 
+					(not MouseHasFrame() and not Env.Unit("mouseover"):IsEnemy())
+				) and 
+				-- Exception to don't pull by mistake mob
+				CombatTime("targettarget") > 0 and
+				not Env.Unit("target"):IsEnemy() and
+				Env.Unit("targettarget"):IsEnemy() and 
+				-- LOS checking 
+				not Action.UnitInLOS("targettarget")						
+	else
+		return 	(
+					not Action.GetToggle(2, "mouseover") or 
+					(not MouseHasFrame() and not Env.Unit("mouseover"):IsEnemy())
+				) and 
+				Env.Unit(thisunit):IsEnemy() 
+	end
+end 
+Action.IsUnitDMG = Action.MakeFunctionCachedDynamic(Action.IsUnitDMG, 0.001)
+
+function Action:CanHeal(thisunit)
+	return not thisunit or not Env.InPvP() or Env.Unit(thisunit):DeBuffCyclone() <= (self.Type ~= "Spell" and 0 or Env.CastTime(self.ID))
+end 
+
+function Action:CanDMG(thisunit)
+	return not thisunit or not Env.InPvP() or (Env.Unit(thisunit):DeBuffCyclone() <= (self.Type ~= "Spell" and 0 or Env.CastTime(self.ID)) and Env.Unit(thisunit):WithOutKarmed())
+end 
+
 -- Trinkets (Racial and (H)G.Medallion)
 local LOC = {
 	["GladiatorMedallion"] = {
@@ -7648,8 +7783,10 @@ function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
 	
 	return result, isApplied
 end 
--- Healthstone Item create 
+
+-- Healthstone Item variable  
 local HS 
+
 function Action.Rotation(meta, ...)
 	-- Shared (Trinket)
 	if meta == 5 then 
@@ -7726,7 +7863,7 @@ function Action.Rotation(meta, ...)
 				HS = TMW.Classes.ItemByID:New(5512)
 			end 
 			
-			if HS:GetCount() > 0 and HS:GetCooldownDurationNoGCD() == 0 and not Env.global_invisible() then 			
+			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
 				if Healthstone >= 100 then -- AUTO 
 					if TimeToDie("player") <= 7 then 
 						Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262

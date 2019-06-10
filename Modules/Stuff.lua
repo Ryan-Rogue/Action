@@ -164,17 +164,6 @@ function ScanToolTip(spellID)
 end
 ]]
 
---- ============================= MOUSE =============================
-local GetMouseFocus = GetMouseFocus
-function MouseHasFrame()
-    local focus = UnitExists("mouseover") and GetMouseFocus()
-    if focus then
-        local frame = not focus:IsForbidden() and focus:GetName()
-        return not frame or (frame and frame ~= "WorldFrame")
-    end
-    return false
-end
-
 --- ============================= UTILS =============================
 function quote(str)
     return "\""..str.."\""

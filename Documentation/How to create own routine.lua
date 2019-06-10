@@ -19,11 +19,11 @@ Structure (example with all supported elemenets):
 			(optional) LayoutOptions is a special table which can be used to configure layout position through keys: { columns = *number*, gutter = *number*, padding = { top = *number*, right = *number*, left = *number* } }
 				(optional) RowOptions is a special table which can be used to configure specified row position through keys: { margin = { top = *number*, right = *number*, left = *number*, bottom = *number* } }
 					E is type of Element, supported: "Label", "Header", "Checkbox", "Dropdown", "Slider", "LayoutSpace"
-					L is localization table 
+					L is localization table which supported ANY as key (usually for things such as GetSpellInfo)
 					DB is name of key for SavedVariables in DataBase, supported: "Checkbox", "Dropdown", "Slider" 
 					DBV is default value if key wasn't existed before, it also using for 'Reset Settings', supported: "Checkbox", "Dropdown", "Slider" 
 					(optional) S is text size, supported: "Label", "Header"
-					(optional) TT is ToolTip and his localization, if omited and M exist then will display localized by main core text - "RightClick: create macro"
+					(optional) TT is ToolTip localization table which supported ANY as key (usually for things such as GetSpellInfo), if omited and M exist then will display localized by main core text - "RightClick: create macro"
 					(optional) M is Macro which is table with keys 2 ways: { Custom = *string* } or { Value = *any*, TabN = *number*, Print = *string* }
 					(optional) H is Height of element *number*, supported: "Dropdown", "Slider"
 					(optional) isDisabled is boolean, supported: "Checkbox", "Dropdown"
@@ -78,10 +78,12 @@ Action.Data.ProfileUI = {
 				DB = "toggle",
 				DBV = *any*,
 				L = { 
+					ANY = Action.GetSpellInfo(17) .. " (%)",
 					enUS = "ENG", 
 					ruRU = "RUS", 
 				}, 
 				TT = { 
+					ANY = Action.GetSpellInfo(17) .. " (% HP)",
 					enUS = "ENG", 
 					ruRU = "RUS", 
 				}, 
@@ -216,7 +218,7 @@ local E = CNDT.Env
 local A = Action
 A.Data.ProfileEnabled[TMW.db:GetCurrentProfile()] = true
 A.Data.ProfileUI = {	
-	DateTime = "v1.2a (01.01.2050)",
+	DateTime = "v1.2a (01.01.2850)",
 	[2] = {
 		[260] = { 						
 			{
@@ -454,4 +456,4 @@ function A[260][3](icon)
 	A.Hide(icon)																	
 end 
 -- /tmw and apply code for always shown frame by "Conditions" > "LUA (Advanced)"
--- return A[260][3](thisobj)
+-- A[260][3](thisobj)
