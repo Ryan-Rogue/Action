@@ -163,31 +163,35 @@ Action.Data.ProfileUI = {
 local TMW = TMW 
 local CNDT = TMW.CNDT 
 local Env = CNDT.Env -- or local E = CNDT.Env -- which is more shorter 
--- Now we need create actions (spells, items) and put them into APL (Action Priority List), default it uses Action table, but to make it shorter you can do:
-local A = Action 
+-- Now we need create actions (spells, items) and put them into APL (Action Priority List), default it uses Action table, so we link it here 
+local Action = Action
 --[[
 -- Here is constructor template with all available options
 -- PLAYERSPEC should be replaced by specID like (Rogue Outlaw): [260]
 -- First assign custom key like POWS which will be used to refference in this table 
--- Then you need assign specific table through function Action.Create, since we use shorter method it will A.Create 
+-- Then you need assign specific table through function Action.Create
 --		Arguments (they are always in table {}):
---			Required: Type, ID, Color (only if Type is SpellColor or SpellColoredTexture)
---			Optional: Desc (use this if need set Rank on action or if same ID already uses, this is also displays in UI as Note in ScrollTable), QueueForbidden (default true if Type is Trinket|Potion|HeartOfAzeroth), Texture (acceptable only spellID)
---			{ Type = "Spell|SpellColor|SpellColoredTexture|Trinket|Potion|HeartOfAzeroth", ID = "@number", Color = "@string key which can be found in Action.Data.C (you can add custom colors)", Desc = "@string", QueueForbidden = "@boolean", Texture = "@number" }
-A[PLAYERSPEC] = {
-	POWS = A.Create({ Type = "Spell", ID = 17}),
-	PetKick = Action.Create({ Type = "SpellColor", ID = 47482, Color = "RED", Desc = "RED" }),  
-	POWS_Rank2 = Action.Create({ Type = "SpellColoredTexture", ID = 17, Color = "BLUE", Desc = "Rank2" }), 
+--			Required: Type, ID, Color (Color valid only if Type is Spell|SpellSingleColor|Item|ItemSingleColor)
+--			Optional: Desc (use this if need set Rank on action or if same ID already uses, this is also displays in UI as Note in ScrollTable), QueueForbidden (default true if Type is Trinket|Potion|HeartOfAzeroth|Item|ItemSingleColor), Texture (acceptable by spellID|itemID)
+--			{ Type = "Spell|SpellSingleColor|Trinket|Potion|HeartOfAzeroth|Item|ItemSingleColor", ID = "@number", Color = "@string key which can be found in Action.Data.C (you can add custom colors or use own hex)", Desc = "@string", QueueForbidden = "@boolean", Texture = "@number" }
+Action[PLAYERSPEC] = {
+	POWS = Action.Create({ Type = "Spell", ID = 17}),
+	PetKick = Action.Create({ Type = "Spell", ID = 47482, Color = "RED", Desc = "RED" }),  
+	POWS_Rank2 = Action.Create({ Type = "SpellSingleColor", ID = 17, Color = "BLUE", Desc = "Rank2" }), 
 	TrinketTest = Action.Create({ Type = "Trinket", ID = 122530, QueueForbidden = true }),
 	TrinketTest2 = Action.Create({ Type = "Trinket", ID = 159611, QueueForbidden = true }),	
 	PotionTest = Action.Create({ Type = "Potion", ID = 142117, QueueForbidden = true }),
 	-- Mix will use action with ID 2983 as itself Rogue's Sprint but it will display Power Word: Shield with applied over color "LIGHT BLUE" and UI will displays Note with "Test", also Queue system will not run Queue with this action
-	Sprint = Action.Create({ Type = "SpellColoredTexture", ID = 2983, QueueForbidden = true, Desc = "Test", Color = "LIGHT BLUE", Texture = 17}),
+	Sprint = Action.Create({ Type = "SpellSingleColor", ID = 2983, QueueForbidden = true, Desc = "Test", Color = "LIGHT BLUE", Texture = 17}),
+	-- More examples 
+	NimbleBrew = Action.Create({ Type = "Item", ID = 137648, Color = "RED" }),
 }
 -- Now we starting build itself APL for each meta slot, about meta slots you can find at site in guides/development
 -- META should be replaced by meta slot (number). In short: 
--- 1 - CC, 2 - Kick, 3 - Single Rotation, 4 - AoE Rotation, 5 - Trinket, 6 - Passive (@player, @raid1, @arena1), 7 - Passive (@raid2, @party1, @arena2 sometimes additional START), 8 - Passive (@raid3, @party2, @arena3 sometimes additional START)
+-- 1 - Kick, 2 - CC, 3 - Single Rotation, 4 - AoE Rotation, 5 - Trinket, 6 - Passive (@player, @raid1, @arena1), 7 - Passive (@raid2, @party1, @arena2 sometimes additional START), 8 - Passive (@raid3, @party2, @arena3 sometimes additional START)
 ]]
+-- I prefer make it shorter and it will help prevent mistakes and confuse, so we will better set this:
+local A = setmetatable(Action[PLAYERSPEC], { __index = Action })
 -- You should put here locals before create A[PLAYERSPEC][META](icon) or they wouldn't be linked 
 local function Test() 
 	return "TestThing" 
@@ -207,17 +211,18 @@ function A[PLAYERSPEC][META](icon)                                    				-- ico
 	A.Hide(icon)																	-- Hide it to background (black) if absolutely nothing to do 
 end 		
 -- /tmw and apply code for always shown frame at the left upper corner by "Conditions" > "LUA (Advanced)"
--- return A[260][3](thisobj)
+-- Once created there will reference for all specs but work exactly with which is active
+-- Action.Rotation(META, thisobj)
 
 --------------------------------------
--- №3: Working an example 
+-- №3: Working example 
 --------------------------------------
 local TMW = TMW 
 local CNDT = TMW.CNDT 
 local E = CNDT.Env
-local A = Action
-A.Data.ProfileEnabled[TMW.db:GetCurrentProfile()] = true
-A.Data.ProfileUI = {	
+local Action = Action
+Action.Data.ProfileEnabled[TMW.db:GetCurrentProfile()] = true
+Action.Data.ProfileUI = {	
 	DateTime = "v1.2a (01.01.2850)",
 	[2] = {
 		[260] = { 						
@@ -431,18 +436,20 @@ Action.Data.ProfileDB = {
 	},
 }
 ]]
-A[260] = {
-	POWS = A.Create({ Type = "Spell", ID = 17 }),
-	POWS_Rank2 = A.Create({ Type = "SpellColoredTexture", ID = 17, Color = "BLUE", Desc = "Rank2" }),
-	FrostBolt = A.Create({ Type = "Spell", ID = 116, Desc = "DMG" }),
-	Guard = A.Create({ Type = "Spell", ID = 115295 }),
-	TrinketTest = A.Create({ Type = "Trinket", ID = 122530 }),
-	TrinketTest2 = A.Create({ Type = "Trinket", ID = 159611 }),	
-	PotionTest = A.Create({ Type = "Potion", ID = 142117 }),  
-	PotionTest2 = A.Create({ Type = "Potion", ID = 127835 }),  	
-	PetKick = A.Create({ Type = "SpellColor", ID = 47482, Color = "RED", Desc = "RED" }),                                          	 
-	Sprint = A.Create({ Type = "SpellColoredTexture", ID = 2983, QueueForbidden = true, Desc = "Test", Color = "LIGHT BLUE", Texture = 17 }),
+Action[260] = {
+	POWS = Action.Create({ Type = "Spell", ID = 17 }),
+	POWS_Rank2 = Action.Create({ Type = "SpellSingleColor", ID = 17, Color = "BLUE", Desc = "Rank2" }),
+	FrostBolt = Action.Create({ Type = "Spell", ID = 116, Desc = "DMG" }),
+	Guard = Action.Create({ Type = "Spell", ID = 115295 }),
+	TrinketTest = Action.Create({ Type = "Trinket", ID = 122530 }),
+	TrinketTest2 = Action.Create({ Type = "Trinket", ID = 159611 }),	
+	PotionTest = Action.Create({ Type = "Potion", ID = 142117 }),  
+	PotionTest2 = Action.Create({ Type = "Potion", ID = 127835 }),  	
+	PetKick = Action.Create({ Type = "Spell", ID = 47482, Color = "RED", Desc = "RED" }),                                          	 
+	Sprint = Action.Create({ Type = "SpellSingleColor", ID = 2983, QueueForbidden = true, Desc = "Test", Color = "LIGHT BLUE", Texture = 17 }),
+	NimbleBrew = Action.Create({ Type = "Item", ID = 137648, Color = "RED" }),
 }
+local A = setmetatable(Action[260], { __index = Action })
 local function Test() 
 	return true
 end 
@@ -456,4 +463,5 @@ function A[260][3](icon)
 	A.Hide(icon)																	
 end 
 -- /tmw and apply code for always shown frame by "Conditions" > "LUA (Advanced)"
--- A[260][3](thisobj)
+-- Once created there will reference for all specs but work exactly with which is active
+-- Action.Rotation(3, thisobj)

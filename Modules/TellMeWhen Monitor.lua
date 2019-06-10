@@ -616,6 +616,7 @@ function Env.UseItem(slot)
 end
 
 --- ========================== RACIALS ===========================
+--- TODO: Remove on old profiles until June 2019
 local Race = {
 	SpellID = {
 		Human = 59752, 

@@ -730,8 +730,12 @@ local function LossOfControlUpdate()
     end
 end
 
---- PvP trinket and racials creating defaults 
+--- Create all locType (exception INVULNERABILITY, MAGICAL_IMMUNITY, TURN_UNDEAD)
 do 
+	LossOfControlCreate("DAZE")
+	LossOfControlCreate("DISTRACT")
+	LossOfControlCreate("PACIFY")
+	LossOfControlCreate("CONFUSE")
     --- PvP Trinket:
     LossOfControlCreate("DISARM")
     LossOfControlCreate("INCAPACITATE")

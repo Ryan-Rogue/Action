@@ -3187,7 +3187,7 @@ local function ShowTooltip(parent, show, ID, Type)
 		end
 		GameTooltip:SetOwner(parent)
 		GameTooltip:SetPoint("RIGHT")
-		if Type == "Trinket" or Type == "Potion" then 
+		if Type == "Trinket" or Type == "Potion" or Type == "Item" then 
 			GameTooltip:SetItemByID(ID) 
 		else
 			GameTooltip:SetSpellByID(ID)
@@ -6855,16 +6855,17 @@ function Action:GetSpellTexture()
 	end
     return "texture", GetSpellTexture(self.ID)
 end 
---- SpellColor
-function Action:GetColorTexture()
-    return "state", {Color = self.colorname, Alpha = 1, Texture = "ERROR"}
-end 
---- SpellColoredTexture
+--- Spell Colored Texturre
 function Action:GetColoredSpellTexture()
-    return "state; texture", {Color = self.colorname, Alpha = 1, Texture = ""}, GetSpellTexture(self.ID)
+    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, GetSpellTexture(self.ID)
 end 
 
---- Items
+--- SingleColor
+function Action:GetColorTexture()
+    return "state", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = "ERROR"}
+end 
+
+--- Item
 local iteminfocache = setmetatable({}, { __index = function(t, v)	
     local a = { GetItemInfo(v) }
     if a[1] then
@@ -6900,6 +6901,11 @@ function Action:GetItemTexture()
 	end
     return "texture", texture
 end 
+--- Item Colored Texture
+function Action:GetColoredItemTexture()
+    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, self:GetItemIcon()
+end 
+
 
 --- [[  CREATION  ]]
 function Action.Create(attributes)
@@ -6907,11 +6913,11 @@ function Action.Create(attributes)
 		Required: 
 			Type (string)
 			ID (number - spellID | itemID)
-			Color (string) - only if type is SpellColor or SpellColoredtexture, this will set color which stored in Action.Data.C[Color]
+			Color (string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in Action.Data.C[Color] or here can be own hex 
 	 	Optional: 
 			Desc (string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
-			QueueForbidden (boolean) uses to preset for action fixed queue valid (default true for type Potion)
-			Texture (number) might be spellID (for Spell|SpellColor||SpellColoredTexture) and itemID (for other, note: Potion, Trinket, HeartOfAzeroth have fixed texture in their linked funcs)
+			QueueForbidden (boolean) uses to preset for action fixed queue valid (default true for type Potion, Trinkets, Item)
+			Texture (number) valid only for spellID|itemID (if Type is Spell|Item)
 	]]
 	local s = {
 		ID = attributes.ID,
@@ -6926,16 +6932,27 @@ function Action.Create(attributes)
 		s.Info = Action.GetSpellInfo
 		s.Link = Action.GetSpellLink		
 		s.Icon = Action.GetSpellIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetSpellTexture(attributes.Texture)
-			end 
+		if attributes.Color then 
+			s.Color = attributes.Color
+			if attributes.Texture then 
+				s.Texture = function()
+					return Action.GetColoredSpellTexture(attributes.Texture)
+				end 
+			else 
+				s.Texture = Action.GetColoredSpellTexture
+			end 		
 		else 
-			s.Texture = Action.GetSpellTexture	
-		end
+			if attributes.Texture then 
+				s.Texture = function()
+					return Action.GetSpellTexture(attributes.Texture)
+				end 
+			else 
+				s.Texture = Action.GetSpellTexture	
+			end
+		end 
 		-- Power 
 		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)
-	elseif attributes.Type == "SpellColor" then 
+	elseif attributes.Type == "SpellSingleColor" then 
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"
 		s.Color = attributes.Color
@@ -6943,32 +6960,10 @@ function Action.Create(attributes)
 		s.Info = Action.GetSpellInfo
 		s.Link = Action.GetSpellLink		
 		s.Icon = Action.GetSpellIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetColorTexture(attributes.Texture)
-			end 
-		else 
-			s.Texture = Action.GetColorTexture	
-		end 
+		-- This using static and fixed only color so no need texture
+		s.Texture = Action.GetColorTexture			
 		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)		
-	elseif attributes.Type == "SpellColoredTexture" then 
-		s = setmetatable(s, {__index = Action})	
-		s.Type = "Spell"
-		s.Color = attributes.Color
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetSpellInfo
-		s.Link = Action.GetSpellLink		
-		s.Icon = Action.GetSpellIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetColoredSpellTexture(attributes.Texture)
-			end 
-		else 
-			s.Texture = Action.GetColoredSpellTexture
-		end 
-		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)		
+		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)			
 	elseif attributes.Type == "Trinket" then 
 		s = setmetatable(s, {
 				__index = function(self, key)
@@ -6984,13 +6979,8 @@ function Action.Create(attributes)
 		s.Info = Action.GetItemInfo
 		s.Link = Action.GetItemLink		
 		s.Icon = Action.GetItemIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetItemTexture(attributes.Texture)
-			end 
-		else 
-			s.Texture = Action.GetItemTexture
-		end
+		-- This using static and fixed texture
+		s.Texture = Action.GetItemTexture		
 		-- Misc
 		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden	
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
@@ -7010,17 +7000,71 @@ function Action.Create(attributes)
 		s.Info = Action.GetItemInfo
 		s.Link = Action.GetItemLink		
 		s.Icon = Action.GetItemIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetItemTexture(attributes.Texture)
-			end 
-		else 
-			s.Texture = Action.GetItemTexture
-		end 
+		-- This using static and fixed texture
+		s.Texture = Action.GetItemTexture 
 		-- Misc 
 		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
+	elseif attributes.Type == "Item" then
+		s = setmetatable(s, {
+				__index = function(self, key)
+					if Action[key] then
+						return Action[key]
+					else
+						return self.Item[key]
+					end
+				end
+		})
+		s.Type = "Item" 
+		-- Methods (metakey:Link())	
+		s.Info = Action.GetItemInfo
+		s.Link = Action.GetItemLink		
+		s.Icon = Action.GetItemIcon
+		if attributes.Color then 
+			s.Color = attributes.Color
+			if attributes.Texture then 
+				s.Texture = function()
+					return Action.GetColoredItemTexture(attributes.Texture)
+				end 
+			else 
+				s.Texture = Action.GetColoredItemTexture
+			end 		
+		else 		
+			if attributes.Texture then 
+				s.Texture = function()
+					return Action.GetItemTexture(attributes.Texture)
+				end 
+			else 
+				s.Texture = Action.GetItemTexture
+			end 
+		end
+		-- Misc 
+		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
+		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
+		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 		
+	elseif attributes.Type == "ItemSingleColor" then
+		s = setmetatable(s, {
+				__index = function(self, key)
+					if Action[key] then
+						return Action[key]
+					else
+						return self.Item[key]
+					end
+				end
+		})
+		s.Type = "Item" 
+		s.Color = attributes.Color
+		-- Methods (metakey:Link())	
+		s.Info = Action.GetItemInfo
+		s.Link = Action.GetItemLink		
+		s.Icon = Action.GetItemIcon
+		-- This using static and fixed only color so no need texture
+		s.Texture = Action.GetColorTexture		
+		-- Misc 
+		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
+		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
+		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 			
 	elseif attributes.Type == "HeartOfAzeroth" then
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"
@@ -7029,13 +7073,8 @@ function Action.Create(attributes)
 		s.Info = Action.GetSpellInfo
 		s.Link = Action.GetSpellLink		
 		s.Icon = Action.GetSpellIcon
-		if attributes.Texture then 
-			s.Texture = function()
-				return Action.GetSpellTexture(attributes.Texture)
-			end 
-		else 
-			s.Texture = Action.GetSpellTexture
-		end
+		-- This using static and fixed texture
+		s.Texture = Action.GetSpellTexture		
 	end 
 	return s
 end 
@@ -7712,7 +7751,7 @@ function Action:CanDMG(thisunit)
 end 
 
 -- Trinkets (Racial and (H)G.Medallion)
-local LOC = {
+Action.LOC = {
 	["GladiatorMedallion"] = {
 		Applied = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT", "SNARE", "STUN"},	
 		SpellID = 208683,
@@ -7747,7 +7786,7 @@ local LOC = {
 		SpellID = 7744,
 	},
 	["Gnome"] = {
-		Applied = {"ROOT", "SNARE"},
+		Applied = {"ROOT", "SNARE"}, 
 		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "STUN", "SHACKLE_UNDEAD", "FEAR", "HORROR"},
 		SpellID = 20589,
 	},		
@@ -7770,6 +7809,11 @@ function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
 		if prace == "Dwarf" then 
 			isApplied = Env.Unit("player"):HasDeBuffs("Poison") > 0 or Env.Unit("player"):HasDeBuffs("Curse") > 0 or Env.Unit("player"):HasDeBuffs("Magic") > 0
 		end
+		-- Gnome in current speed 
+		if prace == "Gnome" then 
+			local cSpeed = Env.UNITCurrentSpeed("player")
+			isApplied = cSpeed > 0 and cSpeed < 100
+		end 
 	end 
 	
 	if isApplied and MustBeMissed then 
@@ -7784,6 +7828,17 @@ function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
 	return result, isApplied
 end 
 
+function Action.LossOfControlIsMissed(MustBeMissed)
+	local result = true
+	for i = 1, #MustBeMissed do 
+		if LossOfControlGet(MustBeMissed[i]) > 0 then 
+			result = false  
+			break 
+		end
+	end
+	return result 
+end 
+
 -- Healthstone Item variable  
 local HS 
 
@@ -7791,10 +7846,10 @@ function Action.Rotation(meta, ...)
 	-- Shared (Trinket)
 	if meta == 5 then 
 		-- Use racial available trinkets if we don't have additional LOS 
-		if Action.GetToggle(1, "Racial") and LOC[prace] and Env.SpellCD(LOC[prace].SpellID) <= 0.02 and Env.SpellExists(Action.GetSpellInfo(LOC[prace].SpellID)) then 
-			local result, isApplied = Action.LossOfControlIsValid(LOC[prace].Applied, LOC[prace].Missed, prace == "Dwarf")
+		if Action.GetToggle(1, "Racial") and Action.LOC[prace] and Env.SpellCD(Action.LOC[prace].SpellID) <= 0.02 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[prace].SpellID)) then 
+			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[prace].Applied, Action.LOC[prace].Missed, prace == "Dwarf" or prace == "Gnome")
 			if result then 
-				Action.TMWAPL(..., "texture", GetSpellTexture(LOC[prace].SpellID))
+				Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[prace].SpellID))
 				return 
 			end 
 		end 		
@@ -7806,14 +7861,14 @@ function Action.Rotation(meta, ...)
 		end 	
 
 		-- Use (H)G.Medallion
-		if LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(LOC["GladiatorMedallion"].Applied) then 
-			Action.TMWAPL(..., "texture", GetSpellTexture(LOC["GladiatorMedallion"].SpellID))
+		if Action.LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(Action.LOC["GladiatorMedallion"].Applied) then 
+			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC["GladiatorMedallion"].SpellID))
 			return 
 		end 		
 		
 		-- Use racial if nothing is not available 
 		if isApplied then 
-			Action.TMWAPL(..., "texture", GetSpellTexture(LOC[prace].SpellID))
+			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[prace].SpellID))
 			return 
 		end 
 			
