@@ -213,7 +213,30 @@ end
 -- /tmw and apply code for always shown frame at the left upper corner by "Conditions" > "LUA (Advanced)"
 -- Once created there will reference for all specs but work exactly with which is active
 -- Action.Rotation(META, thisobj)
-
+-- Use these keys to create racials 
+local KeyByRace = {
+	Worgen = "Darkflight",
+	VoidElf = "SpatialRift",
+	NightElf = "Shadowmeld",
+	LightforgedDraenei = "LightsJudgment",
+	KulTiran = "Haymaker",
+	Human = "EveryManforHimself",
+	Gnome = "EscapeArtist",
+	Dwarf = "Stoneform",
+	Draenei = "GiftoftheNaaru",
+	DarkIronDwarf = "Fireblood",
+	Pandaren = "QuakingPalm",
+	ZandalariTroll = "Regeneratin",
+	Scourge = "WilloftheForsaken",
+	Troll = "Berserking",
+	Tauren = "WarStomp",
+	Orc = "BloodFury",
+	Nightborne = "ArcanePulse",
+	MagharOrc = "AncestralCall",
+	HighmountainTauren = "BullRush",
+	BloodElf = "ArcaneTorrent",
+	Goblin = "RocketJump",
+}
 --------------------------------------
 -- №3: Working example 
 --------------------------------------

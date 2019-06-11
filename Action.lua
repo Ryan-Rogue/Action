@@ -1,5 +1,5 @@
 --- 
-local DateTime = "10.06.2019"
+local DateTime = "11.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -18,11 +18,15 @@ LSM:Register(LSM.MediaType.STATUSBAR, "Flat",				[[Interface\Addons\TheAction\Me
 Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
 
 local UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID = UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID
+local _, pclass = UnitClass("player")
+
 local GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
-	  GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate	  
+	  GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate
+	  
 local GameLocale = GetLocale()	 
 local BuildInfo = select(2, GetBuildInfo())
 	  BuildInfo = tonumber(BuildInfo)
+	  
 local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, IsAttackSpell
 
 
@@ -2770,8 +2774,7 @@ local function ActionDB_Initialization()
 	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
 	if profile == defaultprofile then 
 		local AllProfiles = TMW.db:GetProfiles()
-		if AllProfiles then 
-			local _, pclass = UnitClass("player")
+		if AllProfiles then 			
 			for i = 1, #AllProfiles do 
 				if AllProfiles[i] == Action.Data.DefaultProfile[pclass] then 
 					TMW.db:SetProfile(Action.Data.DefaultProfile[pclass])
@@ -6816,12 +6819,13 @@ Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANG
 -- APL 
 --------------------------------------
 
+Action.PlayerRace = select(2, UnitRace("player"))
+
 local GetSpellTexture, GetSpellLink, GetSpellInfo = TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
 local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
 local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
 
-local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace
-local _, prace = UnitRace("player")
+local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
 local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
 --- Spell  
@@ -7353,7 +7357,7 @@ function Action.InterruptIsValid(unit, list)
 end 
 
 --- [[ AURAS ]]
--- Note: Toggles  ("UseDispel", "UsePurge", "UseExpelEnrage")
+-- Note: Toggles  ("UseDispel", "UsePurge", "UseExpelEnrage")  
 --		 Category ("Dispel", "MagicMovement", "PurgeFriendly", "PurgeHigh", "PurgeLow", "Enrage")				
 function Action.AuraIsON(Toggle)
 	-- @return boolean 
@@ -7461,50 +7465,6 @@ end
 --- [[ MSG ]]
 --- Moved above
 
---- Racial Util 
-function Action:LazyRacial(unit)
-	local thisunit = unit or "target"
-	
-	if self.Race == "Kul Tiran" then 
-		return 	Env.SpellInRange(thisunit, self.ID) and 
-				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, thisunit)) > 1 + Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))
-	end 
-	
-	if self.Race == "Pandaren" then
-		return 	Env.SpellInRange(thisunit, self.ID) and 
-				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, thisunit)) > Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	
-	end 
-	
-	if self.Race == "Tauren" then 
-		return 	Env.Unit(thisunit):GetRange() <= 8 and 
-				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, thisunit)) > 0.5 + Env.CurrentTimeGCD() + 0.1 and 
-				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	
-	end 
-	
-	if self.Race == "Highmountain Tauren" then
-		return 	Env.Unit(thisunit):GetRange() <= 6 and 
-				Action.InterruptIsValid(thisunit, "TargetMouseover") and 
-				select(2, Env.CastTime(nil, thisunit)) > Env.CurrentTimeGCD() + 0.25 and 
-				(not Env.InPvP() or (Env.Unit(thisunit):HasBuffs("DamagePhysImun") == 0 and Env.Unit(thisunit):HasBuffs("TotalImun") == 0))	 
-	end 
-	
-	if self.Race == "Nightborne" then 
-		return 	Env.Unit(thisunit):GetRange() <= 5 and 
-				((Env.InPvP() and Env.UNITCurrentSpeed(thisunit) >= 100) or AoE(3, 5))	 
-	end 
-	
-	return true 
-end 
-
-function Action:IsRacialReady(lazy, unit)
-	return Action.GetToggle(1, "Racial") and IsPlayerSpell(self.ID) and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and (lazy == false or self:LazyRacial(unit))
-end 
-
 --------------------------------------
 -- DISPLAY FUNCTIONAL
 --------------------------------------
@@ -7549,6 +7509,7 @@ end
 
 function Action:Show(...)     
     Action.TMWAPL(...,  self:Texture())
+	return true 
 end 
 
 --------------------------------------
@@ -7648,11 +7609,7 @@ function Action.MakeFunctionCachedDynamic(func, interval)
 	return Cache:WrapDynamic(func, interval)
 end 
 
-local PauseChecks = Cache:WrapStatic(function()  
-	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
-		return "state", 0 
-	end 	
-	
+local PauseChecks = Cache:WrapStatic(function()  	
 	-- ACTIVE_CHAT_EDIT_BOX, BindPad, TellMeWhen
 	if ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible()) or not TMW.Locked then 
 		return "texture", 397907 -- @return Levelupicon-lfd same with GetSpellTexture(236254)
@@ -7662,15 +7619,15 @@ local PauseChecks = Cache:WrapStatic(function()
         return "texture", 397907 -- @return Levelupicon-lfd which is 397907
     end	
 	
-	if Action.GetToggle(1, "CheckDeadOrGhost") and UnitIsDeadOrGhost("player") then 
+	if Action.GetToggle(1, "CheckDeadOrGhost") and Env.UNITDead("player") then 
 		return "texture", 236399
 	end 
 		
-	if Action.GetToggle(1, "CheckDeadOrGhostTarget") and UnitIsDeadOrGhost("target") then 
+	if Action.GetToggle(1, "CheckDeadOrGhostTarget") and Env.UNITDead("target") and (not Env.InPvP() or select(2, UnitClass("target")) ~= "HUNTER") then 
 		return "texture", 236399
 	end 	
 	
-	if Action.GetToggle(1, "CheckMount") and IsMounted() then 
+	if Action.GetToggle(1, "CheckMount") and IsMounted() and (pclass ~= "PALADIN" or Env.Unit("player"):HasBuffs(190784, true) == 0) then -- exception Divine Steed
 		return "texture", 975744
 	end 
 
@@ -7750,7 +7707,317 @@ function Action:CanDMG(thisunit)
 	return not thisunit or not Env.InPvP() or (Env.Unit(thisunit):DeBuffCyclone() <= (self.Type ~= "Spell" and 0 or Env.CastTime(self.ID)) and Env.Unit(thisunit):WithOutKarmed())
 end 
 
--- Trinkets (Racial and (H)G.Medallion)
+function Action.BurstIsON(thisunit)
+	local Current = Action.GetToggle(1, "Burst")
+	if Current == "Auto" then  
+		local unit = thisunit or "target"
+		return UnitIsPlayer(unit) or Env.UNITBoss(unit)
+	elseif Current == "Everything" then 
+		return true 
+	end 		
+	return false 			
+end 
+Action.BurstIsON = Action.MakeFunctionCachedDynamic(Action.BurstIsON)
+
+-- RACIAL 
+-- [[ MANAGMENT ]] 
+function Action:IsRacialReady()
+	return Action.GetToggle(1, "Racial") and Env.SpellExists(self:Info()) and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() 
+end 
+
+local GetRaceBySpellName = {
+	-- Darkflight
+	[Spell:CreateFromSpellID(68992):GetSpellName()] = "Worgen",
+	-- SpatialRift
+	[Spell:CreateFromSpellID(256948):GetSpellName()] = "VoidElf",
+	-- Shadowmeld
+	[Spell:CreateFromSpellID(58984):GetSpellName()] = "NightElf",
+	-- LightsJudgment
+	[Spell:CreateFromSpellID(255647):GetSpellName()] = "LightforgedDraenei",
+	-- Haymaker
+	[Spell:CreateFromSpellID(287712):GetSpellName()] = "KulTiran",
+	-- EveryManforHimself
+	[Spell:CreateFromSpellID(59752):GetSpellName()] = "Human", -- ThinHuman (? wut)
+	-- EscapeArtist
+	[Spell:CreateFromSpellID(20589):GetSpellName()] = "Gnome",
+	-- Stoneform
+	[Spell:CreateFromSpellID(20594):GetSpellName()] = "Dwarf",
+	-- GiftoftheNaaru
+	[Spell:CreateFromSpellID(121093):GetSpellName()] = "Draenei",
+	-- Fireblood
+	[Spell:CreateFromSpellID(265221):GetSpellName()] = "DarkIronDwarf", 
+	-- QuakingPalm
+	[Spell:CreateFromSpellID(107079):GetSpellName()] = "Pandaren",
+	-- Regeneratin
+	[Spell:CreateFromSpellID(291944):GetSpellName()] = "ZandalariTroll",
+	-- WilloftheForsaken
+	[Spell:CreateFromSpellID(7744):GetSpellName()] = "Scourge", -- (this is confirmed) Undead 
+	-- Berserking
+	[Spell:CreateFromSpellID(26297):GetSpellName()] = "Troll",
+	-- WarStomp
+	[Spell:CreateFromSpellID(20549):GetSpellName()] = "Tauren",
+	-- BloodFury
+	[Spell:CreateFromSpellID(33697):GetSpellName()] = "Orc",
+	-- ArcanePulse
+	[Spell:CreateFromSpellID(260364):GetSpellName()] = "Nightborne",
+	-- AncestralCall
+	[Spell:CreateFromSpellID(274738):GetSpellName()] = "MagharOrc",
+	-- BullRush
+	[Spell:CreateFromSpellID(255654):GetSpellName()] = "HighmountainTauren",
+	-- ArcaneTorrent
+	[Spell:CreateFromSpellID(28730):GetSpellName()] = "BloodElf",	
+	-- RocketJump
+	[Spell:CreateFromSpellID(69070):GetSpellName()] = "Goblin",	-- Should we add RocketBarrage (?) or it's crap damaged spell
+}
+local GetKeyByRace = {
+	-- I use this to check if we have created for spec needed spell 
+	Worgen = "Darkflight",
+	VoidElf = "SpatialRift",
+	NightElf = "Shadowmeld",
+	LightforgedDraenei = "LightsJudgment",
+	KulTiran = "Haymaker",
+	Human = "EveryManforHimself",
+	Gnome = "EscapeArtist",
+	Dwarf = "Stoneform",
+	Draenei = "GiftoftheNaaru",
+	DarkIronDwarf = "Fireblood",
+	Pandaren = "QuakingPalm",
+	ZandalariTroll = "Regeneratin",
+	Scourge = "WilloftheForsaken",
+	Troll = "Berserking",
+	Tauren = "WarStomp",
+	Orc = "BloodFury",
+	Nightborne = "ArcanePulse",
+	MagharOrc = "AncestralCall",
+	HighmountainTauren = "BullRush",
+	BloodElf = "ArcaneTorrent",
+	Goblin = "RocketJump",
+}
+function Action:AutoRacial(unit, isReadyCheck)
+	-- @return boolean 
+	-- Note: This is lazy template for all racials to easy manage them in one place. Their managment category can be found below this function, otherwise use :IsRacialReady + :IsReady to configure custom 
+	-- Args are optional. isReadyCheck must be true for Single / AoE / Passive 
+	if self:IsRacialReady() and (not isReadyCheck or self:IsReady(unit)) then 
+		--[[ 
+			 This is how correctly that must be checked instead of UnitRace, even if game API will output another race we still know truly race
+			 Sometimes game change player race to another but UnitRace will still old that caused tons of problems but since Env.SpellExists
+			 checking spells exactly which has player we know which spells we have and can compare them with race
+		]]
+		Action.PlayerRace = GetRaceBySpellName[self:Info()]
+		
+		-- [NO LOGIC - ALWAYS TRUE] 
+		if 	-- Sprint
+			Action.PlayerRace == "Worgen" or 
+			Action.PlayerRace == "Goblin" or 
+			-- Misc (uncategoried) 
+			Action.PlayerRace == "VoidElf" or 
+			Action.PlayerRace == "NightElf" or 
+			-- Bursting 
+			Action.PlayerRace == "DarkIronDwarf" or 
+			Action.PlayerRace == "Troll" or 
+			Action.PlayerRace == "Orc" or 
+			Action.PlayerRace == "MagharOrc"
+		then 
+			return true 
+		end 
+		
+		-- Damaging  
+		if 	Action.PlayerRace == "LightforgedDraenei" and 
+			(
+				(
+					unit and 	
+					Env.Unit(unit):IsEnemy() and 
+					Env.Unit(unit):GetRange() <= 5  and 
+					self:CanDMG(unit) and  					
+					(
+						not Env.InPvP() or 
+						not UnitIsPlayer(unit) or 
+						(					
+							Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
+							Env.Unit(unit):HasBuffs("DamageMagicImun") == 0 and 
+							not Env.EnemyTeam("HEALER"):IsBreakAble(5)
+						)
+					)
+				) or 
+				-- More advanced check (can be used on healers for example without target enemy)
+				(
+					(
+						not unit or 
+						not Env.Unit(unit):IsEnemy() 
+					) and 
+					AoE(1, 5) and 
+					(
+						not Env.InPvP() or 
+						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
+					)
+				)
+			)	
+		then 
+			return true 
+		end 
+		
+		if 	Action.PlayerRace == "Nightborne" and 
+			(
+				(
+					unit and 	
+					Env.Unit(unit):IsEnemy() and 
+					Env.Unit(unit):GetRange() <= 5 and 
+					Env.UNITCurrentSpeed(thisunit) >= 100
+				) or 
+				AoE(3, 5)
+			)
+		then 
+			return true 
+		end 		
+		
+		-- Purge 
+		if 	Action.PlayerRace == "BloodElf" and 
+			(	
+				(
+					Env.InPvP() and 
+					Env.FriendlyTeam():ArcaneTorrentMindControl()
+				) or 
+				(
+					unit and 
+					Env.Unit(unit):IsEnemy() and 
+					Env.Unit(unit):GetRange() <= 8 and 
+					Action.AuraIsValid(unit, "UsePurge", "PurgeHigh")
+				) or 
+				(
+					unit and 
+					not Env.Unit(unit):IsEnemy() and 
+					Env.Unit(unit):GetRange() <= 8 and 
+					Action.AuraIsValid(unit, "UsePurge", "PurgeFriendly")					
+				)
+			)
+		then 
+			return true 
+		end 
+		
+		-- Healing 
+		if	Action.PlayerRace == "Draenei"  then 
+			if not unit or Env.Unit(unit):IsEnemy() then 
+				unit = "player" 
+			end 
+			
+			if 	(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:CanHeal(unit))) and 
+				UnitHealthMax(unit) - UnitHealth(unit) >= UnitHealthMax("player") * 0.2 + (getHEAL(unit) * 5) + UnitGetIncomingHeals(unit) - (incdmg(unit) * 5) 
+			then 
+				return true 
+			end 
+		end 
+		
+		if 	Action.PlayerRace == "ZandalariTroll" and 
+			Env.UNITStaying("player") > 1 and 
+			(				
+				incdmg("player") == 0 or 
+				(
+					pclass == "PALADIN" and 
+					Env.Unit("player"):HasBuffs(642, true) >= (100 - Env.UNITHP("player")) * 6 / 100
+				) or 
+				(
+					pclass == "HUNTER" and 
+					Env.Unit("player"):HasBuffs(186265, true) >= (100 - Env.UNITHP("player")) * 6 / 100
+				)
+			)
+		then 
+			return true 
+		end 
+				
+		-- Iterrupts 
+		if 	Action.PlayerRace == "Pandaren" and unit and 			
+			Env.SpellInRange(unit, self.ID) and 
+			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
+			(
+				not Env.InPvP() or 
+				not UnitIsPlayer(unit) or 
+				(
+					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
+					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
+					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 
+				)
+			)
+		then
+			return true 			  
+		end 
+		
+		if 	Action.PlayerRace == "KulTiran" and unit and 	
+			Env.SpellInRange(unit, self.ID) and 
+			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
+			(
+				not Env.InPvP() or 
+				not UnitIsPlayer(unit) or 
+				(
+					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
+					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
+					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 
+					-- I don't think there is need stun imun check because flyout should work 
+				)
+			)
+		then
+			return true			  
+		end 	
+
+		if 	Action.PlayerRace == "Tauren" and 
+			(
+				(
+					unit and 	
+					Env.Unit(unit):IsEnemy() and 
+					Env.Unit(unit):GetRange() <= 8 and 					
+					select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.7 and 
+					(
+						not Env.InPvP() or 
+						not UnitIsPlayer(unit) or 
+						(					
+							Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
+							Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
+							Env.Unit(unit):HasBuffs("CCTotalImun") == 0 and 
+							Env.Unit(unit):HasBuffs("StunImun") == 0
+						)
+					)
+				) or 
+				-- More advanced check (can be used on healers for example without target enemy)
+				(
+					(
+						not unit or 
+						not Env.Unit(unit):IsEnemy() 
+					) and 
+					CastingUnits(1, 8)
+				)
+			)
+		then
+			return true				  
+		end 		
+
+		if 	Action.PlayerRace == "HighmountainTauren" and unit and 
+			Env.Unit(unit):GetRange() <= 6 and 
+			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and 
+			(
+				not Env.InPvP() or 
+				not UnitIsPlayer(unit) or 
+				(					
+					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
+					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
+					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 and 
+					Env.Unit(unit):HasBuffs("StunImun") == 0
+				)
+			)
+		then
+			return true				  
+		end 	
+	
+		-- Trinkets 
+		if	Action.LOC[Action.PlayerRace] and 
+			Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied)
+		then 
+			return true 
+		end 		
+	end 
+	return false 	
+end 
+
+-- LOSS OF CONTROL 
+-- [[ Trinkets (Racial and (H)G.Medallion) ]]
 Action.LOC = {
 	["GladiatorMedallion"] = {
 		Applied = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT", "SNARE", "STUN"},	
@@ -7806,11 +8073,11 @@ function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
 	-- Exception 
 	if Exception and not isApplied then 
 		-- Dwarf in DeBuffs
-		if prace == "Dwarf" then 
+		if Action.PlayerRace == "Dwarf" then 
 			isApplied = Env.Unit("player"):HasDeBuffs("Poison") > 0 or Env.Unit("player"):HasDeBuffs("Curse") > 0 or Env.Unit("player"):HasDeBuffs("Magic") > 0
 		end
 		-- Gnome in current speed 
-		if prace == "Gnome" then 
+		if Action.PlayerRace == "Gnome" then 
 			local cSpeed = Env.UNITCurrentSpeed("player")
 			isApplied = cSpeed > 0 and cSpeed < 100
 		end 
@@ -7839,23 +8106,39 @@ function Action.LossOfControlIsMissed(MustBeMissed)
 	return result 
 end 
 
--- Healthstone Item variable  
+-- Healthstone
+-- [[ Item variable ]]
 local HS 
 
 function Action.Rotation(meta, ...)
-	-- Shared (Trinket)
+	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
+		Action.Hide(...)
+		return
+	end 	
+	
+	-- [1] CC / [2] Kick 
+	if meta <= 2 then 
+		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
+			return 
+		else
+			Action.Hide(...)
+		end 
+		return 		
+	end 
+	
+	-- [5] Trinket 
 	if meta == 5 then 
 		-- Use racial available trinkets if we don't have additional LOS 
-		if Action.GetToggle(1, "Racial") and Action.LOC[prace] and Env.SpellCD(Action.LOC[prace].SpellID) <= 0.02 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[prace].SpellID)) then 
-			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[prace].Applied, Action.LOC[prace].Missed, prace == "Dwarf" or prace == "Gnome")
+		-- Note: Additional LOS is the main reason why I avoid here :AutoRacial (see below 'if isApplied then ')
+		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) then 
+			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
 			if result then 
-				Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[prace].SpellID))
+				Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
 				return 
 			end 
 		end 		
 		
 		-- Use specialization spell trinkets
-		-- Note: FUNCTION MUST HAVE RETURN TRUE TO SKIP BELOW CODE
 		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then  
 			return 			
 		end 	
@@ -7868,7 +8151,7 @@ function Action.Rotation(meta, ...)
 		
 		-- Use racial if nothing is not available 
 		if isApplied then 
-			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[prace].SpellID))
+			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
 			return 
 		end 
 			
@@ -7885,7 +8168,7 @@ function Action.Rotation(meta, ...)
 		return 
 	end 		
 	
-	-- Shared (Passive): @player, @raid1, @arena1 
+	-- [6] Passive: @player, @raid1, @arena1 
 	if meta == 6 then 
 		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
@@ -7948,8 +8231,9 @@ function Action.Rotation(meta, ...)
 		return 
     end 
 	
-	if Action[Env.PlayerSpec][meta] then 
-		Action[Env.PlayerSpec][meta](...)
+	-- [3] Single / [4] AoE / [7-8] Passive: @party1-2, @raid2-3, @arena2-3
+	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
+		return 
 	else 
 		Action.Hide(...)
 	end 

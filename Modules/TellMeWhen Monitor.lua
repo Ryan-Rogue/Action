@@ -637,7 +637,7 @@ local Race = {
 		DarkIronDwarf = 265221, 
 		HighmountainTauren = 255654, 
 		Nightborne = 260364,
-		["Mag'har"] = 274738,	
+		Maghar = 274738,	
 	},
 	DAMAGE = {
 		Orc = true, 
