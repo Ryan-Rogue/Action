@@ -2940,13 +2940,13 @@ local function ActionDB_Initialization()
 				local FPS = Action.GetToggle(1, "FPS")
 				if FPS < 0 then 
 					local Framerate = GetFramerate() or 0
-					if Framerate >= 0 and Framerate < 100 then
-						FPS = (100 - Framerate) / 100
+					if Framerate > 0 and Framerate < 100 then
+						FPS = (100 - Framerate) / 800
 						if FPS < 0.04 then 
 							FPS = 0.04
 						end 
 					else
-						FPS = 0.039
+						FPS = 0.03
 					end					
 				end 				
 				TMW.UPD_INTV = FPS + 0.001				
@@ -7264,6 +7264,7 @@ end
 
 function Action.ShowQueue(...)
     Action.TMWAPL(...,  Action.Data.Q[1]:Texture())
+	return true
 end 
 
 function Action.GetQueueID()
@@ -7474,8 +7475,8 @@ function Action.TMWAPL(...)
     if attributesString == "state" then 
         -- Color if not colored (Alpha will show it)
         if type(param) == "table" and param["Color"] then 
-            if icon.attributes.calculatedState.Color ~= Action.Data.C[param["Color"]] then 
-                icon:SetInfo(attributesString, {Color = Action.Data.C[param["Color"]], Alpha = param["Alpha"], Texture = param["Texture"]})
+            if icon.attributes.calculatedState.Color ~= param["Color"] then 
+                icon:SetInfo(attributesString, {Color = param["Color"], Alpha = param["Alpha"], Texture = param["Texture"]})
             end
             return 
         end 
@@ -8112,18 +8113,15 @@ local HS
 
 function Action.Rotation(meta, ...)
 	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
-		Action.Hide(...)
-		return
+		return Action.Hide(...)		
 	end 	
 	
 	-- [1] CC / [2] Kick 
 	if meta <= 2 then 
 		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
-			return 
-		else
-			Action.Hide(...)
+			return true
 		end 
-		return 		
+		return Action.Hide(...)
 	end 
 	
 	-- [5] Trinket 
@@ -8134,38 +8132,36 @@ function Action.Rotation(meta, ...)
 			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
 			if result then 
 				Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
-				return 
+				return true
 			end 
 		end 		
 		
 		-- Use specialization spell trinkets
 		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then  
-			return 			
+			return true 			
 		end 	
 
 		-- Use (H)G.Medallion
 		if Action.LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(Action.LOC["GladiatorMedallion"].Applied) then 
 			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC["GladiatorMedallion"].SpellID))
-			return 
+			return true 
 		end 		
 		
 		-- Use racial if nothing is not available 
 		if isApplied then 
 			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
-			return 
+			return true 
 		end 
 			
-		Action.Hide(...)
-		return 
+		return Action.Hide(...)		 
 	end 
 	
 	if PauseChecks() then 
 		if meta == 3 then 
-			Action.TMWAPL(..., PauseChecks())	
-		else 
-			Action.Hide(...)
-		end 
-		return 
+			Action.TMWAPL(..., PauseChecks())
+			return true
+		end  
+		return Action.Hide(...)
 	end 		
 	
 	-- [6] Passive: @player, @raid1, @arena1 
@@ -8173,24 +8169,24 @@ function Action.Rotation(meta, ...)
 		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
 			if Action.GameTooltipClick == "LEFT" then 
-				Action.TMWAPL(..., "texture", 237586) -- GetSpellTexture(98008)
-				return 
+				Action.TMWAPL(..., "texture", 237586) -- GetSpellTexture(98008)				 
+				return true
 			elseif Action.GameTooltipClick == "RIGHT" then 
-				Action.TMWAPL(..., "texture", 132487) -- GetSpellTexture(34976)
-				return 
+				Action.TMWAPL(..., "texture", 132487) -- GetSpellTexture(34976)				 
+				return true
 			end 
 		end 
 		
 		-- ReTarget ReFocus 
 		if Env.InPvP() then 
 			if Action.GetToggle(1, "ReTarget") and Action.LastTarget and not UnitExists("target") then 
-				Action.TMWAPL(..., "texture", Re["Target"][Action.LastTarget]) 
-				return 
+				Action.TMWAPL(..., "texture", Re["Target"][Action.LastTarget]) 				 
+				return true
 			end 
 			
 			if Action.GetToggle(1, "ReFocus") and Action.LastFocus and not UnitExists("focus") then 
-				Action.TMWAPL(..., "texture", Re["Focus"][Action.LastFocus]) 
-				return 
+				Action.TMWAPL(..., "texture", Re["Focus"][Action.LastFocus]) 				 
+				return true
 			end 
 		end 
 		
@@ -8204,12 +8200,12 @@ function Action.Rotation(meta, ...)
 			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
 				if Healthstone >= 100 then -- AUTO 
 					if TimeToDie("player") <= 7 then 
-						Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
-						return 
+						Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262						 
+						return true
 					end 
 				elseif Env.UNITHP("player") <= Healthstone then 
-					Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262
-					return 
+					Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262					 
+					return true
 				end 
 			end 
 		end 
@@ -8221,21 +8217,18 @@ function Action.Rotation(meta, ...)
 			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
 			and ((not Env.InPvP() and CombatUnits(1)) or Env.Zone == "pvp")
 		then 
-			Action.TMWAPL(..., "texture", 133015) -- SpellID: 153911
-			return 
+			return Action.TMWAPL(..., "texture", 133015) -- SpellID: 153911			 
 		end 
 	end 
 	
 	if Action.IsQueueReady(meta) then                                              	-- queue system must have highest priority 
-		Action.ShowQueue(...)                                          				-- if everything success then set frame 		
-		return 
+		return Action.ShowQueue(...)                                          		-- if everything success then set frame 				 
     end 
 	
 	-- [3] Single / [4] AoE / [7-8] Passive: @party1-2, @raid2-3, @arena2-3
 	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
-		return 
-	else 
-		Action.Hide(...)
+		return true 
 	end 
+	Action.Hide(...)	
 end 
 

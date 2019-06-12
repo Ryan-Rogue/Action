@@ -380,7 +380,7 @@ function Env.SpellUsable(spell, offset)
 end
 
 function Env.SpellInRange(unit, id)
-    return IsSpellInRange(GetSpellInfo(id), unit) == 1 or (Env.PetIsActive() and Env.PetSpellInRange(id))
+    return unit == "player" or IsSpellInRange(GetSpellInfo(id), unit) == 1 or (Env.PetIsActive() and Env.PetSpellInRange(id))
 end
 
 function Env.SpellInteract(unit, range)  

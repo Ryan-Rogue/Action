@@ -196,7 +196,7 @@ local A = setmetatable(Action[PLAYERSPEC], { __index = Action })
 local function Test() 
 	return "TestThing" 
 end 
-function A[PLAYERSPEC][META](icon)                                    				-- icon should be used by TMW conditions > Lua and argument icon is thisobj. Example of LUA conditions usage in /tmw : return Action[260][3](thisobj)  
+A[PLAYERSPEC][META] = function(icon)                                    				-- icon should be used by TMW conditions > Lua and argument icon is thisobj. Example of LUA conditions usage in /tmw : return Action[260][3](thisobj)  
 	-- You no need here check pause or queue because this is already will be checked before execute all below:
 	if 																				-- if not blocked and not in queue (e.g. not ready as CD / not in range / not enough safe cap power / never use in queue / queue is empty)															
 		A.POWS:IsReady("target") and 												-- required ("target" can be nil if no need unit check for custom LUA)									
@@ -204,11 +204,8 @@ function A[PLAYERSPEC][META](icon)                                    				-- ico
 		Env.SpellInRange("target", A.POWS.ID) and 
 		Test() == "TestThing"
 	then 																			-- the normalized view of earlier existed API                                            	
-        A.POWS:Show(icon)        
-		return
+        return A.POWS:Show(icon)        											-- must return true to show frame since :show has return true I can and will wirte in one string this
     end 
-	
-	A.Hide(icon)																	-- Hide it to background (black) if absolutely nothing to do 
 end 		
 -- /tmw and apply code for always shown frame at the left upper corner by "Conditions" > "LUA (Advanced)"
 -- Once created there will reference for all specs but work exactly with which is active
@@ -477,13 +474,10 @@ local function Test()
 	return true
 end 
 local TestVar = 5
-function A[260][3](icon)                          
+A[260][3] = function(icon)                          
 	if A.POWS:IsReady("target") and E.SpellUsable(A.POWS.ID) and E.SpellInRange("target", A.POWS.ID) and Test() and TestVar == 5 then 																			                                           	
-        A.POWS:Show(icon)        
-		return
-    end 
-	
-	A.Hide(icon)																	
+        return A.POWS:Show(icon)        		
+    end 																
 end 
 -- /tmw and apply code for always shown frame by "Conditions" > "LUA (Advanced)"
 -- Once created there will reference for all specs but work exactly with which is active
