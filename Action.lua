@@ -1,5 +1,5 @@
 --- 
-local DateTime = "11.06.2019"
+local DateTime = "12.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -20,12 +20,10 @@ Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")
 local UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID = UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID
 local _, pclass = UnitClass("player")
 
-local GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
-	  GetRealmName, GetBuildInfo, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate
+local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
+	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate
 	  
 local GameLocale = GetLocale()	 
-local BuildInfo = select(2, GetBuildInfo())
-	  BuildInfo = tonumber(BuildInfo)
 	  
 local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, IsAttackSpell
 
@@ -1202,9 +1200,9 @@ Action.Data = {
 	Auras = {},
 }
 
--- Clear old global snippets
+-- Clear old global snippets (always even if user accidentally installed it again)
 local function ClearTrash()
-	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and (not TMW.db.global.ActionDB or not TMW.db.global.ActionDB.oldCleaned) then 
+	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and type(TMW.db.global.CodeSnippets.n) == "number" and TMW.db.global.CodeSnippets.n > 0 then 
 		local isRemove = {
 			["Stuff"] = true, 
 			["TMW Monitor"] = true,
@@ -1221,10 +1219,10 @@ local function ClearTrash()
 			["BossMods"] = true, 
 			["DEV"] = true,
 		}
-		for _, snippet in ipairs(TMW.db.global.CodeSnippets) do
+		for i, snippet in ipairs(TMW.db.global.CodeSnippets) do
 			if isRemove[snippet.Name] then
-				snippet = nil 
-				TMW.db.global.CodeSnippets["n"] = TMW.db.global.CodeSnippets["n"] - 1
+				TMW.db.global.CodeSnippets[i] = nil 
+				TMW.db.global.CodeSnippets.n = TMW.db.global.CodeSnippets.n - 1
 			end
 		end
 	end 
@@ -1421,7 +1419,6 @@ local Factory = {
 -- TMW.db.global.ActionDB DefaultBase
 local GlobalFactory = {	
 	InterfaceLanguage = "Auto",	
-	oldCleaned = true,
 	minimap = {},
 	[5] = {		
 		PvE = {
@@ -4270,7 +4267,7 @@ function Action.ToggleMainUI()
 			end)
 			HeartOfAzeroth.Identify = { Type = "Checkbox", Toggle = "HeartOfAzeroth" }		
 			StdUi:FrameTooltip(HeartOfAzeroth, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
-			if BuildInfo <= 30706 then 
+			if not _G.C_AzeriteEssence then 
 				HeartOfAzeroth:Disable()
 			end 
 
@@ -7262,8 +7259,8 @@ function Action:SetQueue(args)
 	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", Action.QueueEventReset)
 end
 
-function Action.ShowQueue(...)
-    Action.TMWAPL(...,  Action.Data.Q[1]:Texture())
+function Action.ShowQueue(icon)
+    Action.TMWAPL(icon,  Action.Data.Q[1]:Texture())
 	return true
 end 
 
@@ -7504,12 +7501,12 @@ function Action.TMWAPL(...)
     icon:SetInfo(select(2, ...))
 end
   
-function Action.Hide(...)
-    Action.TMWAPL(..., "state", TMW.CONST.STATE.DEFAULT_HIDE)
+function Action.Hide(icon)
+    Action.TMWAPL(icon, "state", TMW.CONST.STATE.DEFAULT_HIDE)
 end 
 
-function Action:Show(...)     
-    Action.TMWAPL(...,  self:Texture())
+function Action:Show(icon)     
+    Action.TMWAPL(icon,  self:Texture())
 	return true 
 end 
 
@@ -7569,12 +7566,12 @@ local Cache = {
 		end 
 		return unpack(obj.v)
 	end,	
-	-- Static without arguments in func
+	-- Static without arguments or with cycling arguments in func
 	WrapStatic = function(t, func, interval)
 		if not t.bufer[func] then 
 			t.bufer[func] = {}
 		end 	
-		return function()  
+		return function(...)  
 			if TMW.time > (t.bufer[func].t or 0) then			
 				return t:newVal(interval, nil, func)
 			else
@@ -7644,6 +7641,15 @@ local PauseChecks = Cache:WrapStatic(function()
 		return "texture", 975746
 	end	
 end)
+
+-- This is custom function for users if they wish check Pauses on own lua 
+function Action.PauseChecks()
+	-- @return nil or value which is not nil (string + number) but it can be used as boolean 'true'
+	if Action.IsInitialized then 
+		return PauseChecks()
+	end 
+end 
+Action.PauseChecks = Action.MakeFunctionCachedStatic(Action.PauseChecks)
 
 -- MOUSE 
 MouseHasFrame = Cache:WrapStatic(function()
@@ -7719,6 +7725,11 @@ function Action.BurstIsON(thisunit)
 	return false 			
 end 
 Action.BurstIsON = Action.MakeFunctionCachedDynamic(Action.BurstIsON)
+
+function Action.ShouldStop()
+	return Env.ShouldStop()
+end 
+Action.ShouldStop = Action.MakeFunctionCachedStatic(Action.ShouldStop)
 
 -- RACIAL 
 -- [[ MANAGMENT ]] 
@@ -8111,17 +8122,18 @@ end
 -- [[ Item variable ]]
 local HS 
 
-function Action.Rotation(meta, ...)
+function Action.Rotation(icon)
 	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
-		return Action.Hide(...)		
+		return Action.Hide(icon)		
 	end 	
+	local meta = icon.ID
 	
 	-- [1] CC / [2] Kick 
 	if meta <= 2 then 
-		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
+		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
 			return true
 		end 
-		return Action.Hide(...)
+		return Action.Hide(icon)
 	end 
 	
 	-- [5] Trinket 
@@ -8131,37 +8143,37 @@ function Action.Rotation(meta, ...)
 		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) then 
 			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
 			if result then 
-				Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
+				Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
 				return true
 			end 
 		end 		
 		
 		-- Use specialization spell trinkets
-		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then  
+		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then  
 			return true 			
 		end 	
 
 		-- Use (H)G.Medallion
 		if Action.LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(Action.LOC["GladiatorMedallion"].Applied) then 
-			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC["GladiatorMedallion"].SpellID))
+			Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC["GladiatorMedallion"].SpellID))
 			return true 
 		end 		
 		
 		-- Use racial if nothing is not available 
 		if isApplied then 
-			Action.TMWAPL(..., "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
+			Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
 			return true 
 		end 
 			
-		return Action.Hide(...)		 
+		return Action.Hide(icon)		 
 	end 
 	
 	if PauseChecks() then 
 		if meta == 3 then 
-			Action.TMWAPL(..., PauseChecks())
+			Action.TMWAPL(icon, PauseChecks())
 			return true
 		end  
-		return Action.Hide(...)
+		return Action.Hide(icon)
 	end 		
 	
 	-- [6] Passive: @player, @raid1, @arena1 
@@ -8169,10 +8181,10 @@ function Action.Rotation(meta, ...)
 		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
 			if Action.GameTooltipClick == "LEFT" then 
-				Action.TMWAPL(..., "texture", 237586) -- GetSpellTexture(98008)				 
+				Action.TMWAPL(icon, "texture", 237586) -- GetSpellTexture(98008)				 
 				return true
 			elseif Action.GameTooltipClick == "RIGHT" then 
-				Action.TMWAPL(..., "texture", 132487) -- GetSpellTexture(34976)				 
+				Action.TMWAPL(icon, "texture", 132487) -- GetSpellTexture(34976)				 
 				return true
 			end 
 		end 
@@ -8180,12 +8192,12 @@ function Action.Rotation(meta, ...)
 		-- ReTarget ReFocus 
 		if Env.InPvP() then 
 			if Action.GetToggle(1, "ReTarget") and Action.LastTarget and not UnitExists("target") then 
-				Action.TMWAPL(..., "texture", Re["Target"][Action.LastTarget]) 				 
+				Action.TMWAPL(icon, "texture", Re["Target"][Action.LastTarget]) 				 
 				return true
 			end 
 			
 			if Action.GetToggle(1, "ReFocus") and Action.LastFocus and not UnitExists("focus") then 
-				Action.TMWAPL(..., "texture", Re["Focus"][Action.LastFocus]) 				 
+				Action.TMWAPL(icon, "texture", Re["Focus"][Action.LastFocus]) 				 
 				return true
 			end 
 		end 
@@ -8200,11 +8212,11 @@ function Action.Rotation(meta, ...)
 			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
 				if Healthstone >= 100 then -- AUTO 
 					if TimeToDie("player") <= 7 then 
-						Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262						 
+						Action.TMWAPL(icon, "texture", 538745) -- SpellID: 6262						 
 						return true
 					end 
 				elseif Env.UNITHP("player") <= Healthstone then 
-					Action.TMWAPL(..., "texture", 538745) -- SpellID: 6262					 
+					Action.TMWAPL(icon, "texture", 538745) -- SpellID: 6262					 
 					return true
 				end 
 			end 
@@ -8217,18 +8229,18 @@ function Action.Rotation(meta, ...)
 			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
 			and ((not Env.InPvP() and CombatUnits(1)) or Env.Zone == "pvp")
 		then 
-			return Action.TMWAPL(..., "texture", 133015) -- SpellID: 153911			 
+			return Action.TMWAPL(icon, "texture", 133015) -- SpellID: 153911			 
 		end 
 	end 
 	
 	if Action.IsQueueReady(meta) then                                              	-- queue system must have highest priority 
-		return Action.ShowQueue(...)                                          		-- if everything success then set frame 				 
+		return Action.ShowQueue(icon)                                          		-- if everything success then set frame 				 
     end 
 	
 	-- [3] Single / [4] AoE / [7-8] Passive: @party1-2, @raid2-3, @arena2-3
-	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](...) then 
+	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
 		return true 
 	end 
-	Action.Hide(...)	
+	Action.Hide(icon)	
 end 
 
