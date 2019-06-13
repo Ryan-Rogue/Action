@@ -7160,12 +7160,25 @@ function Action.MacroBlocker(key)
 end
 
 --- [[  QUEUE  ]]
---- Currently disabled items because they don't have event to trigger reset
 local function QueueEvent(...) 
     local source, _, spellID = ...
-    if (source == "player" or source == "pet") and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 			
+    if (source == "player" or source == "pet") and Action.Data.Q[1] and Action.Data.Q[1].Type == "Spell" and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 			
 		getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
     end 
+end 
+
+local function Queue_BAG_UPDATE_COOLDOWN()
+	if Action.Data.Q[1] and Action.Data.Q[1].Type ~= "Spell" then 
+		local start, duration, enable = Action.Data.Q[1]:GetCooldown()
+		if duration and math.abs(TMW.time - start) <= 2 then 
+			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+			return 
+		end 
+		-- For things like a potion that was used in combat and the cooldown hasn't yet started counting down
+		if enable == 0 and Action.Data.Q[1].Type ~= "Trinket" then 
+			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+		end 
+	end 
 end 
 
 function Action.QueueEventReset()
@@ -7178,8 +7191,12 @@ function Action.QueueEventReset()
 	end 
 	wipe(Action.Data.Q) 
 	Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
+	Listener:Remove("Queue_Events", "BAG_UPDATE_COOLDOWN")
 	Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
 	Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")	
+	Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
+	Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
+	Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")	
 end 
 
 function Action:IsQueued()
@@ -7229,11 +7246,13 @@ function Action:SetQueue(args)
 	if self.QueueForbidden then 
         Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
         return 
+	--[[ Let for user allow run blocked actions whenever he wants, anyway why not 
 	elseif self:IsBlocked() and not self.Queued then 
 		if not args.Silence then 
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
 		end 
         return 
+	]]
     end 
 	
 	if args.Value ~= nil and self.Queued == args.Value then 
@@ -7264,8 +7283,12 @@ function Action:SetQueue(args)
 				table.remove(Action.Data.Q, i)
 				if #Action.Data.Q == 0 then 
 					Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
+					Listener:Remove("Queue_Events", "BAG_UPDATE_COOLDOWN")
 					Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
 					Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")
+					Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
+					Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
+					Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")
 					return 
 				end 				
 			end 
@@ -7297,8 +7320,12 @@ function Action:SetQueue(args)
 	end 	
 	
     Listener:Add("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED", QueueEvent)
+	Listener:Add("Queue_Events", "BAG_UPDATE_COOLDOWN", Queue_BAG_UPDATE_COOLDOWN)
     Listener:Add("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED", Action.QueueEventReset)
-	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", Action.QueueEventReset)
+	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", Action.QueueEventReset)	
+	Listener:Add("Queue_Events", "PLAYER_TALENT_UPDATE", Action.QueueEventReset)
+	Listener:Add("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED", Action.QueueEventReset)
+	Listener:Add("Queue_Events", "PLAYER_EQUIPMENT_CHANGED", Action.QueueEventReset)
 end
 
 function Action.ShowQueue(icon)
