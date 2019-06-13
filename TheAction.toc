@@ -17,6 +17,7 @@ Modules\AzeriteTraits.lua
 Modules\BossMods.lua
 Modules\Hybrid Profile.lua
 Modules\TellMeWhen Monitor.lua
+Modules\TellMeWhen Tools.lua
 Modules\PMultiplier.lua 
 Modules\CombatTracker.lua
 Modules\PvPLib.lua

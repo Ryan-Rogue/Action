@@ -3576,7 +3576,7 @@ function Action.GetToggle(n, toggle)
 		if toggle == "FPS" then
 			return TMW.db.global.Interval
 		end 
-		if toggle == "DisableMinimap" then 
+		if toggle == "DisableMinimap" or toggle == "DisableRotationDisplay" then 
 			return true
 		end 
 		Action.Print(TMW.db:GetCurrentProfile() .. "  " .. L["NOSUPPORT"] .. ". Toggle: [" .. (n or "") .. "] " ..toggle)
@@ -3594,6 +3594,13 @@ function Action.GetToggle(n, toggle)
 	
 	return bool	
 end 	
+
+function Action.ToggleMode()
+	Env.InPvP_Toggle = true
+	Env.InPvP_Status = not Env.InPvP_Status	
+	Action.Print(L["SELECTED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))
+	TMW:Fire("TMW_ACTION_MODE_CHANGED")
+end 
 
 function Action.ToggleBurst(fixed)
 	local Current = Action.GetToggle(1, "Burst")
@@ -4111,11 +4118,9 @@ function Action.ToggleMainUI()
 			PvEPvPToggle:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			PvEPvPToggle:SetScript('OnClick', function(self, button, down)
 				if button == "LeftButton" then 
-					Env.InPvP_Toggle = true
-					Env.InPvP_Status = not Env.InPvP_Status
-					Action.Print(L["SELECTED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))	
+					Action.ToggleMode()
 				elseif button == "RightButton" then 
-					CraftMacro("PvEPvPToggle", [[/run TMW.CNDT.Env.InPvP_Toggle = true; TMW.CNDT.Env.InPvP_Status = not TMW.CNDT.Env.InPvP_Status; Action.Print("]] .. L["SELECTED"] .. [[: " .. (TMW.CNDT.Env.InPvP_Status and "PvP" or "PvE"))]])	
+					CraftMacro("PvEPvPToggle", [[/run Action.ToggleMode()]])	
 				end 
 			end)
 			StdUi:FrameTooltip(PvEPvPToggle, L["TAB"][tab.name]["PVEPVPTOGGLETOOLTIP"], nil, "TOPRIGHT", true)
@@ -4990,8 +4995,8 @@ function Action.ToggleMainUI()
 					elseif data:IsBlocked() and not data.Queued then 
 						Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"])
 					else
-						if button == "LeftButton" then 
-							data:SetQueue({ Priority = 1})						
+						if button == "LeftButton" then 	
+							Action.MacroQueue(data.TableKeyName, { Priority = 1})							
 						elseif button == "RightButton" then 						
 							CraftMacro("Queue: " .. data.TableKeyName, [[#showtip ]] .. data:Info() .. "\n" .. [[/run Action.MacroQueue("]] .. data.TableKeyName .. [[", { Priority = 1})]], 1, true, true)	
 						end
@@ -6919,12 +6924,14 @@ function Action.Create(attributes)
 			Desc (string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
 			QueueForbidden (boolean) uses to preset for action fixed queue valid (default true for type Potion, Trinkets, Item)
 			Texture (number) valid only for spellID|itemID (if Type is Spell|Item)
+			MetaSlot (number) allows set fixed position for action whenever it will be tried to set in queue 
 	]]
 	local s = {
 		ID = attributes.ID,
 		SubType = attributes.Type,
 		Desc = attributes.Desc or "",
-		QueueForbidden = attributes.QueueForbidden ~= nil and attributes.QueueForbidden or false,   			
+		QueueForbidden = attributes.QueueForbidden ~= nil and attributes.QueueForbidden or false, 
+		MetaSlot = attributes.MetaSlot,
 	}
 	if attributes.Type == "Spell" then 
 		s = setmetatable(s, {__index = Action})	
@@ -7135,8 +7142,8 @@ end
 --- [[  QUEUE  ]]
 local function QueueEvent(...) 
     local source, _, spellID = ...
-    if (source == "player" or source == "pet") and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 
-		Action.Data.Q[1]:SetQueue({ Silence = true })
+    if (source == "player" or source == "pet") and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 			
+		getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
     end 
 end 
 
@@ -7144,7 +7151,7 @@ function Action.QueueEventReset()
 	if #Action.Data.Q > 0 then 
 		for i = 1, #Action.Data.Q do 
 			if Action.Data.Q[i].Queued then 
-				Action.Data.Q[i]:SetQueue({ Silence = true })
+				getmetatable(Action.Data.Q[i]).__index:SetQueue({ Silence = true })
 			end 
 		end 		
 	end 
@@ -7179,6 +7186,19 @@ function Action:SetQueue(args)
 			Priority (number) put in specified priority 
 			MetaSlot (number) usage for MSG system to set queue on fixed position 
 	]]
+	-- Check validance 
+	if not self.Queued then 
+		if self.Type == "Spell" and not Env.SpellExists(self.ID) then 
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
+			return 
+		end 
+		
+		if (self.Type == "Trinket" or self.Type == "Item") and not self:GetEquipped() then
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
+			return 
+		end 
+	end 
+	
 	if not args then 
 		args = {}
 	end 
@@ -7270,30 +7290,24 @@ function Action.GetQueueID()
 end 
 
 local function IsThisMeta(meta)
-	if meta == 3 or meta == 4 or (meta > 5 and meta < 9) then 
-		return not Action.Data.Q[1].MetaSlot or Action.Data.Q[1].MetaSlot == meta
-	end 
-	return false 
+	return (not Action.Data.Q[1].MetaSlot and (meta == 3 or meta == 4)) or Action.Data.Q[1].MetaSlot == meta
 end
 function Action.IsQueueReady(meta)
     if #Action.Data.Q > 0 and IsThisMeta(meta) then 
-        if Action.Data.Q[1].Type == "Trinket" then 
-			if Action.Data.Q[1]:GetEquipped() then -- and Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") not tested with trinkets without distance require 
-				local start, duration, enable = Action.Data.Q[1]:GetCooldown()
-				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
-				return custom and enable ~= 0 and start + duration - TMW.time <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.25)   
-			else 
-				Action.Data.Q[1]:SetQueue()
-			end                            
-        elseif Env.SpellExists(Action.Data.Q[1].ID) then  
+        if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then 
+			-- if Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested with trinkets without distance require 
+			local start, duration, enable = Action.Data.Q[1]:GetCooldown()
+			local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
+			return custom and enable ~= 0 and start + duration - TMW.time <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.25)                               
+        elseif Action.Data.Q[1].Type == "Spell" then  
             if Action.Data.Q[1].Unit == "player" or not SpellHasRange(Action.Data.Q[1]:Info()) or Env.SpellInRange(Action.Data.Q[1].Unit or "target", Action.Data.Q[1].ID) then
 				local usable = (not Action.Data.Q[1].ExtraCD and Env.SpellUsable(Action.Data.Q[1].ID)) or (Action.Data.Q[1].ExtraCD and Env.SpellCD(Action.Data.Q[1].ID) <= Action.Data.Q[1].ExtraCD)
-				local custom = (not Action.Data.Q[1].PowerCustom and (not Action.Data.Q[1].ExtraCD or Env.SpellUsable(Action.Data.Q[1].ID))) or UnitPower("player", Action.Data.Q[1].PowerType) >= Action.Data.Q[1].PowerCost
+				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= Action.Data.Q[1].PowerCost
 				return usable and custom 
 			end 
         else 
 			Action.Print(L["DEBUG"] .. Action.Data.Q[1]:Link() .. " " .. L["ISNOTFOUND"])          
-            Action.Data.Q[1]:SetQueue()
+			getmetatable(Action.Data.Q[1]).__index:SetQueue()
         end 
     end 
     return false 
@@ -7502,7 +7516,9 @@ function Action.TMWAPL(...)
 end
   
 function Action.Hide(icon)
-    Action.TMWAPL(icon, "state", TMW.CONST.STATE.DEFAULT_HIDE)
+	if icon.attributes.state ~= TMW.CONST.STATE.DEFAULT_HIDE then 
+		icon:SetInfo("state; texture", TMW.CONST.STATE.DEFAULT_HIDE, "")
+	end 
 end 
 
 function Action:Show(icon)     
@@ -8168,12 +8184,12 @@ function Action.Rotation(icon)
 		return Action.Hide(icon)		 
 	end 
 	
-	if PauseChecks() then 
+	if PauseChecks() then
 		if meta == 3 then 
 			Action.TMWAPL(icon, PauseChecks())
 			return true
 		end  
-		return Action.Hide(icon)
+		return Action.Hide(icon)		
 	end 		
 	
 	-- [6] Passive: @player, @raid1, @arena1 
@@ -8241,6 +8257,6 @@ function Action.Rotation(icon)
 	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
 		return true 
 	end 
-	Action.Hide(icon)	
+	Action.Hide(icon)		
 end 
 

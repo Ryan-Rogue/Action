@@ -335,6 +335,7 @@ function Env.UNITBoss(unitID)
     return Env.UNITLevel(unitID) == -1 or UnitEffectiveLevel(unitID) == -1 or UnitIsQuestBoss(unitID) or UnitIsBoss(unitID) or false 
 end 
 
+-- TODO: Remove on old profile until June 2019
 function Env.MyBurst(unit)
     if not unit then unit = "target" end
     return Env.Zone == "none" or Env.UNITBoss(unit) or UnitIsPlayer(unit)

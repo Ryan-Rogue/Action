@@ -481,4 +481,4 @@ A[260][3] = function(icon)
 end 
 -- /tmw and apply code for always shown frame by "Conditions" > "LUA (Advanced)"
 -- Once created there will reference for all specs but work exactly with which is active
--- Action.Rotation(3, thisobj)
+-- Action.Rotation(thisobj)

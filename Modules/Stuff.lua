@@ -75,6 +75,7 @@ local function UpdateZoneAndPvP(event, ...)
     if event == "UI_INFO_MESSAGE" then        
         if type(...) == "number" and ... >= 996 and ... <= 998 then
             Env.InPvP_Status = C_PvP.IsWarModeDesired()
+			TMW:Fire("TMW_ACTION_MODE_CHANGED")
         end                
         return 
     end            
@@ -82,10 +83,12 @@ local function UpdateZoneAndPvP(event, ...)
     if event == "DUEL_REQUESTED" then
         Env.InPvP_Status = true
         Env.InPvP_Duel = true
+		TMW:Fire("TMW_ACTION_MODE_CHANGED")
         return
     elseif event == "DUEL_FINISHED" then
         Env.InPvP_Status = Env.CheckInPvP() 
         Env.InPvP_Duel = false
+		TMW:Fire("TMW_ACTION_MODE_CHANGED")
         return
     end            
     
@@ -100,7 +103,8 @@ local function UpdateZoneAndPvP(event, ...)
         event == "PLAYER_LOGIN"
     )            
     then                                
-        Env.InPvP_Status = Env.CheckInPvP()                          
+        Env.InPvP_Status = Env.CheckInPvP()  
+		TMW:Fire("TMW_ACTION_MODE_CHANGED")
     end   
 end 
 
