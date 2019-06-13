@@ -1154,7 +1154,7 @@ end
 
 Action.Data = {	
 	ProfileEnabled = {
-		["[GGL] Test"] = true, 
+		["[GGL] Test"] = false, 
 	},
 	ProfileUI = {},
 	ProfileDB = {},
@@ -2785,7 +2785,7 @@ local function ActionDB_Initialization()
 	if not Action.Data.ProfileEnabled[profile] then 				
 		if TMW.db.profile.ActionDB then 
 			TMW.db.profile.ActionDB = nil
-			Action.Print("|cff00cc66" .. profile .. " - profile.ActionDB|r " .. L["DELETED"])
+			Action.Print("|cff00cc66" .. profile .. " - profile.ActionDB|r " .. L["RESETED"]:lower())
 		end 			
 		if Action.Minimap and LibDBIcon then 
 			LibDBIcon:Hide("ActionUI")
@@ -3589,7 +3589,11 @@ function Action.GetToggle(n, toggle)
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 	
 		bool = TMW.db.profile.ActionDB[n][toggle] 
 	elseif TMW.db.profile.ActionDB[n] and TMW.db.profile.ActionDB[n][Env.PlayerSpec] then 
-		bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
+		if toggle == "HeartOfAzeroth" then 
+			bool = _G.C_AzeriteEssence and TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]
+		else 
+			bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
+		end 
 	end 
 	
 	return bool	
@@ -6830,14 +6834,16 @@ local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRan
 local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
 local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
-ACTION_CONST_TRINKET1 = 1030902 		-- GetSpellTexture(179071)
-ACTION_CONST_TRINKET2 = 1030910 		-- GetSpellTexture(224540)
-ACTION_CONST_POTION = 967532		 	-- GetSpellTexture(176108)
+local ItemHasRange = ItemHasRange
 
-ACTION_CONST_LEFT = 237586 				-- GetSpellTexture(98008)
-ACTION_CONST_RIGHT = 132487 			-- GetSpellTexture(34976)
-ACTION_CONST_HEALTHSTONE = 538745 		-- GetSpellTexture(6262)
-ACTION_CONST_ATARGET = 133015 			-- GetSpellTexture(153911)
+ACTION_CONST_TRINKET1 = 	1030902 	-- GetSpellTexture(179071)
+ACTION_CONST_TRINKET2 = 	1030910 	-- GetSpellTexture(224540)
+ACTION_CONST_POTION =		967532		-- GetSpellTexture(176108)
+
+ACTION_CONST_LEFT = 		237586 		-- GetSpellTexture(98008)
+ACTION_CONST_RIGHT = 		132487 		-- GetSpellTexture(34976)
+ACTION_CONST_HEALTHSTONE = 	538745 		-- GetSpellTexture(6262)
+ACTION_CONST_ATARGET = 		133015 		-- GetSpellTexture(153911)
 
 --- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
@@ -6923,12 +6929,12 @@ end
 --- Item API ( + :IsInRange(unit) )
 function Action:GetItemCooldown()
 	local start, duration, enable = self:GetCooldown()
-	return enable ~= 0 and (duration == 0 and 0 or duration - (TMW.time - start)) 
+	return enable ~= 0 and (duration == 0 and 0 or duration - (TMW.time - start)) or -1
 end 
-function Action:IsItemUsable()
-	return self:GetItemCooldown() == 0 and self:GetEquipped()
+function Action:IsTrinketON()
+	-- This also checks equipment (in idea because slot return ID which we compare)
+	return Env.Item(13):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[1] or Env.Item(14):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[2]
 end 
-
 
 --- [[  CREATION  ]]
 function Action.Create(attributes)
@@ -6947,7 +6953,7 @@ function Action.Create(attributes)
 		ID = attributes.ID,
 		SubType = attributes.Type,
 		Desc = attributes.Desc or "",
-		QueueForbidden = attributes.QueueForbidden ~= nil and attributes.QueueForbidden or false, 
+		QueueForbidden = attributes.QueueForbidden, 
 		MetaSlot = attributes.MetaSlot,
 	}
 	if attributes.Type == "Spell" then 
@@ -7007,7 +7013,6 @@ function Action.Create(attributes)
 		-- This using static and fixed texture
 		s.Texture = Action.GetItemTexture		
 		-- Misc
-		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden	
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
 	elseif attributes.Type == "Potion" then
@@ -7028,7 +7033,6 @@ function Action.Create(attributes)
 		-- This using static and fixed texture
 		s.Texture = Action.GetItemTexture 
 		-- Misc 
-		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
 	elseif attributes.Type == "Item" then
@@ -7065,7 +7069,6 @@ function Action.Create(attributes)
 			end 
 		end
 		-- Misc 
-		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 		
 	elseif attributes.Type == "ItemSingleColor" then
@@ -7087,19 +7090,19 @@ function Action.Create(attributes)
 		-- This using static and fixed only color so no need texture
 		s.Texture = Action.GetColorTexture		
 		-- Misc 
-		s.QueueForbidden = attributes.QueueForbidden == nil and true or attributes.QueueForbidden
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 			
 	elseif attributes.Type == "HeartOfAzeroth" then
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"
-		s.SubType = "HeartOfAzeroth"
 		-- Methods (metakey:Link())	
 		s.Info = Action.GetSpellInfo
 		s.Link = Action.GetSpellLink		
 		s.Icon = Action.GetSpellIcon
 		-- This using static and fixed texture
-		s.Texture = Action.GetSpellTexture		
+		s.Texture = Action.GetSpellTexture	
+		-- Power 
+		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)
 	end 
 	return s
 end 
@@ -7157,6 +7160,7 @@ function Action.MacroBlocker(key)
 end
 
 --- [[  QUEUE  ]]
+--- Currently disabled items because they don't have event to trigger reset
 local function QueueEvent(...) 
     local source, _, spellID = ...
     if (source == "player" or source == "pet") and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 			
@@ -7183,10 +7187,11 @@ function Action:IsQueued()
 end 
 
 function Action:IsBlockedByQueue()
-	local Type = self.Type == Action.Data.Q[1].Type
-	local PWRT = not Action.Data.Q[1].PowerType or self.PowerType == Action.Data.Q[1].PowerType
-	local PWRV = not Action.Data.Q[1].PowerCost or UnitPower("player", self.PowerType) < Action.Data.Q[1].PowerCost
-	return not self.QueueForbidden and #Action.Data.Q > 0 and Type and PWRT and PWRV
+	return 	not self.QueueForbidden and 
+			#Action.Data.Q > 0 and 
+			self.Type == Action.Data.Q[1].Type and 
+			( not Action.Data.Q[1].PowerType or self.PowerType == Action.Data.Q[1].PowerType ) and 
+			( not Action.Data.Q[1].PowerCost or UnitPower("player", self.PowerType) < Action.Data.Q[1].PowerCost )
 end
 
 function Action:SetQueue(args) 
@@ -7210,7 +7215,7 @@ function Action:SetQueue(args)
 			return 
 		end 
 		
-		if (self.Type == "Trinket" or self.Type == "Item") and not self:GetEquipped() then
+		if self.Type == "Trinket" and not self:GetEquipped() then -- no need check here :IsTrinketON since user can has disabled toggle but prefer queue it like in PvP Fetish
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
 			return 
 		end 
@@ -7312,10 +7317,11 @@ end
 function Action.IsQueueReady(meta)
     if #Action.Data.Q > 0 and IsThisMeta(meta) then 
         if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then 
-			-- if Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested with trinkets without distance require 
-			local start, duration, enable = Action.Data.Q[1]:GetCooldown()
-			local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
-			return custom and enable ~= 0 and start + duration - TMW.time <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.25)                               
+			if not ItemHasRange(Action.Data.Q[1].ID) or Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested
+				local cooldown = Action.Data.Q[1]:GetItemCooldown()
+				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
+				return custom and cooldown >= 0 and cooldown <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.02)      
+			end
         elseif Action.Data.Q[1].Type == "Spell" then  
             if Action.Data.Q[1].Unit == "player" or not SpellHasRange(Action.Data.Q[1]:Info()) or Env.SpellInRange(Action.Data.Q[1].Unit or "target", Action.Data.Q[1].ID) then
 				local usable = (not Action.Data.Q[1].ExtraCD and Env.SpellUsable(Action.Data.Q[1].ID)) or (Action.Data.Q[1].ExtraCD and Env.SpellCD(Action.Data.Q[1].ID) <= Action.Data.Q[1].ExtraCD)
@@ -7339,12 +7345,34 @@ function Action.MacroQueue(key, args)
 	Action[Env.PlayerSpec][key]:SetQueue(args)
 end
 
---- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA ]]
-function Action:IsReady(thisunit)
+--- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA + CD/RANGE CHECK ]]
+function Action:IsCastable(thisunit, skipRange)
+	-- Checks toggle, cooldown and range 
+	return 	(
+				self.Type == "Spell" and 
+				-- Heart of Azeroth toggle 
+				( self.SubType ~= "HeartOfAzeroth" or Action.GetToggle(1, "HeartOfAzeroth") ) and 
+				IsUsableSpell(self.ID) and
+				Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
+				( skipRange or (thisunit and UnitIsUnit(thisunit, "player")) or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit or "target", self.ID) ) 
+			) or 
+			(
+				self.Type ~= "Spell" and 								
+				-- Trinket toggles 
+				( self.Type ~= "Trinket" or self:IsTrinketON() ) and 
+				-- Potion toggle 
+				( self.Type ~= "Potion" or Action.GetToggle(1, "Potion") ) and 
+				self:GetItemCooldown() == 0 and 
+				( skipRange or (thisunit and UnitIsUnit(thisunit, "player")) or not ItemHasRange(self.ID) or self:IsInRange(thisunit or "target") )
+			)
+end
+
+function Action:IsReady(thisunit, skipRange)
     return 	not self:IsBlocked() and 
 			not self:IsBlockedByQueue() and 
 			not SpellLevel.IsBlocked(self) and 
-			RunLua(self:GetLUA(), thisunit) 
+			RunLua(self:GetLUA(), thisunit) and 
+			self:IsCastable(thisunit, skipRange)
 end 
 
 --- [[ INTERRUPTS ]]
@@ -7597,10 +7625,10 @@ function Action.TimerDestroy(name)
 end 
 
 local Cache = { 
-	bufer = setmetatable({}, { __mode == "v" }),
+	bufer = {},
 	newVal = function(self, interval, keyArg, func, ...)
 		local obj = {
-		  t = TMW.time + (interval or 0.01),               
+		  t = TMW.time + (interval or 0.01) + 0.001,  -- Add small delay to make sure what it's not previous corroute                
 		  v = { func(...) },     
 		}      
 		if keyArg then 
@@ -7613,7 +7641,7 @@ local Cache = {
 	-- Static without arguments or with cycling arguments in func
 	WrapStatic = function(t, func, interval)
 		if not t.bufer[func] then 
-			t.bufer[func] = {}
+			t.bufer[func] = setmetatable({}, { __mode == "kv" })
 		end 	
 		return function(...)  
 			if TMW.time > (t.bufer[func].t or 0) then			
@@ -7626,7 +7654,7 @@ local Cache = {
 	-- Dynamic with unlimited arguments in func 
 	WrapDynamic = function(t, func, interval)
 		if not t.bufer[func] then 
-			t.bufer[func] = {}
+			t.bufer[func] = setmetatable({}, { __mode == "kv" })
 		end 	
 		return function(...) 
 			local arg = {...} 
@@ -7777,8 +7805,8 @@ Action.ShouldStop = Action.MakeFunctionCachedStatic(Action.ShouldStop)
 
 -- RACIAL 
 -- [[ MANAGMENT ]] 
-function Action:IsRacialReady()
-	return Action.GetToggle(1, "Racial") and Env.SpellExists(self:Info()) and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() 
+function Action:IsRacialON()
+	return Action.GetToggle(1, "Racial") and Env.SpellExists(self:Info())
 end 
 
 local GetRaceBySpellName = {
@@ -7851,13 +7879,15 @@ local GetKeyByRace = {
 }
 function Action:AutoRacial(unit, isReadyCheck)
 	-- @return boolean 
-	-- Note: This is lazy template for all racials to easy manage them in one place. Their managment category can be found below this function, otherwise use :IsRacialReady + :IsReady to configure custom 
+	-- Note: This is lazy template for all racials to easy manage them in one place. Their managment category can be found below this function, otherwise use :IsRacialON + :IsReady to configure custom 
 	-- Args are optional. isReadyCheck must be true for Single / AoE / Passive 
-	if self:IsRacialReady() and (not isReadyCheck or self:IsReady(unit)) then 
+	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
 		--[[ 
 			 This is how correctly that must be checked instead of UnitRace, even if game API will output another race we still know truly race
 			 Sometimes game change player race to another but UnitRace will still old that caused tons of problems but since Env.SpellExists
 			 checking spells exactly which has player we know which spells we have and can compare them with race
+			 
+			 Since ID is different and depend even on specialization we must compare localized name
 		]]
 		Action.PlayerRace = GetRaceBySpellName[self:Info()]
 		

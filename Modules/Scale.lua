@@ -46,7 +46,7 @@ local function UpdateFrames()
         TellMeWhen_Group2:SetScale(myscale2) 
         TellMeWhen_Group2:SetFrameStrata("TOOLTIP")
         TellMeWhen_Group2:SetToplevel(true)
-        TellMeWhen_Group2:SetFrameLevel(1)
+        --TellMeWhen_Group2:SetFrameLevel(1)
     end   
     if TargetColor then
         if not TargetColor:IsShown() then

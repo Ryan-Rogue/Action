@@ -172,7 +172,7 @@ local Action = Action
 -- Then you need assign specific table through function Action.Create
 --		Arguments (they are always in table {}):
 --			Required: Type, ID, Color (Color valid only if Type is Spell|SpellSingleColor|Item|ItemSingleColor)
---			Optional: Desc (use this if need set Rank on action or if same ID already uses, this is also displays in UI as Note in ScrollTable), QueueForbidden (default true if Type is Trinket|Potion|HeartOfAzeroth|Item|ItemSingleColor), Texture (acceptable by spellID|itemID)
+--			Optional: Desc (use this if need set Rank on action or if same ID already uses, this is also displays in UI as Note in ScrollTable), QueueForbidden (boolean if need prevent cause by user set Queue on action), Texture (acceptable by spellID|itemID)
 --			{ Type = "Spell|SpellSingleColor|Trinket|Potion|HeartOfAzeroth|Item|ItemSingleColor", ID = "@number", Color = "@string key which can be found in Action.Data.C (you can add custom colors or use own hex)", Desc = "@string", QueueForbidden = "@boolean", Texture = "@number" }
 Action[PLAYERSPEC] = {
 	POWS = Action.Create({ Type = "Spell", ID = 17}),
@@ -192,11 +192,11 @@ Action[PLAYERSPEC] = {
 ]]
 -- I prefer make it shorter and it will help prevent mistakes and confuse, so we will better set this:
 local A = setmetatable(Action[PLAYERSPEC], { __index = Action })
--- You should put here locals before create A[PLAYERSPEC][META](icon) or they wouldn't be linked 
+-- You should put here locals before create A[PLAYERSPEC][META] = function(icon) or they wouldn't be linked 
 local function Test() 
 	return "TestThing" 
 end 
-A[PLAYERSPEC][META] = function(icon)                                    				-- icon should be used by TMW conditions > Lua and argument icon is thisobj. Example of LUA conditions usage in /tmw : return Action[260][3](thisobj)  
+A[PLAYERSPEC][META] = function(icon)                                    				-- icon should be used by TMW conditions > Lua and argument icon is thisobj. Example of LUA conditions usage in /tmw : Action.Rotation(thisobj)  
 	-- You no need here check pause or queue because this is already will be checked before execute all below:
 	if 																				-- if not blocked and not in queue (e.g. not ready as CD / not in range / not enough safe cap power / never use in queue / queue is empty)															
 		A.POWS:IsReady("target") and 												-- required ("target" can be nil if no need unit check for custom LUA)									

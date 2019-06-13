@@ -1,4 +1,4 @@
--- Version 2.1
+-- Version 2.2
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -811,97 +811,53 @@ local ItemList = {
     },
 }
 
---- PSEUDO CLASS
-local function Class()
-    local Class = {}
-    Class.__index = Class
-    setmetatable(Class, {
-            __call =
-            function(self, ...)
-                local Object = self.extend
-                setmetatable(Object, self)
-                Object:New(...)
-                return Object
-            end
+local function PseudoClass(methods)
+    local Class = setmetatable({ extend = methods }, {
+            __call = function(self, ...)
+				self:New(...)
+				return self.extend				 
+            end,
     })
+	setmetatable(Class.extend, { __index = Class })
     return Class
 end
 
---- Func Cache
 local Cache = {
 	bufer = {},
-	intervalStart = 15, -- collectgarbage clean interval
-	start = TMW.time,
-	--func - cache function
-	--Wrap - return "func" in cache 
-	Wrap = function (this, func, name)
-   		return function(...)
-	        this:treshSearch()	        
+	newEl = function(self, interval, keyArg, func, ...)
+		local obj = {
+			t = TMW.time + (interval or 0) + 0.001,  -- Add small delay to make sure what it's not previous corroute  
+			v = { func(...) },   
+		}        
+		self.bufer[func][keyArg] = obj
+		return unpack(obj.v)
+	end,
+	Wrap = function(this, func, name)
+		if not this.bufer[func] then 
+			this.bufer[func] = setmetatable({}, { __mode == "kv" })
+		end 	
+   		return function(...)     
 	        local arg = {...} 
 			local keyArg = arg[1][name] or ""
-			if name == "UnitID" then 
-				keyArg = UnitGUID(arg[1][name]) or ""			
+			if name == "UnitID" and arg[1][name] then 
+				keyArg = UnitGUID(arg[1][name])	or ""	
 			end 
 	        for i = 2, #arg do
 	            keyArg = keyArg .. tostring(arg[i])            
 	        end 
-	        --print('this.buferFunc :' .. tostring(func) .. '  ' .. keyArg)
-	        function newEl(...)
-	            local obj = {
-		            t = TMW.time + arg[1].Refresh,  -- time when cache should be updated by func 
-		            v = this.pack(func(...)) -- convert to table values by last func returnment     
-	            }        
-	            if not this.bufer[func] then 
-	                this.bufer[func] = {} 
-	            end 
-	            this.bufer[func][keyArg] = obj
-	            return this.unpack(obj.v)
-	        end
 	              
-	        -- if not in cache or should be refreshed if time expired
-	        if TMW.time > (this.bufer[func] and this.bufer[func][keyArg] and this.bufer[func][keyArg].t or 0) then
-	            -- update 
-	            return newEl(...)
+	        if TMW.time > (this.bufer[func][keyArg] and this.bufer[func][keyArg].t or 0) then
+	            return this:newEl(arg[1].Refresh, keyArg, func, ...)
 	        else
-	            --print("CACHE WORKED")
-	            -- return from cache with unpack all returnments
-	            return this.unpack(this.bufer[func][keyArg].v)
+	            return unpack(this.bufer[func][keyArg].v)
 	        end
         end        
     end,
-    treshSearch = function(self)
-		if (TMW.time > self.start) then
-	        for k, fun in pairs(self.bufer or {}) do -- names of all cached funcs
-	            for arg, v in pairs(fun) do -- all func arguments
-	                if TMW.time >= v.t  then -- time expired 
-	                    self.bufer[k][arg] = nil
-	                end
-	            end
-	        end 
-		    --collectgarbage() 
-		    self.start = self.start + self.intervalStart -- update time 
-		end
-    end,
-    unpack = function  (t, i)
-      i = i or 1
-      if i ~= nil then
-        return t[i], unpack(t, i + 1)
-      end
-    end,
-   	pack = function (...)
-    	return {n = select("#", ...), ...}
-    end
 }
 
 --- PvP_Events Cache 
 --- TODO: Rename or make local after rewrite first 5 released profiles
 Env.PvPCache = {}
-
-Env.Item = Class()
-Env.Unit = Class()
-Env.EnemyTeam = Class()
-Env.FriendlyTeam = Class()
-
 local Misc = {
 	ClassIsMelee = {
         ["WARRIOR"] = true,
@@ -948,69 +904,60 @@ function Env.GetItemList(ket)
 end 
 
 local Items = TMW:GetItems("13; 14")
-local ItemsForbidden = { 
-	[165581] = true, -- Crest of Pa'ku
-}
-Env.Item.extend = {
-	IsDPS = Cache:Wrap(function (self)       
-			local ID = Items[self.Slot]:GetID()
+Env.Item = PseudoClass({
+	IsForbidden = { 
+		-- Crest of Pa'ku
+		[165581] = true, 
+	},
+	IsDPS = Cache:Wrap(function(self)       
+			local ID = Items[self.Slot]:GetID() or 0
 	        return not ItemList["DEFF"][ID] 
 	end, "Slot"),
-	IsDEFF = Cache:Wrap(function (self)       
-			local ID = Items[self.Slot]:GetID()
+	IsDEFF = Cache:Wrap(function(self)       
+			local ID = Items[self.Slot]:GetID() or 0
 	        return not ItemList["DPS"][ID] 
 	end, "Slot"),
-	IsUsable = Cache:Wrap(function (self) 
-			local ID = Items[self.Slot]:GetID()
+	IsUsable = Cache:Wrap(function(self) 
+			local ID = Items[self.Slot]:GetID() or 0
 			local start, duration, enable = Items[self.Slot]:GetCooldown()
-	        return enable ~= 0 and (duration == 0 or duration - (TMW.time - start) == 0) and Items[self.Slot]:GetEquipped() and not ItemsForbidden[ID] 
+	        return enable ~= 0 and (duration == 0 or duration - (TMW.time - start) <= 0.02) and Items[self.Slot]:GetEquipped() and not self.IsForbidden[ID] 
 	end, "Slot"),	
-	GetID = Cache:Wrap(function (self)   			
-	        return Items[self.Slot]:GetID()
+	GetID = Cache:Wrap(function(self)   			
+	        return Items[self.Slot]:GetID() or 0
 	end, "Slot"),	
-}
+})
 function Env.Item:New(Slot, Refresh)
 	self.Slot = Slot == 13 and 1 or Slot == 14 and 2 or Slot 
-    self.Refresh = Refresh or 0.05
+    self.Refresh = Refresh or 0.1
 end 
 
--- TODO: Remove it on profiles released until June 2019
-function Env.Potion(itemID)
-	local start, duration, enable = GetItemCooldown(itemID)
-	-- Enable will be 0 for things like a potion that was used in combat 
-	if enable ~= 0 and (duration == 0 or duration - (TMW.time - start) == 0)  then
-        return true
-    end    
-    return false 
-end 
-
-Env.Unit.extend = {
-	IsBoss = Cache:Wrap(function (self)       
+Env.Unit = PseudoClass({
+	IsBoss = Cache:Wrap(function(self)       
 	        return Env.UNITBoss(self.UnitID) 
 	end, "UnitID"),
-	IsEnemy = Cache:Wrap(function (self)       
+	IsEnemy = Cache:Wrap(function(self)       
 	        return Env.UNITEnemy(self.UnitID)
 	end, "UnitID"),
-	IsHealer = Cache:Wrap(function (self)       
+	IsHealer = Cache:Wrap(function(self)       
 	        if Env.Unit(self.UnitID):IsEnemy() then
 				return (Env.PvPCache["EnemyHealerUnitID"] and Env.PvPCache["EnemyHealerUnitID"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["HEALER"])  
 			else 
 				return (Env.PvPCache["FriendlyHealerUnitID"] and Env.PvPCache["FriendlyHealerUnitID"][self.UnitID]) or Env.UNITRole(self.UnitID, "HEALER")
 			end 
 	end, "UnitID"),
-	IsTank = Cache:Wrap(function (self)       
+	IsTank = Cache:Wrap(function(self)       
 	        if Env.Unit(self.UnitID):IsEnemy() then
 				return (Env.PvPCache["EnemyTankUnitID"] and Env.PvPCache["EnemyTankUnitID"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["TANK"])  
 			else 
 				return (Env.PvPCache["FriendlyTankUnitID"] and Env.PvPCache["FriendlyTankUnitID"][self.UnitID]) or Env.UNITRole(self.UnitID, "TANK")
 			end 
 	end, "UnitID"),
-	IsTanking = Cache:Wrap(function (self, otherunit)  
+	IsTanking = Cache:Wrap(function(self, otherunit)  
 			local ThreatThreshold = ThreatThreshold or 2
 			local ThreatSituation = UnitThreatSituation(self.UnitID, otherunit)
 			return ThreatSituation and ThreatSituation >= ThreatThreshold or UnitIsUnit(self.UnitID, otherunit .. "target") or false	       
 	end, "UnitID"),
-	IsMelee = Cache:Wrap(function (self)       
+	IsMelee = Cache:Wrap(function(self)       
 	        if Env.Unit(self.UnitID):IsEnemy() then
 				return (Env.PvPCache["EnemyDamagerUnitID_Melee"] and Env.PvPCache["EnemyDamagerUnitID_Melee"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["MELEE"])  
 			elseif Env.UNITRole(self.UnitID, "DAMAGER") or Env.UNITRole(self.UnitID, "TANK") then 
@@ -1034,7 +981,7 @@ Env.Unit.extend = {
 				end 
 			end 
 	end, "UnitID"),
-	DeBuffCyclone = Cache:Wrap(function (self)
+	DeBuffCyclone = Cache:Wrap(function(self)
 		return Env.DeBuffs(self.UnitID, 33786)
 	end, "UnitID"),
 	HasDeBuffs = Cache:Wrap(function(self, key, caster)
@@ -1046,7 +993,7 @@ Env.Unit.extend = {
         end    
         return value, duration   
     end, "UnitID"),
-	HasBuffs = Cache:Wrap(function (self, key, caster)
+	HasBuffs = Cache:Wrap(function(self, key, caster)
 	        local value, duration = 0, 0
 	        if Env.Unit(self.UnitID):DeBuffCyclone() > 0 then 
 	            value, duration = -1, -1
@@ -1055,13 +1002,13 @@ Env.Unit.extend = {
 	        end         
 	        return value, duration
 	end, "UnitID"),
-	HasFlags = Cache:Wrap(function (self)
+	HasFlags = Cache:Wrap(function(self)
 	        return Env.Unit(self.UnitID):HasBuffs({156621, 156618, 34976}) > 0 or Env.Unit(self.UnitID):HasDeBuffs(121177) > 0 
 	end, "UnitID"),
-	GetRange = Cache:Wrap(function (self)
+	GetRange = Cache:Wrap(function(self)
 	        return Env.UNITRange(self.UnitID)  
 	end, "UnitID"),
-	WithOutKarmed = Cache:Wrap(function (self)
+	WithOutKarmed = Cache:Wrap(function(self)
 	        local value = true -- Default as without always
 			if Env.Unit(self.UnitID):IsEnemy() then
 				if Env.PvPCache["Group_FriendlySize"] and Env.PvPCache["Group_FriendlySize"] > 0 and Env.Unit(self.UnitID):HasBuffs(122470) > 0 then 
@@ -1088,7 +1035,7 @@ Env.Unit.extend = {
 			end  
 			return value
 	end, "UnitID"),
-	IsFocused = Cache:Wrap(function (self, specs, burst, deffensive, range)
+	IsFocused = Cache:Wrap(function(self, specs, burst, deffensive, range)
 			local value = false -- Default
 			if Env.Unit(self.UnitID):IsEnemy() then
 				if tableexist(Env.PvPCache["FriendlyDamagerUnitID"]) then     
@@ -1121,7 +1068,7 @@ Env.Unit.extend = {
 			end 
 	        return value 
 	end, "UnitID"),
-	IsExecuted = Cache:Wrap(function (self)
+	IsExecuted = Cache:Wrap(function(self)
 			local value = false -- Default is not available to be executed
 			if Env.Unit(self.UnitID):IsEnemy() then
 				value = TimeToDieX(self.UnitID, 20) <= Env.GCD() + Env.CurrentTimeGCD()
@@ -1137,7 +1084,7 @@ Env.Unit.extend = {
 			end 
 	        return value
 	end, "UnitID"),
-	UseBurst = Cache:Wrap(function (self, pBurst)
+	UseBurst = Cache:Wrap(function(self, pBurst)
 			local unit = self.UnitID
 			local value = false
 			if Env.Unit(unit):IsEnemy() then
@@ -1190,7 +1137,7 @@ Env.Unit.extend = {
 			end 
 	        return value 
 	end, "UnitID"),
-	UseDeff = Cache:Wrap(function (self)
+	UseDeff = Cache:Wrap(function(self)
 	        return 
 			(
 				Env.Unit(self.UnitID):IsFocused(nil, true) or 
@@ -1202,7 +1149,7 @@ Env.Unit.extend = {
 				Env.Unit(self.UnitID):IsExecuted()
 			) 			
 	end, "UnitID"),
-	IsTotem = Cache:Wrap(function (self)
+	IsTotem = Cache:Wrap(function(self)
 			local cType = UnitCreatureType(self.UnitID)
 			return
 			(
@@ -1218,7 +1165,7 @@ Env.Unit.extend = {
 				)
 			) or false  	       	
 	end, "UnitID"),
-	InCC = Cache:Wrap(function (self)
+	InCC = Cache:Wrap(function(self)
 			local value = Env.Unit(self.UnitID):DeBuffCyclone()
 			if value == 0 then 
 				for _, NAME in pairs({"Silenced", "Stuned", "Sleep", "Charmed", "Fear", "Disoriented", "Incapacitated", "CrowdControl"}) do 
@@ -1230,14 +1177,14 @@ Env.Unit.extend = {
 			end	    
 			return value 
 	end, "UnitID"),
-}
+})
 function Env.Unit:New(UnitID, Refresh)
-    self.UnitID = UnitID
-    self.Refresh = Refresh or 0.1                                
+	self.UnitID = UnitID
+	self.Refresh = Refresh or 0.05
 end
 
-Env.EnemyTeam.extend = {
-	GetUnitID = Cache:Wrap(function (self, range)
+Env.EnemyTeam = PseudoClass({
+	GetUnitID = Cache:Wrap(function(self, range)
 			local value = "none" 
 			if tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
 				for k, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
@@ -1250,7 +1197,7 @@ Env.EnemyTeam.extend = {
 	        return value 
 	end, "ROLE"),
 	-- Some functions has second returnment "unitid" whose conditions was passed
-	GetCC = Cache:Wrap(function (self, spells)
+	GetCC = Cache:Wrap(function(self, spells)
 			local value, arena = 0, "none"
 			if tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
 				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
@@ -1277,7 +1224,7 @@ Env.EnemyTeam.extend = {
 			end 
 	        return value, arena 
 	end, "ROLE"),
-	GetBuffs = Cache:Wrap(function (self, Buffs, range)
+	GetBuffs = Cache:Wrap(function(self, Buffs, range)
 			local value, arena = 0, "none"
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
 				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
@@ -1301,7 +1248,7 @@ Env.EnemyTeam.extend = {
 			end  
 	        return value, arena 
 	end, "ROLE"),
-	GetDeBuffs = Cache:Wrap(function (self, DeBuffs, range)
+	GetDeBuffs = Cache:Wrap(function(self, DeBuffs, range)
 			local value, arena = 0, "none"
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
 				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
@@ -1325,7 +1272,7 @@ Env.EnemyTeam.extend = {
 			end   
 	        return value, arena 
 	end, "ROLE"),
-	IsBreakAble = Cache:Wrap(function (self, range)
+	IsBreakAble = Cache:Wrap(function(self, range)
 			local value, arena = false, "none"
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
 				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
@@ -1344,7 +1291,7 @@ Env.EnemyTeam.extend = {
 			end 
 	        return value, arena 
 	end, "ROLE"),
-	IsTauntPetAble = Cache:Wrap(function (self, spellID)
+	IsTauntPetAble = Cache:Wrap(function(self, spellID)
 			local value, pet = false, "none"
 			if tableexist(Env.PvPCache["Group_EnemySize"]) then
 				for i = 1, 3 do                
@@ -1357,7 +1304,7 @@ Env.EnemyTeam.extend = {
 			end
 	        return value, pet 
 	end, "ROLE"),
-	IsReshiftAble = Cache:Wrap(function (self, offset)
+	IsReshiftAble = Cache:Wrap(function(self, offset)
 			local value, arena = false, "none"
 			if tableexist(Env.PvPCache["Group_EnemySize"]) then  
 				if not offset then offset = 0.05 end
@@ -1379,7 +1326,7 @@ Env.EnemyTeam.extend = {
 			end 
 	        return value, arena 
 	end, "ROLE"), 
-	IsPremonitionAble = Cache:Wrap(function (self, offset)
+	IsPremonitionAble = Cache:Wrap(function(self, offset)
 			local value, arena = false, "none"
 			if tableexist(Env.PvPCache["Group_EnemySize"]) then  
 				if not offset then offset = 0.05 end
@@ -1401,14 +1348,14 @@ Env.EnemyTeam.extend = {
 			end  
 	        return value, arena
 	end, "ROLE"),
-}
+})
 function Env.EnemyTeam:New(ROLE, Refresh)
     self.ROLE = ROLE
-    self.Refresh = Refresh or 0.15             
+    self.Refresh = Refresh or 0.125             
 end
 
-Env.FriendlyTeam.extend = {
-	GetUnitID = Cache:Wrap(function (self, range)
+Env.FriendlyTeam = PseudoClass({
+	GetUnitID = Cache:Wrap(function(self, range)
 			local value = "none" 
 			if tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for k, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1420,7 +1367,7 @@ Env.FriendlyTeam.extend = {
 			end 
 	        return value 
 	end, "ROLE"),
-	GetCC = Cache:Wrap(function (self, spells)
+	GetCC = Cache:Wrap(function(self, spells)
 			local value = 0
 			if tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do    
@@ -1448,7 +1395,7 @@ Env.FriendlyTeam.extend = {
 			end
 	        return value 
 	end, "ROLE"),
-	GetBuffs = Cache:Wrap(function (self, Buffs, range, iSource)
+	GetBuffs = Cache:Wrap(function(self, Buffs, range, iSource)
 			local value = 0
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1472,7 +1419,7 @@ Env.FriendlyTeam.extend = {
 			end
 	        return value 
 	end, "ROLE"),
-	GetDeBuffs = Cache:Wrap(function (self, DeBuffs, range)
+	GetDeBuffs = Cache:Wrap(function(self, DeBuffs, range)
 			local value = 0
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1496,7 +1443,7 @@ Env.FriendlyTeam.extend = {
 			end 
 	        return value 
 	end, "ROLE"),
-	GetTTD = Cache:Wrap(function (self, count, seconds)
+	GetTTD = Cache:Wrap(function(self, count, seconds)
 			local value = false
 			local counter =  0
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
@@ -1523,7 +1470,7 @@ Env.FriendlyTeam.extend = {
 			end
 	        return value 
 	end, "ROLE"),
-	AverageTTD = Cache:Wrap(function (self)
+	AverageTTD = Cache:Wrap(function(self)
 			local value, members = 0, 0
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1546,7 +1493,7 @@ Env.FriendlyTeam.extend = {
 			end 
 	        return value 
 	end, "ROLE"),	
-	MissedBuffs = Cache:Wrap(function (self, spells, iSource)
+	MissedBuffs = Cache:Wrap(function(self, spells, iSource)
 			local value = false
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1566,7 +1513,7 @@ Env.FriendlyTeam.extend = {
 			end
 	        return value, member 
 	end, "ROLE"),
-	HealerIsFocused = Cache:Wrap(function (self, burst, deffensive, range)
+	HealerIsFocused = Cache:Wrap(function(self, burst, deffensive, range)
 			local value = false
 			if tableexist(Env.PvPCache[Misc.ArrayFriendly["HEALER"]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly["HEALER"]]) do
@@ -1578,7 +1525,7 @@ Env.FriendlyTeam.extend = {
 			end  
 	        return value, member 
 	end, "ROLE"),
-	ArcaneTorrentMindControl = Cache:Wrap(function (self)
+	ArcaneTorrentMindControl = Cache:Wrap(function(self)
 			local value = false
 			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
 				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
@@ -1598,10 +1545,10 @@ Env.FriendlyTeam.extend = {
 			end 
 	        return value, member 
 	end, "ROLE"),
-}
+})
 function Env.FriendlyTeam:New(ROLE, Refresh)
     self.ROLE = ROLE
-    self.Refresh = Refresh or 0.15                      
+    self.Refresh = Refresh or 0.125                      
 end
 
 --- ========================== FUNCTIONAL ===========================
@@ -1849,6 +1796,14 @@ end)
 
 --- ===================== 2.0 REFFERENCE (OLD) ======================
 -- Remaping for profiles until Monk release
+function Env.Potion(itemID)
+	local start, duration, enable = GetItemCooldown(itemID)
+	-- Enable will be 0 for things like a potion that was used in combat 
+	if enable ~= 0 and (duration == 0 or duration - (TMW.time - start) == 0)  then
+        return true
+    end    
+    return false 
+end 
 Env.PvP = {
 	Unit = Env.Unit,
 	EnemyTeam = Env.EnemyTeam,
