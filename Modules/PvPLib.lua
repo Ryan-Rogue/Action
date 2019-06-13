@@ -963,7 +963,7 @@ Env.Item.extend = {
 	IsUsable = Cache:Wrap(function (self) 
 			local ID = Items[self.Slot]:GetID()
 			local start, duration, enable = Items[self.Slot]:GetCooldown()
-	        return not (enable == 0 or start + duration - TMW.time > 0) and Items[self.Slot]:GetEquipped() and not ItemsForbidden[ID] 
+	        return enable ~= 0 and (duration == 0 or duration - (TMW.time - start) == 0) and Items[self.Slot]:GetEquipped() and not ItemsForbidden[ID] 
 	end, "Slot"),	
 	GetID = Cache:Wrap(function (self)   			
 	        return Items[self.Slot]:GetID()
@@ -974,13 +974,14 @@ function Env.Item:New(Slot, Refresh)
     self.Refresh = Refresh or 0.05
 end 
 
+-- TODO: Remove it on profiles released until June 2019
 function Env.Potion(itemID)
 	local start, duration, enable = GetItemCooldown(itemID)
 	-- Enable will be 0 for things like a potion that was used in combat 
-	if enable == 0 or start + duration - TMW.time > 0 then
-        return false
+	if enable ~= 0 and (duration == 0 or duration - (TMW.time - start) == 0)  then
+        return true
     end    
-    return true 
+    return false 
 end 
 
 Env.Unit.extend = {
@@ -1003,6 +1004,11 @@ Env.Unit.extend = {
 			else 
 				return (Env.PvPCache["FriendlyTankUnitID"] and Env.PvPCache["FriendlyTankUnitID"][self.UnitID]) or Env.UNITRole(self.UnitID, "TANK")
 			end 
+	end, "UnitID"),
+	IsTanking = Cache:Wrap(function (self, otherunit)  
+			local ThreatThreshold = ThreatThreshold or 2
+			local ThreatSituation = UnitThreatSituation(self.UnitID, otherunit)
+			return ThreatSituation and ThreatSituation >= ThreatThreshold or UnitIsUnit(self.UnitID, otherunit .. "target") or false	       
 	end, "UnitID"),
 	IsMelee = Cache:Wrap(function (self)       
 	        if Env.Unit(self.UnitID):IsEnemy() then

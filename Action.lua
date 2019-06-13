@@ -1,5 +1,5 @@
 --- 
-local DateTime = "12.06.2019"
+local DateTime = "13.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -6830,6 +6830,15 @@ local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRan
 local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
 local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
+ACTION_CONST_TRINKET1 = 1030902 		-- GetSpellTexture(179071)
+ACTION_CONST_TRINKET2 = 1030910 		-- GetSpellTexture(224540)
+ACTION_CONST_POTION = 967532		 	-- GetSpellTexture(176108)
+
+ACTION_CONST_LEFT = 237586 				-- GetSpellTexture(98008)
+ACTION_CONST_RIGHT = 132487 			-- GetSpellTexture(34976)
+ACTION_CONST_HEALTHSTONE = 538745 		-- GetSpellTexture(6262)
+ACTION_CONST_ATARGET = 133015 			-- GetSpellTexture(153911)
+
 --- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
     local a = { GetSpellInfo(v) }
@@ -6896,12 +6905,12 @@ function Action:GetItemTexture()
 	local texture
 	if self.Type == "Trinket" then 
 		if GetInventoryItemID("player", 13) == self.ID then 
-			texture = 1030902 -- GetSpellTexture(179071)
+			texture = ACTION_CONST_TRINKET1
 		else 
-			texture = 1030910 -- GetSpellTexture(224540)
+			texture = ACTION_CONST_TRINKET2
 		end
 	elseif self.Type == "Potion" then 
-		texture = 967532 -- GetSpellTexture(176108)
+		texture = ACTION_CONST_POTION
 	else 
 		texture = self:GetItemIcon()
 	end
@@ -6910,6 +6919,14 @@ end
 --- Item Colored Texture
 function Action:GetColoredItemTexture()
     return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, self:GetItemIcon()
+end 
+--- Item API ( + :IsInRange(unit) )
+function Action:GetItemCooldown()
+	local start, duration, enable = self:GetCooldown()
+	return enable ~= 0 and (duration == 0 and 0 or duration - (TMW.time - start)) 
+end 
+function Action:IsItemUsable()
+	return self:GetItemCooldown() == 0 and self:GetEquipped()
 end 
 
 
@@ -7521,8 +7538,19 @@ function Action.Hide(icon)
 	end 
 end 
 
+function Action.ShowTrinket(icon, slot)
+	local textureID = ((slot == 13 or slot == 1) and ACTION_CONST_TRINKET1) or ACTION_CONST_TRINKET2
+	Action.TMWAPL(icon, "texture", textureID)
+	return true 
+end 
+
+function Action.ShowPotion(icon)
+	Action.TMWAPL(icon, "texture", ACTION_CONST_POTION)
+	return true 
+end 
+
 function Action:Show(icon)     
-    Action.TMWAPL(icon,  self:Texture())
+    Action.TMWAPL(icon, self:Texture())
 	return true 
 end 
 
@@ -8142,6 +8170,7 @@ function Action.Rotation(icon)
 	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
 		return Action.Hide(icon)		
 	end 	
+	
 	local meta = icon.ID
 	
 	-- [1] CC / [2] Kick 
@@ -8197,10 +8226,10 @@ function Action.Rotation(icon)
 		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
 			if Action.GameTooltipClick == "LEFT" then 
-				Action.TMWAPL(icon, "texture", 237586) -- GetSpellTexture(98008)				 
+				Action.TMWAPL(icon, "texture", ACTION_CONST_LEFT)			 
 				return true
 			elseif Action.GameTooltipClick == "RIGHT" then 
-				Action.TMWAPL(icon, "texture", 132487) -- GetSpellTexture(34976)				 
+				Action.TMWAPL(icon, "texture", ACTION_CONST_RIGHT) 				 
 				return true
 			end 
 		end 
@@ -8228,11 +8257,11 @@ function Action.Rotation(icon)
 			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
 				if Healthstone >= 100 then -- AUTO 
 					if TimeToDie("player") <= 7 then 
-						Action.TMWAPL(icon, "texture", 538745) -- SpellID: 6262						 
+						Action.TMWAPL(icon, "texture", ACTION_CONST_HEALTHSTONE)					 
 						return true
 					end 
 				elseif Env.UNITHP("player") <= Healthstone then 
-					Action.TMWAPL(icon, "texture", 538745) -- SpellID: 6262					 
+					Action.TMWAPL(icon, "texture", ACTION_CONST_HEALTHSTONE)				 
 					return true
 				end 
 			end 
@@ -8245,7 +8274,8 @@ function Action.Rotation(icon)
 			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
 			and ((not Env.InPvP() and CombatUnits(1)) or Env.Zone == "pvp")
 		then 
-			return Action.TMWAPL(icon, "texture", 133015) -- SpellID: 153911			 
+			Action.TMWAPL(icon, "texture", ACTION_CONST_ATARGET)			 
+			return true
 		end 
 	end 
 	
@@ -8257,6 +8287,7 @@ function Action.Rotation(icon)
 	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
 		return true 
 	end 
+	
 	Action.Hide(icon)		
 end 
 
