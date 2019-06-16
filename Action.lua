@@ -1,5 +1,5 @@
 --- 
-local DateTime = "16.06.2019"
+local DateTime = "17.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -4112,6 +4112,9 @@ function Action.ToggleMinimap(isLaunch)
 end 
 
 function Action.ToggleMainUI()
+	if InCombatLockdown() and (not Action.MainUI or not Action.MainUI.resizer) then 
+		return 
+	end 
 	local specID, specName = GetSpecializationInfo(GetSpecialization())
 	local spec = specID .. CL
 	if Action.MainUI then 	
