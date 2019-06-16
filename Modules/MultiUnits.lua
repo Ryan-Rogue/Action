@@ -66,8 +66,7 @@ function MassTaunt(stop, range, ttd)
             CombatTime(unit) > 0 and 
             TimeToDie(unit) >= ttd and 
             Env.UNITLevel(unit) ~= -1 and 
-            Env.SpellInteract(unit, range) and 
-            UnitExists(unit .. "target") and
+            Env.Unit(unit):GetRange() <= range and 
             not Env.Unit(unit .. "target"):IsTank() then 
                 totalmobs = totalmobs + 1            
                 

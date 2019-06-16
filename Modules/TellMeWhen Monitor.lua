@@ -290,7 +290,10 @@ end
 
 function Env.UNITRange(unitID)
     local min_range, max_range = LibRangeCheck:GetRange(unitID)
-    if not max_range then max_range = 0 end
+    if not max_range then 
+		max_range = 0 
+		min_range = 0
+	end
     return max_range, min_range
 end
 
@@ -518,9 +521,9 @@ function Env.RandomKick(unitid, interruptAble)
         if not prev_spellID[unitid] or spellID ~= prev_spellID[unitid] then
             -- Soothing Mist
             if spellName ~= GetSpellInfo(209525) then
-                interruptpct[unitid] = math.random(38, 83)
+                interruptpct[unitid] = math.random(48, 83)
             else 
-                interruptpct[unitid] = math.random(6, 12)
+                interruptpct[unitid] = math.random(8, 14)
             end
             prev_spellID[unitid] = spellID
         end    
@@ -529,6 +532,7 @@ function Env.RandomKick(unitid, interruptAble)
     return false
 end
 
+-- TODO: Remove on profiles released until June 2019
 function Env.QuakingPalm(unit)
     local total, cur_castleft, pct_castleft, spellID, spellName, notKickAble = Env.CastTime(nil, unit)
     if spellID and cur_castleft < Env.GCD() then 
@@ -537,17 +541,16 @@ function Env.QuakingPalm(unit)
     return false 
 end 
 
-function Env.CastTime(id, unitid)    
+function Env.CastTime(id, unit)    
     -- 1: Total CastTime, 2: Current CastingTime Left, 3: Current CastingTime Percent 
     -- 4: ID, 5: Name, 6: notInterruptable (true yes, false able to kick)
-    if not unitid then unitid = "player" end;
+    if not unit then 
+		unit = "player"
+	end
     local total, castleft, pct_castleft = 0, 0, 0
-    local castName, _, _, castStartTime, castEndTime, _, _, notInterruptable, spellID = UnitCastingInfo(unitid)
-    if not castName then 
-        castName, _, _, castStartTime, castEndTime, _, notInterruptable, spellID = UnitChannelInfo(unitid)
-    end 
+	local castName, castStartTime, castEndTime, notInterruptable, spellID = Env.Unit(unit, 0):IsCasting()
     
-    if unitid == "player" and id then 
+    if unit == "player" and id then 
         total = (select(4, GetSpellInfo(id)) or 0) / 1000
         castleft = total 
     end 

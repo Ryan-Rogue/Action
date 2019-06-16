@@ -9,8 +9,8 @@ local IsInRaid, IsInGroup = IsInRaid, IsInGroup
 local RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetSpellInfo, GetItemCooldown = 
 RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, Action.GetSpellInfo, GetItemCooldown
 
-local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName = 
-UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName 
+local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo = 
+UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo
 
 local GetSpecialization, GetSpecializationInfo = GetSpecialization, GetSpecializationInfo 
 
@@ -917,10 +917,11 @@ Env.Item = PseudoClass({
 			local ID = Items[self.Slot]:GetID() or 0
 	        return not ItemList["DPS"][ID] 
 	end, "Slot"),
-	IsUsable = Cache:Wrap(function(self) 
+	IsUsable = Cache:Wrap(function(self, unit) 
 			local ID = Items[self.Slot]:GetID() or 0
 			local start, duration, enable = Items[self.Slot]:GetCooldown()
-	        return enable ~= 0 and (duration == 0 or duration - (TMW.time - start) <= 0.02) and Items[self.Slot]:GetEquipped() and not self.IsForbidden[ID] 
+			local onCD = enable == 0 or start + duration - TMW.time > 0
+	        return not onCD and Items[self.Slot]:GetEquipped() and not self.IsForbidden[ID] and ( not unit or unit == "player" or not ItemHasRange(ID) or Items[self.Slot]:IsInRange(unit) )
 	end, "Slot"),	
 	GetID = Cache:Wrap(function(self)   			
 	        return Items[self.Slot]:GetID() or 0
@@ -938,80 +939,108 @@ Env.Unit = PseudoClass({
 	IsEnemy = Cache:Wrap(function(self)       
 	        return Env.UNITEnemy(self.UnitID)
 	end, "UnitID"),
-	IsHealer = Cache:Wrap(function(self)       
-	        if Env.Unit(self.UnitID):IsEnemy() then
-				return (Env.PvPCache["EnemyHealerUnitID"] and Env.PvPCache["EnemyHealerUnitID"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["HEALER"])  
+	IsHealer = Cache:Wrap(function(self)  
+			local UnitID = self.UnitID
+	        if Env.Unit():IsEnemy() then
+				return (Env.PvPCache["EnemyHealerUnitID"] and Env.PvPCache["EnemyHealerUnitID"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["HEALER"])  
 			else 
-				return (Env.PvPCache["FriendlyHealerUnitID"] and Env.PvPCache["FriendlyHealerUnitID"][self.UnitID]) or Env.UNITRole(self.UnitID, "HEALER")
+				return (Env.PvPCache["FriendlyHealerUnitID"] and Env.PvPCache["FriendlyHealerUnitID"][UnitID]) or Env.UNITRole(UnitID, "HEALER")
 			end 
 	end, "UnitID"),
-	IsTank = Cache:Wrap(function(self)       
-	        if Env.Unit(self.UnitID):IsEnemy() then
-				return (Env.PvPCache["EnemyTankUnitID"] and Env.PvPCache["EnemyTankUnitID"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["TANK"])  
+	IsTank = Cache:Wrap(function(self)    
+			local UnitID = self.UnitID
+	        if Env.Unit():IsEnemy(UnitID) then
+				return (Env.PvPCache["EnemyTankUnitID"] and Env.PvPCache["EnemyTankUnitID"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["TANK"])  
 			else 
-				return (Env.PvPCache["FriendlyTankUnitID"] and Env.PvPCache["FriendlyTankUnitID"][self.UnitID]) or Env.UNITRole(self.UnitID, "TANK")
+				return (Env.PvPCache["FriendlyTankUnitID"] and Env.PvPCache["FriendlyTankUnitID"][UnitID]) or Env.UNITRole(UnitID, "TANK")
 			end 
 	end, "UnitID"),
-	IsTanking = Cache:Wrap(function(self, otherunit)  
-			local ThreatThreshold = ThreatThreshold or 2
-			local ThreatSituation = UnitThreatSituation(self.UnitID, otherunit)
-			return ThreatSituation and ThreatSituation >= ThreatThreshold or UnitIsUnit(self.UnitID, otherunit .. "target") or false	       
+	IsTanking = Cache:Wrap(function(self, otherunit, range)  
+			local UnitID = self.UnitID
+			local ThreatThreshold = ThreatThreshold or 2			
+			local ThreatSituation = UnitThreatSituation(UnitID, otherunit or "target")
+			return ThreatSituation and ThreatSituation >= ThreatThreshold or Env.Unit(UnitID):IsTankingAoE(range)	       
 	end, "UnitID"),
-	IsMelee = Cache:Wrap(function(self)       
-	        if Env.Unit(self.UnitID):IsEnemy() then
-				return (Env.PvPCache["EnemyDamagerUnitID_Melee"] and Env.PvPCache["EnemyDamagerUnitID_Melee"][self.UnitID]) or Env.UNITSpec(self.UnitID, Misc.Specs["MELEE"])  
-			elseif Env.UNITRole(self.UnitID, "DAMAGER") or Env.UNITRole(self.UnitID, "TANK") then 
-				local _, uClass = UnitClass(self.UnitID)
+	IsTankingAoE = Cache:Wrap(function(self, range)  
+			local UnitID = self.UnitID
+			local activeUnitPlates = GetActiveUnitPlates("enemy")
+			if activeUnitPlates then
+				for reference, unit in pairs(activeUnitPlates) do
+					if UnitIsUnit(UnitID, unit .. "target") and ( not range or Env.SpellInteract(unit, range) ) then 
+						return true  
+					end
+				end   
+			end    
+			return false 		
+	end, "UnitID"),
+	IsMelee = Cache:Wrap(function(self) 
+			local UnitID = self.UnitID
+	        if Env.Unit(UnitID):IsEnemy() then
+				return (Env.PvPCache["EnemyDamagerUnitID_Melee"] and Env.PvPCache["EnemyDamagerUnitID_Melee"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["MELEE"])  
+			elseif Env.UNITRole(UnitID, "DAMAGER") or Env.UNITRole(UnitID, "TANK") then 
+				local _, uClass = UnitClass(UnitID)
 				if uClass == "HUNTER" then 
 					return 
 					(
-						SpellCounter(self.UnitID, 186270) > 0 or -- Raptor Strike
-						SpellCounter(self.UnitID, 259387) > 0 or -- Mongoose Bite
-						SpellCounter(self.UnitID, 190925) > 0 or -- Harpoon
-						SpellCounter(self.UnitID, 259495) > 0    -- Firebomb
+						SpellCounter(UnitID, 186270) > 0 or -- Raptor Strike
+						SpellCounter(UnitID, 259387) > 0 or -- Mongoose Bite
+						SpellCounter(UnitID, 190925) > 0 or -- Harpoon
+						SpellCounter(UnitID, 259495) > 0    -- Firebomb
 					)
 				elseif uClass == "SHAMAN" then 
-					local _, offhand = UnitAttackSpeed(self.UnitID)
+					local _, offhand = UnitAttackSpeed(UnitID)
 					return offhand ~= nil                    
 				elseif uClass == "DRUID" then 
-					local _, power = UnitPowerType(self.UnitID)
+					local _, power = UnitPowerType(UnitID)
 					return power == "ENERGY" or power == "FURY"
 				else 
 					return Misc.ClassIsMelee[uClass]
 				end 
 			end 
 	end, "UnitID"),
+	IsCasting = Cache:Wrap(function(self) 
+			local UnitID = self.UnitID
+			local castName, _, _, castStartTime, castEndTime, _, _, notInterruptable, spellID = UnitCastingInfo(UnitID)
+			if not castName then 
+				castName, _, _, castStartTime, castEndTime, _, notInterruptable, spellID = UnitChannelInfo(UnitID)
+			end  
+			return castName, castStartTime, castEndTime, notInterruptable, spellID
+	end, "UnitID"),
 	DeBuffCyclone = Cache:Wrap(function(self)
 		return Env.DeBuffs(self.UnitID, 33786)
 	end, "UnitID"),
-	HasDeBuffs = Cache:Wrap(function(self, key, caster)
+	HasDeBuffs = Cache:Wrap(function(self, key, caster, byID)
         local value, duration = 0, 0
-        if Env.Unit(self.UnitID):DeBuffCyclone() > 0 then 
+		local UnitID = self.UnitID
+        if not Action.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
             value, duration = -1, -1
         else
-            value, duration = Env.SortDeBuffs(self.UnitID, ((type(key) == "string" and AuraList[key]) or key), caster) 
+            value, duration = Env.SortDeBuffs(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
         end    
         return value, duration   
     end, "UnitID"),
-	HasBuffs = Cache:Wrap(function(self, key, caster)
-	        local value, duration = 0, 0
-	        if Env.Unit(self.UnitID):DeBuffCyclone() > 0 then 
+	HasBuffs = Cache:Wrap(function(self, key, caster, byID)
+	        local UnitID = self.UnitID
+			local value, duration = 0, 0			
+	        if not Action.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
 	            value, duration = -1, -1
 	        else
-	            value, duration = Env.Buffs(self.UnitID, ((type(key) == "string" and AuraList[key]) or key), caster) 
+	            value, duration = Env.Buffs(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
 	        end         
 	        return value, duration
 	end, "UnitID"),
 	HasFlags = Cache:Wrap(function(self)
-	        return Env.Unit(self.UnitID):HasBuffs({156621, 156618, 34976}) > 0 or Env.Unit(self.UnitID):HasDeBuffs(121177) > 0 
+			local UnitID = self.UnitID
+	        return Env.Unit(UnitID):HasBuffs({156621, 156618, 34976}) > 0 or Env.Unit(UnitID):HasDeBuffs(121177) > 0 
 	end, "UnitID"),
 	GetRange = Cache:Wrap(function(self)
 	        return Env.UNITRange(self.UnitID)  
 	end, "UnitID"),
 	WithOutKarmed = Cache:Wrap(function(self)
-	        local value = true -- Default as without always
-			if Env.Unit(self.UnitID):IsEnemy() then
-				if Env.PvPCache["Group_FriendlySize"] and Env.PvPCache["Group_FriendlySize"] > 0 and Env.Unit(self.UnitID):HasBuffs(122470) > 0 then 
+			local UnitID = self.UnitID
+	        local value = true 		
+			if Env.Unit(UnitID):IsEnemy() then
+				if Env.PvPCache["Group_FriendlySize"] and Env.PvPCache["Group_FriendlySize"] > 0 and Env.Unit(UnitID):HasBuffs(122470) > 0 then 
 					value = false
 					for i = 1, Env.PvPCache["Group_FriendlySize"] do
 						local member = Env.PvPCache["Group_FriendlyType"] .. i
@@ -1022,7 +1051,7 @@ Env.Unit = PseudoClass({
 					end        
 				end
 			else
-				if Env.PvPCache["Group_EnemySize"] and Env.PvPCache["Group_EnemySize"] > 0 and Env.Unit(self.UnitID):HasBuffs(122470) > 0 then 
+				if Env.PvPCache["Group_EnemySize"] and Env.PvPCache["Group_EnemySize"] > 0 and Env.Unit(UnitID):HasBuffs(122470) > 0 then 
 					value = false
 					for i = 1, Env.PvPCache["Group_EnemySize"] do
 						local arena = Env.PvPCache["Group_EnemySize"] .. i
@@ -1037,13 +1066,14 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsFocused = Cache:Wrap(function(self, specs, burst, deffensive, range)
 			local value = false -- Default
-			if Env.Unit(self.UnitID):IsEnemy() then
+			local UnitID = self.UnitID
+			if Env.Unit(UnitID):IsEnemy() then
 				if tableexist(Env.PvPCache["FriendlyDamagerUnitID"]) then     
 					for k, member in pairs(Env.PvPCache["FriendlyDamagerUnitID"]) do 
-						if UnitIsUnit(member .. "target", self.UnitID) 
+						if UnitIsUnit(member .. "target", UnitID) 
 						and (not specs or (specs == "MELEE" and Env.Unit(member):IsMelee()))
 						and (not burst or Env.Unit(member):HasBuffs("DamageBuffs") > 2) 
-						and (not deffensive or Env.Unit(self.UnitID):HasBuffs("DeffBuffs") < 2)
+						and (not deffensive or Env.Unit(UnitID):HasBuffs("DeffBuffs") < 2)
 						and (not range or Env.Unit(member):GetRange() <= range) then 
 							value = true 
 							break 
@@ -1055,10 +1085,10 @@ Env.Unit = PseudoClass({
 					-- TYPES AND ROLES
 					specs = Misc.Specs[specs] or specs or false
 					for k, arena in pairs(Env.PvPCache["EnemyDamagerUnitID"]) do
-						if UnitIsUnit(arena .. "target", self.UnitID) 
+						if UnitIsUnit(arena .. "target", UnitID) 
 						and (not specs or Env.UNITSpec(arena, specs))
 						and (not burst or Env.Unit(arena):HasBuffs("DamageBuffs") > 2) 
-						and (not deffensive or Env.Unit(self.UnitID):HasBuffs("DeffBuffs") < 2)
+						and (not deffensive or Env.Unit(UnitID):HasBuffs("DeffBuffs") < 2)
 						and (not range or Env.Unit(arena):GetRange() <= range) then 
 							value = true 
 							break
@@ -1070,12 +1100,13 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsExecuted = Cache:Wrap(function(self)
 			local value = false -- Default is not available to be executed
-			if Env.Unit(self.UnitID):IsEnemy() then
-				value = TimeToDieX(self.UnitID, 20) <= Env.GCD() + Env.CurrentTimeGCD()
+			local UnitID = self.UnitID
+			if Env.Unit(UnitID):IsEnemy() then
+				value = TimeToDieX(UnitID, 20) <= Env.GCD() + Env.CurrentTimeGCD()
 			else
-				if tableexist(Env.PvPCache["EnemyDamagerUnitID_Melee"]) and TimeToDieX(self.UnitID, 20) <= Env.GCD() + Env.CurrentTimeGCD() then
+				if tableexist(Env.PvPCache["EnemyDamagerUnitID_Melee"]) and TimeToDieX(UnitID, 20) <= Env.GCD() + Env.CurrentTimeGCD() then
 					for k, arena in pairs(Env.PvPCache["EnemyDamagerUnitID_Melee"]) do 
-						if Env.UNITSpec(arena, {71, 72}) and UnitIsUnit(arena .. "target", self.UnitID) and UnitPower(arena) >= 20 and (self.UnitID ~= "player" or Env.Unit(arena):GetRange() < 7) then 
+						if Env.UNITSpec(arena, {71, 72}) and UnitIsUnit(arena .. "target", UnitID) and UnitPower(arena) >= 20 and (UnitID ~= "player" or Env.Unit(arena):GetRange() < 7) then 
 							value = true 
 							break
 						end
@@ -1085,26 +1116,26 @@ Env.Unit = PseudoClass({
 	        return value
 	end, "UnitID"),
 	UseBurst = Cache:Wrap(function(self, pBurst)
-			local unit = self.UnitID
+			local UnitID = self.UnitID
 			local value = false
-			if Env.Unit(unit):IsEnemy() then
-				value = UnitIsPlayer(unit) and 
+			if Env.Unit(UnitID):IsEnemy() then
+				value = UnitIsPlayer(UnitID) and 
 				(
 					Env.Zone == "none" or 
-					TimeToDieX(unit, 25) <= Env.GCD() * 4 or
+					TimeToDieX(UnitID, 25) <= Env.GCD() * 4 or
 					(
-						Env.Unit(unit):IsHealer() and 
+						Env.Unit(UnitID):IsHealer() and 
 						(
 							(
-								CombatTime(unit) > 5 and 
-								TimeToDie(unit) <= 10 and 
-								Env.Unit(unit):HasBuffs("DeffBuffs") == 0                      
+								CombatTime(UnitID) > 5 and 
+								TimeToDie(UnitID) <= 10 and 
+								Env.Unit(UnitID):HasBuffs("DeffBuffs") == 0                      
 							) or
-							Env.Unit(unit):HasDeBuffs("Silenced") >= Env.GCD() * 2 or 
-							Env.Unit(unit):HasDeBuffs("Stuned") >= Env.GCD() * 2                         
+							Env.Unit(UnitID):HasDeBuffs("Silenced") >= Env.GCD() * 2 or 
+							Env.Unit(UnitID):HasDeBuffs("Stuned") >= Env.GCD() * 2                         
 						)
 					) or 
-					Env.Unit(unit):IsFocused(nil, true) or 
+					Env.Unit(UnitID):IsFocused(nil, true) or 
 					Env.EnemyTeam("HEALER"):GetCC() >= Env.GCD() * 3 or
 					(
 						pBurst and 
@@ -1113,24 +1144,24 @@ Env.Unit = PseudoClass({
 				)       
 			elseif Env.IamHealer then 
 				-- For HealingEngine as Healer
-				value = UnitIsPlayer(unit) and 
+				value = UnitIsPlayer(UnitID) and 
 				(
-					Env.Unit(unit):IsExecuted() or
+					Env.Unit(UnitID):IsExecuted() or
 					(
-						Env.Unit(unit):HasFlags() and                                         
-						CombatTime(unit) > 0 and 
-						getRealTimeDMG(unit) > 0 and 
-						TimeToDie(unit) <= 14 and 
+						Env.Unit(UnitID):HasFlags() and                                         
+						CombatTime(UnitID) > 0 and 
+						getRealTimeDMG(UnitID) > 0 and 
+						TimeToDie(UnitID) <= 14 and 
 						(
-							TimeToDie(unit) <= 8 or 
-							Env.Unit(unit):HasBuffs("DeffBuffs") < 1                         
+							TimeToDie(UnitID) <= 8 or 
+							Env.Unit(UnitID):HasBuffs("DeffBuffs") < 1                         
 						)
 					) or 
 					(
-						Env.Unit(unit):IsFocused(nil, true) and 
+						Env.Unit(UnitID):IsFocused(nil, true) and 
 						(
-							TimeToDie(unit) <= 10 or 
-							Env.UNITHP(unit) <= 70
+							TimeToDie(UnitID) <= 10 or 
+							Env.UNITHP(UnitID) <= 70
 						)
 					) 
 				)                   
@@ -1138,15 +1169,16 @@ Env.Unit = PseudoClass({
 	        return value 
 	end, "UnitID"),
 	UseDeff = Cache:Wrap(function(self)
+			local UnitID = self.UnitID
 	        return 
 			(
-				Env.Unit(self.UnitID):IsFocused(nil, true) or 
+				Env.Unit():IsFocused(nil, true) or 
 				(
-					TimeToDie(self.UnitID) < 8 and 
-					Env.Unit(self.UnitID):IsFocused() 
+					TimeToDie(UnitID) < 8 and 
+					Env.Unit(UnitID):IsFocused() 
 				) or 
-				Env.Unit(self.UnitID):HasDeBuffs("DamageDeBuffs") > 5 or 
-				Env.Unit(self.UnitID):IsExecuted()
+				Env.Unit(UnitID):HasDeBuffs("DamageDeBuffs") > 5 or 
+				Env.Unit(UnitID):IsExecuted()
 			) 			
 	end, "UnitID"),
 	IsTotem = Cache:Wrap(function(self)
@@ -1166,10 +1198,11 @@ Env.Unit = PseudoClass({
 			) or false  	       	
 	end, "UnitID"),
 	InCC = Cache:Wrap(function(self)
-			local value = Env.Unit(self.UnitID):DeBuffCyclone()
+			local UnitID = self.UnitID
+			local value = Env.Unit(UnitID):DeBuffCyclone()
 			if value == 0 then 
 				for _, NAME in pairs({"Silenced", "Stuned", "Sleep", "Charmed", "Fear", "Disoriented", "Incapacitated", "CrowdControl"}) do 
-					value = Env.Unit(self.UnitID):HasDeBuffs(NAME)
+					value = Env.Unit(UnitID):HasDeBuffs(NAME)
 					if value > 0 then 
 						break
 					end 
@@ -1185,9 +1218,10 @@ end
 
 Env.EnemyTeam = PseudoClass({
 	GetUnitID = Cache:Wrap(function(self, range)
+			local ROLE = self.ROLE
 			local value = "none" 
-			if tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
-				for k, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
+			if tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for k, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
 					if not Env.UNITDead(arena) and (not range or Env.Unit(arena):GetRange() <= range) then 
 						value = arena 
 						break 
@@ -1196,21 +1230,23 @@ Env.EnemyTeam = PseudoClass({
 			end 
 	        return value 
 	end, "ROLE"),
-	-- Some functions has second returnment "unitid" whose conditions was passed
+	-- Some functions has second returnment "UnitID" whose values was passed as true, otherwise last checked "UnitID"
 	GetCC = Cache:Wrap(function(self, spells)
+			local ROLE = self.ROLE
 			local value, arena = 0, "none"
-			if tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
-				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
 					if spells then 
 						value = Env.Unit(arena):HasDeBuffs(spells) 
-					elseif (self.ROLE ~= "HEALER" or not UnitIsUnit(arena, "target")) then 
+					elseif (ROLE ~= "HEALER" or not UnitIsUnit(arena, "target")) then 
 						-- Hex, Cyclone, Wyvern Sting, Sleep 
 						value = Env.Unit(arena):HasDeBuffs({51514, 33786, 19386, 2637}) 
 						if value > 0 then                         
 							break 
 						else  
-							for _, types in pairs({"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}) do 
-								value = Env.Unit(arena):HasDeBuffs(types)
+							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							for i = 1, #ListCC do 
+								value = Env.Unit(arena):HasDeBuffs(ListCC[i])
 								if value > 0 then                                 
 									break 
 								end                     
@@ -1219,15 +1255,40 @@ Env.EnemyTeam = PseudoClass({
 					end 
 					if value > 0 then                                 
 						break 
-					end  
-				end             
+					end 					
+				end     
+			elseif tableexist(Env.PvPCache["Group_EnemySize"]) then
+				for i = 1, Env.PvPCache["Group_EnemySize"] do
+					arena = "arena" .. i
+					if spells then 
+						value = Env.Unit(arena):HasDeBuffs(spells) 
+					elseif (ROLE ~= "HEALER" or not UnitIsUnit(arena, "target")) then 
+						-- Hex, Cyclone, Wyvern Sting, Sleep 
+						value = Env.Unit(arena):HasDeBuffs({51514, 33786, 19386, 2637}) 
+						if value > 0 then                         
+							break 
+						else  
+							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							for i = 1, #ListCC do 
+								value = Env.Unit(arena):HasDeBuffs(ListCC[i])
+								if value > 0 then                                 
+									break 
+								end                     
+							end 
+						end
+					end 
+					if value > 0 then                                 
+						break 
+					end 	
+				end
 			end 
 	        return value, arena 
 	end, "ROLE"),
 	GetBuffs = Cache:Wrap(function(self, Buffs, range)
+			local ROLE = self.ROLE
 			local value, arena = 0, "none"
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
-				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
 					if (not range or Env.Unit(arena):GetRange() <= range) then
 						value = Env.Unit(arena):HasBuffs(Buffs)                     
 					end 
@@ -1249,9 +1310,10 @@ Env.EnemyTeam = PseudoClass({
 	        return value, arena 
 	end, "ROLE"),
 	GetDeBuffs = Cache:Wrap(function(self, DeBuffs, range)
+			local ROLE = self.ROLE
 			local value, arena = 0, "none"
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
-				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
 					if (not range or Env.Unit(arena):GetRange() <= range) then
 						value = Env.Unit(arena):HasDeBuffs(DeBuffs)                     
 					end 
@@ -1273,9 +1335,10 @@ Env.EnemyTeam = PseudoClass({
 	        return value, arena 
 	end, "ROLE"),
 	IsBreakAble = Cache:Wrap(function(self, range)
+			local ROLE = self.ROLE
 			local value, arena = false, "none"
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) then 
-				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[self.ROLE]]) do
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
 					if not UnitIsUnit(arena, "target") and (not range or Env.Unit(arena):GetRange() <= range) and Env.Unit(arena):HasDeBuffs("BreakAble") > 0 then
 						value = true 
 						break
@@ -1291,6 +1354,39 @@ Env.EnemyTeam = PseudoClass({
 			end 
 	        return value, arena 
 	end, "ROLE"),
+	PlayersInRange = Cache:Wrap(function(self, stop, range)
+			local ROLE = self.ROLE
+			local value, count, arena = false, 0, "none"
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
+				for _, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
+					if Env.Unit(arena):GetRange() <= range then
+						count = count + 1 	
+						if not stop then 
+							value = true 
+						end 
+					end 
+					if stop and count >= stop then 
+						value = true 
+						break 
+					end 
+				end 
+			else
+				for refference, arena in pairs(GetActiveUnitPlates("enemy")) do               
+					if UnitIsPlayer(arena) and Env.Unit(arena):GetRange() <= range then
+						count = count + 1 	
+						if not stop then 
+							value = true 
+						end 
+					end 
+					if stop and count >= stop then 
+						value = true 
+						break 
+					end         
+				end  
+			end 
+	        return value, count, arena 
+	end, "ROLE"),
+	-- Without ROLE argument
 	IsTauntPetAble = Cache:Wrap(function(self, spellID)
 			local value, pet = false, "none"
 			if tableexist(Env.PvPCache["Group_EnemySize"]) then
@@ -1356,9 +1452,10 @@ end
 
 Env.FriendlyTeam = PseudoClass({
 	GetUnitID = Cache:Wrap(function(self, range)
+			local ROLE = self.ROLE
 			local value = "none" 
-			if tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for k, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			if tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for k, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if UnitInRange(member) and not Env.UNITDead(member) and (not range or Env.Unit(member):GetRange() <= range) then 
 						value = member 
 						break 
@@ -1368,9 +1465,10 @@ Env.FriendlyTeam = PseudoClass({
 	        return value 
 	end, "ROLE"),
 	GetCC = Cache:Wrap(function(self, spells)
-			local value = 0
-			if tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do    
+			local ROLE = self.ROLE
+			local value, member = 0, "none"
+			if tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do    
 					-- Here is no need UnitInRange
 					if spells then 
 						value = Env.Unit(member):HasDeBuffs(spells) 
@@ -1380,8 +1478,9 @@ Env.FriendlyTeam = PseudoClass({
 						if value > 0 then                         
 							break 
 						else  
-							for _, types in pairs({"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}) do 
-								value = Env.Unit(member):HasDeBuffs(types)
+							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							for i = 1, #ListCC do 
+								value = Env.Unit(member):HasDeBuffs(ListCC[i])
 								if value > 0 then                                 
 									break 
 								end                     
@@ -1393,12 +1492,13 @@ Env.FriendlyTeam = PseudoClass({
 					end                   
 				end             
 			end
-	        return value 
+	        return value, member
 	end, "ROLE"),
 	GetBuffs = Cache:Wrap(function(self, Buffs, range, iSource)
-			local value = 0
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			local ROLE = self.ROLE
+			local value, member = 0, "none"
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if UnitInRange(member) and (not range or Env.Unit(member):GetRange() <= range) then
 						value = Env.Unit(member):HasBuffs(Buffs, iSource)     
 						if value > 0 then 
@@ -1408,7 +1508,7 @@ Env.FriendlyTeam = PseudoClass({
 				end 
 			elseif tableexist(Env.PvPCache["Group_FriendlySize"]) then
 				for i = 1, Env.PvPCache["Group_FriendlySize"] do
-					local member = Env.PvPCache["Group_FriendlyType"] .. i
+					member = Env.PvPCache["Group_FriendlyType"] .. i
 					if UnitInRange(member) and (not range or Env.Unit(member):GetRange() <= range) then
 						value = Env.Unit(member):HasBuffs(Buffs, iSource)     
 						if value > 0 then 
@@ -1417,12 +1517,13 @@ Env.FriendlyTeam = PseudoClass({
 					end                       
 				end  
 			end
-	        return value 
+	        return value, member
 	end, "ROLE"),
 	GetDeBuffs = Cache:Wrap(function(self, DeBuffs, range)
-			local value = 0
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			local ROLE = self.ROLE
+			local value, member = 0, "none"
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if UnitInRange(member) and (not range or Env.Unit(member):GetRange() <= range) then
 						value = Env.Unit(member):HasDeBuffs(DeBuffs, iSource)     
 						if value > 0 then 
@@ -1432,7 +1533,7 @@ Env.FriendlyTeam = PseudoClass({
 				end 
 			elseif tableexist(Env.PvPCache["Group_FriendlySize"]) then
 				for i = 1, Env.PvPCache["Group_FriendlySize"] do
-					local member = Env.PvPCache["Group_FriendlyType"] .. i
+					member = Env.PvPCache["Group_FriendlyType"] .. i
 					if UnitInRange(member) and (not range or Env.Unit(member):GetRange() <= range) then
 						value = Env.Unit(member):HasDeBuffs(DeBuffs, iSource) 
 						if value > 0 then 
@@ -1441,14 +1542,14 @@ Env.FriendlyTeam = PseudoClass({
 					end                        
 				end  
 			end 
-	        return value 
+	        return value, member
 	end, "ROLE"),
-	GetTTD = Cache:Wrap(function(self, count, seconds)
-			local value = false
-			local counter =  0
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
-					if UnitInRange(member) and TimeToDie(member) <= seconds then
+	GetTTD = Cache:Wrap(function(self, count, seconds, range)
+			local ROLE = self.ROLE
+			local value, counter, member = false, 0, member
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
+					if (not range and UnitInRange(member) or range and Env.Unit(member):GetRange() <= range) and TimeToDie(member) <= seconds then
 						counter = counter + 1     
 						if counter >= count then 
 							value = true
@@ -1458,8 +1559,8 @@ Env.FriendlyTeam = PseudoClass({
 				end 
 			elseif tableexist(Env.PvPCache["Group_FriendlySize"]) then
 				for i = 1, Env.PvPCache["Group_FriendlySize"] do
-					local member = Env.PvPCache["Group_FriendlyType"] .. i
-					if UnitInRange(member) and TimeToDie(member) <= seconds then
+					member = Env.PvPCache["Group_FriendlyType"] .. i
+					if (not range and UnitInRange(member) or range and Env.Unit(member):GetRange() <= range) and TimeToDie(member) <= seconds then
 						counter = counter + 1     
 						if counter >= count then 
 							value = true
@@ -1468,12 +1569,13 @@ Env.FriendlyTeam = PseudoClass({
 					end                        
 				end  
 			end
-	        return value 
+	        return value, member
 	end, "ROLE"),
 	AverageTTD = Cache:Wrap(function(self)
+			local ROLE = self.ROLE
 			local value, members = 0, 0
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if UnitInRange(member) then                     
 						value = value + TimeToDie(member)
 						members = members + 1
@@ -1491,12 +1593,13 @@ Env.FriendlyTeam = PseudoClass({
 			if members > 0 then 
 				value = value / members
 			end 
-	        return value 
+	        return value, members
 	end, "ROLE"),	
 	MissedBuffs = Cache:Wrap(function(self, spells, iSource)
-			local value = false
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			local ROLE = self.ROLE
+			local value, member = false, "none"
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if UnitInRange(member) and not Env.UNITDead(member) and Env.Unit(member):HasBuffs(spells, iSource) == 0 then
 						value = true 
 						break
@@ -1504,7 +1607,7 @@ Env.FriendlyTeam = PseudoClass({
 				end 
 			elseif tableexist(Env.PvPCache["Group_FriendlySize"]) then
 				for i = 1, Env.PvPCache["Group_FriendlySize"] do
-					local member = Env.PvPCache["Group_FriendlyType"] .. i
+					member = Env.PvPCache["Group_FriendlyType"] .. i
 					if UnitInRange(member) and not Env.UNITDead(member) and Env.Unit(member):HasBuffs(spells, iSource) == 0 then
 						value = true 
 						break
@@ -1526,9 +1629,10 @@ Env.FriendlyTeam = PseudoClass({
 	        return value, member 
 	end, "ROLE"),
 	ArcaneTorrentMindControl = Cache:Wrap(function(self)
-			local value = false
-			if self.ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) then 
-				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[self.ROLE]]) do
+			local ROLE = self.ROLE
+			local value, member = false, "none"
+			if ROLE and tableexist(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) then 
+				for _, member in pairs(Env.PvPCache[Misc.ArrayFriendly[ROLE]]) do
 					if Env.Unit(member):HasBuffs(605) > 0 and Env.Unit(member):GetRange() <= 8 then
 						value = true 
 						break
@@ -1536,7 +1640,7 @@ Env.FriendlyTeam = PseudoClass({
 				end 
 			elseif tableexist(Env.PvPCache["Group_FriendlySize"]) then
 				for i = 1, Env.PvPCache["Group_FriendlySize"] do
-					local member = Env.PvPCache["Group_FriendlyType"] .. i
+					member = Env.PvPCache["Group_FriendlyType"] .. i
 					if Env.Unit(member):HasBuffs(605) > 0 and Env.Unit(member):GetRange() <= 8 then
 						value = true 
 						break
@@ -1556,7 +1660,7 @@ end
 function Env.MultiCast(unit, spells, range)
     -- 1: Total CastTime, 2: Current CastingTime Left, 3: Current CastingTime Percent (from 0% as start til 100% as finish)
     -- 4: SpellID and 5: SpellName
-    local total, tleft, pleft, id, spellname = 0, 0, 0, 0, 0
+    local total, tleft, pleft, id, spellname = 0, 0, 0, 0, nil
     if unit and (not range or Env.Unit(unit):GetRange() <= range) then
         local query = (type(spells) == "table" and spells) or AuraList.CastBarsCC               
         for i = 1, #query do 
@@ -1565,8 +1669,12 @@ function Env.MultiCast(unit, spells, range)
                 break
             end 
         end         
-    end    
-    return total, tleft, pleft, id, spellname
+    end   
+	if tleft > 0 then 
+		return total, tleft, pleft, id, spellname
+	else 
+		return 0, 0, 0, 0, nil
+	end 
 end
 
 -- UNIT Moving (out or in) 

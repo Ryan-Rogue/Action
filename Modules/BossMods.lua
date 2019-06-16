@@ -92,13 +92,13 @@ end
 -- Note: /dbm pull <5>
 -- Note: /dbm timer <10> <Name>
 function Env.DBM_PullTimer()
-    local name = DBM_CORE_TIMER_PULL:lower()   
+    local name = DBM and DBM_CORE_TIMER_PULL:lower() or nil   
     return Env.DBM_GetTimeRemaining(name)
 end 
 
 function Env.DBM_GetTimer(name)        
     if not Action.IsInitialized or not Action.GetToggle(1, "DBM") then
-        return 0
+        return 0, 0
     end
     
     --local timername = format("%q", name:gsub("([%(%)%%%[%]%-%+%*%.%^%$])", "%%%1"):lower())  
@@ -108,7 +108,7 @@ end
 
 function Env.DBM_IsEngage()
     if not Action.IsInitialized or not Action.GetToggle(1, "DBM") then
-        return 0
+        return 0, 0
     end
     -- Not tested  
     local BossName = UnitName("boss1")

@@ -1,5 +1,5 @@
 --- 
-local DateTime = "13.06.2019"
+local DateTime = "16.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -35,7 +35,7 @@ local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, Is
 local L, CL
 local Localization = {
 	enUS = {			
-		NOSUPPORT = "this profile not supported ActionUI yet",	
+		NOSUPPORT = "this profile is not supported ActionUI yet",	
 		DEBUG = "|cffff0000[Debug] Error Identification: |r",			
 		ISNOTFOUND = "is not found!",			
 		CREATED = "created",
@@ -47,7 +47,7 @@ local Localization = {
 		RESETED = "Reseted",
 		MACRO = "Macro",
 		MACROEXISTED = "|cffff0000Macro already existed!|r",
-		MACROLIMIT = "|cffff0000Can't create macro, you reached limit. You need delete at least one macro!|r",	
+		MACROLIMIT = "|cffff0000Can't create macro, you reached limit. You need to delete at least one macro!|r",	
 		GLOBALAPI = "API Global: ",
 		RESIZE = "Resize",
 		RESIZE_TOOLTIP = "Click-and-drag to resize",
@@ -55,16 +55,16 @@ local Localization = {
 			LIST = "List of slash commands:",
 			OPENCONFIGMENU = "shows config menu",
 			HELP = "shows help info",
-			QUEUEHOWTO = "macro (toggle) for sequence system (Queue), the TABLENAME is a label refference for SpellName|ItemName (on english)",
-			QUEUEEXAMPLE = "example of usage Queue",
-			BLOCKHOWTO = "macro (toggle) for disable|enable any actions (Blocker), the TABLENAME is a label refference for SpellName|ItemName (on english)",
-			BLOCKEXAMPLE = "example of usage Blocker",
-			RIGHTCLICKGUIDANCE = "Most elements are left and right click able. Right click will create macro toggle so you can don't care about help manual above",				
+			QUEUEHOWTO = "macro (toggle) for sequence system (Queue), the TABLENAME is a label reference for SpellName|ItemName (in english)",
+			QUEUEEXAMPLE = "example of Queue usage",
+			BLOCKHOWTO = "macro (toggle) for disable|enable any actions (Blocker), the TABLENAME is a label reference for SpellName|ItemName (in english)",
+			BLOCKEXAMPLE = "example of Blocker usage",
+			RIGHTCLICKGUIDANCE = "Most elements are left and right click-able. Right click will create macro toggle so you can consider the above suggestion",				
 			INTERFACEGUIDANCE = "UI explains:",
-			INTERFACEGUIDANCEEACHSPEC = "[Each spec] relative for CURRENT your selected specialization",
-			INTERFACEGUIDANCEALLSPECS = "[All specs] relative for ALL available on your character specializations",
+			INTERFACEGUIDANCEEACHSPEC = "[Each spec] relative for CURRENT selected specialization",
+			INTERFACEGUIDANCEALLSPECS = "[All specs] relative for your ALL available character specializations",
 			INTERFACEGUIDANCEGLOBAL = "[Global] relative for ALL your account, ALL characters, ALL specializations",
-			ATTENTION = "|cffff0000TAKE ATTENTION|r functional of Action available only for profiles released after 31.05.2019. The old profile would be updated for this system in future",				
+			ATTENTION = "|cffff0000PAY ATTENTION|r functional of Action available only for profiles released after 31.05.2019. The old profile will be updated for this system in future",				
 		},
 		TAB = {
 			RESETBUTTON = "Reset settings",
@@ -75,10 +75,10 @@ local Localization = {
 			SAVEMOUSE = "Save Cursor Lists",
 			SAVEMSG = "Save MSG Lists",
 			LUAWINDOW = "LUA Configure",
-			LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need use .Env or TMW.CNDT.Env. for anything that have it\n\nIf you want to remove already default code you will need write 'return true' without quotes instead of remove all",
+			LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need to use .Env or TMW.CNDT.Env. for anything that have it\n\nIf you want to remove already default code you will need to write 'return true' without quotes instead of remove them all",
 			BRACKETMATCH = "Bracket Matching",
 			CLOSELUABEFOREADD = "Close LUA Configuration before add",
-			FIXLUABEFOREADD = "You need fix errors in LUA Configuration before add",
+			FIXLUABEFOREADD = "You need to fix errors in LUA Configuration before to add",
 			RIGHTCLICKCREATEMACRO = "RightClick: Create macro",
 			NOTHING = "Profile has no configuration for this tab",
 			HOW = "Apply:",
@@ -97,23 +97,23 @@ local Localization = {
 				CHANGELANGUAGE = "Switch language",
 				CHARACTERSECTION = "Character Section",
 				AUTOTARGET = "Auto Target",
-				AUTOTARGETTOOLTIP = "If the target is empty, but you are in a combat, it will return the nearest enemy\nThe switcher works in the same way if the target has immunity in PvP\n\nRightClick: Create macro",					
+				AUTOTARGETTOOLTIP = "If the target is empty, but you are in combat, it will return the nearest enemy\nThe switcher works in the same way if the target has immunity in PvP\n\nRightClick: Create macro",					
 				POTION = "Potion",
 				HEARTOFAZEROTH = "Heart of Azeroth",
 				RACIAL = "Racial spell",
 				SYSTEMSECTION = "System Section",
 				LOSSYSTEM = "LOS System",
-				LOSSYSTEMTOOLTIP = "ATTENTION: This option causes delay of 0.3s + current spinning gcd\nif unit being checked is located in a lose (for example, behind a box at arena)\nYou must also enable same setting in Advanced Settings\nThis option blacklists unit which in a lose and\nstops providing actions to it for N seconds\n\nRightClick: Create macro",
+				LOSSYSTEMTOOLTIP = "ATTENTION: This option causes delay of 0.3s + current spinning gcd\nif unit being checked it is located in a lose (for example, behind a box at arena)\nYou must also enable the same setting in Advanced Settings\nThis option blacklists unit which in a lose and\nstops providing actions to it for N seconds\n\nRightClick: Create macro",
 				HEALINGENGINEPETS = "HealingEngine pets",
 				HEALINGENGINEPETSTOOLTIP = "Include in target select player's pets and calculate for heal them\n\nRightClick: Create macro",
 				ALL = "All",
 				RAID = "Raid",
 				TANK = "Only Tanks",
-				DAMAGER = "Only Damagers",
+				DAMAGER = "Only Damage Dealers",
 				HEALER = "Only Healers",
 				HEALINGENGINETOOLTIP = "This option relative for unit selection on healers\nAll: Everyone member\nRaid: Everyone member without tanks\n\nRightClick: Create macro\nIf you would like set fix toggle state use argument in (ARG): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
 				DBM = "DBM Timers",
-				DBMTOOLTIP = "Tracking pull timers and some specific events such as trash incoming.\nThis feature availble not for all profiles!\n\nRightClick: Create macro",
+				DBMTOOLTIP = "Tracking pull timers and some specific events such as trash incoming.\nThis feature is not availble for all the profiles!\n\nRightClick: Create macro",
 				FPS = "FPS Optimization",
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Increases frames per second by increasing the dynamic dependency\nframes of the refresh cycle (call) of the rotation cycle\n\nYou can also manually set the interval following a simple rule:\nThe larger slider then more FPS, but worse rotation update\nToo high value can cause unpredictable behavior!\n\nRightClick: Create macro",					
@@ -164,7 +164,7 @@ local Localization = {
 				KEY = "[Table Key: ",
 				KEYTOOLTIP = "Use this key in MSG tab",
 				ISFORBIDDENFORQUEUE = "is forbidden for queue!",
-				ISQUEUEDALREADY = "is already exist in queue!",
+				ISQUEUEDALREADY = "is already existing in queue!",
 				QUEUED = "|cff00ff00Queued: |r",
 				QUEUEREMOVED = "|cffff0000Removed from queue: |r",
 				QUEUEPRIORITY = " has priority №",
@@ -204,7 +204,7 @@ local Localization = {
 				KICKPVPPRINT = "[PvP] List of Interrupts",
 				KICKPVPTOOLTIP = "Unchecked: @arena1-3 [PvP] custom list don't work\nChecked: @arena1-3 [PvP] custom list will work\n\nRightClick: Create macro",	
 				KICKPVPONLYSMART = "[PvP] SMART",
-				KICKPVPONLYSMARTTOOLTIP = "Checked: will interrupt only by logic establish in profile lua configuration. Example:\n1) Chain control on your healer\n2) Someone friendly (or you) has Burst buffs >4 sec\n3) Someone will die in less than 8 sec\n4) Your (or @target) HP going to execute phase\nUnchecked: will interrupt this list always without any kind of logic\n\nNote: Cause high CPU demand\nRightClick: Create macro",
+				KICKPVPONLYSMARTTOOLTIP = "Checked: will interrupt only accordingly to logic established in profile lua configuration. Example:\n1) Chain control on your healer\n2) Someone friendly (or you) has Burst buffs >4 sec\n3) Someone will die in less than 8 sec\n4) Your (or @target) HP going to execute phase\nUnchecked: will interrupt this list always without any kind of logic\n\nNote: Cause high CPU demand\nRightClick: Create macro",
 				ADD = "Add Interrupt",					
 				ADDERROR = "|cffff0000You didn't specify anything in 'Write spell' or spell is not found!|r",
 				ADDTOOLTIP = "Add spell from 'Write spell'\neditbox to current selected list",
@@ -264,7 +264,7 @@ local Localization = {
 				ISTOTEM = "IsTotem",
 				ISTOTEMTOOLTIP = "If enabled then will check @mouseover on type 'Totem' for given name\nAlso prevent click in situation if your @target already has there any totem",				
 				INPUTTITLE = "Enter the name of the object (localized!)", 
-				INPUT = "This entry is case insensitive",
+				INPUT = "This entry is case non sensitive",
 				ADD = "Add",
 				REMOVE = "Remove",
 				-- GlobalFactory default name preset in lower case!					
@@ -304,10 +304,10 @@ local Localization = {
 				SOURCETOOLTIP = "This is optional. You can leave it blank (recommended)\nIf you want to configure it, the name must be exactly the same as in the chat group",
 				NAME = "Contains a message",
 				ICON = "Icon",
-				INPUT = "Enter a phrase for the message system",
+				INPUT = "Enter a phrase for the system message",
 				INPUTTITLE = "Phrase",
 				INPUTERROR = "You have not entered a phrase!",
-				INPUTTOOLTIP = "The phrase will be triggered on any match in the group chat (/party)\nIt's not case sensitive\nContains patterns, this means that a phrase spoken by someone with the combination of the words raid, party, arena, party or player\nadaptates the action to the desired meta slot\nYou don’t need to set the listed patterns here, they are used as an addition to the macro\nIf the pattern is not found, then slots for Single and AoE rotations will be used",				
+				INPUTTOOLTIP = "The phrase will be triggered on any match in the group chat (/party)\nIt's not case sensitive\nContains patterns, this means that a phrase written by someone with the combination of the words raid, party, arena, party or player\nadaptates the action to the desired meta slot\nYou don’t need to set the listed patterns here, they are used as an addition to the macro\nIf the pattern is not found, then slots for Single and AoE rotations will be used",				
 			},
 		},
 	},
@@ -1142,10 +1142,289 @@ local Localization = {
 			},
 		},
 	},
+	itIT = {			
+		NOSUPPORT = "questo profilo non supporta ancora ActionUI",	
+		DEBUG = "|cffff0000[Debug] Identificativo di Errore: |r",			
+		ISNOTFOUND = "non trovato!",			
+		CREATED = "creato",
+		YES = "Si",
+		NO = "No",
+		TOGGLEIT = "Switch it",
+		SELECTED = "Selezionato",
+		RESET = "Riavvia",
+		RESETED = "Riavviato",
+		MACRO = "Macro",
+		MACROEXISTED = "|cffff0000La Macro esiste gia!|r",
+		MACROLIMIT = "|cffff0000Non posso creare la macro, hai raggiunto il limite. Devi cancellare almeno una macro!|r",	
+		GLOBALAPI = "API Globale: ",
+		RESIZE = "Ridimensiona",
+		RESIZE_TOOLTIP = "Seleziona e tracina per ridimensionare",
+		SLASH = {
+			LIST = "Lista comandi:",
+			OPENCONFIGMENU = "mostra il menu di configurazione",
+			HELP = "mostra info di aiuto",
+			QUEUEHOWTO = "macro (toggle) per il sistema di coda (Coda), la TABLENAME é etichetta di riferimento per incantesimo|oggetto (in inglese)",
+			QUEUEEXAMPLE = "esempio per uso della Coda",
+			BLOCKHOWTO = "macro (toggle) per disabilitare|abilitare le azioni (Blocco), é etichetta di riferimento per incantesimo|oggetto (in inglese)",
+			BLOCKEXAMPLE = "esempio per uso del Blocker",
+			RIGHTCLICKGUIDANCE = "La maggior parte degli elementi sono pulsanti cliccabili sinistro e destro del mouse. Il pulsante destro del mouse creerà una macro, in modo che tu non possa tener conto del suggerimento di cui sopra",				
+			INTERFACEGUIDANCE = "spiegazioni UI:",
+			INTERFACEGUIDANCEEACHSPEC = "[Spec Corrente] si riferisce alla CORRENTE specializzazione",
+			INTERFACEGUIDANCEALLSPECS = "[Spec Tutte] si applica a TUTTE le specializzazioni di un personaggio.",
+			INTERFACEGUIDANCEGLOBAL = "[Spec Globale] si applica GLOBALMENTE al tuo account TUTTI i personaggi TUTTE le specializzazioni.",
+			ATTENTION = "|cffff0000FAI ATTENZIONE|r La funzionalità Action è disponibile solo per i profili rilasciati dopo il 31.05.2019. I profili precedenti verranno aggiornati in futuro.",				
+		},
+		TAB = {
+			RESETBUTTON = "Riavvia settaggi",
+			RESETQUESTION = "Sei sicuro?",
+			SAVEACTIONS = "Salva settaggi Actions",
+			SAVEINTERRUPT = "Salva liste Interruzioni",
+			SAVEDISPEL = "Salva liste Auree",
+			SAVEMOUSE = "Salva liste cursori",
+			SAVEMSG = "Salva liste MSG",
+			LUAWINDOW = "Configura LUA",
+			LUATOOLTIP = "Per fare riferimento all unità da controllare, usa il nome senza virgolette \nIl codice deve avere un valore(true) per funzionare \nIl codice ha setfenv, significa che non devi usare .Env o TMW.CNDT.Env \n\nSe vuoi rimpiazzare il codice predefinito, devi rimpiazzare con un 'return true' senza virgolette, \n invece di cancellarlo",
+			BRACKETMATCH = "Verifica parentesi",
+			CLOSELUABEFOREADD = "Chiudi la configurazione LUA prima di aggiungere",
+			FIXLUABEFOREADD = "Devi correggere gli errori nella configurazione LUA prima di aggiungere",
+			RIGHTCLICKCREATEMACRO = "Pulsanmte destro: Crea macro",
+			NOTHING = "Il profilo non ha una configuration per questo tab",
+			HOW = "Applica:",
+			HOWTOOLTIP = "Global: Tutto account, tutti i personaggi e tutte le specializzazioni",
+			GLOBAL = "Globale",
+			ALLSPECS = "A tutte le specializzazioni di un personaggio",
+			THISSPEC = "Alla specializzazione corrente del personaggio",			
+			KEY = "Chiave:",
+			CONFIGPANEL = "'Aggiungi' Configurazione",
+			[1] = {
+				HEADBUTTON = "Generale",	
+				HEADTITLE = "[Spec Tutte] Primaria",
+				PVEPVPTOGGLE = "PvE / PvP interruttore manuale",
+				PVEPVPTOGGLETOOLTIP = "Forza il cambio di un profilo\n(utile quando Modalitá guerra é attiva)\n\nTastodestro: Crea macro", 
+				PVEPVPRESETTOOLTIP = "Resetta interruttore manuale - auto",
+				CHANGELANGUAGE = "Cambia Lingua",
+				CHARACTERSECTION = "Seleziona personaggio",
+				AUTOTARGET = "Bersaglio automatico",
+				AUTOTARGETTOOLTIP = "Se il bersaglio non é selezionato e sei in combattimento, ritorna il nemico piú vicino\nInterruttore funziona nella stesso modo se il bersaglio selezionato é immune|non in PvP\n\nTastodestro: Crea macro",					
+				POTION = "Pozione",
+				HEARTOFAZEROTH = "Cuore di Azeroth",
+				RACIAL = "Abilitá Raziale",
+				SYSTEMSECTION = "Area systema",
+				LOSSYSTEM = "Sistema di linea di vista [LOS]",
+				LOSSYSTEMTOOLTIP = "ATTENZIONE: Questa opzione causa un ritardo di 0.3s + piu tempo del sistema di recupero globale [srg]\nse il bersaglio é in los (per esempio dietro una cassa in arena)\nDevi anche abilitare lo stesso settaggio in Settaggi Avanzati\nQuesta opzione mette in blacklists bersagli fuori los e\nferma le azioni verso il bersaglio per N secondio\n\nTastodestro: Crea macro",
+				HEALINGENGINEPETS = "Logica di cure per pet",
+				HEALINGENGINEPETSTOOLTIP = "include nella selezione dei bersagli  i pets dei giocatori e considera la loro cura \n\nTastodestro: Crea macro",
+				ALL = "Tutti",
+				RAID = "Raid",
+				TANK = "Solo Tank",
+				DAMAGER = "Solo Danno",
+				HEALER = "Solo Curatori",
+				HEALINGENGINETOOLTIP = "Opzione per la selezione bersagli per i curatori\nTutti: Tutti i membri\nRaid: Tutti i membri ma non i tank\n\nTastodestro: Crea macro\nSe desideri utilizzare specifici attributi per il bersaglio usa in (ARG): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
+				DBM = "Timers DBM",
+				DBMTOOLTIP = "Tiene traccia dei timer di avvio combattimento e alcuni eventi specific tipo patrol in arrivo.\nQuesta funzionalitá é disponibile per tutti i profili!\n\nTastodestro: Crea macro",
+				FPS = "Ottimizzazione FPS",
+				FPSSEC = " (sec)",
+				FPSTOOLTIP = "AUTO: Aumenta i frames per second incrementando la dipendenza dinamica\ndei frames del ciclo di refresh (call) della rotazione\n\nPuoi settare manualmente l'intervallo seguendo questa semplice regola:\nPiú é altop lo slider piú é l'FPS, ma peggiore sará l'update della rotazione\nValori troppo alti possono portare a risultati imprevedibili!\n\nTastodestro: Crea macro",					
+				PVPSECTION = "Sezione PvP",
+				REFOCUS = "Identifica il focus precedente @focus\n(solo arena unitá 1-3)\nraccomandato contro le classi con capacitá di invisibilitá\n\nTastodestro: Crea macro",
+				RETARGET = "Identifica il bersaglio precedente @target\n(solo arena unitá 1-3)\nraccomandato contro cacciatori con capacitá 'Morte Fasulla' e altre abilitá che deselezionano il bersaglio\n\nTastodestro: Crea macro",
+				TRINKETS = "Ninnolo",
+				TRINKET = "Ninnoli",
+				BURST = "Modalitá raffica",
+				BURSTTOOLTIP = "Utilizza Tutto - appena esce dal coll down\nAuto - Boss o Giocatore\nOff - Disabilitata\n\nTastodestro: Crea macro\nSe desidere utilizzare specifici attributi utilizza in (ARG): 'Everything', 'Auto', 'Off'",					
+				HEALTHSTONE = "Healthstone",
+				HEALTHSTONETOOLTIP = "Seta la percentuale di vita (HP)\n\nTastodestro: Crea macro",
+				PAUSECHECKS = "[All specs] Rotation doesn't work if:",
+				VEHICLE = "NelVeicolo",
+				VEHICLETOOLTIP = "Esempio: Catapulta, Cannone",
+				DEADOFGHOSTPLAYER = "Sei Morto",
+				DEADOFGHOSTTARGET = "Il bersaglio é morto",
+				DEADOFGHOSTTARGETTOOLTIP = "Eccezione il cacciatore bersaglio se é selezionato come bersaglio primario",
+				MOUNT = "ACavallo",
+				COMBAT = "Non in combattimento", 
+				COMBATTOOLTIP = "Se tu e il tuo bersaglio siete non in combattimento. l' invisibile non viene considerato\n(quando invisibile questa condizione viene non valutata|saltata)",
+				SPELLISTARGETING = "IncantesimoHaBersaglio",
+				SPELLISTARGETINGTOOLTIP = "Esembio: Tormento, Balzo eroico, Trappola congelante",
+				LOOTFRAME = "Bottino",
+				MISC = "Varie:",		
+				DISABLEROTATIONDISPLAY = "Nascondi|Mostra la rotazione",
+				DISABLEROTATIONDISPLAYTOOLTIP = "Nasconde il gruppo, che generalmente siu trova al\ncentro in basso dello schermo",
+				DISABLEBLACKBACKGROUND = "Nascondi lo sfondo nero", 
+				DISABLEBLACKBACKGROUNDTOOLTIP = "Nasconde lo sfondo nero nell'angolo in alto a sinistra dello schermo\nATTENZIONE: puo causare comportamenti anomali della applicazione!",
+				DISABLEPRINT = "Nascondi|Stampa",
+				DISABLEPRINTTOOLTIP = "Nasconde notifice di chat per tutto\nATTENZIONE: Questa opzione nasconde anche le notifiche [Debug] Identificazione errori!",
+				DISABLEMINIMAP = "Nasconde icona nella minimap",
+				DISABLEMINIMAPTOOLTIP = "Nasconde l'icona di questa UI dalla minimappa",
+			},
+			[3] = {
+				HEADBUTTON = "Azioni",
+				HEADTITLE = "Blocco | Coda",
+				ENABLED = "Abilitato",
+				NAME = "Nome",
+				DESC = "Nota",
+				ICON = "Icona",
+				SETBLOCKER = "Setta\nBlocco",
+				SETBLOCKERTOOLTIP = "Blocca l'azione selezionata da esser eseguta nella rotazione\nNon verrá usata in nessuna condizione\n\nTastodestro: Crea macro",
+				SETQUEUE = "Set\nCoda",
+				SETQUEUETOOLTIP = "Accoda l'azione selezionata alla rotazione\nUtilizza l'azione appena é possibile\n\nTastodestro: Crea macro",
+				BLOCKED = "|cffff0000Bloccato: |r",
+				UNBLOCKED = "|cff00ff00Sbloccato: |r",
+				KEY = "[Chiave in tabella: ",
+				KEYTOOLTIP = "Usa questa chiave nel tab MSG",
+				ISFORBIDDENFORQUEUE = "non può esser messo in coda!",
+				ISQUEUEDALREADY = "esiste giá nella coda!",
+				QUEUED = "|cff00ff00Nella Coda: |r",
+				QUEUEREMOVED = "|cffff0000Rimosso dalla Coda: |r",
+				QUEUEPRIORITY = " ha prioritá №",
+				QUEUEBLOCKED = "|cffff0000non può essere in Coda perché é giá bloccato!|r",
+				SELECTIONERROR = "|cffff0000Non hai selezionato una riga!|r",
+				CHECKSPELLLVL = "[All specs] Verifica il livello richiesto",
+				CHECKSPELLLVLTOOLTIP = "Tutti gli spell non disponibilit dat il livello del personaggio sono bloccati\nTorneranno disponibili non appena il personaggio raggiunge il livello richiesto\n\nNota: Potrebbe causare un intenso uso di CPU\nTastodestro: Crea macro",
+				CHECKSPELLLVLERROR = "Giá inizializzato!",
+				CHECKSPELLLVLERRORMAXLVL = "Sel al livello MAX possibile!",
+				CHECKSPELLLVLMACRONAME = "VerificaLivello",
+				LUAAPPLIED = "LUA code é applicato a ",
+				LUAREMOVED = "LUA code é rimosso da ",
+			},
+			[4] = {
+				HEADBUTTON = "Interruzioni",	
+				HEADTITLE = "Profile per le interruzioni",					
+				ID = "ID Incantesimo",
+				NAME = "Nome Incantesimo",
+				ICON = "Icona",
+				CONFIGPANEL = "'Aggiungi Interruzione' Configurazione",
+				INTERRUPTFRONTSTRINGTITLE = "Seleziona lista:",
+				INTERRUPTTOOLTIP = "[Principale] per bersagli @target/@mouseover/@targettarget\n[Cura] per bersagli @arena1-3 (curatore)\n[PvP] per bersagli @arena1-3 (Controllo bersagli)\n\nPuoi settare differenti timer per [Cura] and [PvP] (non un questa UI)",
+				INPUTBOXTITLE = "Srivi Incantesimo :",					
+				INPUTBOXTOOLTIP = "ESCAPE (ESC): cancella incantesimo e rimuove il focus",
+				INTEGERERROR = "Errore Integer overflow > tentativo di memorizzare piú di 7 numeri", 
+				SEARCH = "Cerca per nome o ID ",
+				TARGETMOUSEOVERLIST = "[Principale] Lista",
+				TARGETMOUSEOVERLISTTOOLTIP = "Non selezionato: interroperá QUALSIASI incantesimo a caso\nSelezionato: interromperá solo scecifiche liste se @target/@mouseover/@targettarget\nNota: in PvP interromperá gli spell della lista se selezionato, altrimeti solo healers se moriranno in meno di 3-4 sec!\n\n@mouseover/@targettarget sono opzionali e dipendono dalle selezioni fatte nella sezione spec\n\nTastodestro: Crea macro",
+				KICKTARGETMOUSEOVER = "[Principale] Interruzioni\nAbilitato",					
+				KICKTARGETMOUSEOVERTOOLTIP = "Non selezionato: @target/@mouseover le interruzioni non funzionano\nSelezionato: @target/@mouseover le interruzioni funzionano\n\nTastodestro: Crea macro",					
+				KICKHEALONLYHEALER = "[Cura] Solo curatori",					
+				KICKHEALONLYHEALERTOOLTIP = "Non selezionato: la lista sará valida per ogni specializzazione del bersaglio\n(e.g. Ench, Elem, SP, Retri)\nSelezionato: la lista sará valida solo per i bersagli curatori\n\nTastodestro: Crea macro",
+				KICKHEAL = "[Cura] Lista",
+				KICKHEALPRINT = "[Cura] Lista delle interruzioni",
+				KICKHEALTOOLTIP = "Non selezionato: @arena1-3 [Cura] lista custom non attiva\nSelezionato: @arena1-3 [Cura] lista custom attiva\n\nTastodestro: Crea macro",
+				KICKPVP = "[PvP] Lista",
+				KICKPVPPRINT = "[PvP] Lista delle interruzioni",
+				KICKPVPTOOLTIP = "Non selezionato: @arena1-3 [PvP] lista custom non attiva\nSelezionato: @arena1-3 [PvP] lista custom attiva\n\nTastodestro: Crea macro",	
+				KICKPVPONLYSMART = "[PvP] SMART",
+				KICKPVPONLYSMARTTOOLTIP = "Selezionato: interompe seguendo la logica definita nella configurazione del profilo. Esempio:\n1) Controllo a catena sul curatore\n2) Bersaglio amico (o tu) ha il raffica di buff con tempo residuo >4 sec\n3) Qualcuno muore in meno di 8 sec\n4) I punti vita tuoi (o @target) vengono considerati\nnon selezionato: interrompe sempre gli incantesimi nella lista senza ulteriori logiche\n\nNota: può causare un alto uso della CPU\nTastodestro: Crea macro",
+				ADDERROR = "|cffff0000Non hai specificato niente in 'Scrivi Incantesimo' o l'incantesimo non é stato trovato!|r",
+				ADD = "Aggiungi Interruzione",					
+				ADDTOOLTIP = "Aggiungi incantesimo indicato in 'Scrivi Incantesimo'\nalla lista selezionata",
+				REMOVE = "Rimuovi Interruzione",
+				REMOVETOOLTIP = "Rimuovi l'incantesimo alla riga selezionata della lista",
+			},
+			[5] = { 	
+				HEADBUTTON = "Auree",					
+				USETITLE = "[Each spec] Configurazione",
+				USEDISPEL = "Usa Dissoluzione",
+				USEPURGE = "Usa Epurazione",
+				USEEXPELENRAGE = "Usa Enrage",
+				HEADTITLE = "[Globale] Dissoluzione | Epurazione | Enrage",
+				MODE = "Modo:",
+				CATEGORY = "Categoria:",
+				POISON = "Dissolvi Veleni",
+				DISEASE = "Dissolvi Malattie",
+				CURSE = "Dissolvi Maledizioni",
+				MAGIC = "Dissolvi Magia",
+				MAGICMOVEMENT = "Dissolvi magia rallentamento/radici",
+				PURGEFRIENDLY = "Epura amico",
+				PURGEHIGH = "Epura nemico (alta prioritá)",
+				PURGELOW = "Epura nemico  (bassa prioritá)",
+				ENRAGE = "Expel Enrage",	
+				ROLE = "Ruolo",
+				ID = "ID",
+				NAME = "Nome",
+				DURATION = "Durata\n >",
+				STACKS = "Stacks\n >=",
+				ICON = "Icona",					
+				ROLETOOLTIP = "Il tuo ruolo per usarla",
+				DURATIONTOOLTIP = "Reazione all'aura se la durata é maggiore di (>) secondi specificati\nIMPORTANTE: Auree senza una durata come 'Favore Divino'\n(Paladino della luce) devono essere a 0. Questo indica che l'aura é presente!",
+				STACKSTOOLTIP = "Reazione all'aura se la durata é maggiore o eguale a (>=) degli stack specificati",									
+				BYID = "Utilizza ID\ninvece del nome",
+				BYIDTOOLTIP = "L'ID deve testare TUTTE gli incantesimi\nche hanno lo stesso nome, ma hanno diversi livelli\ncome 'Afflizione Instabile'",					
+				CANSTEALORPURGE = "Solo se può\nrubare o epurare",					
+				ONLYBEAR = "Solo se bersaglio\nin 'Forma D'Orso'",									
+				CONFIGPANEL = "'Aggiungi Aura' Configurazione",
+				ANY = "Qualsiasi",
+				HEALER = "Curatore",
+				DAMAGER = "Tank|Danno",
+				ADD = "Aggiungi Aura",					
+				REMOVE = "Rimuovi Aura",					
+			},				
+			[6] = {
+				HEADBUTTON = "Cursore",
+				HEADTITLE = "Interazione con mouse",
+				USETITLE = "[Spec Corrente] Configurazione pulsanti:",
+				USELEFT = "Utilizza click sinistro",
+				USELEFTTOOLTIP = "Utilizza macro /target mouseover che non é un click!\n\nTastodestro: Crea macro",
+				USERIGHT = "Utilizza click destro",
+				LUATOOLTIP = "Per fare riferimento all'unitá da controllare, utilizza 'thisunit' senza virgolette\nSe usi LUA nella categoria 'GameToolTip' questa unitaá non é allora valida\nIl codice deve avere un ritorno logico (vero) perche sia attivato\nQuesto codice ha setfenv questo significa che non hai bisogno di usare .Env or TMW.CNDT.Env.\n\nSe vuoi rimuovere il codice predefinito, devi scrivere 'return true' senza virgolette\ninvece di una semplice eliminazione",							
+				BUTTON = "Click",
+				NAME = "Nome",
+				LEFT = "Click sinistro",
+				RIGHT = "Click Destro",
+				ISTOTEM = "IsTotem",
+				ISTOTEMTOOLTIP = "Se abilitato, controlla @mouseover per il tipo 'Totem' con il nome specificato\nPreviene anche il cast nel caso il totem @target sia giá presente",				
+				INPUTTITLE = "inserisci il nome dell'oggetto (nella lingua di gioco!)", 
+				INPUT = "Questo inserimento non é influenzato da maiuscole|minuscole",
+				ADD = "Aggiungi",
+				REMOVE = "Rimuovi",
+				-- GlobalFactory default name preset in lower case!					
+				SPIRITLINKTOTEM = "totem del collegamento spirituale",
+				HEALINGTIDETOTEM = "totem della marea curativa",
+				CAPACITORTOTEM = "totem della condensazione elettrica",					
+				SKYFURYTOTEM = "totem della furia del cielo",					
+				ANCESTRALPROTECTIONTOTEM = "totem del risveglio ancestrale",					
+				COUNTERSTRIKETOTEM = "totem del controassalto",
+				-- Optional totems
+				TREMORTOTEM = "totem del tremore",
+				GROUNDINGTOTEM = "totem dell'adescamento magico",
+				WINDRUSHTOTEM = "totem del soffio di vento",
+				EARTHBINDTOTEM = "totem del vincolo terrestre",
+				-- GameToolTips
+				ALLIANCEFLAG = "bandiera dell'alleanza",
+				HORDEFLAG = "bandiera dell'orda",
+				NETHERSTORMFLAG = "bandiera di landa fatua",
+				ORBOFPOWER = "globo del potere",
+			},
+			[7] = {
+				HEADTITLE = "Messaggio di sistema",
+				USETITLE = "[Spec Corrente]",
+				MSG = "MSG Sistema",
+				MSGTOOLTIP = "Selezionato: attivo\nNon selezionato: non attivo\n\nTastodestro: Crea macro",
+				DISABLERETOGGLE = "Blocca Coda Rimuovi",
+				DISABLERETOGGLETOOLTIP = "Previeni l'eliminazione di un incantesimo dalla coda con un messaggio ripetuto\nEsempio, consente di inviare una macro spam senza rischiare eliminazioni non volute\n\nTastodestro: Crea macro",
+				MACRO = "Macro per il tuo gruppo:",
+				MACROTOOLTIP = "Questo è ciò che dovrebbe alla chat di gruppo per attivare l'azione assegnata ad una chiave specifica\nPer indirizzare un'azione a una unitá specifica, aggiungerlo alla macro o lasciala così com'è per l'utilizzo in rotazione singola/AoE\nSupportati: raid1-40, party1-2, giocatore, arena1-3\nSOLO UN'UNITÀ PER MESSAGGIO!\n\nI tuoi compagni possono usare anche loro macro, ma fai attenzione, devono essere macro allineate!",
+				KEY = "Chiave",
+				KEYERROR = "Non hai specificato una chiave!",
+				KEYERRORNOEXIST = "la chiave non esite!",
+				KEYTOOLTIP = "Devi specificare una chiave per vincolare l'azione\nPuoi verificare|leggere lachiave nel Tab 'Azioni'",
+				MATCHERROR = "il nome che stai usando esiste giá, usane un altro!",				
+				SOURCE = "Il nomme della persona che ha detto",
+				WHOSAID = "Che ha detto",
+				SOURCETOOLTIP = "Opzionale. Puoi lasciarlo vuoto (raccomndato)\nSe vuoi configurarlo, il nome deve essere esattamente lo stesso indicato nella chat del gruppo",
+				NAME = "Contiene un messaggio",
+				ICON = "Icona",
+				INPUT = "Inserire una frase da usare come messaggio di sistema",
+				INPUTTITLE = "Frase",
+				INPUTERROR = "Non hai inserito una frase!",
+				INPUTTOOLTIP = "La frase verrà attivata in corrispondenza ai riscontri nella chat di gruppo(/party)\nNon é sensibile alle maiuscole\nIdentifica pattern, ciò significa che una frase scritta in chat con la combinazione delle parole raid, party, arena, party o giocatore\nattiva l'azione nel meta slot desiderato\nNon hai bisogno di impostare i pattern elencati, sono usati on top alla macro\nIf non trova nessun pattern, allora verra usato lo slot per rotazione Singola e ad area",				
+			},
+		},
+	},
 }
 local function GetLocalization()
 	CL = TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or Localization[GameLocale] and GameLocale or "enUS"
 	L = Localization[CL] or Localization["enUS"]
+	-- This need to prevent any errors caused by missed keys 
+	setmetatable(L, { __index = Localization["enUS"] })
 end 
 
 --------------------------------------
@@ -1780,6 +2059,10 @@ local GlobalFactory = {
 				[233395] = { dur = 1 },
 			},
 			Enrage = {
+				-- Berserker Rage
+				[18499] = { dur = 1 },
+				-- Enrage
+				[184361] = { dur = 1 },
 			},
 		},
 	},
@@ -2938,7 +3221,7 @@ local function ActionDB_Initialization()
 				if FPS < 0 then 
 					local Framerate = GetFramerate() or 0
 					if Framerate > 0 and Framerate < 100 then
-						FPS = (100 - Framerate) / 800
+						FPS = (100 - Framerate) / 900
 						if FPS < 0.04 then 
 							FPS = 0.04
 						end 
@@ -3022,9 +3305,9 @@ local function ActionDB_Initialization()
 			end 
 		end
 		
-		--TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", UnlockExtremelyInterval) -- not sure if it' really need but why not if for some reason TMW core will caused issues
+		TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", function() UnlockExtremelyInterval(true) end) 
 
-		UnlockExtremelyInterval(true)
+		--UnlockExtremelyInterval(true)
 		
 		local isIconEditorHooked
 		hooksecurefunc(TMW, "LockToggle", function() 
@@ -3579,7 +3862,7 @@ function Action.GetToggle(n, toggle)
 		if toggle == "DisableMinimap" or toggle == "DisableRotationDisplay" then 
 			return true
 		end 
-		Action.Print(TMW.db:GetCurrentProfile() .. "  " .. L["NOSUPPORT"] .. ". Toggle: [" .. (n or "") .. "] " ..toggle)
+		Action.Print(TMW.db:GetCurrentProfile() .. " - Toggle: [" .. (n or "") .. "] " .. toggle .. " " .. (L and L["NOSUPPORT"] or ""))
 		return
 	end 
 	
@@ -3733,8 +4016,8 @@ local function UpdateChat(...)
 	local msg, _, _, sname = ... 
 	msg = msg:lower()
 	for Name in pairs(msgList) do 
-		if msgList[Name].Enabled and msg:match(Name) and (not msgList[Name].Source or msgList[Name].Source == sname) then  			
-			local units = { "raid%d+", "party%d+", "arena%d+", "player" }
+		if msgList[Name].Enabled and msg:match(Name) and (not msgList[Name].Source or msgList[Name].Source == sname) and Action[Env.PlayerSpec][msgList[Name].Key] then  			
+			local units = { "raid%d+", "party%d+", "arena%d+", "player", "target", "focus" }
 			local unit
 			for j = 1, #units do 
 				unit = msg:match(units[j])
@@ -3745,11 +4028,13 @@ local function UpdateChat(...)
 			
 			if unit then 
 				if RunLua(msgList[Name].LUA, unit) then 
+					-- Note: Regarding "player" unit here is a lot of profiles which don't support slot 6 and mostly 6 slot is valid for healer which has different @target always 
+					-- Since damager / tank always has @target an enemy then "player" will be applied even if spell will be launched in slot 3-4 
 					if unit:match("raid") then 
-						local raidunits = { { u = "player", meta = 6 }, { u = "party1", meta = 7 }, { u = "party2", meta = 8} }					
+						local raidunits = { { u = "player", meta = Env.IamHealer and 6 or nil }, { u = "party1", meta = 7 }, { u = "party2", meta = 8} }					
 						for j = 1, #raidunits do 
 							if UnitIsUnit(unit, raidunits[j].u) then 							
-								Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = raidunits[j].meta })							
+								Action.MacroQueue(msgList[Name].Key, { Unit = raidunits[j].u, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = raidunits[j].meta })							
 								break 
 							end 
 						end 					
@@ -3768,12 +4053,14 @@ local function UpdateChat(...)
 							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 8 })
 						end 
 					elseif unit == "player" then 
-						Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 6 })
+						Action.MacroQueue(msgList[Name].Key, { Unit = "player", Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = Env.IamHealer and 6 or nil })
+					else 
+						Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
 					end 
 				end 
-			elseif not msgList[Name].LUA or RunLua(msgList[Name].LUA, Action[Env.PlayerSpec][msgList[Name].Key].Type == "Spell" and IsAttackSpell(Action[Env.PlayerSpec][msgList[Name].Key]:Info()) and "target" or "player") then 
-				Action.MacroQueue(msgList[Name].Key, { Value = msgList[Name].DisableReToggle == true and true or nil })
-			end 			
+			elseif not msgList[Name].LUA or RunLua(msgList[Name].LUA, unit or "target") then
+				Action.MacroQueue(msgList[Name].Key, { Value = msgList[Name].DisableReToggle == true and true or nil })				 
+			end	
 		end        
     end  
 end 
@@ -4804,7 +5091,7 @@ function Action.ToggleMainUI()
 				local data = {}
 				if Action[specID] then 
 					for k in pairs(Action[specID]) do 
-						if type(Action[specID][k]) ~= "function" then 
+						if type(Action[specID][k]) ~= "function" and not Action[specID][k].Hidden then 
 							local Enabled = "True"
 							if Action[specID][k]:IsBlocked() then 
 								Enabled = "False"
@@ -6831,7 +7118,7 @@ local GetSpellTexture, GetSpellLink, GetSpellInfo = TMW.GetSpellTexture, GetSpel
 local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
 local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
 
-local UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitCastingInfo, UnitChannelInfo, UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
+local UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
 local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
 local ItemHasRange = ItemHasRange
@@ -6926,7 +7213,7 @@ end
 function Action:GetColoredItemTexture()
     return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, self:GetItemIcon()
 end 
---- Item API ( + :IsInRange(unit) )
+--- Item API ( + :IsInRange(unit) by TMW Core )
 function Action:GetItemCooldown()
 	local start, duration, enable = self:GetCooldown()
 	return enable ~= 0 and (duration == 0 and 0 or duration - (TMW.time - start)) or -1
@@ -6934,6 +7221,10 @@ end
 function Action:IsTrinketON()
 	-- This also checks equipment (in idea because slot return ID which we compare)
 	return Env.Item(13):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[1] or Env.Item(14):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[2]
+end 
+--- Item API by slots 
+function Action.SlotTrinketIsReady(slot, unit, itemType)
+	return Action.GetToggle(1, "Trinkets")[slot] and Env.Item(slot):IsUsable(unit) and ( not itemType or itemType == "DEFF" and Env.Item(slot):IsDEFF() or itemType == "DPS" and Env.Item(slot):IsDPS() )
 end 
 
 --- [[  CREATION  ]]
@@ -6948,6 +7239,7 @@ function Action.Create(attributes)
 			QueueForbidden (boolean) uses to preset for action fixed queue valid (default true for type Potion, Trinkets, Item)
 			Texture (number) valid only for spellID|itemID (if Type is Spell|Item)
 			MetaSlot (number) allows set fixed position for action whenever it will be tried to set in queue 
+			Hidden (boolean) allows to hide from UI action 
 	]]
 	local s = {
 		ID = attributes.ID,
@@ -6955,6 +7247,7 @@ function Action.Create(attributes)
 		Desc = attributes.Desc or "",
 		QueueForbidden = attributes.QueueForbidden, 
 		MetaSlot = attributes.MetaSlot,
+		Hidden = attributes.Hidden,
 	}
 	if attributes.Type == "Spell" then 
 		s = setmetatable(s, {__index = Action})	
@@ -7197,6 +7490,7 @@ function Action.QueueEventReset()
 	Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
 	Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
 	Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")	
+	Listener:Remove("Queue_Events", "PLAYER_ENTERING_WORLD")
 end 
 
 function Action:IsQueued()
@@ -7245,15 +7539,14 @@ function Action:SetQueue(args)
 	local Identify = GetTableKeyIdentify(self)
 	if self.QueueForbidden then 
         Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
-        return 
-	--[[ Let for user allow run blocked actions whenever he wants, anyway why not 
-	elseif self:IsBlocked() and not self.Queued then 
-		if not args.Silence then 
-			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
-		end 
-        return 
-	]]
-    end 
+        return 	 
+	-- Let for user allow run blocked actions whenever he wants, anyway why not 
+	--elseif self:IsBlocked() and not self.Queued then 
+		--if not args.Silence then 
+			--Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
+		--end 
+        --return 
+	end
 	
 	if args.Value ~= nil and self.Queued == args.Value then 
 		if not args.Silence then 
@@ -7289,6 +7582,7 @@ function Action:SetQueue(args)
 					Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
 					Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
 					Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")
+					Listener:Remove("Queue_Events", "PLAYER_ENTERING_WORLD")
 					return 
 				end 				
 			end 
@@ -7326,6 +7620,7 @@ function Action:SetQueue(args)
 	Listener:Add("Queue_Events", "PLAYER_TALENT_UPDATE", Action.QueueEventReset)
 	Listener:Add("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED", Action.QueueEventReset)
 	Listener:Add("Queue_Events", "PLAYER_EQUIPMENT_CHANGED", Action.QueueEventReset)
+	Listener:Add("Queue_Events", "PLAYER_ENTERING_WORLD", Action.QueueEventReset)
 end
 
 function Action.ShowQueue(icon)
@@ -7344,10 +7639,10 @@ end
 function Action.IsQueueReady(meta)
     if #Action.Data.Q > 0 and IsThisMeta(meta) then 
         if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then 
-			if not ItemHasRange(Action.Data.Q[1].ID) or Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested
+			if Action.Data.Q[1].Unit == "player" or not ItemHasRange(Action.Data.Q[1].ID) or Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested
 				local cooldown = Action.Data.Q[1]:GetItemCooldown()
 				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
-				return custom and cooldown >= 0 and cooldown <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.02)      
+				return cooldown >= 0 and cooldown <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.02) and custom     
 			end
         elseif Action.Data.Q[1].Type == "Spell" then  
             if Action.Data.Q[1].Unit == "player" or not SpellHasRange(Action.Data.Q[1]:Info()) or Env.SpellInRange(Action.Data.Q[1].Unit or "target", Action.Data.Q[1].ID) then
@@ -7377,29 +7672,49 @@ function Action:IsCastable(thisunit, skipRange)
 	-- Checks toggle, cooldown and range 
 	return 	(
 				self.Type == "Spell" and 
+				not SpellLevel.IsBlocked(self) and
 				-- Heart of Azeroth toggle 
 				( self.SubType ~= "HeartOfAzeroth" or Action.GetToggle(1, "HeartOfAzeroth") ) and 
 				IsUsableSpell(self.ID) and
 				Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-				( skipRange or (thisunit and UnitIsUnit(thisunit, "player")) or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit or "target", self.ID) ) 
+				( skipRange or not thisunit or thisunit == "player" or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit, self.ID) ) 
 			) or 
 			(
-				self.Type ~= "Spell" and 								
-				-- Trinket toggles 
-				( self.Type ~= "Trinket" or self:IsTrinketON() ) and 
-				-- Potion toggle 
-				( self.Type ~= "Potion" or Action.GetToggle(1, "Potion") ) and 
+				self.Type == "Trinket" and 
+				self:IsTrinketON() and 
 				self:GetItemCooldown() == 0 and 
-				( skipRange or (thisunit and UnitIsUnit(thisunit, "player")) or not ItemHasRange(self.ID) or self:IsInRange(thisunit or "target") )
-			)
+				( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
+			) or 
+			(
+				self.Type == "Potion" and 
+				not Env.InPvP() and 
+				Action.GetToggle(1, "Potion") and 
+				self:GetCount() > 0 and 
+				self:GetItemCooldown() == 0 
+			) or 
+			(
+				self.Type == "Item" and 
+				self:GetCount() > 0 and 
+				self:GetItemCooldown() == 0 and 
+				( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
+			) 
 end
 
 function Action:IsReady(thisunit, skipRange)
+	-- For [3-4, 6-8]
     return 	not self:IsBlocked() and 
 			not self:IsBlockedByQueue() and 
-			not SpellLevel.IsBlocked(self) and 
-			RunLua(self:GetLUA(), thisunit) and 
-			self:IsCastable(thisunit, skipRange)
+			self:IsCastable(thisunit, skipRange) and 
+			RunLua(self:GetLUA(), thisunit)  			
+end 
+
+function Action:IsReadyP(thisunit, skipRange, skipLua)
+	-- For other purposes
+    return 	self:IsCastable(thisunit, skipRange) and 
+			(
+				skipLua or 
+				RunLua(self:GetLUA(), thisunit)  			
+			)
 end 
 
 --- [[ INTERRUPTS ]]
@@ -7415,14 +7730,14 @@ function Action.InterruptEnabled(list, spellName)
 end 
 
 local function SmartInterrupt()
-	local HealerInCC = Env.FriendlyTeam("HEALER"):GetCC()
-	return (HealerInCC > 0 and HealerInCC < Env.GCD() + Env.CurrentTimeGCD()) or Env.FriendlyTeam():GetBuffs("DamageBuffs") > 4 or Env.Unit("player"):HasBuffs("DamageBuffs") > 4 or Env.FriendlyTeam():GetTTD(1, 8) or Env.Unit("target"):IsExecuted() or Env.Unit("player"):IsExecuted() 
+	local HealerInCC = not Env.IamHealer and Env.FriendlyTeam("HEALER"):GetCC() or 0
+	return (HealerInCC > 0 and HealerInCC < Env.GCD() + Env.CurrentTimeGCD()) or Env.FriendlyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4 or Env.Unit("player"):HasBuffs("DamageBuffs") > 4 or Env.FriendlyTeam():GetTTD(1, 8) or Env.Unit("target"):IsExecuted() or Env.Unit("player"):IsExecuted() or Env.EnemyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4
 end 
 
-function Action.InterruptIsValid(unit, list)
+function Action.InterruptIsValid(unit, list, ignoreToggle)
 	-- list as "PvETargetMouseover" and "PvPTargetMouseover" must be always "TargetMouseover"
-	if Action.InterruptIsON(list) then 	
-		local spellName = UnitCastingInfo(unit) or UnitChannelInfo(unit)
+	if ignoreToggle or Action.InterruptIsON(list) then 	
+		local spellName = Env.Unit(unit, 0):IsCasting()
 		if spellName then 
 			if list == "TargetMouseover" then 
 				list = (Env.InPvP() and "PvP" or "PvE") .. "TargetMouseover"
@@ -7593,14 +7908,9 @@ function Action.Hide(icon)
 	end 
 end 
 
-function Action.ShowTrinket(icon, slot)
+function Action.SlotTrinketShow(slot, icon)
 	local textureID = ((slot == 13 or slot == 1) and ACTION_CONST_TRINKET1) or ACTION_CONST_TRINKET2
 	Action.TMWAPL(icon, "texture", textureID)
-	return true 
-end 
-
-function Action.ShowPotion(icon)
-	Action.TMWAPL(icon, "texture", ACTION_CONST_POTION)
 	return true 
 end 
 
@@ -7728,7 +8038,7 @@ local PauseChecks = Cache:WrapStatic(function()
 		return "texture", 975744
 	end 
 
-	if Action.GetToggle(1, "CheckCombat") and CombatTime("player") == 0 and CombatTime("target") == 0 and not Env.global_invisible() then 
+	if Action.GetToggle(1, "CheckCombat") and CombatTime("player") == 0 and CombatTime("target") == 0 and not Env.global_invisible() and not Action.BossMods_IsPulling() then -- exception Stealthed and DBM pulling event 
 		return "texture", 134376
 	end 	
 	
@@ -7750,6 +8060,7 @@ function Action.PauseChecks()
 end 
 Action.PauseChecks = Action.MakeFunctionCachedStatic(Action.PauseChecks)
 
+SmartInterrupt = Action.MakeFunctionCachedStatic(SmartInterrupt)
 -- MOUSE 
 MouseHasFrame = Cache:WrapStatic(function()
     local focus = UnitExists("mouseover") and GetMouseFocus()
@@ -7763,7 +8074,7 @@ end)
 --------------------------------------
 -- ROTATION
 --------------------------------------
-function Action.IsUnitHeal(thisunit)
+function Action.IsUnitFriendly(thisunit)
 	if thisunit == "mouseover" then 
 		return 	Action.GetToggle(2, "mouseover") and 
 				MouseHasFrame() and
@@ -7777,9 +8088,9 @@ function Action.IsUnitHeal(thisunit)
 				not Env.Unit(thisunit):IsEnemy() 
 	end 
 end 
-Action.IsUnitHeal = Action.MakeFunctionCachedDynamic(Action.IsUnitHeal, 0.001)
+Action.IsUnitFriendly = Action.MakeFunctionCachedDynamic(Action.IsUnitFriendly)
 
-function Action.IsUnitDMG(thisunit)
+function Action.IsUnitEnemy(thisunit)
 	if thisunit == "mouseover" then 
 		return  Action.GetToggle(2, "mouseover") and 
 				Env.Unit("mouseover"):IsEnemy() 
@@ -7798,26 +8109,63 @@ function Action.IsUnitDMG(thisunit)
 	else
 		return 	(
 					not Action.GetToggle(2, "mouseover") or 
-					(not MouseHasFrame() and not Env.Unit("mouseover"):IsEnemy())
+					not MouseHasFrame()
 				) and 
 				Env.Unit(thisunit):IsEnemy() 
 	end
 end 
-Action.IsUnitDMG = Action.MakeFunctionCachedDynamic(Action.IsUnitDMG, 0.001)
+Action.IsUnitEnemy = Action.MakeFunctionCachedDynamic(Action.IsUnitEnemy)
 
-function Action:CanHeal(thisunit)
-	return not thisunit or not Env.InPvP() or Env.Unit(thisunit):DeBuffCyclone() <= (self.Type ~= "Spell" and 0 or Env.CastTime(self.ID))
+function Action:AbsentImun(thisunit, imunBuffs, skipKarma)
+	if not thisunit or not Env.InPvP() or not UnitIsPlayer(thisunit) then 
+		return true 
+	else 
+		local MinDur = type(self) ~= "table" and 0 or self.Type ~= "Spell" and 0 or (select(4, self:Info()) or 0) / 1000 
+		if MinDur > 0 then 
+			MinDur = MinDur + Env.CurrentTimeGCD()
+		end
+		
+		if Env.Unit(thisunit):DeBuffCyclone() > MinDur then 
+			return false 
+		end 
+		
+		if imunBuffs then 
+			if type(imunBuffs) == "table" then 
+				for i = 1, #imunBuffs do 
+					if Env.Unit(thisunit):HasBuffs(imunBuffs[i]) > MinDur then 
+						return false 
+					end 
+				end 
+			elseif Env.Unit(thisunit):HasBuffs(imunBuffs) > MinDur then
+				return false 
+			end 
+		end 
+		
+		if not skipKarma and Env.Unit(thisunit):IsEnemy() and not Env.Unit(thisunit):WithOutKarmed() then 
+			return false 
+		end 
+
+		return true
+	end 
 end 
 
-function Action:CanDMG(thisunit)
-	return not thisunit or not Env.InPvP() or (Env.Unit(thisunit):DeBuffCyclone() <= (self.Type ~= "Spell" and 0 or Env.CastTime(self.ID)) and Env.Unit(thisunit):WithOutKarmed())
+function Action.BossMods_IsBossPull(unit, counter)
+	if not Action.GetToggle(1, "DBM") then 
+		return true 
+	else  
+		return (Env.Unit(unit):IsBoss() or Env.IamHealer and Env.Unit(unit .. "target"):IsBoss()) and Env.DBM_PullTimer() > 0 and Env.DBM_PullTimer() <= counter
+	end 
+end 
+
+function Action.BossMods_IsPulling()
+	return Action.GetToggle(1, "DBM") and Env.DBM_PullTimer() > 0
 end 
 
 function Action.BurstIsON(thisunit)
 	local Current = Action.GetToggle(1, "Burst")
 	if Current == "Auto" then  
 		local unit = thisunit or "target"
-		return UnitIsPlayer(unit) or Env.UNITBoss(unit)
+		return UnitIsPlayer(unit) or Env.Unit(unit):IsBoss()
 	elseif Current == "Everything" then 
 		return true 
 	end 		
@@ -7936,20 +8284,17 @@ function Action:AutoRacial(unit, isReadyCheck)
 		
 		-- Damaging  
 		if 	Action.PlayerRace == "LightforgedDraenei" and 
+			LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
+			Action.LossOfControlIsMissed("SILENCE") and 
 			(
 				(
 					unit and 	
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 5  and 
-					self:CanDMG(unit) and  					
+					self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"}) and  					
 					(
 						not Env.InPvP() or 
-						not UnitIsPlayer(unit) or 
-						(					
-							Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
-							Env.Unit(unit):HasBuffs("DamageMagicImun") == 0 and 
-							not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-						)
+						not Env.EnemyTeam("HEALER"):IsBreakAble(5)						
 					)
 				) or 
 				-- More advanced check (can be used on healers for example without target enemy)
@@ -7969,15 +8314,28 @@ function Action:AutoRacial(unit, isReadyCheck)
 			return true 
 		end 
 		
-		if 	Action.PlayerRace == "Nightborne" and 
+		if 	Action.PlayerRace == "Nightborne" and
+			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+			Action.LossOfControlIsMissed("SILENCE") and		
 			(
 				(
 					unit and 	
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 5 and 
-					Env.UNITCurrentSpeed(thisunit) >= 100
+					Env.UNITCurrentSpeed(thisunit) >= 100 and 
+					self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"})
 				) or 
-				AoE(3, 5)
+				(
+					(
+						not unit or 
+						not Env.Unit(unit):IsEnemy() 
+					) and 
+					AoE(3, 5)
+				)
+			) and 
+			(
+				not Env.InPvP() or 
+				not Env.EnemyTeam("HEALER"):IsBreakAble(5)
 			)
 		then 
 			return true 
@@ -7985,6 +8343,8 @@ function Action:AutoRacial(unit, isReadyCheck)
 		
 		-- Purge 
 		if 	Action.PlayerRace == "BloodElf" and 
+			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+			Action.LossOfControlIsMissed("SILENCE") and
 			(	
 				(
 					Env.InPvP() and 
@@ -8013,7 +8373,8 @@ function Action:AutoRacial(unit, isReadyCheck)
 				unit = "player" 
 			end 
 			
-			if 	(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:CanHeal(unit))) and 
+			if 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and Action.LossOfControlIsMissed("SILENCE") and 
+				(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))) and 
 				UnitHealthMax(unit) - UnitHealth(unit) >= UnitHealthMax("player") * 0.2 + (getHEAL(unit) * 5) + UnitGetIncomingHeals(unit) - (incdmg(unit) * 5) 
 			then 
 				return true 
@@ -8021,6 +8382,8 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 
 		
 		if 	Action.PlayerRace == "ZandalariTroll" and 
+			LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
+			Action.LossOfControlIsMissed("SILENCE") and 
 			Env.UNITStaying("player") > 1 and 
 			(				
 				incdmg("player") == 0 or 
@@ -8038,18 +8401,10 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 
 				
 		-- Iterrupts 
-		if 	Action.PlayerRace == "Pandaren" and unit and 			
+		if 	Action.PlayerRace == "Pandaren" and unit and 	
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
-			(
-				not Env.InPvP() or 
-				not UnitIsPlayer(unit) or 
-				(
-					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
-					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
-					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 
-				)
-			)
+			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true 			  
 		end 
@@ -8057,16 +8412,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 		if 	Action.PlayerRace == "KulTiran" and unit and 	
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
-			(
-				not Env.InPvP() or 
-				not UnitIsPlayer(unit) or 
-				(
-					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
-					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
-					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 
-					-- I don't think there is need stun imun check because flyout should work 
-				)
-			)
+			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true			  
 		end 	
@@ -8078,16 +8424,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 8 and 					
 					select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.7 and 
-					(
-						not Env.InPvP() or 
-						not UnitIsPlayer(unit) or 
-						(					
-							Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
-							Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
-							Env.Unit(unit):HasBuffs("CCTotalImun") == 0 and 
-							Env.Unit(unit):HasBuffs("StunImun") == 0
-						)
-					)
+					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 				) or 
 				-- More advanced check (can be used on healers for example without target enemy)
 				(
@@ -8104,17 +8441,8 @@ function Action:AutoRacial(unit, isReadyCheck)
 
 		if 	Action.PlayerRace == "HighmountainTauren" and unit and 
 			Env.Unit(unit):GetRange() <= 6 and 
-			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and 
-			(
-				not Env.InPvP() or 
-				not UnitIsPlayer(unit) or 
-				(					
-					Env.Unit(unit):HasBuffs("TotalImun") == 0 and 
-					Env.Unit(unit):HasBuffs("DamagePhysImun") == 0 and 
-					Env.Unit(unit):HasBuffs("CCTotalImun") == 0 and 
-					Env.Unit(unit):HasBuffs("StunImun") == 0
-				)
-			)
+			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and
+			self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
 		then
 			return true				  
 		end 	
@@ -8127,6 +8455,16 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 		
 	end 
 	return false 	
+end 
+
+function Action:AutoRacialP(unit, isReadyCheck)
+	-- @return boolean 
+	-- Note: For other purposes, means custom
+	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
+		Action.PlayerRace = GetRaceBySpellName[self:Info()]
+		return true 
+	end 
+	return false 
 end 
 
 -- LOSS OF CONTROL 
@@ -8210,12 +8548,16 @@ end
 
 function Action.LossOfControlIsMissed(MustBeMissed)
 	local result = true
-	for i = 1, #MustBeMissed do 
-		if LossOfControlGet(MustBeMissed[i]) > 0 then 
-			result = false  
-			break 
+	if type(MustBeMissed) == "table" then 
+		for i = 1, #MustBeMissed do 
+			if LossOfControlGet(MustBeMissed[i]) > 0 then 
+				result = false  
+				break 
+			end
 		end
-	end
+	else
+		result = LossOfControlGet(MustBeMissed) == 0
+	end 
 	return result 
 end 
 

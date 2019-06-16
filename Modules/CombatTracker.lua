@@ -1,4 +1,3 @@
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -567,7 +566,7 @@ end
 
 function incdmg(unit)
     if UnitExists(unit) then
-        local pDMG = select(1, getDMG(unit))
+        local pDMG = getDMG(unit)
         return pDMG or 0
     end
     return 0
@@ -761,6 +760,12 @@ do
     LossOfControlCreate("SNARE")
     --- Human + DK Icebound|Lichborne
     LossOfControlCreate("STUN")
+	--- Draenei / LightforgedDraenei
+	LossOfControlCreate("SCHOOL_INTERRUPT", "HOLY", 0x2)
+	--- BloodElf / Nightborne
+	LossOfControlCreate("SCHOOL_INTERRUPT", "ARCANE", 0x40)
+	--- ZandalariTroll
+	LossOfControlCreate("SCHOOL_INTERRUPT", "NATURE", 0x8)
 end 
 
 Listener:Add('CombatTracker_Events', "LOSS_OF_CONTROL_UPDATE", LossOfControlUpdate)
