@@ -4971,6 +4971,7 @@ function Action.ToggleMainUI()
 				for element = 1, #Action.Data.ProfileUI[tab.name][specID][row] do 
 					local config = Action.Data.ProfileUI[tab.name][specID][row][element]	
 					local CL = (config.L and (TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and config.L[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or config.L[GameLocale] and GameLocale)) or "enUS"
+					local CTT = (config.TT and (TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and config.TT[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or config.TT[GameLocale] and GameLocale)) or "enUS"
 					local obj					
 					if config.E == "Label" then 
 						obj = StdUi:Label(tab.childs[spec], config.L.ANY or config.L[CL], config.S or 14)
@@ -4995,7 +4996,7 @@ function Action.ToggleMainUI()
 							end
 						end)
 						obj.Identify = { Type = config.E, Toggle = config.DB }
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)
 						if config.isDisabled then 
 							obj:Disable()
 						end 
@@ -5040,7 +5041,7 @@ function Action.ToggleMainUI()
 						obj.FontStringTitle = StdUi:FontString(obj, config.L.ANY or config.L[CL])
 						obj.text:SetJustifyH("CENTER")
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
 						if config.isDisabled then 
 							obj:Disable()
 						end 
@@ -5052,7 +5053,7 @@ function Action.ToggleMainUI()
 						if config.M then 
 							obj:SetScript("OnMouseUp", function(self, button, down)
 									if button == "RightButton" then 
-										CraftMacro( config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", ": "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
+										CraftMacro( config.L.ANY or config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", ": "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
 									end					
 							end)
 						end 
@@ -5068,7 +5069,7 @@ function Action.ToggleMainUI()
 						obj.Identify = { Type = config.E, Toggle = config.DB }
 						obj.FontStringTitle = StdUi:FontString(obj, (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID][config.DB] < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB] >= config.MAX and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB]))						
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CL])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)						
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)						
 					elseif config.E == "LayoutSpace" then	
 						obj = LayoutSpace(tab.childs[spec])
 					end 
