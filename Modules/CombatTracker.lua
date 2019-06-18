@@ -742,9 +742,9 @@ local function LossOfControlUpdate()
 					end 
                 end 
             end 
-        else
-            for name in pairs(LossOfControl) do 
-                if _G["LOSS_OF_CONTROL_DISPLAY_" .. name] == text then 
+        else 
+            for name, val in pairs(LossOfControl) do 
+                if type(val) ~=  "table" and _G["LOSS_OF_CONTROL_DISPLAY_" .. name] == text then 
                     -- Check that the user has requested the category that is active on the player.
                     isValidType = true
                     LossOfControl[locType] = (start or 0) + (duration or 0)
