@@ -2,15 +2,29 @@ local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
-local type, pairs, print = type, pairs, Action.Print
+local strlowerCache = TMW.strlowerCache
+local huge = math.huge
+
+local CL_TYPE_PLAYER = COMBATLOG_OBJECT_TYPE_PLAYER
+local CL_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE
+local CL_CONTROL_PLAYER = COMBATLOG_OBJECT_CONTROL_PLAYER
+
+local DRData = LibStub("DRData-1.0")
+
+local type, pairs, print, wipe, bitband, bitbxor = 
+	  type, pairs, Action.Print, wipe, bit.band, bit.bxor
 
 local UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs = 
-UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs
+	  UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs
 
-local GetNumEvents, GetSpellInfo = GetNumEvents, Action.GetSpellInfo
-local cLossOfControl = _G.C_LossOfControl
+local GetNumEvents, GetSpellInfo = 
+	  GetNumEvents, Action.GetSpellInfo
+	  
+local cLossOfControl = 
+  _G.C_LossOfControl
 
-local InCombatLockdown, CombatLogGetCurrentEventInfo = InCombatLockdown, CombatLogGetCurrentEventInfo
+local InCombatLockdown, CombatLogGetCurrentEventInfo = 
+	  InCombatLockdown, CombatLogGetCurrentEventInfo
 
 --- ============================ CONTENT ============================
 local Data = {}
@@ -83,6 +97,13 @@ local function addToData(GUID)
             spell_counter = {},
         }
     end
+end
+
+local function isEnemy(destFlags)
+	return bitband(destFlags, CL_REACTION_HOSTILE) == CL_REACTION_HOSTILE
+end 
+local function isPlayer(destFlags)
+	return bitband(destFlags, CL_TYPE_PLAYER) == CL_TYPE_PLAYER or bitband(destFlags, CL_CONTROL_PLAYER) == CL_CONTROL_PLAYER
 end
 
 --[[ This Logs the damage for every unit ]]
@@ -418,7 +439,7 @@ function getAbsorb(unit, spellID)
     return (not spellID and UnitGetTotalAbsorbs(unit)) or (spellID and Data[GUID] and Data[GUID].absorb_spells[GetSpellInfo(spellID)]["Amount"]) or 0
 end 
 
--- TTD
+--[[ Time To Die ]]
 function TimeToDieX(unit, p)
     if not unit then unit = "target" end;
     local ttd = UnitHealth(unit) - ( UnitHealthMax(unit) * (p / 100) )
@@ -458,7 +479,7 @@ function TimeToDieMagic(unit)
     return ttd
 end
 
--- SPELLS 
+--[[ SPELLS ]]
 function SpellAmount(unit, spellID)
     local GUID = UnitGUID(unit)
     return (Data[GUID] and Data[GUID].spell_value[spellID].Amount) or 0
@@ -488,61 +509,75 @@ function SpellCounter(UNIT, SPELL, byID)
     return timer
 end 
 
---- ============================= CORE ==============================
---[[ Mage Shrimmer Tracker ]]
-local oShrimmer = {}
+--[[ Mage Shrimmer/Blink Tracker ]]
 function GetShrimmer(unit)
-    local charges, cooldown = 2, 0
-    local GUID = UnitGUID(unit) 
-    if oShrimmer[GUID] then         
-        for k, v in pairs(oShrimmer[GUID]) do  
-            if TMW.time < v then
-                charges = charges - 1 
-                cooldown = v - TMW.time
-            end            
-        end 
-    end 
-    return charges, cooldown
+	-- Default has no charges (means never used so it can be just normal Blink which should return 0 as charges then)
+	local GUID = UnitGUID(unit) 
+    local charges, cooldown, summary_cooldown = 0, 0, 0    
+    if Data[GUID] then 
+		if Data[GUID].Shrimmer then
+			charges = 2
+			for i = #Data[GUID].Shrimmer, 1, -1 do
+				cooldown = Data[GUID].Shrimmer[i] - TMW.time
+				if cooldown > 0 then
+					charges = charges - 1
+					summary_cooldown = summary_cooldown + cooldown												
+				end            
+			end 			
+		elseif Data[GUID].Blink then 
+			cooldown = Data[GUID].Blink - TMW.time
+			if cooldown <= 0 then 
+				cooldown = 0 
+			else 
+				summary_cooldown = cooldown
+			end 
+		end 
+	end 
+    return charges, cooldown, summary_cooldown
 end 
 
-Listener:Add('Shrimmer_Events', 'COMBAT_LOG_EVENT_UNFILTERED', function(...)
-        local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _,_,_, spellID, spellName = CombatLogGetCurrentEventInfo()
-        if EVENT == "SPELL_CAST_SUCCESS" and spellID == 212653 then 
-            local cd = 0
-            if not oShrimmer[SourceGUID] then 
-                oShrimmer[SourceGUID] = {}
-            end 
-            for k, v in pairs(oShrimmer[SourceGUID]) do
-                if TMW.time < v then
-                    cd = v - TMW.time
-                end
-            end
-            
-            table.insert(oShrimmer[SourceGUID], TMW.time + 20 + cd)
-        end 
-end)
-
+--- ============================= CORE ==============================
 --[[ Combat Tracker ]]
 Listener:Add('CombatTracker_Events', 'COMBAT_LOG_EVENT_UNFILTERED', function(...)
-        local _, EVENT, _, SourceGUID, _,_,_, DestGUID = CombatLogGetCurrentEventInfo()
+        local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _, destFlags,_, spellID, spellName, _, auraType = CombatLogGetCurrentEventInfo()
         -- Add the unit to our data if we dont have it
         addToData(SourceGUID)
         addToData(DestGUID) 
         -- Triggers 
         if EVENTS[EVENT] then EVENTS[EVENT](...) end
+		-- On hostile flags
+		if isEnemy(destFlags) then 
+			-- PvP - Track Shrimmer on players 
+			if EVENT == "SPELL_CAST_SUCCESS" and Env.InPvP() and spellID == 212653 and isPlayer(destFlags) then 
+				local ShrimmerCD = 0
+				if not Data[SourceGUID].Shrimmer then 
+					Data[SourceGUID].Shrimmer = {}
+				end 		
+				
+				table.insert(Data[SourceGUID].Shrimmer, TMW.time + 20)
+				
+				-- Since it has only 2 charges by default need remove old ones 
+				if #Data[SourceGUID].Shrimmer > 2 then 
+					table.remove(Data[SourceGUID].Shrimmer, 1)
+				end 				
+			end 
+			-- PvP - Track Blink 1953
+			if EVENT == "SPELL_CAST_SUCCESS" and Env.InPvP() and spellName == GetSpellInfo(1953) and isPlayer(destFlags) then 
+				Data[SourceGUID].Blink = TMW.time + 15				
+			end 
+			
+			-- Diminishing (DR-Tracker)
+		end 
 end)
 
 Listener:Add('CombatTracker_Events', 'PLAYER_REGEN_ENABLED', function()
-        --if not InCombatLockdown() and not UnitAffectingCombat("player") then
-            wipe(Data)
-            wipe(oShrimmer)            
-        --end        
+        wipe(Data)                   
 end)
 
 Listener:Add('CombatTracker_Events', 'PLAYER_REGEN_DISABLED', function()
+		-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
         if TMW.time - SpellLastCast("player", Env.LastPlayerCastID) > 0.5 then 
             wipe(Data)
-            wipe(oShrimmer)
         end 
 end)
 
@@ -650,7 +685,7 @@ function LossOfControlCreate(locType, name, ...)
             LossOfControl[locType][name] = {}
         end 
         
-        LossOfControl[locType][name].hex = type(...) == "table" and bit.bxor(unpack(...)) or ...
+        LossOfControl[locType][name].hex = type(...) == "table" and bitbxor(unpack(...)) or ...
         LossOfControl[locType][name].result = 0
     else 
         if LossOfControl[locType] then 
@@ -701,7 +736,7 @@ local function LossOfControlUpdate()
             if LossOfControl[locType] and lockoutSchool and lockoutSchool ~= 0 then 
                 for name in pairs(LossOfControl[locType]) do
                     local hex = LossOfControl[locType][name].hex -- v.hex                    
-                    if hex and bit.band(lockoutSchool, hex) ~= 0 then
+                    if hex and bitband(lockoutSchool, hex) ~= 0 then
                         isValidType = true
                         LossOfControl[locType][name].result = (start or 0) + (duration or 0)
                     end
@@ -729,7 +764,7 @@ local function LossOfControlUpdate()
     end
 end
 
---- Create all locType (exception INVULNERABILITY, MAGICAL_IMMUNITY, TURN_UNDEAD)
+--- Create all locType (exception INVULNERABILITY, MAGICAL_IMMUNITY, TURN_UNDEAD) and schools HOLY, ARCANE, NATURE
 do 
 	LossOfControlCreate("DAZE")
 	LossOfControlCreate("DISTRACT")
