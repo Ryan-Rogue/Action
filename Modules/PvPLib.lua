@@ -2,17 +2,23 @@
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
+local A = Action 
+local LibRangeCheck = LibStub("LibRangeCheck-2.0")
 
-local tableexist, pairs, tostring = tableexist, pairs, tostring
-local IsInRaid, IsInGroup = IsInRaid, IsInGroup
+local next, pairs, tostring, tableexist, wipe = 
+	  next, pairs, tostring, tableexist, wipe 
+	  
+local IsInRaid, IsInGroup = 
+	  IsInRaid, IsInGroup
 
-local RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetSpellInfo, GetItemCooldown = 
-RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, Action.GetSpellInfo, GetItemCooldown
+local RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetItemCooldown, GetSpellInfo = 
+	  RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetItemCooldown, A.GetSpellInfo
 
-local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo = 
-UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo
+local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification = 
+	  UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification
 
-local GetSpecialization, GetSpecializationInfo = GetSpecialization, GetSpecializationInfo 
+local GetSpecialization, GetSpecializationInfo, GetNumClasses, GetClassInfo, GetNumSpecializationsForClassID, GetSpecializationInfoForClassID = 
+	  GetSpecialization, GetSpecializationInfo, GetNumClasses, GetClassInfo, GetNumSpecializationsForClassID, GetSpecializationInfoForClassID
 
 specNameToRole = {}
 for i = 1, GetNumClasses() do
@@ -48,8 +54,7 @@ function SPECS:UpdateUnitSpecs()
 				if Env.UnitSpecs then 
 					Env.UnitSpecs[name] = specID
 				end 
-				Env.ModifiedUnitSpecs[name] = specID
-				--print(Env.ModifiedUnitSpecs[name])
+				Env.ModifiedUnitSpecs[name] = specID				
 			end
 		end
 
@@ -1030,7 +1035,7 @@ Env.Unit = PseudoClass({
 	HasDeBuffs = Cache:Wrap(function(self, key, caster, byID)
         local value, duration = 0, 0
 		local UnitID = self.UnitID
-        if not Action.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
+        if not A.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
             value, duration = -1, -1
         else
             value, duration = Env.SortDeBuffs(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
@@ -1040,7 +1045,7 @@ Env.Unit = PseudoClass({
 	HasBuffs = Cache:Wrap(function(self, key, caster, byID)
 	        local UnitID = self.UnitID
 			local value, duration = 0, 0			
-	        if not Action.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
+	        if not A.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
 	            value, duration = -1, -1
 	        else
 	            value, duration = Env.Buffs(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
@@ -1731,7 +1736,7 @@ function Env.UNITMoving(unitID, mode)
 			end 
 			
 			if TMW.time - MoveCache[unitID][mode]["MovingTimeStamp"] > 0.25 then 
-                local range = Env.LibRangeCheck:GetRange(unitID) 
+                local range = LibRangeCheck:GetRange(unitID) 
                 MoveCache[unitID][mode]["MovingTimeStamp"] = TMW.time     			-- Reset
                 if range ~= MoveCache[unitID][mode]["MovingRangeStamp"] then 		-- Make snapshot only if range has been changed
                     if mode == "out" then 

@@ -7121,19 +7121,36 @@ function Action:OnInitialize()
 	SlashCmdList.ACTION = SlashCommands	
 end
 
+local HealerSpecs = {
+	[105] = true, 
+	[270] = true, 
+	[65] = true, 
+	[256] = true, 
+	[257] = true, 
+	[264] = true, 
+}
 function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
-	if not Action.IsInitialized or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") then
+	if event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player" then
 		return
 	end
-	-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
-	GlobalsRemap()	
-	Action.ReInit()
-	Action.LOSInit(true)
-	Action.ToggleMSG(true)	
+	
+	Env.PlayerSpec = GetSpecializationInfo(GetSpecialization())  
+    Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
+	
+	if Action.IsInitialized then 
+		-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
+		GlobalsRemap()	
+		Action.ReInit()
+		Action.LOSInit(true)
+		Action.ToggleMSG(true)	
+	end 
 end
 Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("PLAYER_LOGIN", "PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("UPDATE_INSTANCE_INFO", "PLAYER_SPECIALIZATION_CHANGED")
 
 --------------------------------------
 -- APL 

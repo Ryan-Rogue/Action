@@ -17,12 +17,8 @@ local type, pairs, print, wipe, bitband, bitbxor =
 local UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs = 
 	  UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs
 
-local GetNumEvents, GetSpellInfo = 
-	  GetNumEvents, Action.GetSpellInfo
+local GetSpellInfo = Action.GetSpellInfo
 	  
-local cLossOfControl = 
-  _G.C_LossOfControl
-
 local InCombatLockdown, CombatLogGetCurrentEventInfo = 
 	  InCombatLockdown, CombatLogGetCurrentEventInfo
 
@@ -624,8 +620,10 @@ function incdmgmagic(unit)
 end
 
 --- ========================== LOS OF CONTROL ============================
+local cLossOfControl = _G.C_LossOfControl
 local GetEventInfo = cLossOfControl.GetEventInfo
 local GetNumEvents = cLossOfControl.GetNumEvents
+
 local LossOfControl = {} 
 --[[ 
 Hex Schools:
@@ -681,12 +679,11 @@ function LossOfControlCreate(locType, name, ...)
         if not LossOfControl[locType] then 
             LossOfControl[locType] = {}
         end         
-        if not LossOfControl[locType][name] then 
-            LossOfControl[locType][name] = {}
-        end 
-        
-        LossOfControl[locType][name].hex = type(...) == "table" and bitbxor(unpack(...)) or ...
-        LossOfControl[locType][name].result = 0
+      
+        LossOfControl[locType][name] = {
+			hex = type(...) == "table" and bitbxor(unpack(...)) or ...,
+			result = 0,
+		}
     else 
         if LossOfControl[locType] then 
             print("[Debug Error] Attemp to create LossOfControl with already existed locType: " .. locType)
@@ -697,11 +694,15 @@ function LossOfControlCreate(locType, name, ...)
 end 
 
 function LossOfControlRemove(locType, name)
-    if name then 
-        LossOfControl[locType][name] = nil 
-    else
-        LossOfControl[locType] = nil 
-    end 
+	if LossOfControl[locType] then 
+		if name then 
+			if LossOfControl[locType][name] then 
+				LossOfControl[locType][name] = nil 
+			end 
+		else
+			LossOfControl[locType] = nil 
+		end 
+	end 
 end 
 
 function LossOfControlGet(locType, name)
@@ -734,12 +735,11 @@ local function LossOfControlUpdate()
         if locType == "SCHOOL_INTERRUPT" then
             -- Check that the user has requested the schools that are locked out.
             if LossOfControl[locType] and lockoutSchool and lockoutSchool ~= 0 then 
-                for name in pairs(LossOfControl[locType]) do
-                    local hex = LossOfControl[locType][name].hex -- v.hex                    
-                    if hex and bitband(lockoutSchool, hex) ~= 0 then
-                        isValidType = true
-                        LossOfControl[locType][name].result = (start or 0) + (duration or 0)
-                    end
+                for name, val in pairs(LossOfControl[locType]) do
+					if type(val) == "table" and val.hex and bitband(lockoutSchool, val.hex) ~= 0 then 						                 						
+						isValidType = true
+						LossOfControl[locType][name].result = (start or 0) + (duration or 0)											
+					end 
                 end 
             end 
         else
@@ -756,8 +756,8 @@ local function LossOfControlUpdate()
     
     -- Reset running durations.
     if not isValidType then 
-        for name in pairs(LossOfControl) do 
-            if type(name) ~= "table" and LossOfControlGet(name) > 0 then
+        for name, val in pairs(LossOfControl) do 
+            if type(val) ~= "table" and LossOfControlGet(name) > 0 then
                 LossOfControl[name] = 0
             end            
         end

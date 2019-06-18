@@ -2,7 +2,8 @@
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
-local isNumber = TMW.isNumber
+local A = Action
+
 local strlowerCache = TMW.strlowerCache
 local LibRangeCheck = LibStub("LibRangeCheck-2.0")
 local IsSpellInRange = LibStub("SpellRange-1.0").IsSpellInRange
@@ -14,12 +15,12 @@ local IsStealthed, IsFalling, IsUsableSpell, IsPlayerSpell, IsSpellKnown = IsSte
 local UnitClass, UnitRace, UnitAura, UnitCastingInfo, UnitChannelInfo, UnitName, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitHealth, UnitHealthMax, UnitExists,
 UnitGroupRolesAssigned, UnitEffectiveLevel, UnitIsQuestBoss, UnitLevel, UnitCanAttack, UnitIsEnemy, UnitIsUnit, UnitDetailedThreatSituation, GetUnitSpeed, UnitIsPlayer,
 UnitPower, UnitPowerMax = 
-UnitClass, UnitRace, UnitAura, UnitCastingInfo, UnitChannelInfo, UnitName, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitHealth, UnitHealthMax, UnitExists,
+	  UnitClass, UnitRace, UnitAura, UnitCastingInfo, UnitChannelInfo, UnitName, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitHealth, UnitHealthMax, UnitExists,
 UnitGroupRolesAssigned, UnitEffectiveLevel, UnitIsQuestBoss, UnitLevel, UnitCanAttack, UnitIsEnemy, UnitIsUnit, UnitDetailedThreatSituation, GetUnitSpeed, UnitIsPlayer,
 UnitPower, UnitPowerMax 
 
-local GetSpellInfo, GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown = 
-Action.GetSpellInfo, GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown
+local GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, GetSpellInfo = 
+	  GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, A.GetSpellInfo
 
 local _, pclass = UnitClass("player")
 local _, prace = UnitRace("player")
@@ -219,16 +220,17 @@ function Env.ShouldStop() -- true
 end
 
 --- =========================== UNITS ============================
-local function UpdatePlayerSpec() 
-    local HealerSpecs = {105, 270, 65, 256, 257, 264}
+local HealerSpecs = {
+	[105] = true, 
+	[270] = true, 
+	[65] = true, 
+	[256] = true, 
+	[257] = true, 
+	[264] = true, 
+}
+local function UpdatePlayerSpec()     
     Env.PlayerSpec = GetSpecializationInfo(GetSpecialization())  
-    for i = 1, #HealerSpecs do 
-        if HealerSpecs[i] == Env.PlayerSpec then 
-            Env.IamHealer = true
-            return 
-        end 
-    end 
-    Env.IamHealer = false 
+    Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
 end 
 Listener:Add('Spec_Event', "PLAYER_LOGIN", UpdatePlayerSpec)
 Listener:Add('Spec_Event', "PLAYER_ENTERING_WORLD", UpdatePlayerSpec)
@@ -499,7 +501,7 @@ end
 
 --- ========================== Simcraft ===========================
 function Env.execute_time(id) 
-    -- Return GCD>CastTime or CastTime>GCD
+    -- @return GCD > CastTime or GCD
     local gcd, cast_time = Env.GCD(), Env.CastTime(id)     
     if cast_time > gcd then
         return cast_time 
@@ -515,7 +517,7 @@ end
 --- ========================== Casts ===========================
 local prev_spellID, interruptpct = {}, {}
 function Env.RandomKick(unitid, interruptAble)
-    if not unitid then unitid = "target" end;
+    if not unitid then unitid = "target" end
     local pct_castleft, spellID, spellName, notKickAble = select(3, Env.CastTime(nil, unitid))
     if spellID then               
         if not prev_spellID[unitid] or spellID ~= prev_spellID[unitid] then
