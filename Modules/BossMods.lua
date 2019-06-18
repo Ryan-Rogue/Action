@@ -1,7 +1,7 @@
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
+local A = Action
 
 local pairs, type = pairs, type
 local UnitName = UnitName
@@ -13,12 +13,16 @@ local function DBM_timer_init()
         function Env.DBM_GetTimeRemaining()
             return 0, 0
         end
+		
+		function Env.DBM_GetTimeRemainingBySpellID()
+            return 0, 0
+        end
         
         return
     end
     
-    local Timers = {}
-    DBM:RegisterCallback("DBM_TimerStart", function(_, id, text, timerRaw)
+    local Timers, TimersBySpellID = {}, {}
+    DBM:RegisterCallback("DBM_TimerStart", function(_, id, text, timerRaw, icon, timerType, spellid, colorId)
             -- Older versions of DBM return this value as a string:
             local duration
             if type(timerRaw) == "string" then
@@ -27,7 +31,10 @@ local function DBM_timer_init()
                 duration = timerRaw
             end
             
-            Timers[id] = {text = text:lower(), start = TMW.time, duration = duration}          
+            Timers[id] = {text = text:lower(), start = TMW.time, duration = duration}   
+			if spellid then 
+				TimersBySpellID[spellid] = Timers[id]
+			end 
     end)
     DBM:RegisterCallback("DBM_TimerStop", function(_, id) Timers[id] = nil end)
     
@@ -45,6 +52,17 @@ local function DBM_timer_init()
         
         return 0, 0
     end
+	
+	function Env.DBM_GetTimeRemainingBySpellID(spellID)
+		if TimersBySpellID[spellID] then 
+			local expirationTime = TimersBySpellID[spellID].start + TimersBySpellID[spellID].duration
+			local remaining = (expirationTime) - TMW.time
+			if remaining < 0 then remaining = 0 end
+			return remaining, expirationTime
+		end 
+        
+        return 0, 0
+	end 
 end
 
 local function DBM_engaged_init()
@@ -96,18 +114,23 @@ function Env.DBM_PullTimer()
     return Env.DBM_GetTimeRemaining(name)
 end 
 
-function Env.DBM_GetTimer(name)        
-    if not Action.IsInitialized or not Action.GetToggle(1, "DBM") then
+function Env.DBM_GetTimer(name)    
+	-- @arg name can be number (spellID) or string (localizated name of the timer)
+	-- @return number: remaining, expirationTime
+    if not A.IsInitialized or not A.GetToggle(1, "DBM") then
         return 0, 0
     end
     
-    --local timername = format("%q", name:gsub("([%(%)%%%[%]%-%+%*%.%^%$])", "%%%1"):lower())  
-    local timername = name:lower()
-    return Env.DBM_GetTimeRemaining(timername)
+    if type(name) == "string" then 
+		local timername = name:lower()
+		return Env.DBM_GetTimeRemaining(timername)
+	else
+		return Env.DBM_GetTimeRemainingBySpellID(name)
+	end 
 end 
 
 function Env.DBM_IsEngage()
-    if not Action.IsInitialized or not Action.GetToggle(1, "DBM") then
+    if not A.IsInitialized or not A.GetToggle(1, "DBM") then
         return 0, 0
     end
     -- Not tested  
