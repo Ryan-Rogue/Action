@@ -932,6 +932,16 @@ function Env.Item:New(Slot, Refresh)
     self.Refresh = Refresh or 0.1
 end 
 
+local ControlAbleClassification = {
+	["trivial"] = true,
+	["minus"] = true,
+	["normal"] = true,
+	["rare"] = true,
+	["rareelite"] = false,
+	["elite"] = false,
+	["worldboss"] = false,
+	[""] = true,
+}
 Env.Unit = PseudoClass({
 	IsBoss = Cache:Wrap(function(self)       
 	        return Env.UNITBoss(self.UnitID) 
@@ -1005,6 +1015,14 @@ Env.Unit = PseudoClass({
 				castName, _, _, castStartTime, castEndTime, _, notInterruptable, spellID = UnitChannelInfo(UnitID)
 			end  
 			return castName, castStartTime, castEndTime, notInterruptable, spellID
+	end, "UnitID"),
+	IsControlAble = Cache:Wrap(function(self, drType)
+		local UnitID = self.UnitID 
+		if not Env.InPvP() then 
+			return not Env.Unit(UnitID):IsBoss() and ControlAbleClassification[UnitClassification(UnitID) or ""]
+		else 
+			return true 
+		end 
 	end, "UnitID"),
 	DeBuffCyclone = Cache:Wrap(function(self)
 		return Env.DeBuffs(self.UnitID, 33786)
