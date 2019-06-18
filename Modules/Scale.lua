@@ -12,6 +12,8 @@ BlackBackground.texture = BlackBackground:CreateTexture(nil, "TOOLTIP")
 BlackBackground.texture:SetAllPoints(true)
 BlackBackground.texture:SetColorTexture(0, 0, 0, 1)
 
+local print = Action.Print
+
 local function UpdateFrames()
     if not TellMeWhen_Group1 or (not strfind(TellMeWhen_Group1.Name, "[GGL]") and not strfind(TellMeWhen_Group1.Name, "Main")) then 
         if BlackBackground:IsShown() then

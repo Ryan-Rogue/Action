@@ -1,5 +1,5 @@
 --- 
-local DateTime = "17.06.2019"
+local DateTime = "18.06.2019"
 ---
 --- ============================ HEADER ============================
 if not TMW then return end 
@@ -32,7 +32,7 @@ local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, Is
 -- Localization
 --------------------------------------
 -- Note: L (@table localized with current language of interface), CL (@string current selected language of interface), GameLocale (@string game language default), Localization (@table clear with all locales)
-local L, CL
+local CL, L = "enUS", nil
 local Localization = {
 	enUS = {			
 		NOSUPPORT = "this profile is not supported ActionUI yet",	
@@ -161,7 +161,8 @@ local Localization = {
 				SETQUEUETOOLTIP = "This will queue action in rotation\nIt will use it as soon as it possible\n\nRightClick: Create macro",
 				BLOCKED = "|cffff0000Blocked: |r",
 				UNBLOCKED = "|cff00ff00Unblocked: |r",
-				KEY = "[Table Key: ",
+				KEY = "[Key: ",
+				KEYTOTAL = "[Queued Total: ",
 				KEYTOOLTIP = "Use this key in MSG tab",
 				ISFORBIDDENFORQUEUE = "is forbidden for queue!",
 				ISQUEUEDALREADY = "is already existing in queue!",
@@ -438,7 +439,8 @@ local Localization = {
 				SETQUEUETOOLTIP = "Это поставит действие в очередь ротации\nЭто использует действие по первой доступности\n\nПравая кнопка мыши: Создать макрос", 
 				BLOCKED = "|cffff0000Заблокировано: |r",
 				UNBLOCKED = "|cff00ff00Разблокировано: |r",
-				KEY = "[Ключ таблицы: ",
+				KEY = "[Ключ: ",
+				KEYTOTAL = "[Суммарно Очереди: ",
 				KEYTOOLTIP = "Используйте этот ключ во вкладке MSG",
 				ISFORBIDDENFORQUEUE = "запрещен для установки в очередь!",
 				ISQUEUEDALREADY = "уже в состоит в очереди!",
@@ -715,7 +717,8 @@ local Localization = {
 				SETQUEUETOOLTIP = "Der nächste Spell wird in die Warteschleife gessetzt\n Er wird benutzt sobald es möglich ist\n\n Rechtsklick: Makro erstellen",
 				BLOCKED = "|cffff0000Blockiert: |r",
 				UNBLOCKED = "|cff00ff00Freigestellt: |r",
-				KEY = "[Table Schlüssel: ",
+				KEY = "[Schlüssel: ",
+				KEYTOTAL = "[Warteschlangensumme: ",
 				KEYTOOLTIP = "Benutze den Schlüssel im MSG Fenster", 
 				ISFORBIDDENFORQUEUE = "Verboten für die Warteschleife!",
 				ISQUEUEDALREADY = "Schon in der Warteschleife drin!",
@@ -992,7 +995,8 @@ local Localization = {
 				SETQUEUETOOLTIP = "Cela met l'action en queue dans la rotation\nElle sera utilisé le plus tôt possible\n\nClique droit : Créer la macro",
 				BLOCKED = "|cffff0000Bloqué: |r",
 				UNBLOCKED = "|cff00ff00Débloqué: |r",
-				KEY = "[Table Key: ",
+				KEY = "[Key: ",
+				KEYTOTAL = "[Total de la file d'attente: ",
 				KEYTOOLTIP = "Utiliser ce mot clef dans l'onglet MSG",
 				ISFORBIDDENFORQUEUE = "est indertit pour la file d'attente!",
 				ISQUEUEDALREADY = "est déjà dans la file d'attente!",
@@ -1269,7 +1273,8 @@ local Localization = {
 				SETQUEUETOOLTIP = "Accoda l'azione selezionata alla rotazione\nUtilizza l'azione appena é possibile\n\nTastodestro: Crea macro",
 				BLOCKED = "|cffff0000Bloccato: |r",
 				UNBLOCKED = "|cff00ff00Sbloccato: |r",
-				KEY = "[Chiave in tabella: ",
+				KEY = "[Chiave: ",
+				KEYTOTAL = "[Totale coda: ",
 				KEYTOOLTIP = "Usa questa chiave nel tab MSG",
 				ISFORBIDDENFORQUEUE = "non può esser messo in coda!",
 				ISQUEUEDALREADY = "esiste giá nella coda!",
@@ -1421,7 +1426,7 @@ local Localization = {
 	},
 }
 local function GetLocalization()
-	CL = TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or Localization[GameLocale] and GameLocale or "enUS"
+	CL = TMW and TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or Localization[GameLocale] and GameLocale or "enUS"
 	L = Localization[CL] or Localization["enUS"]
 	-- This need to prevent any errors caused by missed keys 
 	setmetatable(L, { __index = Localization["enUS"] })
@@ -1534,9 +1539,9 @@ local Factory = {
 			HeartOfAzeroth = true,
 			Racial = true,	
 			DBM = true,
-			LOSCheck = _G.LOSCheck ~= nil and _G.LOSCheck or false, 
-			HE_Toggle = _G.HE_Toggle ~= nil and _G.HE_Toggle or "ALL",
-			HE_Pets = _G.HE_Pets ~= nil and _G.HE_Pets or true,			
+			["LOSCheck"] = _G.LOSCheck ~= nil and _G.LOSCheck or false, 
+			["HE_Toggle"] = _G.HE_Toggle ~= nil and _G.HE_Toggle or "ALL",
+			["HE_Pets"] = _G.HE_Pets ~= nil and _G.HE_Pets or true,			
 			FPS = -0.01, 	
 			Trinkets = {
 				[1] = true, 
@@ -3004,12 +3009,14 @@ end
 
 -- Modules (old name "TMW Global Snippets")
 local function GlobalsRemap()
-	local specID = GetSpecializationInfo(GetSpecialization()) 
-	_G.HE_Toggle = TMW.db.profile.ActionDB[1][specID].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][specID].HE_Toggle or nil
-	_G.HE_Pets = TMW.db.profile.ActionDB[1][specID].HE_Pets
-	_G.LOSCheck = TMW.db.profile.ActionDB[1][specID].LOSCheck	
-	if TMW.db.profile.ActionDB[1].DisableBlackBackground then 
-		Env.BlackBackgroundSet(not TMW.db.profile.ActionDB[1].DisableBlackBackground)
+	local specID = GetSpecializationInfo(GetSpecialization())
+	if specID and TMW and TMW.db and TMW.db.profile.ActionDB then 
+		_G.HE_Toggle = TMW.db.profile.ActionDB[1][specID].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][specID].HE_Toggle or nil
+		_G.HE_Pets = TMW.db.profile.ActionDB[1][specID].HE_Pets
+		_G.LOSCheck = TMW.db.profile.ActionDB[1][specID].LOSCheck	
+		if TMW.db.profile.ActionDB[1].DisableBlackBackground then 
+			Env.BlackBackgroundSet(not TMW.db.profile.ActionDB[1].DisableBlackBackground)
+		end 
 	end 
 end
 
@@ -3142,7 +3149,7 @@ local function ActionDB_Initialization()
 	Action.ReInit()
 	
 	-- Initialization LOS 
-	Action.LOSInit()
+	Action.LOSInit(true)
 	
 	-- Initialization SpellLevelCheck if it was selected in db
 	Action.SpellLevelInit()
@@ -3229,7 +3236,7 @@ local function ActionDB_Initialization()
 						FPS = 0.03
 					end					
 				end 				
-				TMW.UPD_INTV = FPS + 0.001				
+				TMW.UPD_INTV = FPS + 0.001					
 			
 				if LastUpdate <= TMW.time - TMW.UPD_INTV then
 					LastUpdate = TMW.time
@@ -3306,8 +3313,6 @@ local function ActionDB_Initialization()
 		end
 		
 		TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", function() UnlockExtremelyInterval(true) end) 
-
-		--UnlockExtremelyInterval(true)
 		
 		local isIconEditorHooked
 		hooksecurefunc(TMW, "LockToggle", function() 
@@ -3978,8 +3983,10 @@ function Action.UnitInLOS(unit)
 	local GUID = UnitGUID(unit)
 	return LOS[GUID] and TMW.time < LOS[GUID] or false
 end 
-function Action.LOSInit()
-	GlobalsRemap()
+function Action.LOSInit(isLaunch)
+	if not isLaunch then 
+		GlobalsRemap()
+	end 
 	if Action.GetToggle(1, "LOSCheck") then 
 		Listener:Add("ACTION_LOS", "UI_ERROR_MESSAGE", function(...)
 			if Env.IamHealer and ... == 50 and Action.IsUnitDMG("targettarget") then          
@@ -4058,8 +4065,23 @@ local function UpdateChat(...)
 						Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
 					end 
 				end 
-			elseif not msgList[Name].LUA or RunLua(msgList[Name].LUA, unit or "target") then
-				Action.MacroQueue(msgList[Name].Key, { Value = msgList[Name].DisableReToggle == true and true or nil })				 
+			else
+				if msgList[Name].LUA then 
+					local Key = Action[Env.PlayerSpec][msgList[Name].Key]					 
+					if self.Type == "Spell" then 
+						if SpellHasRange(Key:Info()) then
+							unit = ((Env.IamHealer or IsAttackSpell(Key:Info()) or IsHarmfulSpell(Key:Info())) and "target") or "player"
+						end 
+					else
+						if ItemHasRange(Key:Info()) then 						
+							unit = (IsHarmfulItem(Key:Info()) and "target") or (not Env.IamHealer and "player") or "target"
+						end 
+					end 
+				end 
+			
+				if RunLua(msgList[Name].LUA, unit or "target") then
+					Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
+				end 
 			end	
 		end        
     end  
@@ -5053,7 +5075,7 @@ function Action.ToggleMainUI()
 						if config.M then 
 							obj:SetScript("OnMouseUp", function(self, button, down)
 									if button == "RightButton" then 
-										CraftMacro( config.L.ANY or config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", ": "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
+										CraftMacro( config.L.ANY or config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[": "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
 									end					
 							end)
 						end 
@@ -5287,8 +5309,9 @@ function Action.ToggleMainUI()
 					local data = tab.childs[spec].ScrollTable:GetRow(index)
 					if data.QueueForbidden then 
 						Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"])
-					elseif data:IsBlocked() and not data.Queued then 
-						Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"])
+					-- I decided unlocked Queue for blocked actions
+					--elseif data:IsBlocked() and not data.Queued then 
+						--Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"])
 					else
 						if button == "LeftButton" then 	
 							Action.MacroQueue(data.TableKeyName, { Priority = 1})							
@@ -7103,10 +7126,10 @@ function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
 		return
 	end
 	-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
-	GlobalsRemap()
-	Action.ToggleMSG(true)	
+	GlobalsRemap()	
 	Action.ReInit()
-	Action.LOSInit()
+	Action.LOSInit(true)
+	Action.ToggleMSG(true)	
 end
 Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
@@ -7161,15 +7184,15 @@ end
 function Action:GetSpellIcon()
 	return select(3, self:GetSpellInfo())
 end
-function Action:GetSpellTexture()
+function Action:GetSpellTexture(custom)
 	if self.SubType == "HeartOfAzeroth" then 
 		return "texture", 1869493 -- GetSpellTexture(280431)
 	end
-    return "texture", GetSpellTexture(self.ID)
+    return "texture", GetSpellTexture(custom or self.ID)
 end 
 --- Spell Colored Texturre
-function Action:GetColoredSpellTexture()
-    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, GetSpellTexture(self.ID)
+function Action:GetColoredSpellTexture(custom)
+    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, GetSpellTexture(custom or self.ID)
 end 
 
 --- SingleColor
@@ -7198,7 +7221,7 @@ end
 function Action:GetItemIcon()
 	return select(10, self:GetItemInfo())
 end
-function Action:GetItemTexture()
+function Action:GetItemTexture(custom)
 	local texture
 	if self.Type == "Trinket" then 
 		if GetInventoryItemID("player", 13) == self.ID then 
@@ -7209,13 +7232,14 @@ function Action:GetItemTexture()
 	elseif self.Type == "Potion" then 
 		texture = ACTION_CONST_POTION
 	else 
-		texture = self:GetItemIcon()
+		texture = (custom and GetItemIcon(custom)) or self:GetItemIcon()
 	end
+	
     return "texture", texture
 end 
 --- Item Colored Texture
-function Action:GetColoredItemTexture()
-    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, self:GetItemIcon()
+function Action:GetColoredItemTexture(custom)
+    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, (custom and GetItemIcon(custom)) or self:GetItemIcon()
 end 
 --- Item API ( + :IsInRange(unit) by TMW Core )
 function Action:GetItemCooldown()
@@ -7264,7 +7288,7 @@ function Action.Create(attributes)
 			s.Color = attributes.Color
 			if attributes.Texture then 
 				s.Texture = function()
-					return Action.GetColoredSpellTexture(attributes.Texture)
+					return Action.GetColoredSpellTexture(s, attributes.Texture)
 				end 
 			else 
 				s.Texture = Action.GetColoredSpellTexture
@@ -7272,7 +7296,7 @@ function Action.Create(attributes)
 		else 
 			if attributes.Texture then 
 				s.Texture = function()
-					return Action.GetSpellTexture(attributes.Texture)
+					return Action.GetSpellTexture(s, attributes.Texture)
 				end 
 			else 
 				s.Texture = Action.GetSpellTexture	
@@ -7351,7 +7375,7 @@ function Action.Create(attributes)
 			s.Color = attributes.Color
 			if attributes.Texture then 
 				s.Texture = function()
-					return Action.GetColoredItemTexture(attributes.Texture)
+					return Action.GetColoredItemTexture(s, attributes.Texture)
 				end 
 			else 
 				s.Texture = Action.GetColoredItemTexture
@@ -7359,7 +7383,7 @@ function Action.Create(attributes)
 		else 		
 			if attributes.Texture then 
 				s.Texture = function()
-					return Action.GetItemTexture(attributes.Texture)
+					return Action.GetItemTexture(s, attributes.Texture)
 				end 
 			else 
 				s.Texture = Action.GetItemTexture
@@ -7534,6 +7558,11 @@ function Action:SetQueue(args)
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
 			return 
 		end 
+		
+		if (self.Type == "Item" or self.Type == "Potion") and self:GetCount() <= 0 then 
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
+			return 
+		end 
 	end 
 	
 	if not args then 
@@ -7568,7 +7597,7 @@ function Action:SetQueue(args)
 	local priority = (args.Priority and (args.Priority > #Action.Data.Q + 1 and #Action.Data.Q + 1 or args.Priority)) or #Action.Data.Q + 1	
     if not args.Silence then 
 		if self.Queued then 
-			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]" .. L["TAB"][3]["QUEUEPRIORITY"] .. priority)
+			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]" .. L["TAB"][3]["QUEUEPRIORITY"] .. priority .. ". " .. L["TAB"][3]["KEYTOTAL"] .. #Action.Data.Q + 1 .. "]")
 		else
 			Action.Print(L["TAB"][3]["QUEUEREMOVED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
 		end 
@@ -7632,9 +7661,35 @@ function Action.ShowQueue(icon)
 	return true
 end 
 
-function Action.GetQueueID()
-    -- Condition mostly for PvP to check by specific spells Imun
-    return #Action.Data.Q > 0 and Action.Data.Q[1].ID or 0
+function Action:QueueValidCheck()
+	-- Note: This thing does mostly tasks but still causing some issues with certain spells which should be blacklisted or avoided through another way (ideally) 
+	-- Example of issue: WW Monk can set Queue for Resuscitate while has @target an enemy and it will true because it will set to variable "player" which is also true and correct!
+	-- Why "player"? Coz while @target an enemy you can set queue of supportive spells for "self" and if they will be used on enemy then they will be applied on "player" 
+	local unit 
+	if self.Type == "Spell" then 
+		if not SpellHasRange(self:Info()) then 
+			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
+		else
+			unit = self.Unit or ((Env.IamHealer or IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())) and "target") or "player"
+			if IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info()) then 
+				return Env.Unit(unit):IsEnemy() and Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache)
+			else 
+				return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache))
+			end 
+		end 
+	else 
+		if not ItemHasRange(self.ID) then 
+			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
+		else
+			unit = self.Unit or (IsHarmfulItem(self:Info()) and "target") or (not Env.IamHealer and "player") or "target"
+			if IsHarmfulItem(self:Info()) then 
+				return Env.Unit(unit):IsEnemy() and self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache)
+			else 
+				return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache))
+			end 
+		end 		
+	end 
+	return false 
 end 
 
 local function IsThisMeta(meta)
@@ -7642,14 +7697,14 @@ local function IsThisMeta(meta)
 end
 function Action.IsQueueReady(meta)
     if #Action.Data.Q > 0 and IsThisMeta(meta) then 
-        if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then 
-			if Action.Data.Q[1].Unit == "player" or not ItemHasRange(Action.Data.Q[1].ID) or Action.Data.Q[1]:IsInRange(Action.Data.Q[1].Unit or "target") then -- not tested
+        if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then -- Equip and Count of items already checked before set queue 
+			if Action.Data.Q[1].Unit == "player" or Action.Data.Q[1]:QueueValidCheck() then 
 				local cooldown = Action.Data.Q[1]:GetItemCooldown()
 				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
 				return cooldown >= 0 and cooldown <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.02) and custom     
 			end
         elseif Action.Data.Q[1].Type == "Spell" then  
-            if Action.Data.Q[1].Unit == "player" or not SpellHasRange(Action.Data.Q[1]:Info()) or Env.SpellInRange(Action.Data.Q[1].Unit or "target", Action.Data.Q[1].ID) then
+            if Action.Data.Q[1].Unit == "player" or Action.Data.Q[1]:QueueValidCheck() then
 				local usable = (not Action.Data.Q[1].ExtraCD and Env.SpellUsable(Action.Data.Q[1].ID)) or (Action.Data.Q[1].ExtraCD and Env.SpellCD(Action.Data.Q[1].ID) <= Action.Data.Q[1].ExtraCD)
 				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= Action.Data.Q[1].PowerCost
 				return usable and custom 
@@ -7871,8 +7926,8 @@ end
 --------------------------------------
 -- DISPLAY FUNCTIONAL
 --------------------------------------
-function Action.TMWAPL(...)
-    local icon, attributesString, param = ...
+function Action.TMWAPL(icon, ...)
+    local attributesString, param = ...
     
     if attributesString == "state" then 
         -- Color if not colored (Alpha will show it)
@@ -7903,7 +7958,7 @@ function Action.TMWAPL(...)
         return         
     end 
     
-    icon:SetInfo(select(2, ...))
+    icon:SetInfo(...)
 end
   
 function Action.Hide(icon)
@@ -8124,6 +8179,11 @@ function Action:AbsentImun(thisunit, imunBuffs, skipKarma)
 	if not thisunit or not Env.InPvP() or not UnitIsPlayer(thisunit) then 
 		return true 
 	else 
+		-- Super trick for Queue system, it will save in cache imunBuffs when firstly will be called from APL and Queue will be allowed to handle cache for compare Imun 
+		if type(self) == "table" and not self.AbsentImunQueueCache and imunBuffs then 
+			self.AbsentImunQueueCache = imunBuffs
+		end 	
+		
 		local MinDur = type(self) ~= "table" and 0 or self.Type ~= "Spell" and 0 or (select(4, self:Info()) or 0) / 1000 
 		if MinDur > 0 then 
 			MinDur = MinDur + Env.CurrentTimeGCD()
@@ -8408,6 +8468,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 		if 	Action.PlayerRace == "Pandaren" and unit and 	
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
+			Env.Unit(unit):IsControlAble() and 
 			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true 			  
