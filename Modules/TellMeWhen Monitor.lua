@@ -43,6 +43,7 @@ end
 
 --- ======================= UnitAura ===========================
 --- Buffs 
+--- TODO: Rework it via change 'spell' as table in format {[123124] = true} to avoid query
 function Env.Buffs(unitID, spell, source, byID)
     local dur, duration
     local filter = "HELPFUL" .. (source and " PLAYER" or "")
@@ -93,23 +94,31 @@ end
 
 --- DeBuffs
 local IDexception = {
-    [31117] = true, -- Unstable Affliction Silence
-    [163505] = true, -- Rake Stun
-    --[1822] = true, -- Rake spell (spellbook)
-    --[231052] = true, -- Rake dot spell
-    [155722] = true, -- Rake dot
-    --[203123] = true, -- Maim
-    --[236025] = true, -- Enraged Maim
-    [339] = true, -- Entangling Roots dispel able
-    [235963] = true, -- Entangling Roots NO dispel able
-	[204085] = true, -- Deathchill (DK Frost PvP Roots)
-    -- Garrote types 
-    [703] = true, -- Dot 
-    --[231719] = true, -- Silence 
-    [1330] = true, -- Silence Debuff
-    [216411] = true, -- Holy Shock Divine Purpose
-    [216413] = true, -- Light of Down Divine Purpose
-    [217832] = true, -- Imprison
+	-- Warlock 
+    [31117] = true, 	-- Unstable Affliction (silence after dispel)
+	-- Druid 
+    [163505] = true, 	-- Rake (stun from stealth)
+    --[231052] = true, 	-- Rake (dot) spell -- seems old id which is not valid in BFA 
+    [155722] = true, 	-- Rake (dot)
+    [203123] = true, 	-- Maim (stun)
+    [236025] = true, 	-- Enraged Maim (incapacitate)
+    [339] = true, 		-- Entangling Roots (dispel able)
+    [235963] = true, 	-- Entangling Roots (NO dispel able)
+	-- Death Knight 
+	[204085] = true, 	-- Deathchill (Frost - PvP Roots)
+	[207171] = true, 	-- Winter is Coming (Frost - Remorseless Winter Stun)
+    -- Rogue  
+    [703] = true, 		-- Garroute - Dot 
+    [1330] = true, 		-- Garroute - Silence
+	-- Paladin 
+    --[216411] = true, 	-- BUFFS: Holy Shock 	(Divine Purpose)
+    --[216413] = true, 	-- BUFFS: Light of Down (Divine Purpose)
+	-- Priest 
+	[200200] = true, 	-- Holy word: Chastise (Holy stun)
+	[200196] = true, 	-- Holy Word: Chastise (Holy incapacitate)
+	-- Demon Hunter 
+    [217832] = true, 	-- Imprison	
+	[200166] = true, 	-- Metamorphosis
 }
 
 function Env.DeBuffs(unitID, spell, source, byID)
@@ -220,23 +229,6 @@ function Env.ShouldStop() -- true
 end
 
 --- =========================== UNITS ============================
-local HealerSpecs = {
-	[105] = true, 
-	[270] = true, 
-	[65] = true, 
-	[256] = true, 
-	[257] = true, 
-	[264] = true, 
-}
-local function UpdatePlayerSpec()     
-    Env.PlayerSpec = GetSpecializationInfo(GetSpecialization())  
-    Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
-end 
-Listener:Add('Spec_Event', "PLAYER_LOGIN", UpdatePlayerSpec)
-Listener:Add('Spec_Event', "PLAYER_ENTERING_WORLD", UpdatePlayerSpec)
-Listener:Add('Spec_Event', "PLAYER_SPECIALIZATION_CHANGED", UpdatePlayerSpec)
-Listener:Add('Spec_Event', "UPDATE_INSTANCE_INFO", UpdatePlayerSpec)
-
 function Env.UNITSpec(unitID, specs)  
     local found
     local name, server = UnitName(unitID)

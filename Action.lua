@@ -1993,7 +1993,7 @@ local GlobalFactory = {
 				-- Hunter: Freezing Arrow 
 				[209790] = { dur = 1.5 },
 				-- Hunter: Binding Shot
-				[117526] = { dur = 0 },
+				[117526] = { dur = 1 },
 				-- Priest: Mind Control 
 				[605] = { dur = 0 },
 				-- Priest: Psychic Scream
@@ -2008,6 +2008,8 @@ local GlobalFactory = {
 				[64044] = { dur = 0 },
 				-- Priest: Mind Bomb
 				[226943] = { dur = 0 },
+				-- Priest: Holy word: Chastise
+				[200200] = { dur = 0 }, 
 				-- Shaman: Static Charge
 				[118905] = { dur = 0 },
 				-- Shaman: Earthfury
@@ -2031,7 +2033,9 @@ local GlobalFactory = {
 				-- Warlock: Unstable Affliction
 				[31117] = { dur = 1, byID = true },
 				-- Warlock: Shadowfury
-				[30283] = { dur = 0 },				
+				[30283] = { dur = 1 },
+				-- Warlock: Summon Infernal
+				[22703] = { dur = 1.4 },
 				-- Monk: Song of Chi-ji
 				[198909] = { dur = 1.5 },
 				-- Monk: Incendiary brew
@@ -2043,9 +2047,13 @@ local GlobalFactory = {
 				-- Demon Hunter: Chaos Nova
 				[179057] = { dur = 0 },
 				-- Demon Hunter: Illidan's Grasp
-				[205630] = { dur = 0 },
+				[205630] = { dur = 0, byID = true },
 				-- Demon Hunter: Imprison
 				[217832] = { dur = 0, byID = true },
+				-- Demon Hunter: Metamorphosis
+				[200166] = { dur = 1.4, byID = true }, 
+				-- Demon Hunter: Fel Eruption
+				[211881] = { dur = 0 },
 				-- Death Knight: Strangulate
 				[47476] = { dur = 1 },				
 				-- Misc: Gladiator's Maledict
@@ -2059,7 +2067,7 @@ local GlobalFactory = {
 				-- Druid: Mass Entanglement
 				[102359] = { dur = 1 },
 				-- Druid: Entangling Roots
-				[339] = { dur = 1 },
+				[339] = { dur = 1, byID = true },
 				-- Death Knight: Frozen Center
 				[233395] = { dur = 1 },
 			},
@@ -7863,7 +7871,7 @@ function Action.AuraIsValid(unit, Toggle, Category)
 			for i = 1, huge do
 				Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unit, i, Filter)
 				if Name then
-					if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Env.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Env.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].byID) then 
+					if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Env.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Env.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 
 						local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
 						if Dur > Aura[Name].Dur and (Aura[Name].Stack == 0 or count >= Aura[Name].Stack) and (not Aura[Name].canStealOrPurge or canStealOrPurge == true) and (not Aura[Name].onlyBear or Env.Unit(unit):HasBuffs(5487) > 0) and RunLua(Aura[Name].LUA, unit) then
 							return true
@@ -8353,7 +8361,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 			Action.PlayerRace == "Goblin" or 
 			-- Misc (uncategoried) 
 			Action.PlayerRace == "VoidElf" or 
-			Action.PlayerRace == "NightElf" or 
+			--Action.PlayerRace == "NightElf" or -- under development
 			-- Bursting 
 			Action.PlayerRace == "DarkIronDwarf" or 
 			Action.PlayerRace == "Troll" or 
@@ -8378,18 +8386,17 @@ function Action:AutoRacial(unit, isReadyCheck)
 						not Env.EnemyTeam("HEALER"):IsBreakAble(5)						
 					)
 				) or 
-				-- More advanced check (can be used on healers for example without target enemy)
 				(
 					(
 						not unit or 
 						not Env.Unit(unit):IsEnemy() 
 					) and 
-					AoE(1, 5) and 
-					(
-						not Env.InPvP() or 
-						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-					)
+					AoE(1, 5) 
 				)
+			) and 
+			(
+				not Env.InPvP() or 
+				not Env.EnemyTeam("HEALER"):IsBreakAble(5)
 			)	
 		then 
 			return true 
@@ -8405,14 +8412,8 @@ function Action:AutoRacial(unit, isReadyCheck)
 					Env.Unit(unit):GetRange() <= 5 and 
 					Env.UNITCurrentSpeed(thisunit) >= 100 and 
 					self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"})
-				) or 
-				(
-					(
-						not unit or 
-						not Env.Unit(unit):IsEnemy() 
-					) and 
-					AoE(3, 5)
-				)
+				) or  
+				AoE(3, 5)				
 			) and 
 			(
 				not Env.InPvP() or 
@@ -8485,7 +8486,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 		if 	Action.PlayerRace == "Pandaren" and unit and 	
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
-			Env.Unit(unit):IsControlAble() and 
+			Env.Unit(unit):IsControlAble("incapacitate") and 
 			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true 			  
@@ -8494,6 +8495,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 		if 	Action.PlayerRace == "KulTiran" and unit and 	
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
+			Env.Unit(unit):IsControlAble("stun") and 
 			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true			  
@@ -8506,9 +8508,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 8 and 					
 					select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.7 and 
+					Env.Unit(unit):IsControlAble("stun") and 
 					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 				) or 
-				-- More advanced check (can be used on healers for example without target enemy)
 				(
 					(
 						not unit or 
@@ -8524,6 +8526,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 		if 	Action.PlayerRace == "HighmountainTauren" and unit and 
 			Env.Unit(unit):GetRange() <= 6 and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and
+			-- Env.Unit(unit):IsControlAble("knockback") and -- I removed it from 1.1 seems it hasn't DR either it's not so often to be checked 
 			self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
 		then
 			return true				  
@@ -8541,10 +8544,138 @@ end
 
 function Action:AutoRacialP(unit, isReadyCheck)
 	-- @return boolean 
-	-- Note: For other purposes, means custom
+	-- Note: For other purposes, means custom. Just validance condition check what we can use by School, Loss of Control, Range and etc Imun
 	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
 		Action.PlayerRace = GetRaceBySpellName[self:Info()]
-		return true 
+		-- [NO LOGIC - ALWAYS TRUE] 
+		if 	-- Sprint
+			Action.PlayerRace == "Worgen" or 
+			Action.PlayerRace == "Goblin" or 
+			-- Misc (uncategoried) 
+			Action.PlayerRace == "VoidElf" or 
+			Action.PlayerRace == "NightElf" or 
+			-- Bursting 
+			Action.PlayerRace == "DarkIronDwarf" or 
+			Action.PlayerRace == "Troll" or 
+			Action.PlayerRace == "Orc" or 
+			Action.PlayerRace == "MagharOrc"
+		then 
+			return true 
+		end 
+		
+		-- Damaging  
+		if 	Action.PlayerRace == "LightforgedDraenei" then 
+			return 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
+					Action.LossOfControlIsMissed("SILENCE") and 
+					(
+						(
+							unit and 	
+							Env.Unit(unit):IsEnemy() and 
+							Env.Unit(unit):GetRange() <= 5  and 
+							self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"}) 
+						) or 						
+						AoE(1, 5) 						
+					) and 
+					(
+						not Env.InPvP() or 
+						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
+					)	
+		elseif 	Action.PlayerRace == "Nightborne" then
+			return	LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+					Action.LossOfControlIsMissed("SILENCE") and		
+					(
+						(
+							unit and 	
+							Env.Unit(unit):IsEnemy() and 
+							Env.Unit(unit):GetRange() <= 5 and 
+							self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"})
+						) or 
+						(
+							(
+								not unit or 
+								not Env.Unit(unit):IsEnemy() 
+							) and 
+							AoE(3, 5)
+						)
+					) and 
+					(
+						not Env.InPvP() or 
+						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
+					)	 				
+		-- Purge 
+		elseif 	Action.PlayerRace == "BloodElf" then 
+			return 	LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+					Action.LossOfControlIsMissed("SILENCE") and
+					(	
+						(
+							unit and 
+							Env.Unit(unit):IsEnemy() and 
+							Env.Unit(unit):GetRange() <= 8 
+						) or 
+						(
+							unit and 
+							not Env.Unit(unit):IsEnemy() and 
+							Env.Unit(unit):GetRange() <= 8 				
+						) or 				
+						AoE(1, 8)
+					)		 		
+		-- Healing 
+		elseif	Action.PlayerRace == "Draenei" then 
+			if not unit or Env.Unit(unit):IsEnemy() then 
+				unit = "player" 
+			end 
+			return 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and Action.LossOfControlIsMissed("SILENCE") and 
+					(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit)))
+		elseif 	Action.PlayerRace == "ZandalariTroll" then 
+			return 	LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
+					Action.LossOfControlIsMissed("SILENCE") and 
+					Env.UNITStaying("player") > 0 and 
+					(				
+						incdmg("player") == 0 or 
+						(
+							pclass == "PALADIN" and 
+							Env.Unit("player"):HasBuffs(642, true) >= (100 - Env.UNITHP("player")) * 6 / 100
+						) or 
+						(
+							pclass == "HUNTER" and 
+							Env.Unit("player"):HasBuffs(186265, true) >= (100 - Env.UNITHP("player")) * 6 / 100
+						)
+					)				
+		-- Iterrupts 
+		elseif 	Action.PlayerRace == "Pandaren" then 
+			return 	unit and 
+					Env.SpellInRange(unit, self.ID) and 		
+					Env.Unit(unit):IsControlAble("incapacitate") and 
+					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true) 			  				
+		elseif 	Action.PlayerRace == "KulTiran" then 
+			return 	unit and 
+					Env.SpellInRange(unit, self.ID) and 
+					Env.Unit(unit):IsControlAble("stun") and 
+					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)		  		 
+		elseif 	Action.PlayerRace == "Tauren" then 
+			return 	(
+						(
+							unit and 	
+							Env.Unit(unit):IsEnemy() and 
+							Env.Unit(unit):GetRange() <= 8 and 					
+							Env.Unit(unit):IsControlAble("stun") and 
+							self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
+						) or 
+						(
+							(
+								not unit or 
+								not Env.Unit(unit):IsEnemy() 
+							) and 
+							AoE(1, 8)
+						)
+					)			  
+		elseif 	Action.PlayerRace == "HighmountainTauren" then 
+			return	unit and 
+					Env.Unit(unit):GetRange() <= 6 and 
+					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
+		else 
+			return true 
+		end 	
 	end 
 	return false 
 end 

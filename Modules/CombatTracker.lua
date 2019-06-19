@@ -1,23 +1,22 @@
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
+local A = Action
 
-local strlowerCache = TMW.strlowerCache
-local huge = math.huge
-
-local CL_TYPE_PLAYER = COMBATLOG_OBJECT_TYPE_PLAYER
+local CL_TYPE_PLAYER 	  = COMBATLOG_OBJECT_TYPE_PLAYER
+local CL_CONTROL_PLAYER   =	COMBATLOG_OBJECT_CONTROL_PLAYER
 local CL_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE
-local CL_CONTROL_PLAYER = COMBATLOG_OBJECT_CONTROL_PLAYER
+local CL_REACTION_NEUTRAL = COMBATLOG_OBJECT_REACTION_NEUTRAL
 
-local DRData = LibStub("DRData-1.0")
+local DRData = LibStub("DRData-1.1")
 
 local type, pairs, print, wipe, bitband, bitbxor = 
-	  type, pairs, Action.Print, wipe, bit.band, bit.bxor
+	  type, pairs, A.Print, wipe, bit.band, bit.bxor
 
-local UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs = 
-	  UnitHealthMax, UnitHealth, UnitGUID, UnitAffectingCombat, UnitExists, UnitGetTotalAbsorbs
+local UnitHealthMax, UnitHealth, UnitGUID, UnitExists, UnitGetTotalAbsorbs = 
+	  UnitHealthMax, UnitHealth, UnitGUID, UnitExists, UnitGetTotalAbsorbs
 
-local GetSpellInfo = Action.GetSpellInfo
+local GetSpellInfo = A.GetSpellInfo
 	  
 local InCombatLockdown, CombatLogGetCurrentEventInfo = 
 	  InCombatLockdown, CombatLogGetCurrentEventInfo
@@ -90,16 +89,16 @@ local function addToData(GUID)
             combat_time = TMW.time,
             spell_value = {},
             spell_lastcast_time = {},
-            spell_counter = {},
+            spell_counter = {},			
         }
     end
 end
 
-local function isEnemy(destFlags)
-	return bitband(destFlags, CL_REACTION_HOSTILE) == CL_REACTION_HOSTILE
+local function isEnemy(Flags)
+	return bitband(Flags, CL_REACTION_HOSTILE) == CL_REACTION_HOSTILE or bitband(Flags, CL_REACTION_NEUTRAL) == CL_REACTION_NEUTRAL
 end 
-local function isPlayer(destFlags)
-	return bitband(destFlags, CL_TYPE_PLAYER) == CL_TYPE_PLAYER or bitband(destFlags, CL_CONTROL_PLAYER) == CL_CONTROL_PLAYER
+local function isPlayer(Flags)
+	return bitband(Flags, CL_TYPE_PLAYER) == CL_TYPE_PLAYER or bitband(Flags, CL_CONTROL_PLAYER) == CL_CONTROL_PLAYER
 end
 
 --[[ This Logs the damage for every unit ]]
@@ -261,12 +260,16 @@ local EVENTS = {
 --- ========================== FUNCTIONAL ===========================
 --[[ Returns the total ammount of time a unit is in-combat for ]]
 function CombatTime(UNIT)
-    if not UNIT then UNIT = "player" end;    
+    if not UNIT then 
+		UNIT = "player" 
+	end
+	
     local GUID = UnitGUID(UNIT)     
     if Data[GUID] and InCombatLockdown() then
         local combatTime = TMW.time - Data[GUID].combat_time       
         return combatTime              
     end
+	
     return 0
 end
 
@@ -354,8 +357,7 @@ function getDPS(UNIT)
     local total, Hits, phys, magic = 0, 0, 0, 0
     local GUID = UnitGUID(UNIT)
     if Data[GUID] then
-        local Hits = Data[GUID].DMG.hits_done
-        --local combatTime = CombatTime(UNIT)
+        local Hits = Data[GUID].DMG.hits_done        
         -- Remove a unit if it hasn't done dmg for more then 5 sec
         if TMW.time - Data[GUID].DMG.lastHit_done > 5 then                    
             -- Damage Done
@@ -400,7 +402,6 @@ function getHPS(UNIT)
     local GUID = UnitGUID(UNIT)   
     if Data[GUID] then
         local Hits = Data[GUID].HPS.heal_hits_done
-        --local combatTime = CombatTime(UNIT)
         -- Remove a unit if it hasn't done heal for more then 5 sec
         if TMW.time - Data[GUID].HPS.heal_lasttime_done > 5 then            
             -- Healing Done
@@ -415,73 +416,119 @@ function getHPS(UNIT)
 end 
 
 --[[ Get Spell Amount Taken with time ]]
-function getHealSpellAmount(UNIT, SPELL, timer)
-    if not timer then timer = 5 end;
+function getHealSpellAmount(UNIT, SPELL, TIMER)
+    if not TIMER then 
+		TIMER = 5 
+	end
+	
     local total = 0
     local GUID = UnitGUID(UNIT)   
     if Data[GUID] and Data[GUID].spell_value[SPELL] then
-        if TMW.time - Data[GUID].spell_value[SPELL].TIME <= timer then 
+        if TMW.time - Data[GUID].spell_value[SPELL].TIME <= TIMER then 
             total = Data[GUID].spell_value[SPELL].Amount
         else
             Data[GUID].spell_value[SPELL] = nil
         end 
     end
+	
     return total  
 end
 
---[[ Get Heal Taken ]]
-function getAbsorb(unit, spellID)
-    local GUID = UnitGUID(unit)
-    return (not spellID and UnitGetTotalAbsorbs(unit)) or (spellID and Data[GUID] and Data[GUID].absorb_spells[GetSpellInfo(spellID)]["Amount"]) or 0
+--[[ Get Absorb Taken ]]
+function getAbsorb(UNIT, spellID)
+    local GUID = UnitGUID(UNIT)
+    return (not spellID and UnitGetTotalAbsorbs(UNIT)) or (spellID and Data[GUID] and Data[GUID].absorb_spells[GetSpellInfo(spellID)]["Amount"]) or 0
 end 
 
 --[[ Time To Die ]]
-function TimeToDieX(unit, p)
-    if not unit then unit = "target" end;
-    local ttd = UnitHealth(unit) - ( UnitHealthMax(unit) * (p / 100) )
-    local DMG, Hits = getDMG(unit)
+function TimeToDieX(UNIT, X)
+    if not UNIT then 
+		UNIT = "target" 
+	end
+
+    local ttd = UnitHealth(UNIT) - ( UnitHealthMax(UNIT) * (X / 100) )
+    local DMG, Hits = getDMG(UNIT)
+	
     if DMG >= 1 and Hits > 1 then
         ttd = ttd / DMG
     end    
-    if Env.Zone == "none" and UnitHealth(unit) == 1 then
+	
+	-- Trainer dummy totems exception 
+    if Env.Zone == "none" and UnitHealth(UNIT) == 1 then
         ttd = 500
     end
+	
     return ttd
 end
 
-function TimeToDie(unit)
-    if not unit then unit = "target" end;
-    local ttd = UnitHealthMax(unit)
-    local DMG, Hits = getDMG(unit)
+function TimeToDie(UNIT)
+    if not UNIT then 
+		UNIT = "target" 
+	end
+	
+    local ttd = UnitHealthMax(UNIT)
+    local DMG, Hits = getDMG(UNIT)
+	
     if DMG >= 1 and Hits > 1 then
-        ttd = UnitHealth(unit) / DMG
+        ttd = UnitHealth(UNIT) / DMG
     end    
-    if Env.Zone == "none" and UnitHealth(unit) == 1 then
+	
+	-- Trainer dummy totems exception 
+    if Env.Zone == "none" and UnitHealth(UNIT) == 1 then
         ttd = 500
     end
+	
     return ttd
 end
 
-function TimeToDieMagic(unit)
-    if not unit then unit = "target" end;
-    local ttd = UnitHealthMax(unit)
-    local Hits, _, DMG = select(2, getDMG(unit))
+function TimeToDieMagicX(UNIT, X)
+    if not UNIT then 
+		UNIT = "target" 
+	end
+
+    local ttd = UnitHealth(UNIT) - ( UnitHealthMax(UNIT) * (X / 100) )
+    local Hits, _, DMG = select(2, getDMG(UNIT))
+	
     if DMG >= 1 and Hits > 1 then
-        ttd = UnitHealth(unit) / DMG
+        ttd = ttd / DMG
     end    
-    if Env.Zone == "none" and UnitHealth(unit) == 1 then
+	
+	-- Trainer dummy totems exception 
+    if Env.Zone == "none" and UnitHealth(UNIT) == 1 then
         ttd = 500
     end
+	
+    return ttd
+end
+
+function TimeToDieMagic(UNIT)
+    if not UNIT then 
+		UNIT = "target" 
+	end
+	
+    local ttd = UnitHealthMax(UNIT)
+    local Hits, _, DMG = select(2, getDMG(UNIT))
+	
+    if DMG >= 1 and Hits > 1 then
+        ttd = UnitHealth(UNIT) / DMG
+    end  
+	
+	-- Trainer dummy totems exception 
+    if Env.Zone == "none" and UnitHealth(UNIT) == 1 then
+        ttd = 500
+    end
+	
     return ttd
 end
 
 --[[ SPELLS ]]
-function SpellAmount(unit, spellID)
-    local GUID = UnitGUID(unit)
+function SpellAmount(UNIT, spellID)
+    local GUID = UnitGUID(UNIT)
     return (Data[GUID] and Data[GUID].spell_value[spellID].Amount) or 0
 end
 
 function SpellLastCast(UNIT, SPELL, byID)
+	-- @return TMW.time stamp when spell was casted 
     local timer = 0
     local GUID = UnitGUID(UNIT)
     if Data[GUID] then
@@ -489,6 +536,22 @@ function SpellLastCast(UNIT, SPELL, byID)
             SPELL = GetSpellInfo(SPELL)
         end 
         timer = Data[GUID].spell_lastcast_time[SPELL] or 0
+    end 
+    return timer
+end 
+
+function SpellTimeSinceLastCast(UNIT, SPELL, byID)
+	-- @return time ticked since last time cast 
+    local timer = 0
+    local GUID = UnitGUID(UNIT)
+    if Data[GUID] then
+        if not byID and type(SPELL) == "number" then 
+            SPELL = GetSpellInfo(SPELL)
+        end 
+        timer = Data[GUID].spell_lastcast_time[SPELL] or 0
+		if timer > 0 then 
+			timer = TMW.time - timer
+		end 
     end 
     return timer
 end 
@@ -505,8 +568,11 @@ function SpellCounter(UNIT, SPELL, byID)
     return timer
 end 
 
---[[ Mage Shrimmer/Blink Tracker ]]
-function GetShrimmer(unit)
+--[[ Mage Shrimmer/Blink Tracker (only enemy) ]]
+local BlinkID = {
+	[1953] = true, 
+}
+function GetShrimmer(UNIT)
 	-- Default has no charges (means never used so it can be just normal Blink which should return 0 as charges then)
 	local GUID = UnitGUID(unit) 
     local charges, cooldown, summary_cooldown = 0, 0, 0    
@@ -532,19 +598,54 @@ function GetShrimmer(unit)
     return charges, cooldown, summary_cooldown
 end 
 
+--[[ DR: Diminishing (only enemy) ]]
+function getDR(UNIT, drCat) 
+	-- @return Tick (number: 100% -> 0%), Remain (number: 0 -> 18), Application (number: 0 -> 5), ApplicationMax (number: 0 -> 5)
+--[[ drCat accepts:
+	"root"           
+	"stun"      -- PvE unlocked     
+	"disorient"      
+	"disarm" 	-- added in 1.1		   
+	"silence"        
+	"taunt"     -- PvE unlocked      
+	"incapacitate"   
+	"knockback" -- removed in 1.1
+]]
+	local GUID = UnitGUID(UNIT)
+	-- Default 100% means no DR at all, and 0 if no ticks then no remaning time, Application is how much DR was applied and how much by that category can be applied totally 
+	local DR_Tick, DR_Remain, DR_Application, DR_ApplicationMax = 100, 0, 0, DRData:GetApplicationMax(drCat)  	
+	-- About Tick:
+	-- Ticks go like 100 -> 50 -> 25 -> 0 or for Taunt 100 -> 65 -> 42 -> 27 -> 0
+	-- 100 no DR, 0 full DR 
+	if Data[GUID] and Data[GUID].DR and Data[GUID].DR[drCat] and Data[GUID].DR[drCat].reset and Data[GUID].DR[drCat].reset >= TMW.time then 
+		DR_Tick 			= Data[GUID].DR[drCat].diminished
+		DR_Remain 			= Data[GUID].DR[drCat].reset - TMW.time
+		DR_Application 		= Data[GUID].DR[drCat].application
+		DR_ApplicationMax 	= Data[GUID].DR[drCat].applicationMax
+	end 
+	
+	return DR_Tick, DR_Remain, DR_Application, DR_ApplicationMax
+end 
+
 --- ============================= CORE ==============================
 --[[ Combat Tracker ]]
-Listener:Add('CombatTracker_Events', 'COMBAT_LOG_EVENT_UNFILTERED', function(...)
-        local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _, destFlags,_, spellID, spellName, _, auraType = CombatLogGetCurrentEventInfo()
+Listener:Add("CombatTracker_Events", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
+        local _, EVENT, _, SourceGUID, _,_, sourceFlags, DestGUID, _, destFlags,_, spellID, spellName, _, auraType = CombatLogGetCurrentEventInfo()
+		
         -- Add the unit to our data if we dont have it
         addToData(SourceGUID)
         addToData(DestGUID) 
+		
         -- Triggers 
-        if EVENTS[EVENT] then EVENTS[EVENT](...) end
+        if EVENTS[EVENT] then 
+			EVENTS[EVENT](...) 
+		end
+		
 		-- On hostile flags
-		if isEnemy(destFlags) then 
-			-- PvP - Track Shrimmer on players 
-			if EVENT == "SPELL_CAST_SUCCESS" and Env.InPvP() and spellID == 212653 and isPlayer(destFlags) then 
+		-- PvP players tracker 
+		if EVENT == "SPELL_CAST_SUCCESS" and Env.InPvP() and isEnemy(sourceFlags) and isPlayer(sourceFlags) then 
+			-- Shrimmer
+			if spellID == 212653 then 
 				local ShrimmerCD = 0
 				if not Data[SourceGUID].Shrimmer then 
 					Data[SourceGUID].Shrimmer = {}
@@ -557,22 +658,69 @@ Listener:Add('CombatTracker_Events', 'COMBAT_LOG_EVENT_UNFILTERED', function(...
 					table.remove(Data[SourceGUID].Shrimmer, 1)
 				end 				
 			end 
-			-- PvP - Track Blink 1953
-			if EVENT == "SPELL_CAST_SUCCESS" and Env.InPvP() and spellName == GetSpellInfo(1953) and isPlayer(destFlags) then 
+			-- Blink
+			if BlinkID[spellID] then 
 				Data[SourceGUID].Blink = TMW.time + 15				
 			end 
-			
-			-- Diminishing (DR-Tracker)
 		end 
+		
+		-- On hostile flags
+		-- Diminishing (DR-Tracker)
+		if (EVENT == "SPELL_AURA_REMOVED" or EVENT == "SPELL_AURA_APPLIED" or EVENT == "SPELL_AURA_REFRESH") and auraType == "DEBUFF" and isEnemy(destFlags) then 
+			local drCat = DRData:GetSpellCategory(spellID)
+			if drCat and (DRData:IsPVE(drCat) or isPlayer(destFlags)) then
+				if not Data[DestGUID].DR then 
+					Data[DestGUID].DR = {}
+				end 
+				
+				local dr = Data[DestGUID].DR[drCat]				
+				if EVENT == "SPELL_AURA_APPLIED" then 
+					-- If something is applied, and the timer is expired,
+					-- reset the timer in preparation for the effect falling off
+					
+					-- Here is has a small bug due specific of release through SPELL_AURA_REFRESH event 
+					-- As soon as unit receive applied debuff aura (DR) e.g. this event SPELL_AURA_APPLIED he WILL NOT be diminished until next events such as SPELL_AURA_REFRESH or SPELL_AURA_REMOVED will be triggered
+					-- Why this released like that by DRData Lib - I don't know and this probably can be tweaked however I don't have time to pay attention on it 
+					-- What's why I added in 1.1 thing named 'Application' so feel free to use it to solve this bug
+					if dr and dr.diminished ~= 100 and dr.reset < TMW.time then						
+						dr.diminished = 100
+						dr.application = 0
+						dr.reset = 0
+						-- No reason to this:
+						--dr.applicationMax = DRData:GetApplicationMax(drCat) 
+					end			
+				else
+					if not dr then
+						-- If there isn't already a table, make one
+						-- Start it at 1th application because the unit just got diminished
+						local diminishedNext, applicationNext, applicationMaxNext = DRData:NextDR(100, drCat)
+						dr = {
+							diminished = diminishedNext,
+							application = applicationNext,
+							applicationMax = applicationMaxNext,
+							reset = TMW.time + DRData:GetResetTime(drCat),
+						}
+						Data[DestGUID].DR[drCat] = dr
+					else
+						-- Diminish the unit by one tick
+						-- Ticks go 100 -> 0						
+						if dr.diminished and dr.diminished ~= 0 then
+							dr.diminished, dr.application, dr.applicationMax = DRData:NextDR(dr.diminished, drCat)
+							dr.reset = TMW.time + DRData:GetResetTime(drCat)
+						end
+					end				
+				end 
+			end 
+		end 				
 end)
 
-Listener:Add('CombatTracker_Events', 'PLAYER_REGEN_ENABLED', function()
+Listener:Add("CombatTracker_Events", "PLAYER_REGEN_ENABLED", function()
         wipe(Data)                   
 end)
 
-Listener:Add('CombatTracker_Events', 'PLAYER_REGEN_DISABLED', function()
+Listener:Add("CombatTracker_Events", "PLAYER_REGEN_DISABLED", function()
 		-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
-        if TMW.time - SpellLastCast("player", Env.LastPlayerCastID) > 0.5 then 
+        if SpellTimeSinceLastCast("player", Env.LastPlayerCastID) > 0.5 then 
             wipe(Data)
         end 
 end)

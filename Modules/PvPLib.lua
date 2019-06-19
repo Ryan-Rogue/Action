@@ -118,7 +118,13 @@ local AuraList = {
         209749, -- Faerie Swarm (Moonkin Disarm) 
         204399, -- Earthfury (enhancement shaman pvp talent)
         217832, -- Imprison
-        286349, -- Gladiator's Maledict
+        286349, -- Gladiator's Maledict		
+		22703, -- Summon Infernal
+		200166, -- Metamorphosis
+		208618, -- Illidan's Grasp (secondary effect)
+		211881, -- Fel Eruption
+		200200, -- Holy word: Chastise (stunned)
+		--200196, -- Holy word: Chastise (incapacitated)
     },
     MagicRooted = {
         233395, -- Frozen Center (DK PvP Frost)    
@@ -159,7 +165,7 @@ local AuraList = {
         2094, -- Blind
         186387, -- Bursting Shot (hunter marks ability)
         213691, -- Scatter Shot (hunter pvp talent)
-        25, -- Stun
+        --25, -- Stun
         1833, -- Cheap Shot
         408, -- Kidney Shot
         5211, -- Mighty Bash
@@ -167,9 +173,7 @@ local AuraList = {
         89766, -- Axe Toss
         108194, -- Asphyxiate (DK)        
         118345, -- Pulverize
-        119381, -- Leg Sweep
-        132168, -- Shockwave
-        132169, -- Storm Bolt
+        119381, -- Leg Sweep        
         163505, -- Rake
         199804, -- Between the Eyes
         203123, -- Maim
@@ -183,61 +187,86 @@ local AuraList = {
         233759, -- Grapple Weapon
         212638, -- Tracker's Net (Hunter PvP talent)
         162480, -- Steel Trap (Hunter SV PvE talent)
+		-- Warrior 
+		132168, -- Shockwave
+        132169, -- Storm Bolt
+		--237744, -- Warbringer       
+		-- Tauren
+		--20549, -- War Stomp
+		-- Kul Tiran
+		287712, -- Haymaker
     },
     -- CC CONTROL TYPE
     CrowdControl = {
-        118, -- Polymorph
-        --6770, -- Sap
-        --605, -- Mind Control
-        20066, -- Repentance
-        --51514, -- Hex (also 211004, 210873, 211015, 211010)
-        --9484, -- Shackle Undead
-        --5782, -- Fear
-        --33786, -- Cyclone
-        --3355, -- Freezing Trap
-        --209790, -- Freezing Arrow (hunter pvp)
-        710, -- Banish
-        --6358, -- Seduction
-        --2094, -- Blind
-        --19386, -- Wyvern Sting
-        --82691, -- Ring of Frost
-        --115078, -- Paralysis
-        --115268, -- Mesmerize
-        --107079, -- Quaking Palm
-        --207685, -- Sigil of Misery (Havoc Demon hunter)
-        --198909, -- Song of Chi-ji (mistweaver monk talent)
-        6789, -- Mortal Coil
+        -- Deprecated
     },
     Incapacitated = {
+		-- Druid
         99, -- Incapacitating Roar
+		203126, -- Maim (Feral PvP talent)
+		-- Hunter 
+		213691, -- Scatter Shot 
         3355, -- Freezing Trap
-        209790, -- Freezing Arrow (hunter pvp)
-        6770, -- Sap
-        118, -- Polymorph
-        115268, -- Mesmerize
-        51514, -- Hex (also 211004, 210873, 211015, 211010)
-        20066, -- Repentance
-        200196, -- Holy Word: Chastise
-        82691, -- Ring of Frost
-        1776, -- Gouge
-        6358, -- Seduction
-        19386, -- Wyvern Sting
+        209790, -- Freezing Arrow
+		19386, -- Wyvern Sting
+		-- Mage 
+        118, -- Polymorph  
+		82691, -- Ring of Frost	
+		-- Monk 
         115078, -- Paralysis
-        31661, -- Dragon's Breath
+		-- Paladin 
+        20066, -- Repentance
+		-- Priest 
+        200196, -- Holy Word: Chastise (Holy)
+		--605, -- Dominate Mind (Mind Control) this is buff type 
+		9484, -- Shackle Undead
+		-- Rogue 
+        6770, -- Sap
+		1776, -- Gouge		
+		-- Shaman		
+        51514, -- Hex (also 211004, 210873, 211015, 211010)   
+		-- Warlock 
+		710, -- Banish
+		6789, -- Mortal Coil        
+        -- Pandaren
         107079, -- Quaking Palm
-        198909, -- Song of Chi-ji (mistweaver monk talent)
-        203126, -- Maim (with blood trauma feral pvp talent)
+		-- Demon Hunter 
+		217832, -- Imprison
+		--221527, -- Improve Imprison
     },
     Disoriented = {
-        2094, -- Blind
-        31661, -- Dragon's Breath
-        105421, -- Bliding light (paladin talent)
-        186387, -- Bursting Shot (hunter marks ability)
-        202274, -- Incendiary brew (brewmaster monk pvp talent)
-        207167, -- Blinding Sleet (dk talent)
-        213691, -- Scatter Shot (hunter pvp talent)
-        207685, -- Sigil of Misery (Havoc Demon hunter)
-        198909, -- Song of Chi-ji (mistweaver monk talent)
+		-- Death Knight
+		207167, -- Blinding Sleet (Frost) 
+		-- Demon Hunter
+		207685, -- Sigil of Misery (Havoc)
+		115268, -- Mesmerize
+		-- Druid 
+		--33786, -- Cyclone 
+		--209753, -- Cyclone (Balance)		
+		-- Hunter
+		--224729, -- Bursting Shot		
+		186387, -- Bursting Shot (MM)
+		-- Mage 
+		31661, -- Dragon's Breath (Fire)
+		-- Monk 
+		202274, -- Incendiary brew (BW)
+		198909, -- Song of Chi-ji (MW)
+        -- Paladin 
+        105421, -- Bliding light (Holy)
+		-- Priest
+		8122, -- Psychic Scream
+		226943, -- Mind Bomb
+		-- Rogue 
+        2094, -- Blind		
+		-- Warlock
+		5782, -- Fear 
+		--118699, -- Fear 
+		--130616, -- Fear 
+		5484, -- Howl of Terror 
+		115268, -- Mesmerize (Shivarra)
+		6358, -- Seduction (Succubus)
+		-- Warrior
+		5246, -- Intimidating Shout
     },    
     Fear = {
         5782, -- Fear
@@ -248,6 +277,7 @@ local AuraList = {
         207685, -- Sigil of Misery (Havoc Demon hunter)
     },
     Charmed = {
+		-- Deprecated
         605, -- Mind Control                  
         9484, -- Shackle Undead
     },
@@ -255,56 +285,116 @@ local AuraList = {
         2637, -- Hibernate
     },
     Stuned = {
-        47481, -- Gnaw (DK pet)
-        212332, -- Smash (DK transformation pet)
-        108194, -- Asphyxiate (DK)
-        5211, -- Mighty Bash (Druid)
-        117526, -- Binding Shot (Hunter)
-        19577, -- Intimidation (Hunter by pet)
-        119381, -- Leg Sweep (Monk)
-        30283, -- Shadowfury (Warlock)
-        89766, -- Axe Toss (Warlock pet)
-        118905, -- Static Charge (Shaman)
-        179057, -- Chaos Nova (DH)
-        853, -- Hammer of Justice (Paladin)
-        1833, -- Cheap Shot (Rogue)
-        408, -- Kidney Shot (Rogue)
-        199804, -- Between the Eyes (Rogue)
-        132168, -- Shockwave (Warrior)
-        132169, -- Storm Bolt (Warrior)
-        163505, -- Rake
-        203123, -- Maim
-        64044, -- Psychic Horror (SPriest)        
+		-- Death Knight 
+        47481, -- Gnaw (pet)
+        212332, -- Smash (transformation pet)
+        108194, -- Asphyxiate
+		207171, -- Winter is Coming (Remorseless winter stun)
+		-- Demon Hunter 
+		179057, -- Chaos Nova
+		200166, -- Metamorphosis
+		205630, -- Illidan's Grasp (primary effect)
+		208618, -- Illidan's Grasp (secondary effect)
+		211881, -- Fel Eruption
+		-- Druid 
+		203123, -- Maim
+        5211, -- Mighty Bash 
+		163505, -- Rake
+		--2637, -- Hibernate --FIXME: Not sure if Human race can avert it as stunned effect but it has stun DR 
+		--236025, -- Enraged Maim --FIXME: same 
+		-- Hunter 
+        117526, -- Binding Shot
+        19577, -- Intimidation (pet)
+		-- Monk 		
+        119381, -- Leg Sweep
+		-- Paladin 
+		853, -- Hammer of Justice
+		-- Priest 
+		200200, -- Holy word: Chastise
+		64044, -- Psychic Horror
+		-- Rogue 
+		1833, -- Cheap Shot 
+        408, -- Kidney Shot 
+        199804, -- Between the Eyes
+		-- Shaman
+		118345, -- Pulverize (Primal Earth Elemental)
+		118905, -- Static Charge (Capacitor Totem)
+		-- Warlock 
+        30283, -- Shadowfury
+        89766, -- Axe Toss (pet)
+		22703, -- Summon Infernal
+		-- Warrior 
+        132168, -- Shockwave 
+        132169, -- Storm Bolt
+		237744, -- Warbringer       
+		-- Tauren
+		20549, -- War Stomp
+		-- Kul Tiran
+		287712, -- Haymaker
     },
     PhysStuned = {
-        108194, -- Asphyxiate (DK)
-        5211, -- Mighty Bash (Druid)
-        19577, -- Intimidation (Hunter by pet)
-        119381, -- Leg Sweep (Monk)
-        89766, -- Axe Toss (Warlock pet)
-        1833, -- Cheap Shot (Rogue)
-        408, -- Kidney Shot (Rogue)
-        199804, -- Between the Eyes (Rogue)
-        132168, -- Shockwave (Warrior)
-        132169, -- Storm Bolt (Warrior)
-        163505, -- Rake
+		-- Death Knight 
+		47481, -- Gnaw (pet)
+        212332, -- Smash (transformation pet)
+        108194, -- Asphyxiate
+		-- Druid 
         203123, -- Maim
+        5211, -- Mighty Bash 
+		163505, -- Rake
+		-- Hunter 
+		117526, -- Binding Shot
+        19577, -- Intimidation (pet)
+		-- Monk
+        119381, -- Leg Sweep
+        -- Rogue 
+        1833, -- Cheap Shot 
+        408, -- Kidney Shot 
+        199804, -- Between the Eyes 
+		-- Shaman
+		118345, -- Pulverize (Primal Earth Elemental)
+        -- Warlock 
+		89766, -- Axe Toss (pet)
+        -- Druid 
+		203123, -- Maim
+        5211, -- Mighty Bash 
+		163505, -- Rake
+		--236025, -- Enraged Maim --FIXME: it's desorient but DR trigger it as stun 
+		-- Warrior 
+        132168, -- Shockwave 
+        132169, -- Storm Bolt
+		237744, -- Warbringer       
+		-- Tauren
+		20549, -- War Stomp
+		-- Kul Tiran
+		287712, -- Haymaker
     },
     Silenced = {
-        15487, -- Silence        
-        1330, -- Garrote - Silence
-        31935, -- Avenger's Shield
-        78675, -- Solar Beam
+		-- Death Knight 
+		47476, -- Strangulate (Unholy/Blood)
+		-- Demon Hunter 
+        204490, -- Sigil of Silence (Havoc)
+		-- Druid 
+        78675, -- Solar Beam (Balance)
+		-- Hunter 
         202933, -- Spider Sting
-        199683, -- Last Word
-        47476, -- Strangulate
-        31117, -- Unstable Affliction
-        204490, -- Sigil of Silence
+		-- Paladin 
+        31935, -- Avenger's Shield	(Prot)	
+		-- Priest 
+        15487, -- Silence (Shadow)    
+		199683, -- Last Word (Holy)
+		-- Rogue 		
+        1330, -- Garrote - Silence				
+        -- Warlock         
+        31117, -- Unstable Affliction		
     },
     Disarmed = {
+		-- Rogue 
         207777, -- Dismantle
-        236077, -- Disarm        
+		-- Warrior 
+        236077, -- Disarm  
+		-- Monk 		
         233759, -- Grapple Weapon
+		-- Druid 
         209749, -- Faerie Swarm
     }, 
     Rooted = {
@@ -315,7 +405,7 @@ local AuraList = {
         45334, -- Immobilized (wild charge, bear form)
         53148, -- Charge        
         64695, -- Earthgrab
-        91807, -- Shambling Rush (DK ghoul)
+        91807, -- Shambling Rush (DK pet)
         102359, -- Mass Entanglement
         105771, -- Charge
         116706, -- Disable
@@ -435,7 +525,7 @@ local AuraList = {
         115078, -- Paralysis        
         5484, -- Howl of Terror
         5246, -- Intimidating Shout
-        6789, -- Mortal Coil
+        --6789, -- Mortal Coil
         8122, -- Psychic Scream
         99, -- Incapacitating Roar
         1776, -- Gouge
@@ -1021,12 +1111,24 @@ Env.Unit = PseudoClass({
 			end  
 			return castName, castStartTime, castEndTime, notInterruptable, spellID
 	end, "UnitID"),
-	IsControlAble = Cache:Wrap(function(self, drType)
+	IsControlAble = Cache:Wrap(function(self, drCat, drDiminishing)
+	-- drDiminishing preferly 0 for [1], [2] 
+--[[ Taken from Combat Tracker
+	drCat accepts:
+		"root"           
+		"stun"   	-- PvE unlocked       
+		"disorient"      
+		"disarm" 	-- added in 1.1	DRData	   
+		"silence"        
+		"taunt"     -- PvE unlocked   
+		"incapacitate"   
+		"knockback" -- removed in 1.1 DRData
+]]	
 		local UnitID = self.UnitID 
 		if not Env.InPvP() then 
-			return not Env.Unit(UnitID):IsBoss() and ControlAbleClassification[UnitClassification(UnitID) or ""]
+			return not Env.Unit(UnitID):IsBoss() and ControlAbleClassification[UnitClassification(UnitID) or ""] and getDR(UnitID, drCat) > (drDiminishing or 25)
 		else 
-			return true 
+			return getDR(UnitID, drCat) > (drDiminishing or 25)
 		end 
 	end, "UnitID"),
 	DeBuffCyclone = Cache:Wrap(function(self)
@@ -1224,7 +1326,7 @@ Env.Unit = PseudoClass({
 			local UnitID = self.UnitID
 			local value = Env.Unit(UnitID):DeBuffCyclone()
 			if value == 0 then 
-				for _, NAME in pairs({"Silenced", "Stuned", "Sleep", "Charmed", "Fear", "Disoriented", "Incapacitated", "CrowdControl"}) do 
+				for _, NAME in pairs({"Silenced", "Stuned", "Sleep", "Fear", "Disoriented", "Incapacitated"}) do 
 					value = Env.Unit(UnitID):HasDeBuffs(NAME)
 					if value > 0 then 
 						break
@@ -1267,7 +1369,7 @@ Env.EnemyTeam = PseudoClass({
 						if value > 0 then                         
 							break 
 						else  
-							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							local ListCC = {"Stuned", "Silenced", "Fear", "Incapacitated", "Disoriented"}
 							for i = 1, #ListCC do 
 								value = Env.Unit(arena):HasDeBuffs(ListCC[i])
 								if value > 0 then                                 
@@ -1291,7 +1393,7 @@ Env.EnemyTeam = PseudoClass({
 						if value > 0 then                         
 							break 
 						else  
-							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							local ListCC = {"Stuned", "Silenced", "Fear", "Incapacitated", "Disoriented"}
 							for i = 1, #ListCC do 
 								value = Env.Unit(arena):HasDeBuffs(ListCC[i])
 								if value > 0 then                                 
@@ -1501,7 +1603,7 @@ Env.FriendlyTeam = PseudoClass({
 						if value > 0 then                         
 							break 
 						else  
-							local ListCC = {"Stuned", "Silenced", "Fear", "CrowdControl", "Incapacitated", "Disoriented", "Charmed"}
+							local ListCC = {"Stuned", "Silenced", "Fear", "Incapacitated", "Disoriented"}
 							for i = 1, #ListCC do 
 								value = Env.Unit(member):HasDeBuffs(ListCC[i])
 								if value > 0 then                                 
