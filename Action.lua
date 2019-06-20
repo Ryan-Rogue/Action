@@ -1,8 +1,7 @@
 --- 
-local DateTime = "18.06.2019"
+local DateTime = "20.06.2019"
 ---
 --- ============================ HEADER ============================
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
@@ -3817,7 +3816,7 @@ function Action.SetToggle(arg, custom)
 	if Action.MainUI then 		
 		local spec = Env.PlayerSpec .. CL
 		local tab = tabFrame.tabs[n]
-		if tab.childs[spec] then 
+		if tab and tab.childs[spec] then 
 			local kids = tab.childs[spec]:GetChildrenWidgets()
 			for _, child in ipairs(kids) do 				
 				if child.Identify and child.Identify.Toggle == toggle then 
@@ -4112,7 +4111,7 @@ function Action.ToggleMSG(isLaunch)
 	if Action.MainUI then 
 		local spec = Env.PlayerSpec .. CL
 		local tab = tabFrame.tabs[7]
-		if tab.childs[spec] then 
+		if tab and tab.childs[spec] then 
 			local kids = tab.childs[spec]:GetChildrenWidgets()
 			for _, child in ipairs(kids) do 				
 				if child.Identify and child.Identify.Toggle == "DisableReToggle" then 
@@ -4142,10 +4141,10 @@ function Action.ToggleMinimap(isLaunch)
 end 
 
 function Action.ToggleMainUI()
-	if InCombatLockdown() and (not Action.MainUI or not Action.MainUI.resizer) then 
+	if (InCombatLockdown() and (not Action.MainUI or not Action.MainUI.resizer)) or not Env.PlayerSpec then 
 		return 
 	end 
-	local specID, specName = GetSpecializationInfo(GetSpecialization())
+	local specID, specName = Env.PlayerSpec, Env.PlayerSpecName -- GetSpecializationInfo(GetSpecialization())
 	local spec = specID .. CL
 	if Action.MainUI then 	
 		if Action.MainUI:IsShown() then 
@@ -4166,18 +4165,8 @@ function Action.ToggleMainUI()
 		Action.MainUI:SetShown(true) 
 		Action.MainUI:RegisterEvent("BARBER_SHOP_OPEN")
 		Action.MainUI:RegisterEvent("BARBER_SHOP_CLOSE")		
-		Action.MainUI:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 		Action.MainUI:SetScript("OnEvent", function(self, event, ...)
-			if event == "PLAYER_SPECIALIZATION_CHANGED" then 
-				if Action.MainUI:IsShown() then 
-					Action.ToggleMainUI()
-					Action.ToggleMainUI()
-				end 
-				-- Refresh title of spec 
-				tabFrame.tabs[2].title = select(2, GetSpecializationInfo(GetSpecialization()))
-				tabFrame:DrawButtons()
-				GlobalsRemap()
-			elseif (event == "BARBER_SHOP_OPEN" or event == "BARBER_SHOP_CLOSE") and Action.MainUI:IsShown() then 
+			if (event == "BARBER_SHOP_OPEN" or event == "BARBER_SHOP_CLOSE") and Action.MainUI:IsShown() then 
 				Action.ToggleMainUI()
 			end 
 		end)
@@ -4490,7 +4479,7 @@ function Action.ToggleMainUI()
 				spec = specID .. CL	
 				for i = 1, #tabFrame.tabs do
 					local tab = tabFrame.tabs[i]
-					if tab.childs[spec] then 
+					if tab and tab.childs[spec] then 
 						if i == 3 then 					
 							local ScrollTable = tab.childs[spec].ScrollTable
 							for index = 1, #ScrollTable.data do 								
@@ -7137,21 +7126,33 @@ local HealerSpecs = {
 	[257] = true, 
 	[264] = true, 
 }
+local PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = 0
 function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
-	if event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player" then
+	if (TMW.time == PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP) or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") then
 		return
 	end
 	
-	Env.PlayerSpec = GetSpecializationInfo(GetSpecialization())  
+	Env.PlayerSpec, Env.PlayerSpecName = GetSpecializationInfo(GetSpecialization()) 
     Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
 	
 	if Action.IsInitialized then 
+		if Action.MainUI then 
+			if Action.MainUI:IsShown() then 
+				Action.ToggleMainUI()
+				Action.ToggleMainUI()
+			end 
+			-- Refresh title of spec 
+			tabFrame.tabs[2].title = Env.PlayerSpecName
+			tabFrame:DrawButtons()	
+		end 
 		-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
 		GlobalsRemap()	
 		Action.ReInit()
 		Action.LOSInit(true)
 		Action.ToggleMSG(true)	
 	end 
+	
+	PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = TMW.time 
 end
 Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
@@ -7165,6 +7166,8 @@ Action:RegisterEvent("UPDATE_INSTANCE_INFO", "PLAYER_SPECIALIZATION_CHANGED")
 --------------------------------------
 
 Action.PlayerRace = select(2, UnitRace("player"))
+
+local IsStealthed = IsStealthed
 
 local GetSpellTexture, GetSpellLink, GetSpellInfo = TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
 local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
@@ -7181,6 +7184,7 @@ ACTION_CONST_POTION =		967532		-- GetSpellTexture(176108)
 
 ACTION_CONST_LEFT = 		237586 		-- GetSpellTexture(98008)
 ACTION_CONST_RIGHT = 		132487 		-- GetSpellTexture(34976)
+ACTION_CONST_STOPCAST = 	249170		-- GetSpellTexture(147362)
 ACTION_CONST_HEALTHSTONE = 	538745 		-- GetSpellTexture(6262)
 ACTION_CONST_ATARGET = 		133015 		-- GetSpellTexture(153911)
 
@@ -8361,7 +8365,6 @@ function Action:AutoRacial(unit, isReadyCheck)
 			Action.PlayerRace == "Goblin" or 
 			-- Misc (uncategoried) 
 			Action.PlayerRace == "VoidElf" or 
-			--Action.PlayerRace == "NightElf" or -- under development
 			-- Bursting 
 			Action.PlayerRace == "DarkIronDwarf" or 
 			Action.PlayerRace == "Troll" or 
@@ -8531,6 +8534,31 @@ function Action:AutoRacial(unit, isReadyCheck)
 		then
 			return true				  
 		end 	
+	
+		-- Control Avoid 
+		if 	Action.PlayerRace == "NightElf" then 
+			-- Check Freezing Trap 
+			if 	UnitCooldown:GetCooldown("arena", 3355) > UnitCooldown:GetMaxDuration("arena", 3355) - 2 and 
+				UnitCooldown:IsSpellInFly("arena", 3355) and 
+				getDR("player", "incapacitate") > 0 
+			then 
+				local Caster = UnitCooldown:GetUnitID("arena", 3355)
+				if Caster and not IsStealthed() and Env.Unit(Caster):GetRange() <= 40 and (getDMG("player") == 0 or not Env.Unit("player"):IsFocused("DAMAGER")) then 
+					return true 
+				end 
+			end 
+				
+			-- Check Storm Bolt 
+			if 	UnitCooldown:GetCooldown("arena", 222897) > UnitCooldown:GetMaxDuration("arena", 222897) - 2 and 
+				UnitCooldown:IsSpellInFly("arena", 222897) and 
+				getDR("player", "stun") > 25 -- don't waste on short durations by diminishing
+			then 
+				local Caster = UnitCooldown:GetUnitID("arena", 222897)
+				if Caster and not IsStealthed() and Env.Unit(Caster):GetRange() <= 20 then 
+					return true 
+				end 
+			end 
+		end 
 	
 		-- Trinkets 
 		if	Action.LOC[Action.PlayerRace] and 
@@ -8835,6 +8863,25 @@ function Action.Rotation(icon)
 	
 	-- [6] Passive: @player, @raid1, @arena1 
 	if meta == 6 then 
+		-- Shadowmeld
+		if Action[Env.PlayerSpec].Shadowmeld and Action[Env.PlayerSpec].Shadowmeld:AutoRacial("player", true) then 
+			return Action[Env.PlayerSpec].Shadowmeld:Show(icon)
+		end 
+		
+		-- Stopcasting 
+		if 	UnitCooldown:GetCooldown("arena", 147362) > UnitCooldown:GetMaxDuration("arena", 147362) - 1 and 
+			UnitCooldown:IsSpellInFly("arena", 147362) 
+		then 
+			local Caster = UnitCooldown:GetUnitID("arena", 147362)
+			if Caster then 
+				local castName, _, _, notInterruptable = Env.Unit("player"):IsCasting()
+				if castName and not notInterruptable and Env.Unit(Caster):GetRange() <= 40 and Env.Unit("player"):HasBuffs("TotalImun") == 0 and Env.Unit("player"):HasBuffs("KickImun") == 0 then 
+					Action.TMWAPL(icon, "texture", ACTION_CONST_STOPCAST)			 
+					return true 
+				end 
+			end 
+		end 
+		
 		-- Cursor 
 		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
 			if Action.GameTooltipClick == "LEFT" then 
@@ -8868,7 +8915,7 @@ function Action.Rotation(icon)
 			
 			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
 				if Healthstone >= 100 then -- AUTO 
-					if TimeToDie("player") <= 7 then 
+					if TimeToDie("player") <= 9 and Env.UNITHP("player") <= 40 then 
 						Action.TMWAPL(icon, "texture", ACTION_CONST_HEALTHSTONE)					 
 						return true
 					end 
