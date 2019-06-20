@@ -10,8 +10,8 @@ local CL_REACTION_NEUTRAL = COMBATLOG_OBJECT_REACTION_NEUTRAL
 
 local DRData = LibStub("DRData-1.1")
 
-local type, pairs, print, wipe, bitband, bitbxor = 
-	  type, pairs, A.Print, wipe, bit.band, bit.bxor
+local next, type, pairs, print, wipe, bitband, bitbxor = 
+	  next, type, pairs, A.Print, wipe, bit.band, bit.bxor
 
 local UnitHealthMax, UnitHealth, UnitGUID, UnitExists, UnitGetTotalAbsorbs = 
 	  UnitHealthMax, UnitHealth, UnitGUID, UnitExists, UnitGetTotalAbsorbs
@@ -100,6 +100,18 @@ end
 local function isPlayer(Flags)
 	return bitband(Flags, CL_TYPE_PLAYER) == CL_TYPE_PLAYER or bitband(Flags, CL_CONTROL_PLAYER) == CL_CONTROL_PLAYER
 end
+
+local function convertUnitID(unitID)
+	local converted
+	if unitID:match("arena") then 
+		converted = "arena"
+	elseif unitID:match("raid") then 
+		converted = "raid"
+	elseif unitID:match("party") then 
+		converted = "party"
+	end 
+	return converted
+end 
 
 --[[ This Logs the damage for every unit ]]
 local logDamage = function(...)
@@ -527,6 +539,8 @@ function SpellAmount(UNIT, spellID)
     return (Data[GUID] and Data[GUID].spell_value[spellID].Amount) or 0
 end
 
+--[[ This is tracks CLEU spells only if they was applied/missed/reflected e.g. received in any form by end unit to feedback that info ]]
+--[[ Instead of this function for spells which have flying but wasn't received by end unit, since spell still in the fly, you need use UnitCooldown ]]
 function SpellLastCast(UNIT, SPELL, byID)
 	-- @return TMW.time stamp when spell was casted 
     local timer = 0
@@ -627,6 +641,174 @@ function getDR(UNIT, drCat)
 	return DR_Tick, DR_Remain, DR_Application, DR_ApplicationMax
 end 
 
+--- =========================== UNIT COOLDOWN ============================
+UnitCooldown = {
+	Data = {},
+	SpellToUnits = {},
+	CLEUBlackList = {
+		-- Freezing Trap
+		[3355] = {
+			["SPELL_CAST_SUCCESS"] = true,
+		},
+		-- Storm Bolt 
+		[222897] = {
+			["SPELL_CAST_SUCCESS"] = true,
+		},
+	},
+}
+function UnitCooldown:Register(unit, spell, cd, isFriendly, inPvP, CLEUbl)	
+	-- unit accepts "arena", "raid", "party", their number 
+	-- spell accepts spellName, spellID 
+	-- isEnemy, inPvP are optional
+	if not self.Data[unit] then 
+		self.Data[unit] = {} 
+	end 
+	
+	if unit:match("arena") then 
+		inPvP = true 
+	elseif unit:match("party") or unit:match("raid") then 
+		isFriendly = true 
+	end 
+
+	self.Data[unit][spell] = { start = 0, expired = 0, cd = cd or 0, isFriendly = isFriendly, inPvP = inPvP, isFlying = false, UnitID = nil }	
+	if CLEUbl and type(CLEUbl) == "table" then 
+		UnitCooldown.CLEUBlackList[spell] = CLEUbl
+	end 
+	
+	if not self.SpellToUnits[spell] then 
+		self.SpellToUnits[spell] = {}
+	end 
+	self.SpellToUnits[spell][unit] = true
+end 
+
+function UnitCooldown:UnRegister(unit, spell)
+	if self.Data[unit] then 
+		if not spell then 
+			self.Data[unit] = nil 	
+			for _, v in pairs(self.SpellToUnits) do 
+				for u in pairs(v) do 
+					if u == unit then 
+						v[u] = nil 
+					end
+				end 
+			end 
+		elseif self.Data[unit][spell] then 
+			self.Data[unit][spell] = nil
+			self.SpellToUnits[spell][unit] = nil 
+		end 
+	end 
+end 
+
+function UnitCooldown:OnEvent(unit, spellID, UnitID)
+	if self.Data[unit] and spellID then
+		if self.Data[unit][spellID] then 
+			if (not self.Data[unit][spellID].inPvP or Env.InPvP()) and (not self.Data[unit][spellID].isFriendly or not Env.Unit(unit):IsEnemy()) then 
+				self.Data[unit][spellID].start = TMW.time 
+				self.Data[unit][spellID].expired = self.Data[unit][spellID].start + self.Data[unit][spellID].cd
+				self.Data[unit][spellID].isFlying = true
+				self.Data[unit][spellID].UnitID = UnitID				
+			end 
+		else
+			local spell = A.GetSpellInfo(spellID)
+			if spell and self.Data[unit][spell] and (not self.Data[unit][spell].inPvP or Env.InPvP()) and (not self.Data[unit][spell].isFriendly or not Env.Unit(unit):IsEnemy()) then 
+				self.Data[unit][spell].start = TMW.time 
+				self.Data[unit][spell].expired = self.Data[unit][spell].start + self.Data[unit][spell].cd
+				self.Data[unit][spell].isFlying = true
+				self.Data[unit][spell].UnitID = UnitID
+			end 
+		end 
+	end 
+end 
+
+function UnitCooldown:GetCooldown(unit, spell)
+	-- spell can be string (e.g. localized name) or ID, however if ID but you registered by name it will query from ID to Name and would be checked both, so you can use always ID here
+	-- @return remain cooldown time (in seconds), start time stamp when spell was used and counter was launched
+	if self.Data[unit] then 
+		if self.Data[unit][spell] then 
+			if self.Data[unit][spell].expired >= TMW.time then 
+				return self.Data[unit][spell].expired - TMW.time, self.Data[unit][spell].start
+			else 
+				return 0, self.Data[unit][spell].start
+			end 
+		else
+			local spellName = A.GetSpellInfo(spell)
+			if spellName and self.Data[unit][spellName] then 
+				if self.Data[unit][spellName].expired >= TMW.time then 
+					return self.Data[unit][spellName].expired - TMW.time, self.Data[unit][spellName].start
+				else 
+					return 0, self.Data[unit][spellName].start
+				end 				
+			end 
+		end 
+	end 
+	return 0, 0
+end 
+
+function UnitCooldown:GetMaxDuration(unit, spell)
+	-- @return cd of spell
+	if self.Data[unit] then
+		if self.Data[unit][spell] then 
+			return self.Data[unit][spell].cd
+		else
+			local spellName = A.GetSpellInfo(spell)
+			if spellName and self.Data[unit][spellName] then 
+				return self.Data[unit][spellName].cd
+			end 
+		end 
+	end 
+	return 0 
+end 
+
+function UnitCooldown:GetUnitID(unit, spell)
+	-- @return unitID (who last casted spell) otherwise nil  
+	if self.Data[unit] then
+		if self.Data[unit][spell] then 
+			return self.Data[unit][spell].UnitID
+		else
+			local spellName = A.GetSpellInfo(spell)
+			if spellName and self.Data[unit][spellName] then 
+				return self.Data[unit][spellName].UnitID
+			end 
+		end 
+	end 
+end 
+
+function UnitCooldown:IsSpellInFly(unit, spell)
+	if self.Data[unit] then
+		if self.Data[unit][spell] then 
+			return self.Data[unit][spell].isFlying
+		else
+			local spellName = A.GetSpellInfo(spell)
+			if spellName and self.Data[unit][spellName] then 
+				return self.Data[unit][spellName].isFlying
+			end 
+		end 
+	end 
+	return false 
+end 
+
+-- Defaults 
+Listener:Add("CombatTracker_Events", "PLAYER_LOGIN", function()
+	-- Tracks Freezing Trap 
+	UnitCooldown:Register("arena", A.GetSpellInfo(3355), 30)
+	-- Tracks Counter Shoot (hunter's range kick, it's fly able spell and can be avoided by stopcasting)
+	UnitCooldown:Register("arena", A.GetSpellInfo(147362), 24)
+	-- Tracks Storm Bolt 
+	UnitCooldown:Register("arena", A.GetSpellInfo(222897), 25)
+	-- Localize our ID's to Name 
+	local Cached = {}
+	for ID, v in pairs(UnitCooldown.CLEUBlackList) do 
+		local Name = A.GetSpellInfo(ID)
+		if Name then 
+			Cached[Name] = v 		
+		end 
+	end 
+	for k, v in pairs(Cached) do 
+		UnitCooldown.CLEUBlackList[k] = v
+	end 
+	Listener:Remove("CombatTracker_Events", "PLAYER_LOGIN")
+end)
+
 --- ============================= CORE ==============================
 --[[ Combat Tracker ]]
 Listener:Add("CombatTracker_Events", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
@@ -711,17 +893,60 @@ Listener:Add("CombatTracker_Events", "COMBAT_LOG_EVENT_UNFILTERED", function(...
 					end				
 				end 
 			end 
-		end 				
+		end 
+
+		-- [[ UnitCooldown IsSpellInFly reset ]]
+		-- Make sure what it's a spell since handler for UnitCooldown works only on spells and it's not start/stop casting and not create such as hunter's trap (because trap can finish fly only when someone received debuff)
+		if next(UnitCooldown.Data) and EVENT:match("SPELL") and not EVENT:match("_START") and not EVENT:match("_FAILED") and not EVENT:match("_CREATE") then 
+			if (UnitCooldown.CLEUBlackList[spellID] and UnitCooldown.CLEUBlackList[spellID][EVENT]) or (UnitCooldown.CLEUBlackList[spellName] and UnitCooldown.CLEUBlackList[spellName][EVENT]) then
+				return 
+			end 
+			
+			local spell 
+			if UnitCooldown.SpellToUnits[spellID] then 
+				spell = spellID
+			elseif UnitCooldown.SpellToUnits[spellName] then 
+				spell = spellName
+			end 
+			
+			if spell then
+				for unit in pairs(UnitCooldown.SpellToUnits[spell]) do 
+					if UnitCooldown.Data[unit] and UnitCooldown.Data[unit][spell] then 
+						-- Checks reaction to set condition for right unit 
+						if (UnitCooldown.Data[unit][spell].isFriendly and not isEnemy(sourceFlags)) or (not UnitCooldown.Data[unit][spell].isFriendly and isEnemy(sourceFlags)) then 
+							UnitCooldown.Data[unit][spell].isFlying = false 
+						end 
+					end 
+				end 
+			end 
+		end 
+end)
+
+--[[ UnitCooldown Tracker ]]
+Listener:Add("CombatTracker_Events", "UNIT_SPELLCAST_SUCCEEDED", function(...)
+	local unit, _, spellID = ...
+	if unit then  
+		local converted = convertUnitID(unit)
+		if converted then 
+			-- This is for units without number, like it triggers any arena unit for example 
+			UnitCooldown:OnEvent(converted, spellID, unit)
+		end
+		
+		-- This is for fixed unit like arena1
+		UnitCooldown:OnEvent(unit, spellID, unit)
+	end 
 end)
 
 Listener:Add("CombatTracker_Events", "PLAYER_REGEN_ENABLED", function()
-        wipe(Data)                   
+		if Env.Zone ~= "arena" then 
+			wipe(Data)                   
+		end 
 end)
 
 Listener:Add("CombatTracker_Events", "PLAYER_REGEN_DISABLED", function()
 		-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
-        if SpellTimeSinceLastCast("player", Env.LastPlayerCastID) > 0.5 then 
-            wipe(Data)
+        if SpellTimeSinceLastCast("player", Env.LastPlayerCastID) > 0.5 and Env.Zone ~= "arena" then 
+            wipe(Data)			
         end 
 end)
 
