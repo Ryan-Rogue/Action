@@ -96,10 +96,10 @@ local function UpdateCVAR()
     if GetCVar("doNotFlashLowHealthWarning")~="1" then SetCVar("doNotFlashLowHealthWarning", 1) end; 
     -- WM removal
     if GetCVar("screenshotQuality")~="10" then SetCVar("screenshotQuality", 10) end;    
-    -- TODO: Delete after new HPaly and RDruid release
-    if Env.IamHealer and Env.UNITSpec("player", {65, 105}) and GetCVar("nameplateShowAll")=="0" then
+    -- UNIT_NAMEPLAYES_AUTOMODE (must be visible)
+    if GetCVar("nameplateShowAll")=="0" then
         SetCVar("nameplateShowAll", 1)
-		print("All nameplates should be enabled if you're Holy Paladin or Restor Druid")
+		print("All nameplates should be visible")
     end
     if GetCVar("nameplateShowEnemies")~="1" then
         SetCVar("nameplateShowEnemies", 1) 
