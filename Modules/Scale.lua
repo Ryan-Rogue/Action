@@ -96,7 +96,7 @@ local function UpdateCVAR()
     if GetCVar("doNotFlashLowHealthWarning")~="1" then SetCVar("doNotFlashLowHealthWarning", 1) end; 
     -- WM removal
     if GetCVar("screenshotQuality")~="10" then SetCVar("screenshotQuality", 10) end;    
-    -- UNIT_NAMEPLAYES_AUTOMODE (must be visible)
+	-- UNIT_NAMEPLAYES_AUTOMODE (must be visible)
     if GetCVar("nameplateShowAll")=="0" then
         SetCVar("nameplateShowAll", 1)
 		print("All nameplates should be visible")

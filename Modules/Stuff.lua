@@ -15,8 +15,8 @@ end
 
 --- =========================== Listener ===========================
 Listener, listeners = {}, {}
-local object = CreateFrame("Frame", "Listener_Events")
-object:SetScript("OnEvent", function(_, event, ...)
+local frame = CreateFrame("Frame", "Listener_Events")
+frame:SetScript("OnEvent", function(_, event, ...)
         if not listeners[event] then return end
         for k in pairs(listeners[event]) do
             if k == "Stuff_Events" then 
@@ -29,7 +29,7 @@ end)
 
 function Listener.Add(_, name, event, callback)
     if not listeners[event] then
-        object:RegisterEvent(event)
+        frame:RegisterEvent(event)
         listeners[event] = {}
     end
     if not listeners[event][name] then 
@@ -230,6 +230,7 @@ end
 -- ElvUI Fix
 if ElvUI then 
     local handled = {["Frame"] = true}
+	local object = CreateFrame("Frame")
     object.t = object:CreateTexture(nil,"BACKGROUND")
     local OldTexelSnappingBias = object.t:GetTexelSnappingBias()
     
@@ -273,6 +274,5 @@ if ElvUI then
         
         object = EnumerateFrames(object)
     end
-	
-	object.t = nil
+
 end 
