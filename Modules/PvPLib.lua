@@ -199,6 +199,7 @@ local AuraList = {
     -- CC CONTROL TYPE
     CrowdControl = {
         -- Deprecated
+		118, -- Hibernate
     },
     Incapacitated = {
 		-- Druid
