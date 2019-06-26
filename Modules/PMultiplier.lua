@@ -7,6 +7,8 @@ local ListenedSpells = {}
 local ListenedAuras = {}
 local ListenedLastCast = {}
 local UnitGUID, GetSpellInfo = UnitGUID, Action.GetSpellInfo
+local _, pclass = UnitClass("player")
+
 --- ============================ CONTENT ============================
 -- PMultiplier Calculator
 local function ComputePMultiplier(ListenedSpell)
@@ -83,8 +85,10 @@ local function PMultiplierLaunch(...)
 	end
 end
 
-Listener:Add('PMultiplier', "PLAYER_ENTERING_WORLD", PMultiplierLaunch)
-Listener:Add('PMultiplier', "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
+if pclass == "DRUID" then 
+	Listener:Add('PMultiplier', "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
+	PMultiplierLaunch()
+end 
 
 function RegisterPMultiplier(...)
     local Args = { ... }
