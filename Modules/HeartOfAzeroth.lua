@@ -39,6 +39,9 @@ end
 
 local UnitHealthMax, UnitHealth, UnitPowerMax, UnitPower, UnitGetIncomingHeals, UnitIsPlayer, UnitInRange = 
 	  UnitHealthMax, UnitHealth, UnitPowerMax, UnitPower, UnitGetIncomingHeals, UnitIsPlayer, UnitInRange
+	  
+local IsStealthed = 
+	  IsStealthed
 
 local GetNetStats = GetNetStats
 
@@ -174,7 +177,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 
 		local MajorSpellName = GetMajorBySpellName[spellName]
 		
-		if MajorSpellName and Env.SpellCD(spellID) <= select(4, GetNetStats()) / 1000 + 0.025 then 
+		if MajorSpellName and Env.SpellCD(spellID) <= select(4, GetNetStats()) / 1000 + 0.025 and CombatTime("player") > 0 then 
 			local ShouldStop = Action.ShouldStop()
 			local unitID = unit and unit or "target"
 			
@@ -357,7 +360,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			
 			if MajorSpellName == "Standstill" then 
 				-- GCD 1.5 sec 
-				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and not ShouldStop and CombatTime("player") > 0 and not Env.Unit(unitID):IsEnemy() and UnitIsPlayer(unitID) and Env.Unit(unitID):DeBuffCyclone() == 0 and UnitInRange(unitID) and (TimeToDie(unitID) <= 6 or incdmg(unitID) * 4 >= Env.GetDescription(spellID)[1]) and Env.Unit(unitID):HasBuffs("TotalImun") == 0 then 
+				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and not ShouldStop and not Env.Unit(unitID):IsEnemy() and UnitIsPlayer(unitID) and Env.Unit(unitID):DeBuffCyclone() == 0 and UnitInRange(unitID) and (TimeToDie(unitID) <= 6 or incdmg(unitID) * 4 >= Env.GetDescription(spellID)[1]) and Env.Unit(unitID):HasBuffs("TotalImun") == 0 then 
 					return Action.HeartOfAzerothShow(icon)
 				end 
 			end 
@@ -365,7 +368,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			if MajorSpellName == "Life-Binder's Invocation" then 
 				-- GCD 1.5 sec (this is long cast)
 				-- If during latest 3 sec group AHP went down to -30%
-				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and not ShouldStop and CombatTime("player") > 0 and not Env.Unit(unitID):IsEnemy() and FrequencyAHP(3) > 30 and Env.UNITCurrentSpeed("player") == 0 and (TimeToDie("player") > 9 or not Env.InPvP() or (not Env.Unit("player"):IsFocused() and Env.UNITHP("player") > 20)) then 
+				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and not ShouldStop and not Env.Unit(unitID):IsEnemy() and FrequencyAHP(3) > 30 and Env.UNITCurrentSpeed("player") == 0 and (TimeToDie("player") > 9 or not Env.InPvP() or (not Env.Unit("player"):IsFocused() and Env.UNITHP("player") > 20)) then 
 					return Action.HeartOfAzerothShow(icon)
 				end 
 			end  
@@ -373,14 +376,14 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			if MajorSpellName == "Overcharge Mana" then 
 				-- GCD 1.5 sec 
 				-- If unit TTD <= 16 and TTD > 6 and our mana above 35% or while heroism
-				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and not ShouldStop and CombatTime("player") > 0 and not Env.Unit(unitID):IsEnemy() and (not UnitIsPlayer(unitID) or Env.Unit(unitID):DeBuffCyclone() == 0) and UnitInRange(unitID) and ((TimeToDie(unitID) <= 16 and TimeToDie(unitID) > 6 and UnitPower("player") >= UnitPowerMax("player") * 0.35) or Env.Unit("player"):HasBuffs("BurstHaste") > 0) then 
+				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and not ShouldStop and not Env.Unit(unitID):IsEnemy() and (not UnitIsPlayer(unitID) or Env.Unit(unitID):DeBuffCyclone() == 0) and UnitInRange(unitID) and ((TimeToDie(unitID) <= 16 and TimeToDie(unitID) > 6 and UnitPower("player") >= UnitPowerMax("player") * 0.35) or Env.Unit("player"):HasBuffs("BurstHaste") > 0) then 
 					return Action.HeartOfAzerothShow(icon)
 				end 
 			end 
 			
 			if MajorSpellName == "Vitality Conduit" then 
 				-- GCD 1.5 sec 
-				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and not ShouldStop and CombatTime("player") > 0 and not Env.Unit(unitID):IsEnemy() and (not UnitIsPlayer(unitID) or Env.Unit(unitID):DeBuffCyclone() == 0) and UnitInRange(unitID) and PredictHealing(MajorSpellName, spellID, unitID) then 
+				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and not ShouldStop and not Env.Unit(unitID):IsEnemy() and (not UnitIsPlayer(unitID) or Env.Unit(unitID):DeBuffCyclone() == 0) and UnitInRange(unitID) and PredictHealing(MajorSpellName, spellID, unitID) then 
 					return Action.HeartOfAzerothShow(icon)
 				end 
 			end 
