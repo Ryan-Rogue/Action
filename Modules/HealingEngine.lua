@@ -972,12 +972,13 @@ function FrequencyAHP(TIMER)
                 counter = counter + 1
                 total = total + Frequency[i].AHP
             end 
-        end 
-        if total > 0 then 
-            --total = (total / counter * 100 / Frequency[#Frequency].MAXHP) - (Frequency[#Frequency].AHP * 100 / Frequency[#Frequency].MAXHP)
-            total = (Frequency[#Frequency].AHP * 100 / Frequency[#Frequency].MAXHP) - (total / counter * 100 / Frequency[#Frequency].MAXHP)
-        end         
+        end        
     end 
+	
+	if total > 0 then           
+		total = (Frequency[#Frequency].AHP * 100 / Frequency[#Frequency].MAXHP) - (total / counter * 100 / Frequency[#Frequency].MAXHP)
+	end  	
+	
     return total 
 end 
 
@@ -1036,7 +1037,7 @@ function AoEHP(hp)
     local totalhp = 0
     if tableexist(members) then 
         for i = 1, #members do
-            if UnitIsPlayer(members[i].Unit) and Env.UNITHP(members[i].Unit) <= hp then
+            if Env.UNITHP(members[i].Unit) <= hp then
                 totalhp = totalhp + 1
             end
         end

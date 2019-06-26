@@ -24,6 +24,7 @@ local ProfileToggle = {
         deff_toggle = TellMeWhen_Group3_Icon11.Enabled
         DragonRoar_toggle = TellMeWhen_Group3_Icon13.Enabled
         AoE_Toggle = TellMeWhen_Group3_Icon15.Enabled
+		MouseOver_Toggle = TellMeWhen_Group3_Icon17.Enabled
     end,        
     ["[GGL] Druid"] = function()
         MouseOver_Toggle = TellMeWhen_Group3_Icon1.Enabled

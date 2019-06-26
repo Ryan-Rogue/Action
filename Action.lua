@@ -1,5 +1,5 @@
 --- 
-local DateTime = "20.06.2019"
+local DateTime = "26.06.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -26,6 +26,7 @@ local GameLocale = GetLocale()
 	  
 local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, IsAttackSpell
 
+local AzeriteEssence = _G.C_AzeriteEssence
 
 --------------------------------------
 -- Localization
@@ -1420,6 +1421,284 @@ local Localization = {
 				INPUTTITLE = "Frase",
 				INPUTERROR = "Non hai inserito una frase!",
 				INPUTTOOLTIP = "La frase verrà attivata in corrispondenza ai riscontri nella chat di gruppo(/party)\nNon é sensibile alle maiuscole\nIdentifica pattern, ciò significa che una frase scritta in chat con la combinazione delle parole raid, party, arena, party o giocatore\nattiva l'azione nel meta slot desiderato\nNon hai bisogno di impostare i pattern elencati, sono usati on top alla macro\nIf non trova nessun pattern, allora verra usato lo slot per rotazione Singola e ad area",				
+			},
+		},
+	},
+	esES = {			
+		NOSUPPORT = "No soportamos este perfil ActionUI todavía",	
+		DEBUG = "|cffff0000[Debug] Error identificado: |r",			
+		ISNOTFOUND = "no encontrado!",			
+		CREATED = "creado",
+		YES = "Si",
+		NO = "No",
+		TOGGLEIT = "Cambiar",
+		SELECTED = "Seleccionado",
+		RESET = "Reiniciar",
+		RESETED = "Reiniciado",
+		MACRO = "Macro",
+		MACROEXISTED = "|cffff0000Macro ya existe!|r",
+		MACROLIMIT = "|cffff0000No se puede crear la macro, límite alcanzado. Debes borrar al menos una macro!|r",	
+		GLOBALAPI = "API Global: ",
+		RESIZE = "Redimensionar",
+		RESIZE_TOOLTIP = "Click-y-arrastrar para redimensionar",
+		SLASH = {
+			LIST = "Lista de comandos:",
+			OPENCONFIGMENU = "Mostrar menú de configuración",
+			HELP = "Mostrar ayuda",
+			QUEUEHOWTO = "macro (toggle) para sistema de secuencia (Cola), TABLENAME es una etiqueta de referencia para SpellName|ItemName (en inglés)",
+			QUEUEEXAMPLE = "ejemplo de uso de Cola",
+			BLOCKHOWTO = "macro (toggle) para deshabilitar|habilitar cualquier acción (Blocker), TABLENAME es una etiqueta de referencia para SpellName|ItemName (en inglés)",
+			BLOCKEXAMPLE = "ejemplo de uso de Blocker",
+			RIGHTCLICKGUIDANCE = "La mayoría de elementos son usables con el botón izquierdo y derecho del ratón. El botón derecho del ratón creará un macro toggle por lo que puedes considerar la sugerencia anterior",				
+			INTERFACEGUIDANCE = "Explicación de la UI:",
+			INTERFACEGUIDANCEEACHSPEC = "[Each spec] relativa a la ACTUAL especialización seleccionada",
+			INTERFACEGUIDANCEALLSPECS = "[All specs] relativa a TODAS las especializaciones disponibles de tus personajes",
+			INTERFACEGUIDANCEGLOBAL = "[Global] relativa a toda tu cuenta, TODOS los personajes, TODAS las especializaciones",
+			ATTENTION = "|cffff0000ATENCIÓN|r Acción funcional solo para perfiles creados después del 31.05.2019. Los perfiles antiguos serán actualizados para este sistema en el futuro",				
+		},
+		TAB = {
+			RESETBUTTON = "Reiniciar ajustes",
+			RESETQUESTION = "¿Estás seguro?",
+			SAVEACTIONS = "Guardar ajustes de Acciones",
+			SAVEINTERRUPT = "Guardar Lista de Interrupciones",
+			SAVEDISPEL = "Guardar Lista de Auras",
+			SAVEMOUSE = "Guardar Lista de Cursor",
+			SAVEMSG = "Guardar Lista de Mensajes",
+			LUAWINDOW = "Configurar LUA",
+			LUATOOLTIP = "Para referirse a la unidad de comprobación, usa 'thisunit' sin comillas\nEl código debe tener retorno boolean (true) para procesar las condiciones\nEste código tiene setfenv que significa lo que no necesitas usar .Env o TMW.CNDT.Env. para cualquier cosa que tenga it\n\nSi quieres borrar un codigo default necesitas escribir 'return true' sin comillas en vez de removerlo todo",
+			BRACKETMATCH = "Correspondencia de corchetes",
+			CLOSELUABEFOREADD = "Cerrar las configuración de LUA antes de añadir",
+			FIXLUABEFOREADD = "Debes arreglas los errores en la Configuración de LUA antes de añadir",
+			RIGHTCLICKCREATEMACRO = "ClickDerecho: Crear macro",
+			NOTHING = "El Perfil no tiene configuración para este apartado",
+			HOW = "Aplicar:",
+			HOWTOOLTIP = "Global: Todas las cuentas, personajes y especializaciones",
+			GLOBAL = "Global",
+			ALLSPECS = "Para todas las especializaciones del personaje",
+			THISSPEC = "Para la especialización actual del personaje",			
+			KEY = "Tecla:",
+			CONFIGPANEL = "'Añadir' Configuración",
+			[1] = {
+				HEADBUTTON = "General",	
+				HEADTITLE = "[Each spec] Primaria",
+				PVEPVPTOGGLE = "PvE / PvP Mostrar Manual",
+				PVEPVPTOGGLETOOLTIP = "Forzar un perfil a cambiar a otro modo\n(especialmente útil cuando el War Mode está ON)\n\nClickDerecho: Crear macro", 
+				PVEPVPRESETTOOLTIP = "Reiniciar mostrar manual a selección automática",
+				CHANGELANGUAGE = "Cambiar idioma",
+				CHARACTERSECTION = "Sección de Personaje",
+				AUTOTARGET = "Auto Target",
+				AUTOTARGETTOOLTIP = "Si el target está vacío, pero estás en combate, devolverá el que esté más cerca\nEl cambiador funciona de la misma manera si el target tiene inmunidad en PvP\n\nClickDerecho: Crear macro",					
+				POTION = "Poción",
+				HEARTOFAZEROTH = "Corazón de Azeroth",
+				RACIAL = "Habilidad Racial",
+				SYSTEMSECTION = "Sección del sistema",
+				LOSSYSTEM = "Sistema LOS",
+				LOSSYSTEMTOOLTIP = "ATENCIÓN: Esta opción causa un delay de 0.3s + un giro actual de gcd\nsi la unidad está siendo comprobada esta se localizará como pérdida (por ejemplo, detrás de una caja en la arena)\nDebes también habilitar las mismas opciones en Opciones Avanzadas\nEsta opción pone en una lista negra la unidad con perdida y\n deja de producir acciones a esta durante N segundos\n\nClickDerecho: Crear macro",
+				HEALINGENGINEPETS = "Motor de Curación para Pets",
+				HEALINGENGINEPETSTOOLTIP = "Incluída en el target de las pets del jugador y calcula para curarles\n\nClickDerecho: Crear macro",
+				ALL = "Todo",
+				RAID = "Raid",
+				TANK = "Solo Tanques",
+				DAMAGER = "Solo Damage Dealers",
+				HEALER = "Solo Healers",
+				HEALINGENGINETOOLTIP = "Esta opción relativa a selección de unidad en curación\nTodo: todos los miembros\nRaid: Todos los miembros sin tanques\n\nClickDerecho: Crear macro\nSi quieres establecer el estado de conmutación fija usa el argumento en (ARG): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
+				DBM = "Tiempos DBM",
+				DBMTOOLTIP = "Rastrea tiempos de pull y algunos eventos específicos como la basura que pueda venir.\nEsta característica no está disponible para todos los perfiles!\n\nClickDerecho: Crear macro",
+				FPS = "Optimización de FPS",
+				FPSSEC = " (sec)",
+				FPSTOOLTIP = "AUTO: Incrementa los frames por segundo aumentando la dependencia dinámica\nframes del ciclo de recarga (llamada) del ciclo de rotación\n\nTambién puedes establecer manualmente el intervalo siguiendo una regla simple:\nCuanto mayor sea el desplazamiento, mayor las FPS, pero peor actualización de rotación\nUn valor demasiado alto puede causar un comportamiento impredecible!\n\nClickDerecho: Crear macro",					
+				PVPSECTION = "Sección PvP",
+				REFOCUS = "Devuelve el guardado anterior @focus\n(arena1-3 unidades solamente)\nEs recomendable contra clases con invisibilidad\n\nClickDerecho: Crear macro",
+				RETARGET = "Devuelve el guardado anterior @target\n(arena1-3 unidades solamente)\nEs recomendable contra cazadores con 'Feign Death' and cualquier objetivo imprevisto cae\n\nClickDerecho: Crear macro",
+				TRINKETS = "Trinkets",
+				TRINKET = "Trinket",
+				BURST = "Modo Bursteo",
+				BURSTTOOLTIP = "Todo - En cooldown\nAuto - Boss o Jugadores\nOff - Deshabilitado\n\nClickDerechohabilitado\n\nClickDerecho: Crear macro\nSi quieres establecer el estado de conmutación fija usa el argumento en (ARG): 'Everything', 'Auto', 'Off'",					
+				HEALTHSTONE = "Healthstone",
+				HEALTHSTONETOOLTIP = "Establecer porcentaje de vida (HP)\n\nClickDerecho: Crear macro",
+				PAUSECHECKS = "[All specs] La rotación no funciona si:",
+				VEHICLE = "En Vehículo",
+				VEHICLETOOLTIP = "Ejemplo: Catapulta, arma de fuego",
+				DEADOFGHOSTPLAYER = "Estás muerto",
+				DEADOFGHOSTTARGET = "El Target está muerto",
+				DEADOFGHOSTTARGETTOOLTIP = "Excepción a enemigo hunter if seleccionó como objetivo principal",
+				MOUNT = "En montura",
+				COMBAT = "Fuera de comabte", 
+				COMBATTOOLTIP = "Si tu y tu target estáis fuera de combate. Invisible es una excepción\n(mientras te mantengas en sigilo esta condición se omitirá)",
+				SPELLISTARGETING = "Hechizo está apuntando",
+				SPELLISTARGETINGTOOLTIP = "Ejemplo: Blizzard, Salto heroico, Trampa de congelación",
+				LOOTFRAME = "Frame de botín",
+				MISC = "Misc:",		
+				DISABLEROTATIONDISPLAY = "Esconder mostrar rotación",
+				DISABLEROTATIONDISPLAYTOOLTIP = "Esconder el grupo, que está ubicado normalmente en la\nparte inferior central de la pantalla",
+				DISABLEBLACKBACKGROUND = "Esconder fondo negro", 
+				DISABLEBLACKBACKGROUNDTOOLTIP = "Esconder el fondo negro en la esquina izquierda\nATENCIÓN: Esto puede causar comportamientos impredecibles!",
+				DISABLEPRINT = "Esconder impresión",
+				DISABLEPRINTTOOLTIP = "Esconder notificaciones de chat de todo\nATENCIÓN: Esto también esconderá [Debug] Error Identificado!",
+				DISABLEMINIMAP = "Esconder icono en el minimapa",
+				DISABLEMINIMAPTOOLTIP = "Esconder icono de esta UI en el minimapa",
+			},
+			[3] = {
+				HEADBUTTON = "Acciones",
+				HEADTITLE = "Bloquear | Cola",
+				ENABLED = "Activado",
+				NAME = "Nombre",
+				DESC = "Nota",
+				ICON = "Icono",
+				SETBLOCKER = "Establecer\nBloquear",
+				SETBLOCKERTOOLTIP = "Esto bloqueará la acción seleccionada en la rotación\nNunca la usará\n\nClickDerecho: Crear macro",
+				SETQUEUE = "Establecer\nCola",
+				SETQUEUETOOLTIP = "Pondrá la acción en la cola de rotación\nLo usará lo antes posible\n\nClickDerecho: Crear macro",
+				BLOCKED = "|cffff0000Bloqueado: |r",
+				UNBLOCKED = "|cff00ff00Desbloqueado: |r",
+				KEY = "[Tecla: ",
+				KEYTOTAL = "[Cola Total: ",
+				KEYTOOLTIP = "Usa esta tecla en la pestaña MSG",
+				ISFORBIDDENFORQUEUE = "está prohibido ponerlo en cola!",
+				ISQUEUEDALREADY = "ya existe en la cola!",
+				QUEUED = "|cff00ff00Cola: |r",
+				QUEUEREMOVED = "|cffff0000Borrado de la cola: |r",
+				QUEUEPRIORITY = " tiene prioridad №",
+				QUEUEBLOCKED = "|cffff0000no puede añadirse a la cola porque SetBlocker lo ha bloqueado!|r",
+				SELECTIONERROR = "|cffff0000No has seleccionado una fila!|r",
+				CHECKSPELLLVL = "[All specs] Comprueba el nivel requerido de la habilidad",
+				CHECKSPELLLVLTOOLTIP = "Todas las habilidades que no estén disponibles por el nivel del personaje serán bloqueadas\nSerán actualizadas cada vez que se sube de nivel\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
+				CHECKSPELLLVLERROR = "Ya inicializado!",
+				CHECKSPELLLVLERRORMAXLVL = "Estás al MÁXIMO nivel posible!",
+				CHECKSPELLLVLMACRONAME = "Comprueba el nivel de la habilidad",
+				LUAAPPLIED = "El código LUA ha sido aplicado a ",
+				LUAREMOVED = "El código LUA ha sido removido de ",
+			},
+			[4] = {
+				HEADBUTTON = "Interrupciones",	
+				HEADTITLE = "Perfil de Interrupciones",					
+				ID = "ID de la habilidad",
+				NAME = "Nombre de la habilidad",
+				ICON = "Icono",
+				CONFIGPANEL = "'Añadir Interrupción' Configuración",
+				INTERRUPTFRONTSTRINGTITLE = "Seleccionar lista:",
+				INTERRUPTTOOLTIP = "[Main] para unidades @target/@mouseover/@targettarget\n[Heal] para unidades @arena1-3 (healing)\n[PvP] para unidades @arena1-3 (controlmultitud)\n\nPuedes establecer diferentes tiempos para [Heal] y [PvP] (no en esta UI)",
+				INPUTBOXTITLE = "Escribir habilidad:",					
+				INPUTBOXTOOLTIP = "ESCAPE (ESC): limpiar texto y borrar focus",
+				INTEGERERROR = "Desbordamiento de enteros intentando almacenar > 7 números", 
+				SEARCH = "Buscar por nombre o ID",
+				TARGETMOUSEOVERLIST = "[Main] Lista",
+				TARGETMOUSEOVERLISTTOOLTIP = "Desmarcado: interrumpirá CUALQUIER cast de forma aleatoria\nMarcado: interrumpirá solamente la lista específica de @target/@mouseover/@targettarget\nNota: en PvP se solucionará la interrupción de esa lista si está habilitado, de otra manera solo healers si mueren en menos de 3-4 segundos!\n\n@mouseover/@targettarget son opcionales y dependen de si están activados en la seccion spec\n\nClickDerecho: Crear macro",
+				KICKTARGETMOUSEOVER = "[Main] Interrupciones\nHabilitado",					
+				KICKTARGETMOUSEOVERTOOLTIP = "Desmarcado: @target/@mouseover interrupciones de la unidad no funcionan\nMarcado: @target/@mouseover interrupciones de la unidad funcionan\n\nClickDerecho: Crear macro",					
+				KICKHEALONLYHEALER = "[Heal] Solo healers",					
+				KICKHEALONLYHEALERTOOLTIP = "Desmarcado: lista válida para cualquier especialización de la unidad enemiga\n(e.g. Ench, Elem, SP, Retri)\nMarcado: lista solo válida para enemigos healers\n\nClickDerecho: Crear macro",
+				KICKHEAL = "[Heal] Lista",
+				KICKHEALPRINT = "[Heal] Lista of Interrupciones",
+				KICKHEALTOOLTIP = "Desmarcado: @arena1-3 [Heal] lista personalizada no funcionará\nChecked: @arena1-3 [Heal] lista personalizada funcionará\n\nClickDerecho: Crear macro",
+				KICKPVP = "[PvP] Lista",
+				KICKPVPPRINT = "[PvP] Lista de Interrupciones",
+				KICKPVPTOOLTIP = "Desmarcado: @arena1-3 [PvP] lista personalizada no funcionará\nChecked: @arena1-3 [PvP] lista personalizada funcionará\n\nClickDerecho: Crear macro",	
+				KICKPVPONLYSMART = "[PvP] INTELIGENTE",
+				KICKPVPONLYSMARTTOOLTIP = "Marcado: interrumpirá solamente acorden a la lógica establecida en la configuración del perfil lua. Ejemplo:\n1) Chain control en tu healer\n2) Alguien amigo (o tu) teneis buffs de Burst > 4 segundos\n3) Alguien morirá en menos de 8 segundos\n4) Tu (o @target) HP va a ejecutar la fase\nDesmarcado: interrumpirá esta lista siempre sin ningún tipo de lógica\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
+				ADD = "Añadir Interrupción",					
+				ADDERROR = "|cffff0000No has especificado nada en 'Escribir Habilidad' o la habilidad no ha sido encontrada!|r",
+				ADDTOOLTIP = "Añade habilidad del 'Escribir Habilidad'\n edita el cuadro a la lista seleccionada actual",
+				REMOVE = "Borrar Interrupción",
+				REMOVETOOLTIP = "Borra la habilidad seleccionada de la fila de la lista actual",
+			},
+			[5] = { 	
+				HEADBUTTON = "Auras",					
+				USETITLE = "[Each spec] Configuración de Caja",
+				USEDISPEL = "Usar Dispel",
+				USEPURGE = "Usar Purga",
+				USEEXPELENRAGE = "Expel Enrague",
+				HEADTITLE = "[Global] Dispel | Purga | Enrague",
+				MODE = "Modo:",
+				CATEGORY = "Categoría:",
+				POISON = "Dispelea venenos",
+				DISEASE = "Dispelea enfermedades",
+				CURSE = "Dispelea maldiciones",
+				MAGIC = "Dispelea magias",
+				MAGICMOVEMENT = "Dispelea relentizaciones/raíces",
+				PURGEFRIENDLY = "Purgar amigo",
+				PURGEHIGH = "Purgar enemigo (prioridad alta)",
+				PURGELOW = "Purgar enemigo (prioridad baja)",
+				ENRAGE = "Expel Enrague",	
+				ROLE = "Rol",
+				ID = "ID",
+				NAME = "Nombre",
+				DURATION = "Duración\n >",
+				STACKS = "Marcas\n >=",
+				ICON = "Icono",					
+				ROLETOOLTIP = "Tu rol para usar",
+				DURATIONTOOLTIP = "Reacciona al aura si la duración de esta es mayor (>) de los segundos especificados\nIMPORTANTE: Auras sin duración como 'favor divido'\n(sanazión de Paladin) debe ser 0. Esto significa que el aura está presente!",
+				STACKSTOOLTIP = "Reacciona al aura si tiene más o igual (>=) marcas especificadas",									
+				BYID = "usar ID\nen vez de Nombre",
+				BYIDTOOLTIP = "Por ID debe comprobar TODAS las habilidades\ncon el mismo nombre, pero asumir diferentes auras\ncomo 'Afliccion inestable'",					
+				CANSTEALORPURGE = "Solo si puedes\nrobar o purgar",					
+				ONLYBEAR = "Solo si la unidad está\nen 'Forma de oso'",									
+				CONFIGPANEL = "'Añadir Aura' Configuración",
+				ANY = "Cualquiera",
+				HEALER = "Healer",
+				DAMAGER = "Tanque|Dañador",
+				ADD = "Añadir Aura",					
+				REMOVE = "Borrar Aura",					
+			},				
+			[6] = {
+				HEADBUTTON = "Cursor",
+				HEADTITLE = "Interacción del ratón",
+				USETITLE = "[Each spec] Configuración de botones:",
+				USELEFT = "Usar click izquierdo",
+				USELEFTTOOLTIP = "Estás usando macro /target mouseover lo que no significa click!\n\nClickDerecho: Crear macro",
+				USERIGHT = "Usar click derecho",
+				LUATOOLTIP = "Para referirse a la unidad seleccionada, usa 'thisunit' sin comillas\nSi usas LUA en Categoría 'GameToolTip' entonces thisunit no es válido\nEl código debe tener boolean return (true) para procesar las condiciones\nEste código tiene setfenv que significa que no necesitas usar .Env or TMW.CNDT.Env. para ninguna que lo tenga\n\nSi quieres borrar el codigo por defecto necesitarás escribir 'return true' sin comillas en vez de borrarlo todo",							
+				BUTTON = "Click",
+				NAME = "Nombre",
+				LEFT = "Click izquierdo",
+				RIGHT = "Click Derecho",
+				ISTOTEM = "Es Totem",
+				ISTOTEMTOOLTIP = "Si está activado comprobará @mouseover en tipo 'Totem' para el nombre dado\nTambién prevendrá click en situaciones si tu @target ya tiene algún totem",				
+				INPUTTITLE = "Escribe el nombre del objeto (localizado!)", 
+				INPUT = "Esta entrada no puede escribirse en mayúsculas",
+				ADD = "Añadir",
+				REMOVE = "Borrar",
+				-- GlobalFactory default name preset in lower case!					
+				SPIRITLINKTOTEM = "tótem enlace de espíritu",
+				HEALINGTIDETOTEM = "tótem de marea de sanación",
+				CAPACITORTOTEM = "tótem capacitador",					
+				SKYFURYTOTEM = "tótem furia del cielo",					
+				ANCESTRALPROTECTIONTOTEM = "tótem de protección ancestral",					
+				COUNTERSTRIKETOTEM = "tótem de golpe de contraataque",
+				-- Optional totems
+				TREMORTOTEM = "tótem de tremor",
+				GROUNDINGTOTEM = "grounding totem",
+				WINDRUSHTOTEM = "tótem de carga de viento",
+				EARTHBINDTOTEM = "tótem nexo terrestre",
+				-- GameToolTips
+				ALLIANCEFLAG = "bandera de la alianza",
+				HORDEFLAG = "bandera de la horda",
+				NETHERSTORMFLAG = "bandera de la tormenta abisal",
+				ORBOFPOWER = "orbe de poder",
+			},
+			[7] = {
+				HEADTITLE = "Mensaje del Sistema",
+				USETITLE = "[Each spec]",
+				MSG = "Sistema de MSG",
+				MSGTOOLTIP = "Marcado: funcionando\nDesmarcado: sin funcionar\n\nClickDerecho: Crear macro",
+				DISABLERETOGGLE = "Bloquear borrar cola",
+				DISABLERETOGGLETOOLTIP = "Prevenir la repetición de mensajes borrados de la cola del sistema\nE.j. Posible spam de macro sin ser removida\n\nClickDerecho: Crear macro",
+				MACRO = "Macro para tu grupo:",
+				MACROTOOLTIP = "Esto es lo que debe ser enviado al chat de grupo para desencadenar la acción asignada en la tecla específica\nPara direccionar la acción específica de la unidad, añádelos al macro o déjalo tal como está en la rotación Single/AoE\nSoportado: raid1-40, party1-2, player, arena1-3\nSOLO UNA UNIDAD POR MENSAJE!\n\nTus compañeros pueden usar macros también, pero ten cuidado, deben ser leales a esto!\n NO DES ESTA MACRO A LA GENTE QUE NO LE PUEDA GUSTAR QUE USES BOT!",
+				KEY = "Tecla",
+				KEYERROR = "No has especificado una tecla!",
+				KEYERRORNOEXIST = "La tecla no existe!",
+				KEYTOOLTIP = "Debes especificar una tecla para bindear la acción\nPuedes extraer la tecla en el apartado 'Acciones'",
+				MATCHERROR = "Este nombre ya coincide, usa otro!",				
+				SOURCE = "El nombre de la personaje que dijo",					
+				WHOSAID = "Quien dijo",
+				SOURCETOOLTIP = "Esto es opcional. Puede dejarlo en blanco (recomendado)\nSi quieres configurarlo, el nombre debe ser exactamente el mismo al del chat de grupo",
+				NAME = "Contiene un mensaje",
+				ICON = "Icono",
+				INPUT = "Escribe una frase para el sistema de mensajes",
+				INPUTTITLE = "Frase",
+				INPUTERROR = "No has escrito una frase!",
+				INPUTTOOLTIP = "La frase aparecerá en cualquier coincidencia del chat de grupo (/party)\nNo se distingue entre mayúsculas y minúsculas\nContiene patrones, significa que la frase escrita por alguien con la combinación de palabras de raid, party, arena, party o player\nse adapta la acción a la meta slot deseada\nNo necesitas establecer los patrones listados aquí, se utilizan como un añadido a la macro\nSi el patrón no es encontrado, los espacios para las rotaciones Single y AoE serán usadas",				
 			},
 		},
 	},
@@ -3158,7 +3437,10 @@ local function ActionDB_Initialization()
 	-- Initialization LOS 
 	Action.LOSInit(true)
 	
-	-- Initialization SpellLevelCheck if it was selected in db
+	-- Initialization SpellLevelCheck if it was selected in db or player level lower than MAX on this expansion
+	if UnitLevel("player") < MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
+		TMW.db.profile.ActionDB[3].CheckSpellLevel = true 
+	end 
 	Action.SpellLevelInit()
 	
 	-- Initialization Cursor hooks 
@@ -3443,7 +3725,7 @@ local function SlashCommands(input)
 end 
 
 function Action.Print(text, bool, ignore)
-	if not ignore and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1].DisablePrint then 
+	if not ignore and TMW.db and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1].DisablePrint then 
 		return 
 	end 
     local hex = "00ccff"
@@ -3885,7 +4167,7 @@ function Action.GetToggle(n, toggle)
 		bool = TMW.db.profile.ActionDB[n][toggle] 
 	elseif TMW.db.profile.ActionDB[n] and TMW.db.profile.ActionDB[n][Env.PlayerSpec] then 
 		if toggle == "HeartOfAzeroth" then 
-			bool = _G.C_AzeriteEssence and TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]
+			bool = AzeriteEssence and TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]
 		else 
 			bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
 		end 
@@ -4585,7 +4867,7 @@ function Action.ToggleMainUI()
 			end)
 			HeartOfAzeroth.Identify = { Type = "Checkbox", Toggle = "HeartOfAzeroth" }		
 			StdUi:FrameTooltip(HeartOfAzeroth, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
-			if not _G.C_AzeriteEssence then 
+			if not AzeriteEssence then 
 				HeartOfAzeroth:Disable()
 			end 
 
@@ -7178,15 +7460,17 @@ local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
 
 local ItemHasRange = ItemHasRange
 
-ACTION_CONST_TRINKET1 = 	1030902 	-- GetSpellTexture(179071)
-ACTION_CONST_TRINKET2 = 	1030910 	-- GetSpellTexture(224540)
-ACTION_CONST_POTION =		967532		-- GetSpellTexture(176108)
+ACTION_CONST_TRINKET1 = 		1030902 	-- GetSpellTexture(179071)
+ACTION_CONST_TRINKET2 = 		1030910 	-- GetSpellTexture(224540)
+ACTION_CONST_POTION =			967532		-- GetSpellTexture(176108)
+	
+ACTION_CONST_LEFT = 			237586 		-- GetSpellTexture(98008)
+ACTION_CONST_RIGHT = 			132487 		-- GetSpellTexture(34976)
+ACTION_CONST_STOPCAST = 		249170		-- GetSpellTexture(147362)
+ACTION_CONST_HEALTHSTONE = 		538745 		-- GetSpellTexture(6262)
+ACTION_CONST_ATARGET = 			133015 		-- GetSpellTexture(153911)
 
-ACTION_CONST_LEFT = 		237586 		-- GetSpellTexture(98008)
-ACTION_CONST_RIGHT = 		132487 		-- GetSpellTexture(34976)
-ACTION_CONST_STOPCAST = 	249170		-- GetSpellTexture(147362)
-ACTION_CONST_HEALTHSTONE = 	538745 		-- GetSpellTexture(6262)
-ACTION_CONST_ATARGET = 		133015 		-- GetSpellTexture(153911)
+ACTION_CONST_HEARTOFAZEROTH =	1869493 	-- GetSpellTexture(280431)
 
 --- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
@@ -7215,7 +7499,7 @@ function Action:GetSpellIcon()
 end
 function Action:GetSpellTexture(custom)
 	if self.SubType == "HeartOfAzeroth" then 
-		return "texture", 1869493 -- GetSpellTexture(280431)
+		return "texture", ACTION_CONST_HEARTOFAZEROTH
 	end
     return "texture", GetSpellTexture(custom or self.ID)
 end 

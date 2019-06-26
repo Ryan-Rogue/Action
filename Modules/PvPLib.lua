@@ -1081,7 +1081,9 @@ Env.Unit = PseudoClass({
 	IsMelee = Cache:Wrap(function(self) 
 			local UnitID = self.UnitID
 	        if Env.Unit(UnitID):IsEnemy() then
-				return (Env.PvPCache["EnemyDamagerUnitID_Melee"] and Env.PvPCache["EnemyDamagerUnitID_Melee"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["MELEE"])  
+				return (Env.PvPCache["EnemyDamagerUnitID_Melee"] and Env.PvPCache["EnemyDamagerUnitID_Melee"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["MELEE"]) 
+			elseif UnitIsUnit(UnitID, "player") then 
+				return Env.UNITSpec("player", Misc.Specs["MELEE"]) or Env.UNITSpec("player", Misc.Specs["TANK"])
 			elseif Env.UNITRole(UnitID, "DAMAGER") or Env.UNITRole(UnitID, "TANK") then 
 				local _, uClass = UnitClass(UnitID)
 				if uClass == "HUNTER" then 
@@ -1153,6 +1155,16 @@ Env.Unit = PseudoClass({
 	            value, duration = Env.Buffs(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
 	        end         
 	        return value, duration
+	end, "UnitID"),
+	HasBuffsStacks = Cache:Wrap(function(self, key, caster, byID)
+	        local UnitID = self.UnitID
+			local value = 0			
+	        if not A.IsInitialized and Env.Unit(UnitID):DeBuffCyclone() > 0 then 
+	            value = 0
+	        else
+	            value = Env.BuffStack(UnitID, ((type(key) == "string" and AuraList[key]) or key), caster, byID) 
+	        end         
+	        return value
 	end, "UnitID"),
 	HasFlags = Cache:Wrap(function(self)
 			local UnitID = self.UnitID

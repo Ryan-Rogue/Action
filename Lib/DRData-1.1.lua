@@ -11375,7 +11375,6 @@ local deprecatedCategories = {
 	fear           = true,
 	horror         = true,
 	mc             = true,
-	knockback	   = true,
 }
 
 Data.categoryNames = {
@@ -11386,7 +11385,7 @@ Data.categoryNames = {
 	silence        = L["Silences"],
 	taunt          = L["Taunts"],
 	incapacitate   = L["Incapacitates"],
-	--knockback      = L["Knockbacks"],
+	knockback      = L["Knockbacks"],
 }
 
 Data.pveDR = {

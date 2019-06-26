@@ -4,13 +4,18 @@ local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local A = Action
 
-local strlowerCache = TMW.strlowerCache
-local LibRangeCheck = LibStub("LibRangeCheck-2.0")
+local strlowerCache  = TMW.strlowerCache
+local LibRangeCheck  = LibStub("LibRangeCheck-2.0")
 local IsSpellInRange = LibStub("SpellRange-1.0").IsSpellInRange
 
-local type, pairs, huge, tableexist = type, pairs, math.huge, tableexist
-local GetNetStats = GetNetStats
-local IsStealthed, IsFalling, IsUsableSpell, IsPlayerSpell, IsSpellKnown = IsStealthed, IsFalling, IsUsableSpell, IsPlayerSpell, IsSpellKnown
+local type, pairs, tableexist, huge = 
+	  type, pairs, tableexist, math.huge
+	  
+local GetNetStats = 
+	  GetNetStats
+	  
+local IsStealthed, IsFalling, IsUsableSpell, IsPlayerSpell, IsSpellKnown = 
+	  IsStealthed, IsFalling, IsUsableSpell, IsPlayerSpell, IsSpellKnown
 
 local UnitClass, UnitRace, UnitAura, UnitCastingInfo, UnitChannelInfo, UnitName, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitHealth, UnitHealthMax, UnitExists,
 UnitGroupRolesAssigned, UnitEffectiveLevel, UnitIsQuestBoss, UnitLevel, UnitCanAttack, UnitIsEnemy, UnitIsUnit, UnitDetailedThreatSituation, GetUnitSpeed, UnitIsPlayer,
@@ -19,11 +24,11 @@ UnitPower, UnitPowerMax =
 UnitGroupRolesAssigned, UnitEffectiveLevel, UnitIsQuestBoss, UnitLevel, UnitCanAttack, UnitIsEnemy, UnitIsUnit, UnitDetailedThreatSituation, GetUnitSpeed, UnitIsPlayer,
 UnitPower, UnitPowerMax 
 
-local GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, GetSpellInfo = 
-	  GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, A.GetSpellInfo
+local GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, GetSpellDescription, GetSpellInfo = 
+	  GetShapeshiftForm, GetSpecialization, GetSpecializationInfo, GetSpellCooldown, GetSpellCharges, GetSpellBookItemInfo, GetPowerRegen, GetHaste, GetInventoryItemCooldown, GetSpellDescription, A.GetSpellInfo
 
 local _, pclass = UnitClass("player")
-local _, prace = UnitRace("player")
+local _, prace 	= UnitRace("player")
 CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
 CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
 CNDT:PLAYER_TALENT_UPDATE()
@@ -88,8 +93,21 @@ function Env.SortBuffs(unitID, spell, source, byID)
 end
 
 function Env.BuffStack(unitID, spell, source, byID)
-    local filter = "HELPFUL" .. (source and " PLAYER" or "")    
-    return Env.AuraStacks(unitID, not byID and strlowerCache[GetSpellInfo(spell)] or spell, filter)
+	local stacks 
+    local filter = "HELPFUL" .. (source and " PLAYER" or "")  
+
+	if type(spell) == "table" then         
+        for i = 1, #spell do 
+			stacks = Env.AuraStacks(unitID, not byID and strlowerCache[GetSpellInfo(spell[i])] or spell[i], filter)
+			if stacks > 0 then
+                break
+            end
+        end
+	else 
+		stacks = Env.AuraStacks(unitID, not byID and strlowerCache[GetSpellInfo(spell)] or spell, filter)
+	end 
+	
+	return stacks 
 end
 
 --- DeBuffs

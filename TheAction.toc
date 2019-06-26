@@ -1,4 +1,4 @@
-## Interface: 80100
+## Interface: 80200
 ## Title: TellMeWhen |cff00ccff The Action|r
 ## Notes: (\/)O_O(\/)
 ## RequiredDeps: TellMeWhen
@@ -27,3 +27,4 @@ Modules\Scale.lua
 Modules\MSGEvents.lua
 Modules\PetLib.lua
 Modules\HealingEngine.lua
+Modules\HeartOfAzeroth.lua

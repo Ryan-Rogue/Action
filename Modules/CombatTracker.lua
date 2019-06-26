@@ -20,6 +20,8 @@ local GetSpellInfo = A.GetSpellInfo
 	  
 local InCombatLockdown, CombatLogGetCurrentEventInfo = 
 	  InCombatLockdown, CombatLogGetCurrentEventInfo
+	  
+local AzeriteEssence = _G.C_AzeriteEssence	  
 
 --- ============================ CONTENT ============================
 local Data = {}
@@ -1174,6 +1176,12 @@ do
 	LossOfControlCreate("SCHOOL_INTERRUPT", "ARCANE", 0x40)
 	--- ZandalariTroll
 	LossOfControlCreate("SCHOOL_INTERRUPT", "NATURE", 0x8)
+	--- Heart of Azeroth
+	if AzeriteEssence then 
+		--- Anima of Death / Focused Azerite Beam / The Unbound Force
+		LossOfControlCreate("SCHOOL_INTERRUPT", "FIRE", 0x4)
+		LossOfControlCreate("SCHOOL_INTERRUPT", "SHADOW", 0x20)
+	end 
 end 
 
 Listener:Add('CombatTracker_Events', "LOSS_OF_CONTROL_UPDATE", LossOfControlUpdate)

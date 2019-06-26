@@ -1,4 +1,6 @@
-local pairs, ipairs = pairs, ipairs
+local Action = Action 
+
+local pairs, ipairs, wipe = pairs, ipairs, wipe
 local GetSpellInfo = Action.GetSpellInfo
 local ItemSlots = { 1, 2, 3, 5 }
 
@@ -6,66 +8,70 @@ local AzeriteEmpoweredItem = _G.C_AzeriteEmpoweredItem
 local AzeriteTraits = {}
 
 local AzeriteEssence = _G.C_AzeriteEssence
-local AzeriteEssences = { Major = {}, Minor = {}, Total = {} }
+local AzeriteEssences = { Total = {} }
 
-local function AzeriteEssenceUpdate() 
-	wipe(AzeriteEssences.Major)
-	wipe(AzeriteEssences.Minor)
-	wipe(AzeriteEssences.Total)
+if AzeriteEssence then 
+	AzeriteEssences.IsPassive = {
+		-- Checking by spellID which converts to spellName (it's more stable than ID because ID can be changed by Rank and Spec)
+		-- Vision of Perfection
+		[Spell:CreateFromSpellID(299368):GetSpellName()] = true, 
+		-- Conflict and Strife
+		[Spell:CreateFromSpellID(304017):GetSpellName()] = true, 
+	}
+end 
+
+function AzeriteEssences.GetInfo(milestone) 
+	local spellID = AzeriteEssence.GetMilestoneSpell(milestone.ID)
+	local essenceID = AzeriteEssence.GetMilestoneEssence(milestone.ID) 
+	if essenceID then 
+		local info = AzeriteEssence.GetEssenceInfo(essenceID)
+		local temp = {
+			spellID = spellID,
+			spellName = GetSpellInfo(spellID),
+			essenceID = essenceID,
+			milestoneID = milestone.ID,
+			requiredLevel = milestone.requiredLevel,
+			slot = milestone.slot, 							-- selected position in AzeriteEssenceUI
+			canUnlock = milestone.canUnlock,
+			ID = info.ID, 									-- ID of what? (number)
+			Name = info.name, 								-- Name of essence (not a spell) 
+			Rank = info.rank, 
+			Unlocked = info.unlocked, 						-- or milestone.unlocked?
+			Valid = info.valid, 							-- what is it? (boolean)
+			Icon = info.icon,
+		}
+		return temp 
+	end 
+end 
+
+function AzeriteEssences.Update() 
+	local self = AzeriteEssences 
+	self.Major = nil
+	self.MinorOne = nil 
+	self.MinorTwo = nil
+	wipe(self.Total)
+	
 	if AzeriteEssence and AzeriteEmpoweredItem.IsHeartOfAzerothEquipped() then
-		for i = Enum.AzeriteEssence.MainSlot, Enum.AzeriteEssence.PassiveTwoSlot do 
-			if not AzeriteEssence.GetSlotInfo(i) then -- not locked slot (major should as default unlocked)
-				local essenceID = AzeriteEssence.GetActiveEssence(i)
-				if essenceID then 
-					local info = AzeriteEssence.GetEssenceInfo(essenceID) -- not sure if it's exactly table 
-					local ID, Name, Rank, Unlocked, Valid, Icon = info.ID, info.name, info.rank, info.unlocked, info.valid, info.icon			
-					if i == Enum.AzeriteEssence.MainSlot then 
-						--[[
-						local spellID = AzeriteEssence.GetActionSpell() -- this thing removed on latest PTR lol 
-						if spellID then 
-							AzeriteEssences.Major[GetSpellInfo(spellID)] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon, IsAction = true }
-							AzeriteEssences.Major[spellID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon, IsAction = true }
-						end 
-						]]
-						-- not possible get name unless GetMilestoneSpell(milestoneID)
-						local milestones = AzeriteEssence.GetMilestones()
-						for _, milestoneInfo in ipairs(milestones) do
-							if milestoneInfo.slot == i then
-								local spellID = AzeriteEssence.GetMilestoneSpell(milestoneInfo.milestoneID)
-								AzeriteEssences.Major[GetSpellInfo(spellID)] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-								AzeriteEssences.Major[spellID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-								break 
-							end 
-						end	
-						-- need somehow identify usable spell because Major slot can be Passive =\ 
-						-- IsAction can be used as key to indentify it
-						-- TESTING: Try collect all keys to see which will be recorded  
-						AzeriteEssences.Major[essenceID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-						AzeriteEssences.Major[ID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-						AzeriteEssences.Major[Name] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }						
-					else 
-						-- not possible get name unless GetMilestoneSpell(milestoneID)
-						local milestones = AzeriteEssence.GetMilestones()
-						for _, milestoneInfo in ipairs(milestones) do
-							if milestoneInfo.slot == i then
-								local spellID = AzeriteEssence.GetMilestoneSpell(milestoneInfo.milestoneID)
-								AzeriteEssences.Minor[GetSpellInfo(spellID)] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-								AzeriteEssences.Minor[spellID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-								break 
-							end 
-						end								
-						AzeriteEssences.Minor[ID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-						AzeriteEssences.Minor[Name] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-					end 
-					AzeriteEssences.Total[GetSpellInfo(spellID)] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-					AzeriteEssences.Total[spellID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-					-- TESTING: Try collect all keys to see which will be recorded 
-					AzeriteEssences.Total[essenceID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }
-					AzeriteEssences.Total[ID] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }	
-					AzeriteEssences.Total[Name] = { ID = ID, Name = Name, Rank = Rank, Unlocked = Unlocked, Valid = Valid, Icon = Icon }	
+		local milestones = AzeriteEssence.GetMilestones()
+		for i, milestone in ipairs(milestones) do
+			-- Enumerates each milestone with output table 'milestone' with keys: ID, requiredLevel, canUnlock, unlocked, slot
+			if milestone.slot == Enum.AzeriteEssence.MainSlot then
+				self.Major = self.GetInfo(milestone)
+				if self.Major then 
+					self.Total[self.Major.spellName] = self.Major 
 				end 
-			end 			
-		end 		
+			elseif milestone.slot == Enum.AzeriteEssence.PassiveOneSlot then 
+				self.MinorOne = self.GetInfo(milestone)
+				if self.MinorOne then 
+					self.Total[self.MinorOne.spellName] = self.MinorOne 
+				end 
+			elseif milestone.slot == Enum.AzeriteEssence.PassiveTwoSlot then 
+				self.MinorTwo = self.GetInfo(milestone)
+				if self.MinorTwo then 
+					self.Total[self.MinorTwo.spellName] = self.MinorTwo 
+				end
+			end
+		end 
 	end 
 end 
 
@@ -96,7 +102,7 @@ local function AzeriteTraitsUpdate()
 			end
 			-- Azerite Essence
 			if slot == 2 then 
-				AzeriteEssenceUpdate() 
+				AzeriteEssences.Update() 
 			end 
 		end
 	end       
@@ -107,42 +113,64 @@ Listener:Add("AzeriteTraits_Events", "PLAYER_ENTERING_WORLD", AzeriteTraitsUpdat
 Listener:Add("AzeriteTraits_Events", "PLAYER_EQUIPMENT_CHANGED", AzeriteTraitsUpdate)
 Listener:Add("AzeriteTraits_Events", "SPELLS_CHANGED", AzeriteTraitsUpdate)
 
+
+-- Azerite Empower / Azerite Essence
 function AzeriteRank(spellID)
-    local rank = AzeriteTraits[GetSpellInfo(spellID)]
+	local spellName = GetSpellInfo(spellID)
+    local rank = AzeriteTraits[spellName] or (AzeriteEssences.Total[spellName] and AzeriteEssences.Total[spellName].Rank)
     return rank and rank or 0
 end
 
 -- Azerite Essence
-if AzeriteEssence then
-	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_CHANGED", AzeriteEssenceUpdate)
-	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_ACTIVATED", AzeriteEssenceUpdate)
-	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_ACTIVATION_FAILED", AzeriteEssenceUpdate)
+if AzeriteEssence then	
+	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_CHANGED", AzeriteEssences.Update)
+	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_UPDATE", AzeriteEssences.Update) 
+	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_ACTIVATED", AzeriteEssences.Update)
+	Listener:Add("AzeriteTraits_Events", "AZERITE_ESSENCE_ACTIVATION_FAILED", AzeriteEssences.Update)
 end 
 
-function AzeriteEssenceGet(ID)
-	return AzeriteEssences.Total[GetSpellInfo(ID)] or AzeriteEssences.Total[ID]
+function AzeriteEssenceGet(spellID)
+	-- @return table with all available information
+	return AzeriteEssences.Total[GetSpellInfo(spellID)]
 end 
 
-function AzeriteEssenceGetMajor(ID)
-	return AzeriteEssences.Major[GetSpellInfo(ID)] or AzeriteEssences.Major[ID]
+function AzeriteEssenceGetMajor()
+	-- @return table with all available information or nil 
+	return AzeriteEssences.Major
 end 
 
-function AzeriteEssenceGetMinor(ID)
-	return AzeriteEssences.Minor[GetSpellInfo(ID)] or AzeriteEssences.Minor[ID]
+function AzeriteEssenceHasMajor(spellID)
+	-- @return boolean 
+	if AzeriteEssences.Major then 
+		if AzeriteEssences.Major.spellID == spellID then 
+			return true 
+		else 
+			local spellName = GetSpellInfo(spellID)
+			if AzeriteEssences.Major.spellName == spellName then 
+				return true 
+			end 
+		end 
+	end 
+	return false 
 end 
 
-function AzeriteEssenceHasActionSpell(spellID) -- doesn't work properly while we have TESTING phase 
-	local SpellName = GetSpellInfo(spellID)
-	return AzeriteEssences.Major[SpellName] and AzeriteEssences.Major[SpellName].IsAction
+function AzeriteEssenceIsMajorUseable() 
+	-- @return boolean 
+	if AzeriteEssences.Major and AzeriteEssences.Major.spellID then 
+		return not AzeriteEssences.IsPassive[AzeriteEssences.Major.spellName] and not AzeriteEssences.IsPassive[AzeriteEssences.Major.Name]
+	end 
+	return false 
 end 
 
---[[
-C_AzeriteEssence.GetEssenceInfo(essenceID)
-C_AzeriteEssence.GetActiveEssence(slot)
-C_AzeriteEssence.CanActivateEssence(slot or id)
-C_AzeriteEmpoweredItem.IsHeartOfAzerothEquipped()
-
-https://github.com/mrbuds/wow-api-web/blob/1eb680b5f4fb66484bacff217bfba2f479ab31bf/Blizzard_APIDocumentation/AzeriteEssenceDocumentation.lua
-https://github.com/tomrus88/BlizzardInterfaceCode/blob/master/Interface/AddOns/Blizzard_AzeriteEssenceUI/Blizzard_AzeriteEssenceUI.lua
-https://github.com/simulationcraft/simc-addon/blob/master/core.lua
-]]
+function AzeriteEssenceHasMinor(spellID)
+	-- @return boolean 
+	if (AzeriteEssences.MinorOne and AzeriteEssences.MinorOne.spellID == spellID) or (AzeriteEssences.MinorTwo and AzeriteEssences.MinorTwo.spellID == spellID) then 
+		return true 
+	else 
+		local spellName = GetSpellInfo(spellID)
+		if (AzeriteEssences.MinorOne and AzeriteEssences.MinorOne.spellName == spellName) or (AzeriteEssences.MinorTwo and AzeriteEssences.MinorTwo.spellName == spellName) then 
+			return true 
+		end 
+	end 
+	return false 
+end 
