@@ -85,11 +85,6 @@ local function PMultiplierLaunch(...)
 	end
 end
 
-if pclass == "DRUID" then 
-	Listener:Add('PMultiplier', "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
-	PMultiplierLaunch()
-end 
-
 function RegisterPMultiplier(...)
     local Args = { ... }
     local SelfSpellID = Args[1]
@@ -151,6 +146,25 @@ function Persistent_PMultiplier(SpellID)
         error(SpellRegisterError(SpellID))
     end
 end
+
+if pclass == "DRUID" then 
+	Listener:Add('PMultiplier', "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
+	PMultiplierLaunch()
+	RegisterPMultiplier( -- Rake dot and action
+		1822,    -- Rake action
+		155722,  -- Rake dot
+		{function ()
+				return Env.global_invisible() and 2 or 1
+		end},
+		-- BloodtalonsBuff, SavageRoar, TigersFury
+		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}
+	)
+	RegisterPMultiplier(
+		1079, -- Rip action
+		-- BloodtalonsBuff, SavageRoar, TigersFury
+		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}
+	)
+end 
 
 
 -- Test https://github.com/herotc/hero-lib/blob/0918fba55949f42f75801c566dbbad2801ad59c2/HeroLib/Events/PMultiplier.lua
