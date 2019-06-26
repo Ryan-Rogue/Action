@@ -18,29 +18,174 @@ if AzeriteEssence then
 		-- Conflict and Strife
 		[Spell:CreateFromSpellID(304017):GetSpellName()] = true, 
 	}
+	AzeriteEssences.GetSpellID = {
+		-- [ID] = {
+		-- 	[RANK] = SpellID,
+		-- }
+		-- For refference https://www.wowhead.com/guides/heart-of-azeroth-essence-overview#essencestank-nullification-dynamo
+		-- [1] = {},
+		-- Azeroth's Undying Gift
+		[2] = {
+			[1] = 293019,
+			[2] = 298080,
+			[3] = 298081,
+		},
+		-- Suppressing Pulse
+		[3] = {
+			[1] = 293031,
+			[2] = 300009,
+			[3] = 300010,
+		},
+		-- Worldvein Resonance
+		[4] = {
+			[1] = 295186,
+			[2] = 298628,
+			[3] = 299334,
+		},
+		-- Focused Azerite Beam
+		[5] = {
+			[1] = 295258,
+			[2] = 299336,
+			[3] = 299338,
+		},
+		-- Purifying Blast
+		[6] = {
+			[1] = 295337,
+			[2] = 299345,
+			[3] = 299347,
+		},
+		-- Anima of Death
+		[7] = {
+			[1] = 294926,
+			[2] = 300002,
+			[3] = 300003,
+		},
+		-- [8] = {},
+		-- [9] = {},
+		-- [10] = {},
+		-- [11] = {},
+		-- Concentrated Flame
+		[12] = {
+			[1] = 295373,
+			[2] = 299349,
+			[3] = 299353,
+		},
+		-- Empowered Null Barrier
+		[13] = {
+			[1] = 295746,
+			[2] = 300015,
+			[3] = 300016,
+		},
+		-- Guardian of Azeroth
+		[14] = {
+			[1] = 295840,
+			[2] = 299355,
+			[3] = 299358,
+		},
+		-- Ripple in Space
+		[15] = {
+			[1] = 302731,
+			[2] = 302982,
+			[3] = 302983,
+		},
+		-- [16] = {},
+		-- Overcharge Mana
+		[17] = {
+			[1] = 296072,
+			[2] = 299875,
+			[3] = 299876,
+		},
+		-- Standstill
+		[18] = {
+			[1] = 296094,
+			[2] = 299882,
+			[3] = 299883,
+		},
+		-- Refreshment
+		[19] = {
+			[1] = 296197,
+			[2] = 299932,
+			[3] = 299933,
+		},
+		-- Life-Binder's Invocation
+		[20] = {
+			[1] = 293032,
+			[2] = 299943,
+			[3] = 299944,
+		},
+		-- Vitality Conduit
+		[21] = {
+			[1] = 296230,
+			[2] = 299958,
+			[3] = 299959,
+		},
+		-- Vision of Perfection
+		[22] = {
+			[1] = 296325,
+			[2] = 299368,
+			[3] = 299370,
+		},
+		-- Blood of the Enemy
+		[23] = {
+			[1] = 297108,
+			[2] = 298273,
+			[3] = 298277,
+		},
+		-- [24] = {},
+		-- Aegis of the Deep
+		[25] = {
+			[1] = 298168,
+			[2] = 299273,
+			[3] = 299275,
+		},
+		-- Memory of Lucid Dreams
+		[27] = {
+			[1] = 298357,
+			[2] = 299372,
+			[3] = 299374,
+		},
+		-- The Unbound Force
+		[28] = {
+			[1] = 298452,
+			[2] = 299376,
+			[3] = 299378,
+		},
+		-- [29] = {},
+		-- [30] = {},
+		-- [31] = {},
+		-- Conflict
+		[32] = {
+			[1] = 303823,
+			[2] = 304088,
+			[3] = 304121,
+		},
+	}
 end 
 
 function AzeriteEssences.GetInfo(milestone) 
-	local spellID = AzeriteEssence.GetMilestoneSpell(milestone.ID)
-	local essenceID = AzeriteEssence.GetMilestoneEssence(milestone.ID) 
+	-- local spellID = AzeriteEssence.GetMilestoneSpell(milestone.ID) -- this return bullshit	
+	local essenceID = AzeriteEssence.GetMilestoneEssence(milestone.ID) 	
 	if essenceID then 
 		local info = AzeriteEssence.GetEssenceInfo(essenceID)
-		local temp = {
-			spellID = spellID,
-			spellName = GetSpellInfo(spellID),
-			essenceID = essenceID,
-			milestoneID = milestone.ID,
-			requiredLevel = milestone.requiredLevel,
-			slot = milestone.slot, 							-- selected position in AzeriteEssenceUI
-			canUnlock = milestone.canUnlock,
-			ID = info.ID, 									-- ID of what? (number)
-			Name = info.name, 								-- Name of essence (not a spell) 
-			Rank = info.rank, 
-			Unlocked = info.unlocked, 						-- or milestone.unlocked?
-			Valid = info.valid, 							-- what is it? (boolean)
-			Icon = info.icon,
-		}
-		return temp 
+		if info then 
+			local spellID = AzeriteEssences.GetSpellID[info.ID][info.rank]
+			local temp = {
+				spellID = spellID,
+				spellName = Action.GetSpellInfo(spellID),
+				essenceID = essenceID,
+				milestoneID = milestone.ID,
+				requiredLevel = milestone.requiredLevel,
+				slot = milestone.slot, 							-- selected position in AzeriteEssenceUI
+				canUnlock = milestone.canUnlock,
+				ID = info.ID, 									-- ID of what? (number)
+				Name = info.name, 								-- Name of Essence (not a spell) 
+				Rank = info.rank, 
+				Unlocked = info.unlocked, 						-- or milestone.unlocked?
+				Valid = info.valid, 							-- what is it? (boolean)
+				Icon = info.icon,
+			}
+			return temp 
+		end 
 	end 
 end 
 
@@ -90,7 +235,7 @@ local function AzeriteTraitsUpdate()
 				for _, tierInfo in pairs(tierInfos) do
 					for _, powerId in pairs(tierInfo.azeritePowerIDs) do
 						if AzeriteEmpoweredItem.IsPowerSelected(itemLoc, powerId) then
-							local spellIDAzerite = GetSpellInfo(C_AzeriteEmpoweredItem.GetPowerInfo(powerId).spellID)
+							local spellIDAzerite = GetSpellInfo(C_AzeriteEmpoweredItem.GetPowerInfo(powerId).spellID)							
 							if not AzeriteTraits[spellIDAzerite] then
 								AzeriteTraits[spellIDAzerite] = 1
 							else
@@ -157,7 +302,7 @@ end
 function AzeriteEssenceIsMajorUseable() 
 	-- @return boolean 
 	if AzeriteEssences.Major and AzeriteEssences.Major.spellID then 
-		return not AzeriteEssences.IsPassive[AzeriteEssences.Major.spellName] and not AzeriteEssences.IsPassive[AzeriteEssences.Major.Name]
+		return not AzeriteEssences.IsPassive[AzeriteEssences.Major.spellName] 
 	end 
 	return false 
 end 

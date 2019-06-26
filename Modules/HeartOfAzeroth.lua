@@ -6,9 +6,10 @@ local Action = Action
 local tableexist = tableexist
 
 local AzeriteEssence = _G.C_AzeriteEssence
+local GetMajorBySpellName 
 
 if AzeriteEssence then 
-	local GetMajorBySpellName = {
+	GetMajorBySpellName = {
 		-- Taken lowest Azerite Essence ID
 		--[[ Essences Used by All Roles ]]
 		[Spell:CreateFromSpellID(295373):GetSpellName()] = "Concentrated Flame", -- 302564
@@ -164,6 +165,10 @@ end
 function Action.LazyHeartOfAzeroth(icon, unit) 
 	if AzeriteEssenceIsMajorUseable() then 
 		local Major = AzeriteEssenceGetMajor()
+		if not Major then 
+			return false 
+		end 
+		
 		local spellName = Major.spellName 
 		local spellID = Major.spellID 
 
@@ -176,7 +181,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			--[[ Essences Used by All Roles ]]
 			if MajorSpellName == "Concentrated Flame" then 
 				-- GCD 1 sec 
-				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Env.SpellInRange(unitID, spellID) and (not Env.Unit(unitID):IsEnemy() or PredictHealing(MajorSpellName, spellID, unitID)) then 
+				if Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Env.SpellInRange(unitID, spellID) and (Env.Unit(unitID):IsEnemy() or PredictHealing(MajorSpellName, spellID, unitID)) then 
 					-- PvP condition 
 					if not Env.InPvP() or not UnitIsPlayer(unitID) or (not Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):DeBuffCyclone() == 0) or (Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0) then 
 						return Action.HeartOfAzerothShow(icon)
@@ -424,7 +429,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 					local n = Env.Zone == "arena" and 2 or 4
 					if (
 							(isMelee and AoE(n, 8) and (not Env.InPvP() or not Env.EnemyTeam("HEALER"):IsBreakAble(8))) or 
-							(not isMelee and CombatUnits(n + 1, 40) and (not Env.InPvP() or not Env.EnemyTeam("HEALER"):IsBreakAble(40))))  
+							(not isMelee and CombatUnits(n + 1, 40) and (not Env.InPvP() or not Env.EnemyTeam("HEALER"):IsBreakAble(40)))  
 					   ) 
 					then 
 						return Action.HeartOfAzerothShow(icon)
