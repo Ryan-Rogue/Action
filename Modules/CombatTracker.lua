@@ -590,7 +590,7 @@ local BlinkID = {
 }
 function GetShrimmer(UNIT)
 	-- Default has no charges (means never used so it can be just normal Blink which should return 0 as charges then)
-	local GUID = UnitGUID(unit) 
+	local GUID = UnitGUID(UNIT) 
     local charges, cooldown, summary_cooldown = 0, 0, 0    
     if Data[GUID] then 
 		if Data[GUID].Shrimmer then
