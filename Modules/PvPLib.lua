@@ -1047,7 +1047,7 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsHealer = Cache:Wrap(function(self)  
 			local UnitID = self.UnitID
-	        if Env.Unit():IsEnemy() then
+	        if Env.Unit(UnitID):IsEnemy() then
 				return (Env.PvPCache["EnemyHealerUnitID"] and Env.PvPCache["EnemyHealerUnitID"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["HEALER"])  
 			else 
 				return (Env.PvPCache["FriendlyHealerUnitID"] and Env.PvPCache["FriendlyHealerUnitID"][UnitID]) or Env.UNITRole(UnitID, "HEALER")
@@ -1055,7 +1055,7 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsTank = Cache:Wrap(function(self)    
 			local UnitID = self.UnitID
-	        if Env.Unit():IsEnemy(UnitID) then
+	        if Env.Unit(UnitID):IsEnemy(UnitID) then
 				return (Env.PvPCache["EnemyTankUnitID"] and Env.PvPCache["EnemyTankUnitID"][UnitID]) or Env.UNITSpec(UnitID, Misc.Specs["TANK"])  
 			else 
 				return (Env.PvPCache["FriendlyTankUnitID"] and Env.PvPCache["FriendlyTankUnitID"][UnitID]) or Env.UNITRole(UnitID, "TANK")
@@ -1310,7 +1310,7 @@ Env.Unit = PseudoClass({
 			local UnitID = self.UnitID
 	        return 
 			(
-				Env.Unit():IsFocused(nil, true) or 
+				Env.Unit(UnitID):IsFocused(nil, true) or 
 				(
 					TimeToDie(UnitID) < 8 and 
 					Env.Unit(UnitID):IsFocused() 
