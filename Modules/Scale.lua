@@ -13,11 +13,9 @@ BlackBackground.texture:SetAllPoints(true)
 BlackBackground.texture:SetColorTexture(0, 0, 0, 1)
 
 local tostring, tonumber, print = 
-	  tostring, tonumber, Action.Print
-	  
--- Just checks what it has 8.2+	  
-local AzeriteEssence = _G.C_AzeriteEssence		  
+	  tostring, tonumber, Action.Print	  	 
 
+local showedOnce = false
 local function UpdateFrames()
     if not TellMeWhen_Group1 or (not strfind(TellMeWhen_Group1.Name, "[GGL]") and not strfind(TellMeWhen_Group1.Name, "Main")) then 
         if BlackBackground:IsShown() then
@@ -28,18 +26,25 @@ local function UpdateFrames()
         end        
         return 
     end
-	local myhight
+	local myheight
 	
-	if GetCVar("gxMaximize") == "1" and AzeriteEssence then 
-		-- Fullscreen (only 8.2+)
-		myhight = tonumber(string.match(GetCVar("gxFullscreenResolution"), "%d+x(%d+)"))
+	if GetCVar("gxMaximize") == "1" then 
+		-- Fullscreen
+		myheight = tonumber(strmatch(GetScreenResolutions(), "%dx(%d+)")) --tonumber(string.match(GetCVar("gxFullscreenResolution"), "%d+x(%d+)"))		
 	else 
-		-- Windowed 
-		myhight = tonumber(string.match(GetCVar("gxWindowedResolution"), "%d+x(%d+)"))
+		-- Windowed -- tonumber(strmatch(GetScreenResolutions(), "%dx(%d+)"))
+		myheight = select(2, GetPhysicalScreenSize()) --tonumber(string.match(GetCVar("gxWindowedResolution"), "%d+x(%d+)")) 
+		
+		-- Regarding Windows DPI
+		-- Note: Full HD 1920x1080 offsets (100% X8 Y31 / 125% X9 Y38)
+		-- You might need specific thing to get truth relative graphic area, so just contact me if you see this and can't find fix for DPI > 1 e.g. 100%
+		if not showedOnce and GetScreenDPIScale() ~= 1 then 
+			message("You use not 100% Windows DPI and this can may apply conflicts. Set own X and Y offsets in source.")
+		end 
 	end 
 	
-    local myscale1 = 0.42666670680046 * (1080 / myhight)
-    local myscale2 = 0.17777778208256 * (1080 / myhight)    
+    local myscale1 = 0.42666670680046 * (1080 / myheight)
+    local myscale2 = 0.17777778208256 * (1080 / myheight)    
     local group1, group2 = TellMeWhen_Group1:GetEffectiveScale()
     if TellMeWhen_Group2 and TellMeWhen_Group2.Enabled then
         group2 = TellMeWhen_Group2:GetEffectiveScale()   
@@ -66,7 +71,7 @@ local function UpdateFrames()
         if not TargetColor:IsShown() then
             TargetColor:Show()
         end
-        TargetColor:SetScale((0.71111112833023 * (1080 / myhight)) / (TargetColor:GetParent() and TargetColor:GetParent():GetEffectiveScale() or 1))
+        TargetColor:SetScale((0.71111112833023 * (1080 / myheight)) / (TargetColor:GetParent() and TargetColor:GetParent():GetEffectiveScale() or 1))
     end              
 end
 
@@ -84,7 +89,6 @@ local function UpdateCVAR()
 		print("Gamma should be 1")	
 	end
     if GetCVar("colorblindsimulator")~="0" then SetCVar("colorblindsimulator", 0) end; 
-    -- Not neccessary
     if GetCVar("RenderScale")~="1" then SetCVar("RenderScale", 1) end; 
     if GetCVar("MSAAQuality")~="0" then SetCVar("MSAAQuality", 0) end;
     -- Could effect bugs if > 0 but FXAA should work, some people saying MSAA working too 
@@ -122,8 +126,8 @@ TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TEMP_TMW_SAFESETU
 
 
 local function ConsoleUpdate()
-    UpdateFrames()
-    UpdateCVAR()  
+	UpdateCVAR()
+    UpdateFrames()      
 end 
 
 Listener:Add("Console_Events", "DISPLAY_SIZE_CHANGED", ConsoleUpdate)

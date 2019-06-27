@@ -12,7 +12,7 @@ if AzeriteEssence then
 	GetMajorBySpellName = {
 		-- Taken lowest Azerite Essence ID
 		--[[ Essences Used by All Roles ]]
-		[Spell:CreateFromSpellID(295373):GetSpellName()] = "Concentrated Flame", -- 302564
+		[Spell:CreateFromSpellID(295373):GetSpellName()] = "Concentrated Flame",
 		[Spell:CreateFromSpellID(295186):GetSpellName()] = "Worldvein Resonance",
 		[Spell:CreateFromSpellID(302731):GetSpellName()] = "Ripple in Space", 
 		[Spell:CreateFromSpellID(298357):GetSpellName()] = "Memory of Lucid Dreams",
@@ -168,10 +168,6 @@ end
 function Action.LazyHeartOfAzeroth(icon, unit) 
 	if AzeriteEssenceIsMajorUseable() then 
 		local Major = AzeriteEssenceGetMajor()
-		if not Major then 
-			return false 
-		end 
-		
 		local spellName = Major.spellName 
 		local spellID = Major.spellID 
 

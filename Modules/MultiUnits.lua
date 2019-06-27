@@ -3,10 +3,26 @@ local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
 
-local pairs, next = pairs, next
-local UnitIsPlayer, UnitExists, UnitGUID = UnitIsPlayer, UnitExists, UnitGUID
+local pairs, next, type = 
+	  pairs, next, type
+	  
+local UnitIsPlayer, UnitExists, UnitGUID, UnitAffectingCombat = 
+	  UnitIsPlayer, UnitExists, UnitGUID, UnitAffectingCombat
+	  
 local GetNamePlateForUnit = _G.C_NamePlate.GetNamePlateForUnit
 local activeUnitPlates = dynamic_array(2)
+
+local CL_TYPE_PLAYER 	  = COMBATLOG_OBJECT_TYPE_PLAYER
+local CL_CONTROL_PLAYER   =	COMBATLOG_OBJECT_CONTROL_PLAYER
+local CL_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE
+local CL_REACTION_NEUTRAL = COMBATLOG_OBJECT_REACTION_NEUTRAL
+
+local function isEnemy(Flags)
+	return bitband(Flags, CL_REACTION_HOSTILE) == CL_REACTION_HOSTILE or bitband(Flags, CL_REACTION_NEUTRAL) == CL_REACTION_NEUTRAL
+end 
+local function isPlayer(Flags)
+	return bitband(Flags, CL_TYPE_PLAYER) == CL_TYPE_PLAYER or bitband(Flags, CL_CONTROL_PLAYER) == CL_CONTROL_PLAYER
+end
 
 --- ============================ CONTENT ============================
 local function AddNameplate(unitID)
@@ -230,9 +246,10 @@ end
 -- Range
 local logUnits, activeUnits = {}, {}
 local function ActiveEnemiesCLEU(...)
-    local ts, event, _, SourceGUID, SourceName,_,_, DestGUID, DestName,_,_, spellID, spellName,_, auraType, Amount = CombatLogGetCurrentEventInfo()
+	local ts, event, _, SourceGUID, SourceName,_, sourceFlags, DestGUID, DestName, destFlags,_, spellID, spellName, _, auraType, Amount = CombatLogGetCurrentEventInfo()
     if 
     (
+		isEnemy(destFlags) and
         (
             event == "SWING_DAMAGE" or
             event == "RANGE_DAMAGE" or
@@ -245,9 +262,7 @@ local function ActiveEnemiesCLEU(...)
                 auraType == "DEBUFF" and
                 UnitGUID("player") == SourceGUID                    
             )
-        ) and                     
-        DestGUID and    
-        SourceGUID
+        ) 
     ) then   
         ts = round(ts, 0)  
         
@@ -285,32 +300,28 @@ end
 
 local function ActiveEnemiesUpdate()
     if Env.PlayerSpec then 
-        local RangeSpec = {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267}
-        
-        for i = 1, #RangeSpec do 
-            if Env.PlayerSpec == RangeSpec[i] then 
-                Listener:Add('Active_Enemies', "COMBAT_LOG_EVENT_UNFILTERED", ActiveEnemiesCLEU)
-                Listener:Add('Active_Enemies', 'PLAYER_REGEN_ENABLED', function()
-                        if not InCombatLockdown() and not UnitAffectingCombat("player") then
-                            wipe(logUnits)
-                            wipe(activeUnits)            
-                        end        
-                end)
-                Listener:Add('Active_Enemies', 'PLAYER_REGEN_DISABLED', function()
-                        if TMW.time - SpellLastCast("player", Env.LastPlayerCastID) > 0.5 then 
-                            wipe(logUnits)
-                            wipe(activeUnits)
-                        end 
-                end)
-                return 
-            end 
-        end 
+		if Env.UNITSpec("player", {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267}) then 
+			Listener:Add("Active_Enemies", "COMBAT_LOG_EVENT_UNFILTERED", ActiveEnemiesCLEU)
+			Listener:Add("Active_Enemies", "PLAYER_REGEN_ENABLED", function()
+					if not InCombatLockdown() and not UnitAffectingCombat("player") then
+						wipe(logUnits)
+						wipe(activeUnits)            
+					end        
+			end)
+			Listener:Add("Active_Enemies", "PLAYER_REGEN_DISABLED", function()
+					if TMW.time - SpellLastCast("player", Env.LastPlayerCastID) > 0.5 then 
+						wipe(logUnits)
+						wipe(activeUnits)
+					end 
+			end)
+			return 
+		end          
         
         wipe(logUnits)
         wipe(activeUnits)
-        Listener:Remove('Active_Enemies', "COMBAT_LOG_EVENT_UNFILTERED")
-        Listener:Remove('PLAYER_REGEN_ENABLED', "COMBAT_LOG_EVENT_UNFILTERED")
-        Listener:Remove('PLAYER_REGEN_DISABLED', "COMBAT_LOG_EVENT_UNFILTERED")
+        Listener:Remove("Active_Enemies", "COMBAT_LOG_EVENT_UNFILTERED")
+        Listener:Remove("Active_Enemies", "PLAYER_REGEN_ENABLED")
+        Listener:Remove("Active_Enemies", "PLAYER_REGEN_DISABLED")
     end 
 end 
 
@@ -360,23 +371,23 @@ Listener:Add('Active_Enemies', "UPDATE_INSTANCE_INFO", ActiveEnemiesUpdate)
 Listener:Add('Active_Enemies', "PLAYER_SPECIALIZATION_CHANGED", ActiveEnemiesUpdate)
 Listener:Add('Active_Enemies', "PLAYER_TALENT_UPDATE", ActiveEnemiesUpdate)
 
-Listener:Add('MultiUnits_Events', 'PLAYER_ENTERING_WORLD', function()
+Listener:Add("MultiUnits_Events", "PLAYER_ENTERING_WORLD", function()
         wipe(activeUnitPlates)  
         -- TODO: Make another cache
         mobs = { ["friendly"] = {}, ["enemy"] = {} }
         oLastCall = { ["global"] = 0.2 }
 end) 
-Listener:Add('MultiUnits_Events', 'UPDATE_INSTANCE_INFO', function()
+Listener:Add("MultiUnits_Events", "UPDATE_INSTANCE_INFO", function()
         wipe(activeUnitPlates)
         -- TODO: Make another cache
         mobs = { ["friendly"] = {}, ["enemy"] = {} }
         oLastCall = { ["global"] = 0.2 }
 end) 
-Listener:Add('MultiUnits_Events', 'PLAYER_REGEN_DISABLED', function()
+Listener:Add("MultiUnits_Events", "PLAYER_REGEN_DISABLED", function()
         -- TODO: Make another cache
         mobs = { ["friendly"] = {}, ["enemy"] = {} }
         oLastCall = { ["global"] = 0.2 }
 end)
-Listener:Add('MultiUnits_Events', 'NAME_PLATE_UNIT_ADDED', AddNameplate)
-Listener:Add('MultiUnits_Events', 'NAME_PLATE_UNIT_REMOVED', RemoveNameplate)
+Listener:Add("MultiUnits_Events", "NAME_PLATE_UNIT_ADDED", AddNameplate)
+Listener:Add("MultiUnits_Events", "NAME_PLATE_UNIT_REMOVED", RemoveNameplate)
 
