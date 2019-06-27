@@ -533,7 +533,7 @@ function Env.RandomKick(unitid, interruptAble)
         if not prev_spellID[unitid] or spellID ~= prev_spellID[unitid] then
             -- Soothing Mist
             if spellName ~= GetSpellInfo(209525) then
-                interruptpct[unitid] = math.random(48, 83)
+                interruptpct[unitid] = math.random(34, 68)
             else 
                 interruptpct[unitid] = math.random(8, 14)
             end
