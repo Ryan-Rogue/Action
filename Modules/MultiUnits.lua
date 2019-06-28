@@ -12,6 +12,7 @@ local UnitIsPlayer, UnitExists, UnitGUID, UnitAffectingCombat =
 local GetNamePlateForUnit = _G.C_NamePlate.GetNamePlateForUnit
 local activeUnitPlates = dynamic_array(2)
 
+local bitband			  = bit.band
 local CL_TYPE_PLAYER 	  = COMBATLOG_OBJECT_TYPE_PLAYER
 local CL_CONTROL_PLAYER   =	COMBATLOG_OBJECT_CONTROL_PLAYER
 local CL_REACTION_HOSTILE = COMBATLOG_OBJECT_REACTION_HOSTILE
