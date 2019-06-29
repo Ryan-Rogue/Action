@@ -1,5 +1,5 @@
 --- 
-local DateTime = "26.06.2019"
+local DateTime = "29.06.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -3642,7 +3642,7 @@ function SpellLevel.Update(...)
 		SpellLevel.PlayerLVL = lvl 
 		SpellLevel.PlayerSpec = GetSpecializationInfo(GetSpecialization())
 		SpellLevel.Initialized = true
-		if SpellLevel.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] or not Action[Env.PlayerSpec] then 
+		if SpellLevel.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
 			Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERRORMAXLVL"])
 			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)		
 			Action.SpellLevelInit()			
@@ -3763,7 +3763,6 @@ local function ShowTooltip(parent, show, ID, Type)
 			return 
 		end
 		GameTooltip:SetOwner(parent)
-		GameTooltip:SetPoint("RIGHT")
 		if Type == "Trinket" or Type == "Potion" or Type == "Item" then 
 			GameTooltip:SetItemByID(ID) 
 		else
@@ -6180,8 +6179,7 @@ function Action.ToggleMainUI()
 				if show == "Hide" then 
 					GameTooltip:Hide()
 				else 
-					GameTooltip:SetOwner(parent)
-					GameTooltip:SetPoint("RIGHT")
+					GameTooltip:SetOwner(parent)				
 					if show == "Role" then
 						GameTooltip:SetText(L["TAB"][tab.name]["ROLETOOLTIP"], StdUi.config.font.color.yellow.r, StdUi.config.font.color.yellow.g, StdUi.config.font.color.yellow.b, 1, true)
 					elseif show == "Dur" then 
