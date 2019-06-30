@@ -1,5 +1,5 @@
 --- 
-local DateTime = "29.06.2019"
+local DateTime = "30.06.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -171,6 +171,8 @@ local Localization = {
 				QUEUEPRIORITY = " has priority №",
 				QUEUEBLOCKED = "|cffff0000can't be queued because SetBlocker blocked it!|r",
 				SELECTIONERROR = "|cffff0000You didn't selected row!|r",
+				AUTOHIDDEN = "[All specs] AutoHide unavailable actions",
+				AUTOHIDDENTOOLTIP = "Makes Scroll Table smaller and clear by visual hide\nFor example character class has few racials but can use one, this option will hide others racials\nJust for comfort view",
 				CHECKSPELLLVL = "[All specs] Check required spell level",
 				CHECKSPELLLVLTOOLTIP = "All spells which is not available by character level will be blocked\nThey will be updated every time with level up\n\nNote: Cause high CPU demand\nRightClick: Create macro",
 				CHECKSPELLLVLERROR = "Already initialized!",
@@ -449,6 +451,8 @@ local Localization = {
 				QUEUEPRIORITY = " имеет приоритет №",
 				QUEUEBLOCKED = "|cffff0000не может быть поставлен в очередь поскольку установлена блокировка!|r",
 				SELECTIONERROR = "|cffff0000Вы не выбрали строку!|r",
+				AUTOHIDDEN = "[Все спеки] АвтоСкрытие недоступных действий",
+				AUTOHIDDENTOOLTIP = "Делает прокручивающейся список меньше и чистее за счет визуального скрытия\nНапример, класс персонажа имеет несколько расовых способностей, но может использовать лишь одну, эта опция скроет остальные\nПросто для удобства просмотра",
 				CHECKSPELLLVL = "[Все спеки] Проверять необходимый уровень способности",
 				CHECKSPELLLVLTOOLTIP = "Все способности которые не доступны по уровню персонажа будут заблокированы\nОни будут обновляться каждый раз по достижению нового уровня\n\nЗаметка: Вызывает высокое потребление CPU\n\nПравая кнопка мышки: Создать макрос",					
 				CHECKSPELLLVLERROR = "Уже инициализировано!",
@@ -727,6 +731,8 @@ local Localization = {
 				QUEUEPRIORITY = " hat Priorität №",
 				QUEUEBLOCKED = "|cffff0000Kann nicht eingereiht werden das der Spell geblockt ist!|r",
 				SELECTIONERROR = "|cffff0000Du hast nichts ausgewählt!|r",
+				AUTOHIDDEN = "[Alle Spezialisierungen] Nicht verfügbare Aktionen automatisch ausblenden",
+				AUTOHIDDENTOOLTIP = "Verkleinern Sie die Bildlauftabelle und löschen Sie sie durch visuelles Ausblenden\nZum Beispiel hat die Charakterklasse nur wenige Rassen, kann aber eine verwenden. Diese Option versteckt andere Rassen\nNur zur Komfortsicht",
 				CHECKSPELLLVL = "[Alle Spezialisierungen] Überprüfe den vorrausgesetzten Spell Level",
 				CHECKSPELLLVLTOOLTIP = "Alle Zaubersprüche, die auf Charakterebene nicht verfügbar sind, werden blockiert.\nSie werden jedes Mal mit einer höheren Stufe aktualisiert.\n\nHinweis: Verursacht einen hohen CPU-Bedarf.\nRechtsklick: Makro erstellen",
 				CHECKSPELLLVLERROR = "Schon installiert!",
@@ -1005,6 +1011,8 @@ local Localization = {
 				QUEUEPRIORITY = " est prioritaire №",
 				QUEUEBLOCKED = "|cffff0000ne peut être mise en attente car le blocage est activé!|r",
 				SELECTIONERROR = "|cffff0000Vous n'avez pas sélectionné de ligne!|r",
+				AUTOHIDDEN = "[All specs] Masquer automatiquement les actions non disponibles",
+				AUTOHIDDENTOOLTIP = "Rendre la table de défilement plus petite et claire en masquant visuellement\nPar exemple, la classe de personnage a peu de caractères raciaux, mais peut en utiliser un. Cette option masquera les autres caractères raciaux\nJuste pour le confort vue",
 				CHECKSPELLLVL = "[All specs] Vérifier le niveau du sort",
 				CHECKSPELLLVLTOOLTIP = "Tout les sort qui ne sont pas disponible par le personnage à cause de son level seront bloqué\nCela se met à jour à chaque fois que vous gagnez un niveau\n\nNote: Cause une demande élevé sur le CPU \nClique droit : Créer la macro",
 				CHECKSPELLLVLERROR = "Déjà initialisé!",
@@ -1283,6 +1291,8 @@ local Localization = {
 				QUEUEPRIORITY = " ha prioritá №",
 				QUEUEBLOCKED = "|cffff0000non può essere in Coda perché é giá bloccato!|r",
 				SELECTIONERROR = "|cffff0000Non hai selezionato una riga!|r",
+				AUTOHIDDEN = "[All specs] Nascondi automaticamente le azioni non disponibili",
+				AUTOHIDDENTOOLTIP = "Rende la Tabella di Scorrimento più piccola e chiara per nascondere l'immagine\nAd esempio, la classe personaggio ha poche razze ma può usarne una, questa opzione nasconderà altre razze\nSolo per una visione confortevole",
 				CHECKSPELLLVL = "[All specs] Verifica il livello richiesto",
 				CHECKSPELLLVLTOOLTIP = "Tutti gli spell non disponibilit dat il livello del personaggio sono bloccati\nTorneranno disponibili non appena il personaggio raggiunge il livello richiesto\n\nNota: Potrebbe causare un intenso uso di CPU\nTastodestro: Crea macro",
 				CHECKSPELLLVLERROR = "Giá inizializzato!",
@@ -1561,6 +1571,8 @@ local Localization = {
 				QUEUEPRIORITY = " tiene prioridad №",
 				QUEUEBLOCKED = "|cffff0000no puede añadirse a la cola porque SetBlocker lo ha bloqueado!|r",
 				SELECTIONERROR = "|cffff0000No has seleccionado una fila!|r",
+				AUTOHIDDEN = "[All specs] AutoOcultar acciones no disponibles",
+				AUTOHIDDENTOOLTIP = "Hace que la tabla de desplazamiento sea más pequeña y clara mediante ocultación visual\nPor ejemplo, la clase de personaje tiene pocos raciales pero puede usar uno, esta opción ocultará otros raciales\nSólo para ver la comodidad",				
 				CHECKSPELLLVL = "[All specs] Comprueba el nivel requerido de la habilidad",
 				CHECKSPELLLVLTOOLTIP = "Todas las habilidades que no estén disponibles por el nivel del personaje serán bloqueadas\nSerán actualizadas cada vez que se sube de nivel\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
 				CHECKSPELLLVLERROR = "Ya inicializado!",
@@ -1832,6 +1844,7 @@ local Factory = {
 		},
 	}, 
 	[3] = {			
+		AutoHidden = true,
 		CheckSpellLevel = false,
 		PLAYERSPEC = {			
 			disabledActions = {},
@@ -3429,7 +3442,7 @@ local function ActionDB_Initialization()
     Action.Print(L["SLASH"]["LIST"])
 	Action.Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])
 	Action.Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])		
-	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ActionDB_TMW_SAFESETUP_COMPLETE")
+	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")
 
 	-- Initialization ReTarget ReFocus 
 	Action.ReInit()
@@ -3438,10 +3451,7 @@ local function ActionDB_Initialization()
 	Action.LOSInit(true)
 	
 	-- Initialization SpellLevelCheck if it was selected in db or player level lower than MAX on this expansion
-	if UnitLevel("player") < MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
-		TMW.db.profile.ActionDB[3].CheckSpellLevel = true 
-	end 
-	Action.SpellLevelInit()
+	Action.SpellLevelInit(true)
 	
 	-- Initialization Cursor hooks 
 	Action.CursorInit()
@@ -3637,34 +3647,34 @@ function SpellLevel.Wipe()
 	SpellLevel.Initialized = nil
 end 
 function SpellLevel.Update(...)
-	local lvl = ... or UnitLevel("player")
-	if lvl and (lvl ~= SpellLevel.PlayerLVL or GetSpecializationInfo(GetSpecialization()) ~= SpellLevel.PlayerSpec) then 
-		SpellLevel.PlayerLVL = lvl 
-		SpellLevel.PlayerSpec = GetSpecializationInfo(GetSpecialization())
-		SpellLevel.Initialized = true
-		if SpellLevel.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
-			Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERRORMAXLVL"])
-			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)		
-			Action.SpellLevelInit()			
-			return 
-		end 
-		wipe(SpellLevel.Blocked)
-		for k, v in pairs(Action[Env.PlayerSpec]) do 
-			if type(v) ~= "function" and v.Type == "Spell" then 
-				local book = BOOKTYPE_SPELL 
-				local slot = FindSpellBookSlotBySpellID(v.ID, false) 
-				if not slot then 
-					book = BOOKTYPE_PET 
-					slot = FindSpellBookSlotBySpellID(v.ID, true)
-				end 
-				if slot then 
-					local AvailableLevel = GetSpellAvailableLevel(slot, book)
-					if AvailableLevel and AvailableLevel > SpellLevel.PlayerLVL then 
-						SpellLevel.Blocked[v.ID] = true 
-					end 
-				end
+	if SpellLevel.Initialized then
+		local lvl = ... or UnitLevel("player")
+		if lvl and (lvl ~= SpellLevel.PlayerLVL or Env.PlayerSpec ~= SpellLevel.PlayerSpec) then 
+			SpellLevel.PlayerLVL = lvl 
+			SpellLevel.PlayerSpec = Env.PlayerSpec		
+			if SpellLevel.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
+				Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERRORMAXLVL"])
+				Action.SpellLevelInit()		
+				return 
 			end 
-		end 
+			wipe(SpellLevel.Blocked)
+			for k, v in pairs(Action[Env.PlayerSpec]) do 
+				if type(v) ~= "function" and v.Type == "Spell" then 
+					local book = BOOKTYPE_SPELL 
+					local slot = FindSpellBookSlotBySpellID(v.ID, false) 
+					if not slot then 
+						book = BOOKTYPE_PET 
+						slot = FindSpellBookSlotBySpellID(v.ID, true)
+					end 
+					if slot then 
+						local AvailableLevel = GetSpellAvailableLevel(slot, book)
+						if AvailableLevel and AvailableLevel > SpellLevel.PlayerLVL then 
+							SpellLevel.Blocked[v.ID] = true 
+						end 
+					end
+				end 
+			end 
+		end
 	end 
 end 
 
@@ -3672,23 +3682,32 @@ function SpellLevel.IsBlocked(self)
 	return self.Type == "Spell" and SpellLevel.Initialized and SpellLevel.Blocked[self.ID]
 end 
 
-function Action.SpellLevelInit()
-	local toggle = Action.GetToggle(3, "CheckSpellLevel") 
-	if toggle then 
-		if not SpellLevel.Initialized then 						
-			Listener:Add("SpellLevel_Events", "PLAYER_LEVEL_UP", SpellLevel.Update)
-			Listener:Add("SpellLevel_Events", "PLAYER_SPECIALIZATION_CHANGED", function(...) SpellLevel.Update(...) end)
-			Listener:Add("SpellLevel_Events", "UPDATE_INSTANCE_INFO", function(...) SpellLevel.Update(...) end)
-			Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
-			SpellLevel.Update()
+function Action.SpellLevelInit(isLaunch)
+	if Action[Env.PlayerSpec] and UnitLevel("player") < MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
+		if isLaunch then 
+			TMW.db.profile.ActionDB[3].CheckSpellLevel = true  
 		else 
-			Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERROR"])
+			Action.SetToggle({3, "CheckSpellLevel"})
+		end
+		
+		local toggle = Action.GetToggle(3, "CheckSpellLevel") 
+		if toggle then 
+			if not SpellLevel.Initialized then 		
+				SpellLevel.Initialized = true
+				Listener:Add("SpellLevel_Events", "PLAYER_LEVEL_UP", SpellLevel.Update)
+				Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
+				SpellLevel.Update()
+			else 
+				Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERROR"])
+			end 
+		elseif SpellLevel.Initialized then 	
+			Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
+			Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")			
+			SpellLevel.Wipe()
 		end 
-	elseif SpellLevel.Initialized then 		
+	elseif SpellLevel.Initialized then 	
+		Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
 		Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")
-		Listener:Remove("SpellLevel_Events", "PLAYER_SPECIALIZATION_CHANGED")
-		Listener:Remove("SpellLevel_Events", "UPDATE_INSTANCE_INFO")
-		Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
 		SpellLevel.Wipe()
 	end 
 end 
@@ -4011,10 +4030,10 @@ function Action.SetToggle(arg, custom)
 	local bool 
 	local n, toggle, text = arg[1], arg[2], arg[3]
 	if TMW.db.global.ActionDB[toggle] ~= nil then 
-		TMW.db.global.ActionDB[toggle] = custom or not TMW.db.global.ActionDB[toggle]		
+		TMW.db.global.ActionDB[toggle] = custom ~= nil and custom or not TMW.db.global.ActionDB[toggle]		
 		bool = TMW.db.global.ActionDB[toggle] 		
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 
-		TMW.db.profile.ActionDB[n][toggle] = custom or not TMW.db.profile.ActionDB[n][toggle]		
+		TMW.db.profile.ActionDB[n][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][toggle]		
 		bool = TMW.db.profile.ActionDB[n][toggle] 
 	elseif TMW.db.profile.ActionDB[n] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] == nil then
 		Action.Print(L["DEBUG"] .. (n or "") .. " " .. (toggle or "") .. " " .. L["ISNOTFOUND"] .. ". Func: Action.SetToggle")
@@ -4044,7 +4063,7 @@ function Action.SetToggle(arg, custom)
 			if anyIsON then 
 				for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do
 					if TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] and k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom or not v
+						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom ~= nil and custom or not v
 						if text then 
 							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k])
 						end 
@@ -4062,7 +4081,7 @@ function Action.SetToggle(arg, custom)
 			else 
 				for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do
 					if k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom or not v	
+						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom ~= nil and custom or not v	
 						if text then 
 							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k])
 						end		
@@ -4070,7 +4089,7 @@ function Action.SetToggle(arg, custom)
 				end 				
 			end 
 		else 
-			TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] = custom or not TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]						
+			TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]						
 		end
 		bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
 	end 
@@ -4379,15 +4398,15 @@ function Action.ToggleMSG(isLaunch)
 	if not isLaunch then 
 		Action.SetToggle({7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "})
 	end
-	Listener:Remove('MSG_Events', "CHAT_MSG_PARTY")
-	Listener:Remove('MSG_Events', "CHAT_MSG_PARTY_LEADER")
-	Listener:Remove('MSG_Events', "CHAT_MSG_RAID")
-	Listener:Remove('MSG_Events', "CHAT_MSG_RAID_LEADER")	
+	Listener:Remove("MSG_Events", "CHAT_MSG_PARTY")
+	Listener:Remove("MSG_Events", "CHAT_MSG_PARTY_LEADER")
+	Listener:Remove("MSG_Events", "CHAT_MSG_RAID")
+	Listener:Remove("MSG_Events", "CHAT_MSG_RAID_LEADER")	
 	if Action.GetToggle(7, "MSG_Toggle") then 
-		Listener:Add('MSG_Events', "CHAT_MSG_PARTY", UpdateChat)
-		Listener:Add('MSG_Events', "CHAT_MSG_PARTY_LEADER", UpdateChat)
-		Listener:Add('MSG_Events', "CHAT_MSG_RAID", UpdateChat)
-		Listener:Add('MSG_Events', "CHAT_MSG_RAID_LEADER", UpdateChat)
+		Listener:Add("MSG_Events", "CHAT_MSG_PARTY", UpdateChat)
+		Listener:Add("MSG_Events", "CHAT_MSG_PARTY_LEADER", UpdateChat)
+		Listener:Add("MSG_Events", "CHAT_MSG_RAID", UpdateChat)
+		Listener:Add("MSG_Events", "CHAT_MSG_RAID_LEADER", UpdateChat)
 	end 	
 	if Action.MainUI then 
 		local spec = Env.PlayerSpec .. CL
@@ -4425,7 +4444,7 @@ function Action.ToggleMainUI()
 	if (InCombatLockdown() and (not Action.MainUI or not Action.MainUI.resizer)) or not Env.PlayerSpec then 
 		return 
 	end 
-	local specID, specName = Env.PlayerSpec, Env.PlayerSpecName -- GetSpecializationInfo(GetSpecialization())
+	local specID, specName = Env.PlayerSpec, Env.PlayerSpecName 
 	local spec = specID .. CL
 	if Action.MainUI then 	
 		if Action.MainUI:IsShown() then 
@@ -4490,12 +4509,14 @@ function Action.ToggleMainUI()
 		
 		Action.MainUI.ResetQuestion = StdUi:Window(Action.MainUI, L["TAB"]["RESETQUESTION"], 350, 250)
 		Action.MainUI.ResetQuestion:SetPoint("CENTER")
-		Action.MainUI.ResetQuestion:SetToplevel(true)
-		Action.MainUI.ResetQuestion:SetFrameStrata("DIALOG")
+		Action.MainUI.ResetQuestion:SetFrameStrata("TOOLTIP")
+		Action.MainUI.ResetQuestion:SetFrameLevel(50)
 		Action.MainUI.ResetQuestion:SetBackdropColor(0, 0, 0, 1)
 		Action.MainUI.ResetQuestion:SetMovable(false)
-		Action.MainUI.ResetQuestion:EnableMouse(false)
 		Action.MainUI.ResetQuestion:SetShown(false)
+		Action.MainUI.ResetQuestion:SetScript("OnDragStart", nil)
+		Action.MainUI.ResetQuestion:SetScript("OnDragStop", nil)
+		Action.MainUI.ResetQuestion:SetScript("OnReceiveDrag", nil)
 		
 		Action.MainUI.CheckboxSaveActions = StdUi:Checkbox(Action.MainUI.ResetQuestion, L["TAB"]["SAVEACTIONS"])
 		Action.MainUI.CheckboxSaveInterrupt = StdUi:Checkbox(Action.MainUI.ResetQuestion, L["TAB"]["SAVEINTERRUPT"])			
@@ -5394,19 +5415,42 @@ function Action.ToggleMainUI()
 			local function ScrollTableActionsData()
 				local data = {}
 				if Action[specID] then 
-					for k in pairs(Action[specID]) do 
-						if type(Action[specID][k]) ~= "function" and not Action[specID][k].Hidden then 
+					local ToggleAutoHidden = TMW.db.profile.ActionDB[tab.name].AutoHidden
+					for k, v in pairs(Action[specID]) do 
+						if type(v) ~= "function" and not v.Hidden then 
 							local Enabled = "True"
-							if Action[specID][k]:IsBlocked() then 
+							if v:IsBlocked() then 
 								Enabled = "False"
 							end 
-						
-							table.insert(data, setmetatable({ 
-								Enabled = Enabled, 				
-								Name = Action[specID][k]:Info(),
-								Icon = Action[specID][k]:Icon(),
-								TableKeyName = k,
-							}, {__index = Action[specID][k]}))
+							
+							local isShown = true 
+							-- AutoHidden unavailable 
+							if ToggleAutoHidden then 								
+								if v.Type == "Spell" or v.Type == "Racial" or v.Type == "HeartOfAzeroth" then 															
+									if not Env.SpellExists(v:Info()) then 
+										isShown = false 
+									end 
+								else 
+									if v.Type ~= "Trinket" then 
+										if not v:GetEquipped() then 
+											isShown = false 
+										end 
+									else 
+										if v:GetCount() <= 0 then 
+											isShown = false 
+										end 
+									end								
+								end 
+							end 
+							
+							if isShown then 
+								table.insert(data, setmetatable({ 
+									Enabled = Enabled, 				
+									Name = v:Info(),
+									Icon = v:Icon(),
+									TableKeyName = k,
+								}, {__index = Action[specID][k]}))
+							end 
 						end
 					end
 				end 
@@ -5493,19 +5537,66 @@ function Action.ToggleMainUI()
 						OnClick = OnClickCell,
                     },
                 },
-            }, 16, 25)
+            }, 15, 25)
+			local headerEvents = {
+				OnClick = function(table, columnFrame, columnHeadFrame, columnIndex, button, ...)
+					if button == "LeftButton" then
+						tab.childs[spec].ScrollTable.SORTBY = columnIndex
+						Key:ClearFocus()	
+					end	
+				end, 
+			}
+			tab.childs[spec].ScrollTable:RegisterEvents(nil, headerEvents)
+			tab.childs[spec].ScrollTable.SORTBY = 3
 			tab.childs[spec].ScrollTable.defaultrows = { numberOfRows = tab.childs[spec].ScrollTable.numberOfRows, rowHeight = tab.childs[spec].ScrollTable.rowHeight }
             tab.childs[spec].ScrollTable:EnableSelection(true)  
 			tab.childs[spec].ScrollTable:SetScript("OnShow", function(self)			
 				self:SetData(ScrollTableActionsData())	
-				self:SortData(3)
+				self:SortData(self.SORTBY)
 				-- We can and must remove it since ScrollTable here is reusable 
 				self:SetScript("OnShow", nil) 
+			end)
+			-- AutoHidden update ScrollTable events 
+			local EVENTS = {
+				["UNIT_PET"] 						= true,
+				["PLAYER_LEVEL_UP"]					= true,
+				["PLAYER_TALENT_UPDATE"]			= true,
+				["ACTIVE_TALENT_GROUP_CHANGED"]		= true,
+				["BAG_UPDATE_COOLDOWN"]				= true,
+				["PLAYER_EQUIPMENT_CHANGED"]		= true,
+			}
+			local function EVENTS_INIT() 
+				if Action.GetToggle(tab.name, "AutoHidden") then 
+					for k in pairs(EVENTS) do 
+						tab.childs[spec].ScrollTable:RegisterEvent(k)
+					end 
+				else 
+					for k in pairs(EVENTS) do 
+						tab.childs[spec].ScrollTable:UnregisterEvent(k)
+					end 
+				end 
+			end 			
+			tab.childs[spec].ScrollTable.ts = 0
+			tab.childs[spec].ScrollTable:SetScript("OnEvent", function(self, event, ...)
+				-- It triggers even if UI is hidden 
+				if TMW.time ~= self.ts and TMW.db.profile.ActionDB[tab.name].AutoHidden and EVENTS[event] then 
+					self.ts = TMW.time 
+					-- Update ScrollTable if pet gone or summoned or swaped
+					if event == "UNIT_PET" then 
+						if ... == "player" then 						
+							self:SetData(ScrollTableActionsData())	
+							self:SortData(self.SORTBY)
+						end 
+					else 				
+						self:SetData(ScrollTableActionsData())	
+						self:SortData(self.SORTBY)
+					end 
+				end 
 			end)
 			-- If we had return back to this tab then handler will be skipped 
 			if Action.MainUI.RememberTab == tab.name then
 				tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())
-				tab.childs[spec].ScrollTable:SortData(3)				
+				tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)				
 				tab.childs[spec].ScrollTable:SetScript("OnShow", nil)
 			end 
 					
@@ -5531,17 +5622,32 @@ function Action.ToggleMainUI()
 			StdUi:GlueAbove(Key.FontString, Key)		
 			StdUi:FrameTooltip(Key, L["TAB"][tab.name]["KEYTOOLTIP"], nil, "TOP", true)			
 			
+			local AutoHidden = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["AUTOHIDDEN"])		
+			AutoHidden:SetChecked(TMW.db.profile.ActionDB[tab.name].AutoHidden)
+			AutoHidden:RegisterForClicks("LeftButtonUp")
+			AutoHidden:SetScript("OnClick", function(self, button, down)
+				if not self.isDisabled then 
+					if button == "LeftButton" then 
+						Action.SetToggle({tab.name, "AutoHidden", L["TAB"][tab.name]["AUTOHIDDEN"] .. ": "})
+						tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())	
+						tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)	
+						EVENTS_INIT()
+					end 
+				end 
+			end)
+			AutoHidden.Identify = { Type = "Checkbox", Toggle = "AutoHidden" }
+			StdUi:FrameTooltip(AutoHidden, L["TAB"][tab.name]["AUTOHIDDENTOOLTIP"], nil, "TOP", true)	
+			
 			local CheckSpellLevel = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["CHECKSPELLLVL"])		
 			CheckSpellLevel:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellLevel)
 			CheckSpellLevel:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			CheckSpellLevel:SetScript("OnClick", function(self, button, down)
 				if not self.isDisabled then 
 					if button == "LeftButton" then 
-						TMW.db.profile.ActionDB[tab.name].CheckSpellLevel = not TMW.db.profile.ActionDB[tab.name].CheckSpellLevel
-						self:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellLevel)	
 						Action.SpellLevelInit()
+						self:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellLevel)							
 					elseif button == "RightButton" then 
-						CraftMacro(L["TAB"][tab.name]["CHECKSPELLLVLMACRONAME"], [[/run Action.SetToggle({]] .. tab.name .. [[, "CheckSpellLevel"}); Action.SpellLevelInit()]])	
+						CraftMacro(L["TAB"][tab.name]["CHECKSPELLLVLMACRONAME"], [[/run Action.SpellLevelInit()]])	
 					end 
 				end 
 			end)
@@ -5603,6 +5709,7 @@ function Action.ToggleMainUI()
 			
 			tab.childs[spec]:AddRow({ margin = { left = -15, right = -15 } }):AddElement(tab.childs[spec].ScrollTable)
 			tab.childs[spec]:AddRow({ margin = { left = -15, right = -15 } }):AddElement(Key)
+			tab.childs[spec]:AddRow({ margin = { top = -15, left = -15, right = -15 } }):AddElement(AutoHidden)
 			tab.childs[spec]:AddRow({ margin = { top = -15, left = -15, right = -15 } }):AddElement(CheckSpellLevel)
 			tab.childs[spec]:AddRow({ margin = { top = -10, left = -15, right = -15 } }):AddElements(SetBlocker, SetQueue, { column = "even" })
 			tab.childs[spec]:DoLayout()
@@ -7373,8 +7480,27 @@ function Action:OnInitialize()
 	-- Register ActionDB defaults
 	----------------------------------	
 	local function OnSwap(event, profileEvent, arg2, arg3)
+		-- Turn off everything 
+		-- SpellLevelInit
+		Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")
+		SpellLevel.Wipe()
+		-- ReInit 
+		Listener:Remove("RE_Events", "PLAYER_TARGET_CHANGED")
+		Action.LastTarget = nil 
+		Listener:Remove("RE_Events", "PLAYER_FOCUS_CHANGED")
+		Action.LastFocus = nil 
+		-- LOSInit 
+		Listener:Remove("ACTION_LOS", "UI_ERROR_MESSAGE")
+		Listener:Remove("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED")
+		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_ENABLED")
+		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_DISABLED")
+		-- ToggleMSG 
+		Listener:Remove("MSG_Events", "CHAT_MSG_PARTY")
+		Listener:Remove("MSG_Events", "CHAT_MSG_PARTY_LEADER")
+		Listener:Remove("MSG_Events", "CHAT_MSG_RAID")
+		Listener:Remove("MSG_Events", "CHAT_MSG_RAID_LEADER")	
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
-		-- Note: Can cause issues if there loops, timers, frames or hooks 
+		-- Note: Can cause issues if there loops, timers, frames or hooks 		
 		if profileEvent == "OnProfileChanged" then
 			local snippets = {}
 			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
@@ -7390,7 +7516,7 @@ function Action:OnInitialize()
 		ActionDB_Initialization()		       
 	end
 	TMW:RegisterCallback("TMW_ON_PROFILE", OnSwap, "ActionDB_TMW_ON_PROFILE")
-	TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ActionDB_TMW_SAFESETUP_COMPLETE")	
+	TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")	
 	----------------------------------
 	-- Register Slash Commands
 	----------------------------------	
@@ -7429,6 +7555,15 @@ function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
 		GlobalsRemap()	
 		Action.ReInit()
 		Action.LOSInit(true)
+		if Action[Env.PlayerSpec] then 
+			if not SpellLevel.Initialized then 
+				Action.SpellLevelInit()
+			else 
+				SpellLevel.Update()
+			end 
+		else 
+			Action.SpellLevelInit()
+		end 
 		Action.ToggleMSG(true)	
 	end 
 	
@@ -7588,7 +7723,7 @@ function Action.Create(attributes)
 		MetaSlot = attributes.MetaSlot,
 		Hidden = attributes.Hidden,
 	}
-	if attributes.Type == "Spell" then 
+	if attributes.Type == "Spell" or attributes.Type == "Racial" or attributes.Type == "HeartOfAzeroth" then 
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"		
 		-- Methods (metakey:Link())			
@@ -7614,7 +7749,7 @@ function Action.Create(attributes)
 			end
 		end 
 		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)
+		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)	
 	elseif attributes.Type == "SpellSingleColor" then 
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"
@@ -7626,8 +7761,8 @@ function Action.Create(attributes)
 		-- This using static and fixed only color so no need texture
 		s.Texture = Action.GetColorTexture			
 		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)			
-	elseif attributes.Type == "Trinket" then 
+		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)		
+	elseif attributes.Type == "Trinket" or attributes.Type == "Potion" or attributes.Type == "Item" then 
 		s = setmetatable(s, {
 				__index = function(self, key)
 					if Action[key] then
@@ -7637,47 +7772,7 @@ function Action.Create(attributes)
 					end
 				end
 		})
-		s.Type = "Trinket"
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetItemInfo
-		s.Link = Action.GetItemLink		
-		s.Icon = Action.GetItemIcon
-		-- This using static and fixed texture
-		s.Texture = Action.GetItemTexture		
-		-- Misc
-		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
-	elseif attributes.Type == "Potion" then
-		s = setmetatable(s, {
-				__index = function(self, key)
-					if Action[key] then
-						return Action[key]
-					else
-						return self.Item[key]
-					end
-				end
-		})
-		s.Type = "Potion" 
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetItemInfo
-		s.Link = Action.GetItemLink		
-		s.Icon = Action.GetItemIcon
-		-- This using static and fixed texture
-		s.Texture = Action.GetItemTexture 
-		-- Misc 
-		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 
-	elseif attributes.Type == "Item" then
-		s = setmetatable(s, {
-				__index = function(self, key)
-					if Action[key] then
-						return Action[key]
-					else
-						return self.Item[key]
-					end
-				end
-		})
-		s.Type = "Item" 
+		s.Type = attributes.Type
 		-- Methods (metakey:Link())	
 		s.Info = Action.GetItemInfo
 		s.Link = Action.GetItemLink		
@@ -7699,10 +7794,10 @@ function Action.Create(attributes)
 			else 
 				s.Texture = Action.GetItemTexture
 			end 
-		end
-		-- Misc 
+		end	
+		-- Misc
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 		
+		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 	
 	elseif attributes.Type == "ItemSingleColor" then
 		s = setmetatable(s, {
 				__index = function(self, key)
@@ -7723,18 +7818,7 @@ function Action.Create(attributes)
 		s.Texture = Action.GetColorTexture		
 		-- Misc 
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 			
-	elseif attributes.Type == "HeartOfAzeroth" then
-		s = setmetatable(s, {__index = Action})	
-		s.Type = "Spell"
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetSpellInfo
-		s.Link = Action.GetSpellLink		
-		s.Icon = Action.GetSpellIcon
-		-- This using static and fixed texture
-		s.Texture = Action.GetSpellTexture	
-		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)
+		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server			
 	end 
 	return s
 end 
@@ -8044,7 +8128,7 @@ function Action:IsCastable(thisunit, skipRange)
 				self.Type == "Spell" and 
 				not SpellLevel.IsBlocked(self) and
 				-- Heart of Azeroth toggle 
-				( self.SubType ~= "HeartOfAzeroth" or Action.GetToggle(1, "HeartOfAzeroth") ) and 
+				( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and AzeriteEssenceGetMajor() and self:Info() == AzeriteEssenceGetMajor().spellName) ) and 
 				IsUsableSpell(self.ID) and
 				Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
 				( skipRange or not thisunit or thisunit == "player" or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit, self.ID) ) 
@@ -8174,7 +8258,7 @@ end
 
 --- [[ CURSOR ]]
 local function UpdateGameTooltip()
-	if Action.IsInitialized then 
+	if Action.IsInitialized and Action[Env.PlayerSpec] then 
 		local UseLeft = Action.GetToggle(6, "UseLeft")
 		local UseRight = Action.GetToggle(6, "UseRight")
 		if UseLeft or UseRight then 
@@ -8221,7 +8305,7 @@ function Action.CursorInit()
 	if not Action.IsGameTooltipInitializated then
 		GameTooltip:RegisterEvent("CURSOR_UPDATE")
 		GameTooltip:HookScript("OnEvent", function(self, event) 
-			if event == "CURSOR_UPDATE" and self:IsShown() then
+			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Env.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") then
 				self:Hide()				
 			end
 		end)
@@ -9107,7 +9191,7 @@ function Action.Rotation(icon)
 	if meta == 5 then 
 		-- Use racial available trinkets if we don't have additional LOS 
 		-- Note: Additional LOS is the main reason why I avoid here :AutoRacial (see below 'if isApplied then ')
-		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) then 
+		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) then 
 			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
 			if result then 
 				Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
