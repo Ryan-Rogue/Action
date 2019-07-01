@@ -1572,7 +1572,7 @@ local Localization = {
 				QUEUEBLOCKED = "|cffff0000no puede añadirse a la cola porque SetBlocker lo ha bloqueado!|r",
 				SELECTIONERROR = "|cffff0000No has seleccionado una fila!|r",
 				AUTOHIDDEN = "[All specs] AutoOcultar acciones no disponibles",
-				AUTOHIDDENTOOLTIP = "Hace que la tabla de desplazamiento sea más pequeña y clara mediante ocultación visual\nPor ejemplo, la clase de personaje tiene pocos raciales pero puede usar uno, esta opción ocultará otros raciales\nSólo para ver la comodidad",				
+				AUTOHIDDENTOOLTIP = "Hace que la tabla de desplazamiento sea más pequeña y clara ocultándola visualmente\nPor ejemplo, el tipo de personaje tiene pocos racials pero puede usar uno, esta opción hará que se escondan los demás raciales\nPara que sea más cómodo visualmente",				
 				CHECKSPELLLVL = "[All specs] Comprueba el nivel requerido de la habilidad",
 				CHECKSPELLLVLTOOLTIP = "Todas las habilidades que no estén disponibles por el nivel del personaje serán bloqueadas\nSerán actualizadas cada vez que se sube de nivel\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
 				CHECKSPELLLVLERROR = "Ya inicializado!",
@@ -7481,6 +7481,9 @@ function Action:OnInitialize()
 	----------------------------------	
 	local function OnSwap(event, profileEvent, arg2, arg3)
 		-- Turn off everything 
+		if Action.MainUI and Action.MainUI:IsShown() then 
+			Action.ToggleMainUI()
+		end
 		-- SpellLevelInit
 		Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")
 		SpellLevel.Wipe()
@@ -7715,6 +7718,9 @@ function Action.Create(attributes)
 			MetaSlot (number) allows set fixed position for action whenever it will be tried to set in queue 
 			Hidden (boolean) allows to hide from UI action 
 	]]
+	if not attributes then 
+		local attributes = {}
+	end 	
 	local s = {
 		ID = attributes.ID,
 		SubType = attributes.Type,
@@ -7723,7 +7729,7 @@ function Action.Create(attributes)
 		MetaSlot = attributes.MetaSlot,
 		Hidden = attributes.Hidden,
 	}
-	if attributes.Type == "Spell" or attributes.Type == "Racial" or attributes.Type == "HeartOfAzeroth" then 
+	if attributes.Type == "Spell" or attributes.Type == "HeartOfAzeroth" then 
 		s = setmetatable(s, {__index = Action})	
 		s.Type = "Spell"		
 		-- Methods (metakey:Link())			
@@ -7818,7 +7824,10 @@ function Action.Create(attributes)
 		s.Texture = Action.GetColorTexture		
 		-- Misc 
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server			
+		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server	
+	else 
+		s = setmetatable(s, {__index = Action})	
+		s.Hidden = true 
 	end 
 	return s
 end 
@@ -8124,34 +8133,51 @@ end
 --- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA + CD/RANGE CHECK ]]
 function Action:IsCastable(thisunit, skipRange)
 	-- Checks toggle, cooldown and range 
-	return 	(
-				self.Type == "Spell" and 
-				not SpellLevel.IsBlocked(self) and
-				-- Heart of Azeroth toggle 
-				( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and AzeriteEssenceGetMajor() and self:Info() == AzeriteEssenceGetMajor().spellName) ) and 
-				IsUsableSpell(self.ID) and
-				Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-				( skipRange or not thisunit or thisunit == "player" or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit, self.ID) ) 
-			) or 
-			(
-				self.Type == "Trinket" and 
-				self:IsTrinketON() and 
-				self:GetItemCooldown() == 0 and 
-				( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
-			) or 
-			(
-				self.Type == "Potion" and 
-				not Env.InPvP() and 
-				Action.GetToggle(1, "Potion") and 
-				self:GetCount() > 0 and 
-				self:GetItemCooldown() == 0 
-			) or 
-			(
-				self.Type == "Item" and 
-				self:GetCount() > 0 and 
-				self:GetItemCooldown() == 0 and 
-				( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
-			) 
+	if 	self.Type == "Spell" then 
+		if self.SubType == "HeartOfAzeroth" then 
+			local Major = AzeriteEssenceGetMajor()
+			if Major then 
+				self.ID = Major.spellID 
+			end 
+		end 
+		
+		if  not SpellLevel.IsBlocked(self) and
+			( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and Major and Major.spellName == self:Info() ) ) and 
+			IsUsableSpell(self.ID) and
+			Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
+			( skipRange or not thisunit or thisunit == "player" or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit, self.ID) )
+		then
+			return true 
+		end 
+	end 
+	
+	if 	self.Type == "Trinket" and 
+		self:IsTrinketON() and 
+		self:GetItemCooldown() == 0 and 
+		( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
+	then
+		return true 
+	end 
+	
+	if 	self.Type == "Potion" and 
+		not Env.InPvP() and 
+		Action.GetToggle(1, "Potion") and 
+		Action.BurstIsON(thisunit or Env.IamHealer and "targettarget") and 
+		self:GetCount() > 0 and 
+		self:GetItemCooldown() == 0 
+	then
+		return true 
+	end 
+	
+	if  self.Type == "Item" and 
+		self:GetCount() > 0 and 
+		self:GetItemCooldown() == 0 and 
+		( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
+	then
+		return true 
+	end 
+	
+	return false 
 end
 
 function Action:IsReady(thisunit, skipRange)
@@ -8612,7 +8638,7 @@ function Action.BossMods_IsBossPull(unit, counter)
 	if not Action.GetToggle(1, "DBM") then 
 		return true 
 	else  
-		return (Env.Unit(unit):IsBoss() or Env.IamHealer and Env.Unit(unit .. "target"):IsBoss()) and Env.DBM_PullTimer() > 0 and Env.DBM_PullTimer() <= counter
+		return Env.DBM_PullTimer() > 0 and Env.DBM_PullTimer() <= counter
 	end 
 end 
 
@@ -8623,7 +8649,7 @@ end
 function Action.BurstIsON(thisunit)
 	local Current = Action.GetToggle(1, "Burst")
 	if Current == "Auto" then  
-		local unit = thisunit or "target"
+		local unit = thisunit and thisunit or "target"
 		return UnitIsPlayer(unit) or Env.Unit(unit):IsBoss()
 	elseif Current == "Everything" then 
 		return true 
@@ -8635,7 +8661,7 @@ Action.BurstIsON = Action.MakeFunctionCachedDynamic(Action.BurstIsON)
 function Action.ShouldStop()
 	return Env.ShouldStop()
 end 
-Action.ShouldStop = Action.MakeFunctionCachedStatic(Action.ShouldStop)
+Action.ShouldStop = Action.MakeFunctionCachedStatic(Action.ShouldStop, 0)
 
 -- RACIAL 
 -- [[ MANAGMENT ]] 
@@ -8725,6 +8751,11 @@ function Action:AutoRacial(unit, isReadyCheck)
 		]]
 		Action.PlayerRace = GetRaceBySpellName[self:Info()]
 		
+		local ShouldStop = false
+		if isReadyCheck then
+			ShouldStop = Action.ShouldStop()
+		end 		
+		
 		-- [NO LOGIC - ALWAYS TRUE] 
 		if 	-- Sprint
 			Action.PlayerRace == "Worgen" or 
@@ -8741,7 +8772,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 
 		
 		-- Damaging  
+		-- GCD 1.5 sec 
 		if 	Action.PlayerRace == "LightforgedDraenei" and 
+			not ShouldStop and 
 			LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
 			Action.LossOfControlIsMissed("SILENCE") and 
 			(
@@ -8771,7 +8804,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 			return true 
 		end 
 		
+		-- GCD 1 sec 
 		if 	Action.PlayerRace == "Nightborne" and
+			not ShouldStop and 
 			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
 			Action.LossOfControlIsMissed("SILENCE") and		
 			(
@@ -8793,7 +8828,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 		
 		
 		-- Purge 
+		-- GCD 1-1.5 sec 
 		if 	Action.PlayerRace == "BloodElf" and 
+			not ShouldStop and 
 			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
 			Action.LossOfControlIsMissed("SILENCE") and
 			(	
@@ -8832,7 +8869,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 			end 
 		end 
 		
+		-- GCD 1.5 sec 
 		if 	Action.PlayerRace == "ZandalariTroll" and 
+			not ShouldStop and 
 			LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
 			Action.LossOfControlIsMissed("SILENCE") and 
 			Env.UNITStaying("player") > 1 and 
@@ -8852,7 +8891,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 		end 
 				
 		-- Iterrupts 
-		if 	Action.PlayerRace == "Pandaren" and unit and 	
+		-- GCD 1 sec 
+		if 	Action.PlayerRace == "Pandaren" and unit and 
+			not ShouldStop and 
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
 			Env.Unit(unit):IsControlAble("incapacitate") and 
@@ -8861,7 +8902,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 			return true 			  
 		end 
 		
+		-- GCD 1.5 sec 
 		if 	Action.PlayerRace == "KulTiran" and unit and 	
+			not ShouldStop and 
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
 			Env.Unit(unit):IsControlAble("stun") and 
@@ -8870,7 +8913,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 			return true			  
 		end 	
 
+		-- Custom GCD
 		if 	Action.PlayerRace == "Tauren" and 
+			not ShouldStop and 
 			(
 				(
 					unit and 	
@@ -8892,7 +8937,9 @@ function Action:AutoRacial(unit, isReadyCheck)
 			return true				  
 		end 		
 
+		-- Custom GCD
 		if 	Action.PlayerRace == "HighmountainTauren" and unit and 
+			not ShouldStop and 
 			Env.Unit(unit):GetRange() <= 6 and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and
 			-- Env.Unit(unit):IsControlAble("knockback") and -- I removed it from 1.1 seems it hasn't DR either it's not so often to be checked 
@@ -8941,21 +8988,6 @@ function Action:AutoRacialP(unit, isReadyCheck)
 	-- Note: For other purposes, means custom. Just validance condition check what we can use by School, Loss of Control, Range and etc Imun
 	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
 		Action.PlayerRace = GetRaceBySpellName[self:Info()]
-		-- [NO LOGIC - ALWAYS TRUE] 
-		if 	-- Sprint
-			Action.PlayerRace == "Worgen" or 
-			Action.PlayerRace == "Goblin" or 
-			-- Misc (uncategoried) 
-			Action.PlayerRace == "VoidElf" or 
-			Action.PlayerRace == "NightElf" or 
-			-- Bursting 
-			Action.PlayerRace == "DarkIronDwarf" or 
-			Action.PlayerRace == "Troll" or 
-			Action.PlayerRace == "Orc" or 
-			Action.PlayerRace == "MagharOrc"
-		then 
-			return true 
-		end 
 		
 		-- Damaging  
 		if 	Action.PlayerRace == "LightforgedDraenei" then 
@@ -9066,7 +9098,8 @@ function Action:AutoRacialP(unit, isReadyCheck)
 		elseif 	Action.PlayerRace == "HighmountainTauren" then 
 			return	unit and 
 					Env.Unit(unit):GetRange() <= 6 and 
-					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
+					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)	
+		-- [NO LOGIC - ALWAYS TRUE] 
 		else 
 			return true 
 		end 	
