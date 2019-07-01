@@ -22,7 +22,7 @@ if AzeriteEssence then
 		-- [ID] = {
 		-- 	[RANK] = SpellID,
 		-- }
-		-- For refference https://www.wowhead.com/guides/heart-of-azeroth-essence-overview#essencestank-nullification-dynamo
+		-- For refference https://www.wowhead.com/guides/heart-of-azeroth-essence-overview
 		-- [1] = {},
 		-- Azeroth's Undying Gift
 		[2] = {

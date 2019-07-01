@@ -6,7 +6,7 @@ local Action = Action
 local tableexist = tableexist
 
 local AzeriteEssence = _G.C_AzeriteEssence
-local GetMajorBySpellName 
+local GetMajorBySpellName
 
 if AzeriteEssence then 
 	GetMajorBySpellName = {
@@ -34,8 +34,38 @@ if AzeriteEssence then
 		[Spell:CreateFromSpellID(297108):GetSpellName()] = "Blood of the Enemy", 
 		[Spell:CreateFromSpellID(295337):GetSpellName()] = "Purifying Blast", 
 		[Spell:CreateFromSpellID(298452):GetSpellName()] = "The Unbound Force", 
-	}
+	}	
 end 
+
+local AzeriteEssences = {
+	ALL = {
+		ConcentratedFlame 			= { Type = "HeartOfAzeroth", ID = 295373 	}, -- filler (40y, low priority) HPS / DPS 
+		WorldveinResonance			= { Type = "HeartOfAzeroth", ID = 295186 	}, -- filler (small stat burst, cd1min, high priority)
+		RippleinSpace				= { Type = "HeartOfAzeroth", ID = 302731 	}, -- movement / -10% deffensive (x3 rank)
+		MemoryofLucidDreams			= { Type = "HeartOfAzeroth", ID = 298357 	}, -- burst (100% power regeneration)
+	},
+	TANK = {
+		AzerothsUndyingGift			= { Type = "HeartOfAzeroth", ID = 293019 	}, -- -20% 4sec cd1min / -40% 2sec and then -20% 2sec cd45sec
+		AnimaofDeath				= { Type = "HeartOfAzeroth", ID = 294926 	}, -- aoe self heal cd2.5-2min
+		AegisoftheDeep				= { Type = "HeartOfAzeroth", ID = 298168 	}, -- physical attack protection cd2-1.5min
+		EmpoweredNullBarrier		= { Type = "HeartOfAzeroth", ID = 295746 	}, -- magic attack protection cd3-2.3min
+		SuppressingPulse			= { Type = "HeartOfAzeroth", ID = 293031 	}, -- aoe -70% slow and -25% attack speed cd60-45sec
+	},
+	HEALER = {
+		Refreshment					= { Type = "HeartOfAzeroth", ID = 296197 	}, -- filler cd15sec
+		Standstill					= { Type = "HeartOfAzeroth", ID = 296094 	}, -- burst (big absorb incoming dmg and hps) cd3min
+		LifeBindersInvocation		= { Type = "HeartOfAzeroth", ID = 293032 	}, -- burst aoe (big heal) cd3min
+		OverchargeMana				= { Type = "HeartOfAzeroth", ID = 296072 	}, -- filler (my hps < incoming unit dps) cd30sec
+		VitalityConduit				= { Type = "HeartOfAzeroth", ID = 296230 	}, -- aoe cd60-45sec 
+	},	
+	DAMAGER = {
+		FocusedAzeriteBeam			= { Type = "HeartOfAzeroth", ID = 295258 	}, -- aoe 
+		GuardianofAzeroth			= { Type = "HeartOfAzeroth", ID = 295840 	}, -- burst 
+		BloodoftheEnemy				= { Type = "HeartOfAzeroth", ID = 297108 	}, -- aoe 
+		PurifyingBlast				= { Type = "HeartOfAzeroth", ID = 295337 	}, -- filler (high priority)
+		TheUnboundForce				= { Type = "HeartOfAzeroth", ID = 298452 	}, -- filler (high priority)
+	},
+}
 
 local UnitHealthMax, UnitHealth, UnitPowerMax, UnitPower, UnitGetIncomingHeals, UnitIsPlayer, UnitInRange = 
 	  UnitHealthMax, UnitHealth, UnitPowerMax, UnitPower, UnitGetIncomingHeals, UnitIsPlayer, UnitInRange
@@ -43,7 +73,8 @@ local UnitHealthMax, UnitHealth, UnitPowerMax, UnitPower, UnitGetIncomingHeals, 
 local IsStealthed = 
 	  IsStealthed
 
-local GetNetStats = GetNetStats
+local GetNetStats, GetSpecializationRoleByID =
+	  GetNetStats, GetSpecializationRoleByID
 
 local function PredictHealing(MajorSpellName, spellID, unitID, VARIATION) 
 	-- Exception penalty for low level units / friendly boss
@@ -138,7 +169,7 @@ local function PredictHealing(MajorSpellName, spellID, unitID, VARIATION)
 		local totalMembers = 0 
 		if tableexist(members) then 
 			for i = 1, #members do
-				if UnitInRange(members[i].Unit) and UnitHealthMax(members[i].Unit) - UnitHealth(members[i].Unit) >= total then
+				if UnitHealthMax(members[i].Unit) - UnitHealth(members[i].Unit) >= total then
 					totalMembers = totalMembers + 1
 				end
 				if totalMembers >= validMembers then 
@@ -154,17 +185,14 @@ local function PredictHealing(MajorSpellName, spellID, unitID, VARIATION)
 end   
 
 --------------------------------------
--- DISPLAY FUNCTIONAL
+-- OLD PROFILES FUNCTIONAL 
 --------------------------------------
+-- TODO: Remove on old profiles until June 2019
 function Action.HeartOfAzerothShow(icon)
 	Action.TMWAPL(icon, "texture", ACTION_CONST_HEARTOFAZEROTH)
 	return true 
 end 
 
---------------------------------------
--- OLD PROFILES FUNCTIONAL 
---------------------------------------
--- TODO: Remove on old profiles until June 2019
 function Action.LazyHeartOfAzeroth(icon, unit) 
 	if AzeriteEssenceIsMajorUseable() then 
 		local Major = AzeriteEssenceGetMajor()
@@ -218,7 +246,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			
 			if MajorSpellName == "Memory of Lucid Dreams" then
 				-- GCD 1.5 sec
-				if not ShouldStop and (Env.Zone == "none" or Env.Unit(unitID):IsBoss() or UnitIsPlayer(unitID)) and (Env.Unit("player"):HasBuffs("DamageBuffs", true) > 0 or (Env.InPvP() and Env.Unit(unitID):UseBurst())) then 				
+				if not ShouldStop and Env.UNITPW("player") <= 50 and (Env.Zone == "none" or Env.Unit(unitID):IsBoss() or UnitIsPlayer(unitID)) and (Env.Unit("player"):HasBuffs("DamageBuffs", true) > 0 or (Env.InPvP() and Env.Unit(unitID):UseBurst())) then 				
 					-- PvP condition
 					if not Env.InPvP() or not UnitIsPlayer(unitID) or (not Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):DeBuffCyclone() == 0) or (Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0) then 
 						return Action.HeartOfAzerothShow(icon)
@@ -389,7 +417,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 				-- GCD 1.5 sec (channeled)
 				if (AzeriteRank(spellID) >= 3 or Env.UNITStaying("player") >= 1) and Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):GetRange() <= 10 then 
 					local isMelee = Env.Unit("player"):IsMelee()
-					if (AoE(3, 10) or (isMelee and Env.Unit(unitID):GetRange() >= 6)) and (not Env.InPvP() or (UnitIsPlayer(unitID) and not Env.EnemyTeam("HEALER"):IsBreakAble(10) and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0) ) then 
+					if (AoE(3, 10) or (isMelee and Env.InPvP() and Env.Unit(unitID):GetRange() >= 6)) and (not Env.InPvP() or (UnitIsPlayer(unitID) and not Env.EnemyTeam("HEALER"):IsBreakAble(10) and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0) ) then 
 						return Action.HeartOfAzerothShow(icon)
 					end 
 				end 
@@ -452,13 +480,589 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 end 
 
 -------------------------------------
--- 
+-- ACTION API
 --------------------------------------
-function Action.AutoHeartOfAzeroth(unit, isReadyCheck)
+function Action:CreateEssencesFor(specID) 
+	-- If game patch lower than 8.2 it will create empty objects which will be hidden in UI 
+	for k, v in pairs(AzeriteEssences.ALL) do 
+		self[specID][k] = self.Create(AzeriteEssence and v or nil)
+	end 
+
+	for k, v in pairs(AzeriteEssences[GetSpecializationRoleByID(specID)]) do 
+		self[specID][k] = self.Create(AzeriteEssence and v or nil)
+	end 	 
+end 
+
+function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 	-- @return boolean 
 	-- Note: This is lazy template for all Heart Of Azerote Essences 
-	-- Args are optional. isReadyCheck must be true for Single / AoE / Passive 
-	if (not isReadyCheck and self:IsReadyP(unit, true) or isReadyCheck and self:IsReady(unit, true)) then 
+	-- Arguments: skipAuto if true then will skip Auto template conditions and will check only validance (imun, own CC such as silence, range and etc)	
+	if self.Type == "HeartOfAzeroth" and AzeriteEssenceIsMajorUseable() then 
+		local Major = AzeriteEssenceGetMajor()
+		--local spellName = Major.spellName 
+		--local spellID = Major.spellID 
+
+		local MajorSpellName = GetMajorBySpellName[Major.spellName]
+		
+		if MajorSpellName then 
+			local ShouldStop = Action.ShouldStop()
+			
+			--[[ Essences Used by All Roles ]]
+			if MajorSpellName == "Concentrated Flame" then 				
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1 sec 
+					self:IsReady(unitID) and -- no second arg as 'true' coz it checking range 
+					Action.LossOfControlIsMissed("SILENCE") and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 
+				then 
+					local isEnemy = Env.Unit(unitID):IsEnemy()
+					
+					if 	(
+							IsEnemy or 
+							PredictHealing(MajorSpellName, self.ID, unitID)
+						) and 
+						(
+							(
+								not isEnemy and 
+								self:AbsentImun(unitID) 
+							) or 
+							(
+								isEnemy and 
+								self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"})
+							)
+						)
+					then
+						return true 
+					end 
+				end 
+			end 
+			
+			if MajorSpellName == "Worldvein Resonance" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) and 
+					(
+						skipAuto or 
+						((not Env.Unit("player"):IsMelee() and Env.Unit(unitID):GetRange() <= 40) or Env.Unit(unitID):GetRange() <= 8)
+					) and 
+					(	
+						not Env.Unit(unitID):IsEnemy() or						
+						self:AbsentImun(unitID, {"TotalImun", "DamagePhysImun", "DamageMagicImun"})
+					)
+				then 
+					return true 					
+				end 					
+			end 
+			
+			if MajorSpellName == "Ripple in Space" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) 
+				then
+					if skipAuto then 
+						return true 
+					else
+						local isMelee = Env.Unit("player"):IsMelee()
+						local range = Env.Unit(unitID):GetRange()
+						-- -10% damage reducement over 10 sec
+						local isMaxRank = AzeriteRank(self.ID) >= 3
+						
+						if 	(isMelee and range >= 10) or 
+							(not isMelee and range >= 10 and range <= 25 and Env.UNITCurrentSpeed("player") > 0) or 
+							(isMaxRank and (Env.Unit("player"):IsTanking(unitID, 10) or (Env.InPvP() and Env.Unit("player"):UseDeff()))) or 
+							(Env.InPvP() and UnitIsPlayer(unitID) and Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):HasBuffs("DamagePhysImun") > 0 and self:AbsentImun(unitID, "TotalImun"))							 
+						then  
+							return true 
+						end 
+					end 
+				end 
+			end 
+			
+			if MajorSpellName == "Memory of Lucid Dreams" then
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) and 
+					(
+						skipAuto or 
+						Env.UNITPW("player") <= 50
+					) 
+				then 
+					local isEnemy = Env.Unit(unitID):IsEnemy()
+					
+					if	(
+							not isEnemy and 
+							self:AbsentImun(unitID)
+						) or 
+						(
+							isEnemy and 
+							self:AbsentImun(unitID, "TotalImun")
+						)					
+					then
+						return true 
+					end 
+				end 
+			end 
+			
+			--[[ Tank ]]
+			if MajorSpellName == "Azeroth's Undying Gift" then				
+				unitID = "player"				
+				
+				-- GCD 0 sec
+				if 	self:IsReady(unitID, true) and 
+					(
+						skipAuto or
+						(
+							(
+								-- HP lose per sec >= 15
+								incdmg(unitID) * 100 / UnitHealthMax(unitID) >= 15 or 
+								TimeToDieX(unitID, 20) <= 6 or 
+								Env.UNITHP(unitID) < 70 or 
+								(
+									Env.InPvP() and 
+									(
+										Env.Unit(unitID):UseDeff() or 
+										(
+											Env.Unit(unitID):HasFlags() and 
+											getRealTimeDMG(unitID) > 0 and 
+											Env.Unit(unitID):IsFocused(nil, true) 
+										)
+									)
+								) 
+							) and 
+							Env.Unit(unitID):HasBuffs("DeffBuffs", true) == 0
+						)
+					) 
+				then
+					return true
+				end 
+			end 
+			
+			if MajorSpellName == "Anima of Death" then
+				unitID = "player"				
+				
+				if 	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) and 					
+					Action.LossOfControlIsMissed("SILENCE") and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and
+					PredictHealing(MajorSpellName, self.ID, unitID) and 
+					(
+						skipAuto or 
+						Env.UNITHP(unitID) < 70
+					) and 
+					(
+						not Env.InPvP() or
+						not Env.EnemyTeam("HEALER"):IsBreakAble(8)
+					)
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Aegis of the Deep" then 
+				unitID = "player"				
+				
+				if 	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) and 					
+					(
+						skipAuto or 
+						(
+							(
+								-- HP lose per sec taken from physical attacks >= 25
+								incdmgphys(unitID) * 100 / UnitHealthMax(unitID) >= 25 or 
+								TimeToDieX(unitID, 25) <= 4 or 
+								Env.UNITHP(unitID) < 30 or 
+								(
+									Env.InPvP() and 
+									(
+										Env.Unit(unitID):UseDeff() or 
+										(
+											Env.Unit(unitID):HasFlags() and 
+											getRealTimeDMG(unitID) > 0 and 
+											Env.Unit(unitID):IsFocused(nil, true) 
+										)
+									)
+								)
+							) and 
+							Env.Unit(unitID):HasBuffs("DeffBuffs", true) == 0
+						)
+					)
+				then 
+					return true 
+				end 						
+			end 
+			
+			if MajorSpellName == "Empowered Null Barrier" then 
+				unitID = "player"				
+				
+				if 	not ShouldStop and -- GCD 1.5 sec 
+					self:IsReady(unitID, true) and 					
+					(
+						skipAuto or 
+						(
+							(
+								-- If can fully absorb 
+								incdmgmagic(unitID) * 10 >= Env.GetDescription(self.ID)[1] or 
+								-- If can die to 25% from magic attacks in less than 6 sec
+								TimeToDieMagicX(unitID, 25) < 6 or 
+								-- HP lose per sec >= 30 from magic attacks
+								incdmgmagic(unitID) * 100 / UnitHealthMax(unitID) >= 30 or 
+								-- HP < 40 and real time incoming damage from mage attacks more than 10%
+								(
+									Env.UNITHP(unitID) < 40 and 
+									select(4, getRealTimeDMG(unitID)) > UnitHealthMax(unitID) * 0.1
+								) or 
+								(
+									Env.InPvP() and
+									-- Stable real time incoming damage from mage attacks more than 20%
+									select(4, getRealTimeDMG(unitID)) > UnitHealthMax(unitID) * 0.2 and 							
+									(
+										Env.Unit(unitID):UseDeff() or 
+										(
+											Env.Unit(unitID):HasFlags() and 									
+											Env.Unit(unitID):IsFocused(nil, true) 
+										)
+									)
+								)
+							) and 
+							Env.Unit("player"):HasBuffs("DeffBuffsMagic", true) == 0						
+						)
+					)
+				then
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Suppressing Pulse" then 
+				if not unitID or unitID == "player" then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					Action.LossOfControlIsMissed("SILENCE") and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and
+					(
+						(
+							skipAuto and 
+							AoE(1, 15)
+						) or 
+						(
+							not skipAuto and 
+							Env.Unit("player"):IsTanking(unitID, 8) and 
+							select(3, getRealTimeDMG("player")) > 0 and 
+							(
+								(
+									Env.InPvP() and 
+									( 
+										(
+											UnitIsPlayer(unitID) and 
+											Env.Unit(unitID):IsEnemy() and 
+											Env.UNITCurrentSpeed(unitID) >= 100 and 
+											self:AbsentImun(unitID, {"TotalImun", "Freedom"}, true)
+										) or 
+										-- If someone enemy player bursting in 15 range with > 3 duration
+										Env.EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", 15) > 3 
+									)
+								) or 
+								AoE(3, 15)
+							)
+						)
+					)
+				then 
+					return true 
+				end 
+			end 
+			
+			--[[ Healer ]]
+			if MajorSpellName == "Refreshment" then
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					UnitInRange(unitID) and  -- It has 100 yards range but I think it's not truth and 40 yards by UnitInRange enough 
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID) and 
+					PredictHealing(MajorSpellName, self.ID, unitID)					
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Standstill" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					UnitIsPlayer(unitID) and 
+					UnitInRange(unitID) and
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and
+					not Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID, "TotalImun") and 
+					(
+						skipAuto or 
+						(TimeToDie(unitID) <= 6 or incdmg(unitID) * 4 >= Env.GetDescription(self.ID)[1])
+					)
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Life-Binder's Invocation" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					UnitIsPlayer(unitID) and 
+					UnitInRange(unitID) and
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and
+					Env.UNITCurrentSpeed("player") == 0 and 
+					not Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID) and 					
+					(
+						skipAuto or 
+						(
+							FrequencyAHP(3) > 30 and 
+							TimeToDie(unitID) > 8 
+						)
+					)
+				then 
+					return true 
+				end 
+			end  
+			
+			if MajorSpellName == "Overcharge Mana" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					UnitInRange(unitID) and
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not Env.Unit(unitID):IsEnemy() and
+					self:AbsentImun(unitID) and 
+					(
+						skipAuto or 
+						(
+							Env.Unit("player"):HasBuffs("BurstHaste") > 0 or 
+							(
+								TimeToDie(unitID) > 8 and 
+								UnitPower("player") >= UnitPowerMax("player") * 0.2 and 
+								incdmg(unitID) * 1.2 > getHPS("player")
+							)
+						)
+					)
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Vitality Conduit" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					UnitInRange(unitID) and
+					Action.LossOfControlIsMissed("SILENCE") and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID) and 
+					redictHealing(MajorSpellName, self.ID, unitID)
+				then 
+					return true 
+				end 
+			end 
+			
+			--[[ Damager ]]
+			if MajorSpellName == "Focused Azerite Beam" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec (channeled)				
+					(
+						AzeriteRank(self.ID) >= 3 or 
+						Env.UNITStaying("player") >= 1
+					) and 
+					self:IsReady(unitID, true) and 
+					Action.LossOfControlIsMissed("SILENCE") and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					Env.Unit(unitID):IsEnemy() and
+					Env.Unit(unitID):GetRange() <= 10 and 
+					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					(
+						not Env.InPvP() or 
+						not Env.EnemyTeam("HEALER"):IsBreakAble(10)
+					) and 
+					not Env.Unit(unitID):IsTotem() and 
+					(
+						skipAuto or 
+						(
+							(
+								AoE(3, 10) or 
+								(
+									Env.InPvP() and 
+									Env.Unit("player"):IsMelee() and 
+									Env.Unit(unitID):GetRange() >= 6
+								)
+							)
+						)
+					)
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Guardian of Azeroth" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec (range minion with fire attack)
+					self:IsReady(unitID, true) and 
+					Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					not Env.Unit(unitID):IsTotem() and 
+					(
+						(
+							Env.Unit("player"):IsMelee() and 
+							Env.Unit(unitID):GetRange() <= 10 and 
+							Action.LossOfControlIsMissed("DISARM")
+						) or 
+						(
+							not Env.Unit("player"):IsMelee() and 
+							Env.Unit(unitID):GetRange() <= 40 and 
+							Action.LossOfControlIsMissed({"SILENCE", "DISARM"})
+						)
+					)  
+				then 
+					return true 
+				end 
+			end 
+			
+			if MajorSpellName == "Blood of the Enemy" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
+					Env.Unit(unitID):IsEnemy() and 
+					Env.Unit(unitID):GetRange() <= 12 and 
+					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					not Env.Unit(unitID):IsTotem() and 
+					(
+						not Env.Unit("player"):IsMelee() or 
+						Action.LossOfControlIsMissed("DISARM")
+					) and 
+					(
+						not Env.InPvP() or 
+						not Env.EnemyTeam():IsBreakAble(12)
+					) and 
+					(
+						skipAuto or 
+						Env.InPvP() or
+						AoE(4, 12)
+					)
+				then 
+					return true  
+				end 
+			end 
+			
+			if MajorSpellName == "Purifying Blast" then
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID, true) and 
+					Env.Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					not Env.Unit(unitID):IsTotem()
+				then 
+					local isMelee = Env.Unit("player"):IsMelee()
+					local n = Env.Zone == "arena" and 2 or 4
+					
+					if	(
+							isMelee and 
+							(
+								not Env.InPvP() or 
+								not Env.EnemyTeam("HEALER"):IsBreakAble(8)
+							) and 
+							(
+								skipAuto or 
+								AoE(n, 8)
+							)
+						) or 
+						(
+							not isMelee and 
+							(
+								not Env.InPvP() or 
+								not Env.EnemyTeam("HEALER"):IsBreakAble(40)
+							) and 
+							(
+								skipAuto or 
+								CombatUnits(n + 1, 40)
+							)
+						)
+					then 
+						return true 
+					end 
+				end 
+			end 
+			
+			if MajorSpellName == "The Unbound Force" then 
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not ShouldStop and -- GCD 1.5 sec
+					self:IsReady(unitID) and -- no second arg as 'true' coz it checking range 
+					Env.Unit(unitID):IsEnemy() and 
+					Action.LossOfControlIsMissed("SILENCE") and
+					LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and
+					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					not Env.Unit(unitID):IsTotem()
+				then 
+					return true 
+				end 
+			end 
+			
+		end 		
 	end 
+	
 	return false 
+end 
+
+function Action:AutoHeartOfAzerothP(unit)
+	-- @return boolean 
+	-- Note: Just will check validance
+	return self:AutoHeartOfAzeroth(unit, true)
 end 
