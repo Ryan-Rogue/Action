@@ -15,6 +15,7 @@ Action.lua
 
 Modules\Stuff.lua
 Modules\AzeriteTraits.lua
+# Modules\TierGearTraits.lua
 Modules\BossMods.lua
 Modules\Hybrid Profile.lua
 Modules\TellMeWhen Monitor.lua

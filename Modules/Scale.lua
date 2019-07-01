@@ -103,7 +103,7 @@ local function UpdateCVAR()
 	-- UNIT_NAMEPLAYES_AUTOMODE (must be visible)
     if GetCVar("nameplateShowAll")=="0" then
         SetCVar("nameplateShowAll", 1)
-		print("All nameplates should be visible")
+		--print("All nameplates should be visible")
     end
     if GetCVar("nameplateShowEnemies")~="1" then
         SetCVar("nameplateShowEnemies", 1) 
