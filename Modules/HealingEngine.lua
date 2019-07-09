@@ -79,11 +79,15 @@ local function CanHeal(unitID, unitGUID)
 		and not UnitIsCharmed(unitID)			
 		and not Env.InLOS(unitGUID or UnitGUID(unitID)) -- LOS System (target)
 		and not Env.InLOS(unitID)           		 	-- LOS System (another such as party)
-		and not Env.UNITDead(unitID)	
+		and not Env.UNITDead(unitID)		
 		and 
 		(
-			not Env.InPvP() or 
 			(
+				not Env.InPvP() and 
+				not Env.Unit(unitID):IsEnemy()
+			) or 
+			(
+				Env.InPvP() and 
 				Env.Unit(unitID):DeBuffCyclone() == 0 and 
 				( 
 					Env.Unit(unitID):HasDeBuffs(Aura.SmokeBomb) == 0 or 
@@ -1433,6 +1437,24 @@ local types = {
         { id = 252687, dur = 0, stack = 2},
     },
     Magic = {
+		-- 8.2 Queen Azshara - Arcane Burst
+		{ id = 303657, dur = 10, stack = 0 },
+		-- 8.2 Za'qul - Dread
+		{ id = 292963, dur = 0, stack = 0 },
+		-- 8.2 Za'qul - Shattered Psyche
+		{ id = 295327, dur = 0, stack = 0 },
+		-- 8.2 Radiance of Azshara - Arcane Bomb
+		-- { id = 296746, dur = 0, stack = 0 }, -- need predict unit position to dispel only when they are out of raid 
+		-- The Restless Cabal - Promises of Power 
+		{ id = 282562, dur = 0, stack = 3 },
+		-- Jadefire Masters - Searing Embers
+		{ id = 286988, dur = 0, stack = 0 },
+		-- Conclave of the Chosen - Mind Wipe
+		{ id = 285878, dur = 0, stack = 0 },
+		-- Lady Jaina - Grasp of Frost
+		{ id = 287626, dur = 0, stack = 0 },
+		-- Lady Jaina - Hand of Frost
+		{ id = 288412, dur = 0, stack = 0 },
         -- Molten Gold
         { id = 255582, dur = 0, stack = 0},
         -- Terrifying Screech
