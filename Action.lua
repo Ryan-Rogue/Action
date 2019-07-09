@@ -145,6 +145,7 @@ local Localization = {
 				SPELLISTARGETING = "SpellIsTargeting",
 				SPELLISTARGETINGTOOLTIP = "Example: Blizzard, Heroic Leap, Freezing Trap",
 				LOOTFRAME = "LootFrame",
+				EATORDRINK = "Is Eating or Drinking",
 				MISC = "Misc:",		
 				DISABLEROTATIONDISPLAY = "Hide display rotation",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Hides the group, which is usually at the\ncenter bottom of the screen",
@@ -425,6 +426,7 @@ local Localization = {
 				SPELLISTARGETING = "Курсор ожидает клик",
 				SPELLISTARGETINGTOOLTIP = "Например: Снежная Буря, Героический прыжок, Замораживающая ловушка",
 				LOOTFRAME = "Открыто окно добычи\n(лута)",		
+				EATORDRINK = "Вы Пьете или Едите",
 				MISC = "Разное:",
 				DISABLEROTATIONDISPLAY = "Скрыть отображение\nротации",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Скрывает группу, которая обычно в\nцентральной нижней части экрана",
@@ -705,6 +707,7 @@ local Localization = {
 				SPELLISTARGETING = "Fähigkeit dich im Ziel hat",
 				SPELLISTARGETINGTOOLTIP = "Example: Blizzard, Heldenhafter Sprung, Eiskältefalle",
 				LOOTFRAME = "Beutefenster",
+				EATORDRINK = "Isst oder trinkt",
 				MISC = "Verschiedenes:",		
 				DISABLEROTATIONDISPLAY = "Verstecke Rotationsanzeige",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Blendet die Gruppe aus, die sich normalerweise im unteren Bereich des Bildschirms befindet",
@@ -985,6 +988,7 @@ local Localization = {
 				SPELLISTARGETING = "Ciblage d'un sort",
 				SPELLISTARGETINGTOOLTIP = "Exemple: Blizzard, Bond héroïque, Piège givrant",
 				LOOTFRAME = "Fenêtre du butin",
+				EATORDRINK = "Est-ce que manger ou boire",
 				MISC = "Autre:",		
 				DISABLEROTATIONDISPLAY = "Cacher l'affichage de la\nrotation",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Cacher le groupe, qui se trouve par défaut\n en bas au centre de l'écran",
@@ -1265,6 +1269,7 @@ local Localization = {
 				SPELLISTARGETING = "IncantesimoHaBersaglio",
 				SPELLISTARGETINGTOOLTIP = "Esembio: Tormento, Balzo eroico, Trappola congelante",
 				LOOTFRAME = "Bottino",
+				EATORDRINK = "Sta mangiando o bevendo",
 				MISC = "Varie:",		
 				DISABLEROTATIONDISPLAY = "Nascondi|Mostra la rotazione",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Nasconde il gruppo, che generalmente siu trova al\ncentro in basso dello schermo",
@@ -1545,6 +1550,7 @@ local Localization = {
 				SPELLISTARGETING = "Hechizo está apuntando",
 				SPELLISTARGETINGTOOLTIP = "Ejemplo: Blizzard, Salto heroico, Trampa de congelación",
 				LOOTFRAME = "Frame de botín",
+				EATORDRINK = "Está comiendo o bebiendo",
 				MISC = "Misc:",		
 				DISABLEROTATIONDISPLAY = "Esconder mostrar rotación",
 				DISABLEROTATIONDISPLAYTOOLTIP = "Esconder el grupo, que está ubicado normalmente en la\nparte inferior central de la pantalla",
@@ -1833,7 +1839,8 @@ local Factory = {
 		CheckMount = false, 
 		CheckCombat = false, 
 		CheckSpellIsTargeting = true, 
-		CheckLootFrame = true, 		 
+		CheckLootFrame = true, 	
+		CheckEatingOrDrinking = true,
 		DisableRotationDisplay = false,
 		DisableBlackBackground = false,
 		DisablePrint = false,
@@ -1867,6 +1874,11 @@ local Factory = {
 		},
 	},
 	[4] = {
+		BlackList = {
+			[GameLocale] = {
+				ISINTERRUPT = true,
+			},	
+		},
 		PvETargetMouseover = {
 			[GameLocale] = {
 				ISINTERRUPT = true,
@@ -2143,6 +2155,24 @@ local GlobalFactory = {
 				[252687] = { stack = 2 },				
 			},
 			Magic = {
+				-- 8.2 Queen Azshara - Arcane Burst
+				[303657] = { byID = true, dur = 10 },
+				-- 8.2 Za'qul - Dread
+				[292963] = { byID = true },
+				-- 8.2 Za'qul - Shattered Psyche
+				[295327] = { byID = true },
+				-- 8.2 Radiance of Azshara - Arcane Bomb
+				-- [296746] = { byID = true }, -- need predict unit position to dispel only when they are out of raid 
+				-- The Restless Cabal - Promises of Power 
+				[282562] = { byID = true, stack = 3 },
+				-- Jadefire Masters - Searing Embers
+				[286988] = { byID = true },
+				-- Conclave of the Chosen - Mind Wipe
+				[285878] = { byID = true },
+				-- Lady Jaina - Grasp of Frost
+				[287626] = { byID = true },
+				-- Lady Jaina - Hand of Frost
+				[288412] = { byID = true },
 				-- Molten Gold
 				[255582] = {},
 				-- Terrifying Screech
@@ -2456,18 +2486,6 @@ local IsMerge = {
 	["byID"] = true, 
 	["isTotem"] = true,
 	[GameLocale] = true,
-	["deDE"] = true,
-	["enGB"] = true,
-	["enUS"] = true,
-	["esES"] = true,
-	["esMX"] = true,
-	["frFR"] = true,
-	["itIT"] = true,
-	["koKR"] = true,
-	["ptBR"] = true,
-	["ruRU"] = true,
-	["zhCN"] = true,
-	["zhTW"] = true,
 }
 local function tCompare(default, new)
 	local result = {}
@@ -3438,8 +3456,7 @@ local function ActionDB_Initialization()
 	-- profile	
 	if not TMW.db.profile.ActionDB then 
 		Action.Print("|cff00cc66ActionDB.profile|r " .. L["CREATED"])		
-	end
-	Action.Data.Test = tMerge(Factory, Action.Data.ProfileDB, true)
+	end	
 	TMW.db.profile.ActionDB = tCompare(tMerge(Factory, Action.Data.ProfileDB, true), TMW.db.profile.ActionDB) 
 		
 	-- global
@@ -5253,7 +5270,15 @@ function Action.ToggleMainUI()
 				TMW.db.profile.ActionDB[tab.name].CheckLootFrame = not TMW.db.profile.ActionDB[tab.name].CheckLootFrame	
 				Action.Print(L["TAB"][tab.name]["LOOTFRAME"] .. ": ", TMW.db.profile.ActionDB[tab.name].CheckLootFrame)
 			end	
-			CheckLootFrame.Identify = { Type = "Checkbox", Toggle = "CheckLootFrame" }			
+			CheckLootFrame.Identify = { Type = "Checkbox", Toggle = "CheckLootFrame" }	
+
+			local CheckEatingOrDrinking = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["EATORDRINK"])
+			CheckEatingOrDrinking:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking)
+			function CheckEatingOrDrinking:OnValueChanged(self, state, value)
+				TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking = not TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking	
+				Action.Print(L["TAB"][tab.name]["EATORDRINK"] .. ": ", TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking)
+			end	
+			CheckEatingOrDrinking.Identify = { Type = "Checkbox", Toggle = "CheckEatingOrDrinking" }	
 			
 			local Misc = StdUi:Header(PauseChecksPanel, L["TAB"][tab.name]["MISC"])
 			Misc:SetAllPoints()			
@@ -5315,7 +5340,7 @@ function Action.ToggleMainUI()
 			PauseChecksPanel:AddRow({ margin = { top = 10 } }):AddElements(CheckSpellIsTargeting, CheckLootFrame, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckVehicle, CheckDeadOrGhost, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckMount, CheckDeadOrGhostTarget, { column = "even" })	
-			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElement(CheckCombat)	
+			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckCombat, CheckEatingOrDrinking, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -15 } }):AddElement(Misc)		
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableRotationDisplay, DisableBlackBackground, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisablePrint, DisableMinimap, { column = "even" })			
@@ -5650,8 +5675,6 @@ function Action.ToggleMainUI()
 			tab.childs[spec].ScrollTable:SetScript("OnShow", function(self)			
 				self:SetData(ScrollTableActionsData())	
 				self:SortData(self.SORTBY)
-				-- We can and must remove it since ScrollTable here is reusable 
-				self:SetScript("OnShow", nil) 
 			end)
 			-- AutoHidden update ScrollTable events 
 			local EVENTS = {
@@ -8060,7 +8083,7 @@ function Action:SetQueue(args)
 	]]
 	-- Check validance 
 	if not self.Queued then 
-		if self.Type == "Spell" and not Env.SpellExists(self.ID) then 
+		if self.Type == "Spell" and not Env.SpellExists(self:Info()) then 
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
 			return 
 		end 
@@ -8639,6 +8662,14 @@ local PauseChecks = Cache:WrapStatic(function()
 	
 	if Action.GetToggle(1, "CheckLootFrame") and _G.LootFrame:IsShown() then
 		return "texture", 975746
+	end	
+	
+	if Action.GetToggle(1, "CheckEatingOrDrinking") and CombatTime("player") == 0 and Env.Unit("player"):HasBuffs({
+		43180, 	-- Food 
+		27089, 	-- Drink
+		257427, -- FoodDrink
+	}, true) > 0 then
+		return "texture", 134062
 	end	
 end)
 

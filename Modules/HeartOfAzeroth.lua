@@ -499,7 +499,7 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 	-- @return boolean 
 	-- Note: This is lazy template for all Heart Of Azerote Essences 
 	-- Arguments: skipAuto if true then will skip Auto template conditions and will check only validance (imun, own CC such as silence, range and etc)	
-	if self.Type == "HeartOfAzeroth" and AzeriteEssenceIsMajorUseable() then 
+	if self.SubType == "HeartOfAzeroth" and AzeriteEssenceIsMajorUseable() then 
 		local Major = AzeriteEssenceGetMajor()
 		local MajorSpellName = GetMajorBySpellName[Major.spellName]
 		

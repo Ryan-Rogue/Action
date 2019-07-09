@@ -18,7 +18,7 @@ if AzeriteEssence then
 		-- Conflict and Strife
 		[Spell:CreateFromSpellID(304017):GetSpellName()] = true, 
 	}
-	AzeriteEssences.GetSpellID = {
+	--[[AzeriteEssences.GetSpellID = {
 		-- [ID] = {
 		-- 	[RANK] = SpellID,
 		-- }
@@ -159,16 +159,15 @@ if AzeriteEssence then
 			[2] = 304088,
 			[3] = 304121,
 		},
-	}
+	}]]
 end 
 
-function AzeriteEssences.GetInfo(milestone) 
-	-- local spellID = AzeriteEssence.GetMilestoneSpell(milestone.ID) -- this return bullshit	
+function AzeriteEssences.GetInfo(milestone) 	
 	local essenceID = AzeriteEssence.GetMilestoneEssence(milestone.ID) 	
 	if essenceID then 
 		local info = AzeriteEssence.GetEssenceInfo(essenceID)
 		if info then 
-			local spellID = AzeriteEssences.GetSpellID[info.ID][info.rank]
+			local spellID = FindSpellOverrideByID(AzeriteEssence.GetMilestoneSpell(milestone.ID))  -- AzeriteEssences.GetSpellID[info.ID][info.rank]
 			local temp = {
 				spellID = spellID,
 				spellName = Action.GetSpellInfo(spellID),
