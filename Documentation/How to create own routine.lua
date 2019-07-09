@@ -30,6 +30,7 @@ Structure (example with all supported elemenets):
 					OT is OptionTable, supported: "Dropdown". Keys: { { text = *string*, value = *string* or *number* }, { same }, {}, {} }
 					(optional) SetPlaceholder is localization table of the text for Dropdown if he hasn't anything selected, supported: "Dropdown"
 					(optional) MULT is boolean which if it's true then Dropdown will has multiselector 
+					(optional) ONOFF|ONLYON|ONLYOFF if true then slider will use specified mode, supported: "Slider"
 					(optional) isNotEqualVal (only if MULT is false or omited ) is custom value of Dropdown which shouldn't be recorded into Cache, otherwise it's ~= "Off", ~= "OFF" and ~= 0
 					(optional) MIN (default -1), supported: "Slider"
 					(optional) MAX (default 100), supported: "Slider"
