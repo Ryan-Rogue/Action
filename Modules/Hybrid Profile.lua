@@ -282,7 +282,7 @@ function LocalToggles()
     local current = TMW.db:GetCurrentProfile()
     local profile = strmatch(current, "Chesder")     
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
-    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL"
+    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" -- Don't remove it because this validance for HealingEngine
     if ProfileToggle[current] and TellMeWhen_Group3 then
         ProfileToggle[current]()
     end
@@ -298,7 +298,7 @@ local function UpdateChesderGroups()
     local current = TMW.db:GetCurrentProfile()
     local profile = strmatch(current, "Chesder")     
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
-    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL"    
+    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" -- Don't remove it because this validance for HealingEngine   
     
     if profile ~= "Chesder" then         
         -- Chesder Groups
