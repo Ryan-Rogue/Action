@@ -3,8 +3,6 @@ local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local Action = Action
 
-local tableexist = tableexist
-
 local AzeriteEssence = _G.C_AzeriteEssence
 local GetMajorBySpellName
 
@@ -87,7 +85,7 @@ local function PredictHealing(MajorSpellName, spellID, unitID, VARIATION)
     local variation = (VARIATION and (VARIATION / 100)) or 1  
     
     local total = 0
-    local DMG, HPS = incdmg(unitID), getHEAL(unitID)      
+    local DMG, HPS = getDMG(unitID), getHEAL(unitID)      
     local DifficultHP = -1
         
     -- Spells
@@ -164,12 +162,16 @@ local function PredictHealing(MajorSpellName, spellID, unitID, VARIATION)
 		local amount = Env.GetDescription(spellID)[1]
 		total = amount * variation
 		
-		local validMembers = AoEMembers()
-		local members = GetMembers()
+		local validMembers 	= Action.HealingEngine.GetMinimumUnits(1, 5)
+		if validMembers < 2 then 
+			validMembers = 2
+		end 
+		
+		local members 		= Action.HealingEngine.GetMembersAll()
 		local totalMembers = 0 
-		if tableexist(members) then 
+		if #members > 0 and validMembers >= 2 then 
 			for i = 1, #members do
-				if UnitHealthMax(members[i].Unit) - UnitHealth(members[i].Unit) >= total then
+				if members[i].MHP - members[i].AHP >= total then
 					totalMembers = totalMembers + 1
 				end
 				if totalMembers >= validMembers then 
@@ -499,9 +501,6 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 	-- Arguments: skipAuto if true then will skip Auto template conditions and will check only validance (imun, own CC such as silence, range and etc)	
 	if self.Type == "HeartOfAzeroth" and AzeriteEssenceIsMajorUseable() then 
 		local Major = AzeriteEssenceGetMajor()
-		--local spellName = Major.spellName 
-		--local spellID = Major.spellID 
-
 		local MajorSpellName = GetMajorBySpellName[Major.spellName]
 		
 		if MajorSpellName then 
