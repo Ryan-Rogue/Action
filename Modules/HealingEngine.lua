@@ -1,1002 +1,1321 @@
----
---- 23.05.2019
----
---- ============================ HEADER ============================
-if not TMW then return end 
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
-local TargetColor = CreateFrame("Frame", "TargetColor", UIParent)
-TargetColor:SetBackdrop(nil)
-TargetColor:SetFrameStrata("TOOLTIP")
-TargetColor:SetToplevel(true)
-TargetColor:SetSize(1, 1)
-TargetColor:SetScale(1);
-TargetColor:SetPoint("TOPLEFT", 442, 0)
-TargetColor.texture = TargetColor:CreateTexture(nil, "TOOLTIP")
-TargetColor.texture:SetAllPoints(true)
-TargetColor.texture:SetColorTexture(0, 0, 0, 1.0)
-local members, incDMG_members, R_CustomT = {}, {}, {}
-local R_Tanks, R_DPS, R_Heal = {}, {}, {}
-local Frequency, FrequencyPairs = {}, {}
+local A = Action
 
-local pairs, tableexist = pairs, tableexist
-local UnitGetIncomingHeals, UnitHealth, UnitHealthMax, UnitInRange, UnitGUID, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsConnected, UnitThreatSituation, UnitIsUnit, UnitExists, UnitIsPlayer =
-UnitGetIncomingHeals, UnitHealth, UnitHealthMax, UnitInRange, UnitGUID, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsConnected, UnitThreatSituation, UnitIsUnit, UnitExists, UnitIsPlayer
+-- Toggle valid: "TANK", "DAMAGER", "HEALER", "RAID", nil (means "ALL")
+_G.HE_Toggle = nil 
+_G.HE_Pets   = true
 
--- Toggle valid: "TANK", "DAMAGER", "HEALER", "RAID", nil
-HE_Toggle = nil -- will heal everything
--- Toggle for pets 
-HE_Pets = true
+local type, pairs, wipe, huge = 
+	  type, pairs, wipe, math.huge
+	  
+local UnitGetIncomingHeals, UnitHealth, UnitHealthMax, UnitInRange, UnitGUID, UnitIsCharmed, UnitIsConnected, UnitThreatSituation, UnitIsUnit, UnitExists =
+	  UnitGetIncomingHeals, UnitHealth, UnitHealthMax, UnitInRange, UnitGUID, UnitIsCharmed, UnitIsConnected, UnitThreatSituation, UnitIsUnit, UnitExists
 
-local function CalculateHP(t)
-    incomingheals = UnitGetIncomingHeals(t) and UnitGetIncomingHeals(t) or 0
-    local PercentWithIncoming = 100 * (UnitHealth(t) + incomingheals) / UnitHealthMax(t)
-    local ActualWithIncoming = (UnitHealthMax(t) - (UnitHealth(t) + incomingheals))
-    return PercentWithIncoming, ActualWithIncoming
+A.HealingEngine = {}
+A.HealingEngine.Refresh = 10
+A.HealingEngine.UpdatePause = 0
+A.HealingEngine.Frame = CreateFrame("Frame", "TargetColor", UIParent)
+A.HealingEngine.Frame:SetBackdrop(nil)
+A.HealingEngine.Frame:SetFrameStrata("TOOLTIP")
+A.HealingEngine.Frame:SetToplevel(true)
+A.HealingEngine.Frame:SetSize(1, 1)
+A.HealingEngine.Frame:SetScale(1)
+A.HealingEngine.Frame:SetPoint("TOPLEFT", 442, 0)
+A.HealingEngine.Frame.texture = A.HealingEngine.Frame:CreateTexture(nil, "TOOLTIP")
+A.HealingEngine.Frame.texture:SetAllPoints(true)
+A.HealingEngine.Frame.texture:SetColorTexture(0, 0, 0, 1.0)
+
+A.HealingEngine.Members = {
+	ALL = {},
+	TANK = {},
+	DAMAGER = {},
+	HEALER = {},
+	RAID = {},
+	MOSTLYINCDMG = {},
+}
+
+A.HealingEngine.Frequency = {
+	Actual = {},
+	Temp = {},
+}
+
+function A.HealingEngine.Members:Wipe()
+	for k, v in pairs(self) do 
+		if type(v) == "table" then 
+			wipe(self[k])	
+		end 
+	end 
+end 
+
+function A.HealingEngine.Frequency:Wipe()
+	for k, v in pairs(self) do 
+		if type(v) == "table" then 
+			wipe(self[k])	
+		end 
+	end 
+end 
+	  
+local Aura = {
+	SmokeBomb = 76577,
+} 	  
+
+local function CalculateHP(unitID)	
+    local incomingheals = UnitGetIncomingHeals(unitID) or 0
+	local cHealth, mHealth = UnitHealth(unitID), UnitHealthMax(unitID)
+	
+    local PercentWithIncoming = 100 * (cHealth + incomingheals) / mHealth
+    local ActualWithIncoming = mHealth - (cHealth + incomingheals)
+	
+    return PercentWithIncoming, ActualWithIncoming, cHealth, mHealth
 end
-local function CanHeal(t)
-    return UnitInRange(t)
-    and not Env.InLOS(UnitGUID(t)) -- LOS System (target)
-    and not Env.InLOS(t)           -- LOS System (another such as party)
-    --and UnitCanCooperate("player", t)
-    and not UnitIsCharmed(t)
-    and not Env.UNITDead(t)
-    and UnitIsConnected(t)
-    and Env.Unit(t):DeBuffCyclone() == 0 -- Cyclone
-    and 
-    ( 
-        Env.Unit(t):HasDeBuffs(76577) == 0 or -- Smoke Bomb
-        Env.Unit("player"):HasDeBuffs(76577) > 0
-    )    
+
+local function CanHeal(unitID, unitGUID)
+    return 
+		UnitInRange(unitID)
+		and UnitIsConnected(unitID)
+		--and UnitCanCooperate("player", unitID)
+		and not UnitIsCharmed(unitID)			
+		and not Env.InLOS(unitGUID or UnitGUID(unitID)) -- LOS System (target)
+		and not Env.InLOS(unitID)           		 	-- LOS System (another such as party)
+		and not Env.UNITDead(unitID)	
+		and 
+		(
+			not Env.InPvP() or 
+			(
+				Env.Unit(unitID):DeBuffCyclone() == 0 and 
+				( 
+					Env.Unit(unitID):HasDeBuffs(Aura.SmokeBomb) == 0 or 
+					Env.Unit("player"):HasDeBuffs(Aura.SmokeBomb) > 0
+				)  
+			)
+		)
 end
 
-local function HealingEngine(ACTUALHP)    
-    local ActualHP = ACTUALHP or false
-    wipe(members)
-    wipe(incDMG_members)
-    wipe(R_Tanks)
-    wipe(R_DPS)
-    wipe(R_Heal)
-    incDMG_members = {}
-    R_Tanks, R_DPS, R_Heal = {}, {}, {}
+local healingTarget, healingTargetGUID = "None", "None"
+local function HealingEngine(MODE, useActualHP)   
+	local mode = MODE or "ALL"
+    local ActualHP = useActualHP or false
+	A.HealingEngine.Members:Wipe()
+	
     if Env.PvPCache["Group_FriendlyType"] ~= "raid" then 
-        members = { { Unit = "player", HP = CalculateHP("player"), GUID = UnitGUID("player"), AHP = select(2, CalculateHP("player")), incDMG = incdmg("player") } }
-    else 
-        members = {}
+		local pHP, aHP, _, mHP = CalculateHP("player")
+        table.insert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = getRealTimeDMG("player") })
     end 
     
-    -- Check if the Player is apart of the Custom Table
-    for i = 1, #R_CustomT do
-        if UnitGUID("player") == R_CustomT[i].GUID then
-            R_CustomT[i].Unit = "player"
-            R_CustomT[i].HP = CalculateHP("player")
-            R_CustomT[i].AHP = select(2, CalculateHP("player"))
-        end
-    end
-    
-    local skip_dispel = false 
+    local isQueuedDispel = false 
     local group = Env.PvPCache["Group_FriendlyType"]
     for i = 1, Env.PvPCache["Group_FriendlySize"] do
         local member = group .. i        
-        local memberhp, memberahp = CalculateHP(member)
+        local memberhp, memberahp, _, membermhp = CalculateHP(member)
         local memberGUID = UnitGUID(member)
-        -- Frequency (Record By Each Member)
+
         -- Note: We can't use CanHeal here because it will take not all units results could be wrong
-        FrequencyPairs["MAXHP"] = (FrequencyPairs["MAXHP"] or 0) + UnitHealthMax(member)
-        FrequencyPairs["AHP"] = (FrequencyPairs["AHP"] or 0) + memberahp
+		A.HealingEngine.Frequency.Temp.MAXHP = (A.HealingEngine.Frequency.Temp.MAXHP or 0) + membermhp 
+        A.HealingEngine.Frequency.Temp.AHP 	 = (A.HealingEngine.Frequency.Temp.AHP   or 0) + memberahp
         
-        -- Checking all Party/Raid Members for Range/Health
-        if CanHeal(member) then
-            local DMG = getRealTimeDMG(member) -- incdmg(member)
+        -- Party/Raid
+        if CanHeal(member, memberGUID) then
+            local DMG = getRealTimeDMG(member) 
             local Actual_DMG = DMG
-            --local HPS = getHEAL(member)            
             
             -- Stop decrease predict HP if offset for DMG more than 15% of member's HP
-            local DMG_offset = UnitHealthMax(member) * 0.15
+            local DMG_offset = membermhp * 0.15
             if DMG > DMG_offset then 
                 DMG = DMG_offset
             end
             
             -- Checking if Member has threat
-            if UnitThreatSituation(member) == 3 then
-                memberhp = memberhp - 3
+			local threat = UnitThreatSituation(member)
+            if threat == 3 then
+                memberhp = memberhp - threat
             end            
             
-            -- Holy Paladin 
-            if Env.UNITSpec("player", 65) then                 
-                if (not skip_dispel or Env.Unit(member):IsHealer()) and Env.SpellUsable(4987) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
-					-- DISPEL PRIORITY
-                    skip_dispel = true 
-                    memberhp = 50 -- if we will have lower unit than 50% then don't dispel it
-                    if Env.Unit(member):IsHealer() then 
-                        memberhp = 25
-                    end
-                elseif AzeriteRank(287268) > 0 and Env.SpellCD(20473) <= Env.CurrentTimeGCD() and Env.Unit(member, 0.5):HasBuffs(287280, "player") <= Env.GCD() then 
-					-- Glimmer of Light 
-					-- Generally, prioritize players that might die in the next few seconds > non-Beaconed tank (without Glimmer buff) > Beaconed tank (without Glimmer buff) > players without the Glimmer buff
-					if Env.PredictHeal("HolyShock", member) then 
-						if Env.Unit(member):IsTank() then 
-							if Env.Unit(member):HasBuffs({156910, 53563}, "player") == 0 then 
-								memberhp = 35
+			-- Enable specific instructions by profile 
+			if Env.IsGGLprofile then 
+				-- Holy Paladin 
+				if Env.UNITSpec("player", 65) then                 
+					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and Env.SpellUsable(4987) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
+						-- DISPEL PRIORITY
+						isQueuedDispel = true 
+						-- if we will have lower unit than 50% then don't dispel it
+						memberhp = 50
+						if Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then 
+							memberhp = 25
+						end
+					elseif AzeriteRank(287268) > 0 and Env.SpellCD(20473) <= Env.CurrentTimeGCD() and Env.Unit(member, 0.5):HasBuffs(287280, "player") <= Env.GCD() then 
+						-- Glimmer of Light 
+						-- Generally, prioritize players that might die in the next few seconds > non-Beaconed tank (without Glimmer buff) > Beaconed tank (without Glimmer buff) > players without the Glimmer buff
+						if Env.PredictHeal("HolyShock", member) then 
+							if Env.Unit(member, A.HealingEngine.Refresh):IsTank() then 
+								if Env.Unit(member):HasBuffs({156910, 53563}, "player") == 0 then 
+									memberhp = 35
+								else 
+									memberhp = 45
+								end 
 							else 
-								memberhp = 45
+								memberhp = memberhp - 35
 							end 
-						else 
-							memberhp = memberhp - 35
+						else
+							memberhp = memberhp - 10
 						end 
-					else
-						memberhp = memberhp - 10
+					elseif memberhp < 100 then      
+						-- Beacon HPS SYSTEM + hot current ticking and total duration
+						local BestowFaith1, BestowFaith2 = Env.Unit(member):HasBuffs(223306, "player")
+						if BestowFaith1 > 0 then 
+							memberhp = memberhp + ( 100 * (Env.GetDescription(223306)[1]) / membermhp )
+						end 
+						-- Checking if Member has Beacons on them            
+						if Env.Unit(member):HasBuffs({53563, 156910}, "player") > 0 then
+							memberhp = memberhp + ( 100 * (getHPS("player") * 0.4) / membermhp ) - ( 100 * DMG / membermhp )
+						end  
 					end 
-                elseif memberhp < 100 then      
-					-- Beacon HPS SYSTEM + hot current ticking and total duration
-                    local BestowFaith1, BestowFaith2 = Env.Unit(member):HasBuffs(223306, "player")
-                    if BestowFaith1 > 0 then 
-                        memberhp = memberhp + ( 100 * (Env.GetDescription(223306)[1]) / UnitHealthMax(member) )
-                    end 
-                    -- Checking if Member has Beacons on them            
-                    if Env.Unit(member):HasBuffs({53563, 156910}, "player") > 0 then
-                        memberhp = memberhp + ( 100 * (getHPS("player")*0.4) / UnitHealthMax(member) ) - ( 100 * DMG / UnitHealthMax(member) )
-                    end  
-                end 
-            end 
-            
-            -- Restor Druid 
-            if Env.UNITSpec("player", 105) then 
-                -- DISPEL PRIORITY
-                if (not skip_dispel or Env.Unit(member):IsHealer()) and Env.SpellUsable(88423) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
-                    skip_dispel = true 
-                    memberhp = 50 -- if we will have lower unit than 50% then don't dispel it
-                    if Env.Unit(member):IsHealer() then 
-                        memberhp = 25
-                    end
-                    -- HOT SYSTEM: current ticking and total duration
-                elseif memberhp < 100 then                    
-                    local Rejuvenation1, Rejuvenation2 = Env.Unit(member):HasBuffs(774, "player")
-                    local Regrowth1, Regrowth2 = Env.Unit(member):HasBuffs(8936, "player")
-                    local WildGrowth1, WildGrowth2 = Env.Unit(member):HasBuffs(48438, "player")
-                    local Lifebloom1, Lifebloom2 = Env.Unit(member):HasBuffs(33763, "player")                
-                    local Germination1, Germination2 = Env.Unit(member):HasBuffs(155777, "player") -- Rejuvenation Talent 
-                    local summup, summdmg = 0, {}
-                    if Rejuvenation1 > 0 then 
-                        summup = summup + (Env.GetDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
-                        table.insert(summdmg, Rejuvenation1)
-                    else
-                        -- If current target is Tank then to prevent staying on that target we will cycle rest units 
-                        if healingTarget and healingTarget ~= "None" and Env.Unit(healingTarget):IsTank() then 
-                            memberhp = memberhp - 15
-                        else 
-                            summup = summup - (Env.GetDescription(774)[1] * 3)
-                        end 
-                    end
-                    
-                    if Regrowth1 > 0 then 
-                        summup = summup + (Env.GetDescription(8936)[2] / Regrowth2 * Regrowth1)
-                        table.insert(summdmg, Regrowth1)
-                    end
-                    
-                    if WildGrowth1 > 0 then 
-                        summup = summup + (Env.GetDescription(48438)[1] / WildGrowth2 * WildGrowth1)
-                        table.insert(summdmg, WildGrowth1)                    
-                    end
-                    
-                    if Lifebloom1 > 0 then 
-                        summup = summup + (Env.GetDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
-                        table.insert(summdmg, Lifebloom1)    
-                    end
-                    
-                    if Germination1 > 0 then -- same with Rejuvenation
-                        summup = summup + (Env.GetDescription(774)[1] / Germination2 * Germination1)
-                        table.insert(summdmg, Germination1)    
-                    end
-                    
-                    -- Get longer hot duration and predict incoming damage by that 
-                    table.sort(summdmg, function (x, y)
-                            return x > y
-                    end)
-                    
-                    -- Now we convert it to persistent (from value to % as HP)
-                    if summup > 0 then 
-                        -- current %HP with pre casting heal + predict hot heal - predict incoming dmg 
-                        memberhpHotSystem = memberhp + ( 100 * summup / UnitHealthMax(member) ) - ( 100 * (DMG * summdmg[1]) / UnitHealthMax(member) )
-                        if memberhpHotSystem < 100 then
-                            memberhp = memberhpHotSystem
-                        end
-                    end                    
-                end
-            end
-            
-            -- Discipline Priest
-            if Env.UNITSpec("player", 256) then                 
-                if (not skip_dispel or Env.Unit(member):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
-					-- DISPEL PRIORITY
-                    skip_dispel = true 
-                    memberhp = 50 -- if we will have lower unit than 50% then don't dispel it
-                    if Env.Unit(member):IsHealer() then 
-                        memberhp = 25
-                    end 
-				elseif AtonementRenew_Toggle and Env.Unit(member):HasBuffs(81749, "player") <= Env.CurrentTimeGCD() then 				
-					-- Toggle "Group Atonement/Renew﻿"
-					memberhp = 50
-                elseif memberhp < 100 then                    
-                    -- Atonement priority 
-                    if Env.Unit(member):HasBuffs(81749, "player") > 0 and Env.oPR and Env.oPR["AtonementHPS"] then 
-                        memberhp = memberhp + ( 100 * Env.oPR["AtonementHPS"] / UnitHealthMax(member) )
-                    end 
-                    
-                    -- Absorb system 
-                    -- Pre pare 
-                    if CombatTime("player") <= 5 and 
-                    (
-                        CombatTime("player") > 0 or 
-                        (
-                            -- Pre shield before battle will start
-                            ( Env.Zone == "arena" or Env.Zone == "pvp" ) and
-                            TMW.time - Env.ZoneTimeStampSinceJoined < 120                             
-                        )
-                    ) and getAbsorb(member, 17) == 0 then 
-                        memberhp = memberhp - 10
-                    end                     
-                    
-                    -- Toggle or PrePare combat or while Rapture always
-                    if HE_Absorb or CombatTime("player") <= 5 or Env.Unit("player"):HasBuffs(47536, "player") > Env.CurrentTimeGCD() then 
-                        memberhp = memberhp + ( 100 * getAbsorb(member, 17) / UnitHealthMax(member) )
-                    end 
-                end 
-            end 
-            
-            -- Holy Priest
-            if Env.UNITSpec("player", 257) then                 
-                if (not skip_dispel or Env.Unit(member):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
-					-- DISPEL PRIORITY
-                    skip_dispel = true 
-                    memberhp = 50 -- if we will have lower unit than 50% then don't dispel it
-                    if Env.Unit(member):IsHealer() then 
-                        memberhp = 25
-                    end  
-				elseif AtonementRenew_Toggle and Env.Unit(member):HasBuffs(139, "player") <= Env.CurrentTimeGCD() then 				
-					-- Toggle "Group Atonement/Renew﻿"
-					memberhp = 50
-                elseif memberhp < 100 then 
-                    if Env.UnitIsTrailOfLight(member) then 
-                        -- Single Rotation 
-                        local ST = Env.IsIconDisplay("TMW:icon:1RhherQmOw_V") or 0
-                        if ST == 2061 then 
-                            memberhp = memberhp + ( 100 * (Env.GetDescription(2061)[1] * 0.35) / UnitHealthMax(member) )
-                        elseif ST == 2060 then 
-                            memberhp = memberhp + ( 100 * (Env.GetDescription(2060)[1] * 0.35) / UnitHealthMax(member) )
-                        end 
-                    end 
-                end 
-            end 
-            
-            -- Misc: Sort by Roles 
-            if Env.Unit(member):IsTank() then
+				end 
+				
+				-- Restor Druid 
+				if Env.UNITSpec("player", 105) then 					
+					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and Env.SpellUsable(88423) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
+						-- DISPEL PRIORITY
+						isQueuedDispel = true 
+						memberhp = 50 
+						-- if we will have lower unit than 50% then don't dispel it
+						if Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then 
+							memberhp = 25
+						end						
+					elseif memberhp < 100 then   
+						-- HOT SYSTEM: current ticking and total duration
+						local Rejuvenation1, Rejuvenation2 = Env.Unit(member):HasBuffs(774, "player")
+						local Regrowth1, Regrowth2 = Env.Unit(member):HasBuffs(8936, "player")
+						local WildGrowth1, WildGrowth2 = Env.Unit(member):HasBuffs(48438, "player")
+						local Lifebloom1, Lifebloom2 = Env.Unit(member):HasBuffs(33763, "player")                
+						local Germination1, Germination2 = Env.Unit(member):HasBuffs(155777, "player") -- Rejuvenation Talent 
+						local summup, summdmg = 0, {}
+						if Rejuvenation1 > 0 then 
+							summup = summup + (Env.GetDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
+							table.insert(summdmg, Rejuvenation1)
+						else
+							-- If current target is Tank then to prevent staying on that target we will cycle rest units 
+							if healingTarget and healingTarget ~= "None" and Env.Unit(healingTarget, A.HealingEngine.Refresh):IsTank() then 
+								memberhp = memberhp - 15
+							else 
+								summup = summup - (Env.GetDescription(774)[1] * 3)
+							end 
+						end
+						
+						if Regrowth1 > 0 then 
+							summup = summup + (Env.GetDescription(8936)[2] / Regrowth2 * Regrowth1)
+							table.insert(summdmg, Regrowth1)
+						end
+						
+						if WildGrowth1 > 0 then 
+							summup = summup + (Env.GetDescription(48438)[1] / WildGrowth2 * WildGrowth1)
+							table.insert(summdmg, WildGrowth1)                    
+						end
+						
+						if Lifebloom1 > 0 then 
+							summup = summup + (Env.GetDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
+							table.insert(summdmg, Lifebloom1)    
+						end
+						
+						if Germination1 > 0 then -- same with Rejuvenation
+							summup = summup + (Env.GetDescription(774)[1] / Germination2 * Germination1)
+							table.insert(summdmg, Germination1)    
+						end
+						
+						-- Get longer hot duration and predict incoming damage by that 
+						table.sort(summdmg, function (x, y)
+								return x > y
+						end)
+						
+						-- Now we convert it to persistent (from value to % as HP)
+						if summup > 0 then 
+							-- current HP % with pre casting heal + predict hot heal - predict incoming dmg 
+							memberhpHotSystem = memberhp + ( 100 * summup / membermhp ) - ( 100 * (DMG * summdmg[1]) / membermhp )
+							if memberhpHotSystem < 100 then
+								memberhp = memberhpHotSystem
+							end
+						end                    
+					end
+				end
+				
+				-- Discipline Priest
+				if Env.UNITSpec("player", 256) then                 
+					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+						-- DISPEL PRIORITY
+						isQueuedDispel = true 
+						memberhp = 50 
+						-- if we will have lower unit than 50% then don't dispel it
+						if Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then 
+							memberhp = 25
+						end 
+					elseif AtonementRenew_Toggle and Env.Unit(member):HasBuffs(81749, "player") <= Env.CurrentTimeGCD() then 				
+						-- Toggle "Group Atonement/Renew﻿"
+						memberhp = 50
+					elseif memberhp < 100 then                    
+						-- Atonement priority 
+						if Env.Unit(member):HasBuffs(81749, "player") > 0 and Env.oPR and Env.oPR["AtonementHPS"] then 
+							memberhp = memberhp + ( 100 * Env.oPR["AtonementHPS"] / membermhp )
+						end 
+						
+						-- Absorb system 
+						-- Pre pare 
+						if CombatTime("player") <= 5 and 
+						(
+							CombatTime("player") > 0 or 
+							(
+								-- Pre shield before battle will start
+								( Env.Zone == "arena" or Env.Zone == "pvp" ) and
+								TMW.time - Env.ZoneTimeStampSinceJoined < 120                             
+							)
+						) and getAbsorb(member, 17) == 0 then 
+							memberhp = memberhp - 10
+						end                     
+						
+						-- Toggle or PrePare combat or while Rapture always
+						if HE_Absorb or CombatTime("player") <= 5 or Env.Unit("player"):HasBuffs(47536, "player") > Env.CurrentTimeGCD() then 
+							memberhp = memberhp + ( 100 * getAbsorb(member, 17) / membermhp )
+						end 
+					end 
+				end 
+				
+				-- Holy Priest
+				if Env.UNITSpec("player", 257) then                 
+					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+						-- DISPEL PRIORITY
+						isQueuedDispel = true 
+						memberhp = 50 
+						-- if we will have lower unit than 50% then don't dispel it
+						if Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then 
+							memberhp = 25
+						end  
+					elseif AtonementRenew_Toggle and Env.Unit(member):HasBuffs(139, "player") <= Env.CurrentTimeGCD() then 				
+						-- Toggle "Group Atonement/Renew﻿"
+						memberhp = 50
+					elseif memberhp < 100 then 
+						if Env.UnitIsTrailOfLight(member) then 
+							-- Single Rotation 
+							local ST = Env.IsIconDisplay("TMW:icon:1RhherQmOw_V") or 0
+							if ST == 2061 then 
+								memberhp = memberhp + ( 100 * (Env.GetDescription(2061)[1] * 0.35) / membermhp )
+							elseif ST == 2060 then 
+								memberhp = memberhp + ( 100 * (Env.GetDescription(2060)[1] * 0.35) / membermhp )
+							end 
+						end 
+					end 
+				end 
+			   
+				-- Mistweaver Monk 
+				if A.IsInitialized and ACTION_CONST_MONK_MW and Env.UNITSpec("player", ACTION_CONST_MONK_MW) then 
+					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and not UnitIsUnit("player", member) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
+						-- DISPEL PRIORITY
+						isQueuedDispel = true 
+						memberhp = 50 
+						-- If we will have lower unit than 50% then don't dispel it
+						if Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then 
+							memberhp = 25
+						end 
+					elseif memberhp < 100 and A.GetToggle(2, "HealingEngineAutoHot") and A[ACTION_CONST_MONK_MW].RenewingMist:IsReady() then 
+						-- Keep Renewing Mist hots as much as it possible on cooldown
+						local RenewingMist = Env.Unit(member):HasBuffs(A[ACTION_CONST_MONK_MW].RenewingMist.ID, true)
+						if RenewingMist == 0 and Env.PredictHeal("RenewingMist", A[ACTION_CONST_MONK_MW].RenewingMist.ID, member) then 
+							memberhp = memberhp - 40
+							if memberhp < 55 then 
+								memberhp = 55 
+							end 
+						end 
+					end 
+				end 
+			end 
+			
+            -- Misc: Sort by Roles 			
+            if Env.Unit(member, A.HealingEngine.Refresh):IsTank() then
                 memberhp = memberhp - 2
-                table.insert(R_Tanks, { Unit = member, HP = memberhp, GUID = memberGUID, AHP = memberahp, incDMG = Actual_DMG })      
-            elseif Env.UNITRole(member, "DAMAGER")  then
-                memberhp = memberhp - 1
-                table.insert(R_DPS, { Unit = member, HP = memberhp, GUID = memberGUID, AHP = memberahp, incDMG = Actual_DMG })
-            elseif Env.Unit(member):IsHealer() then                
-                if UnitIsUnit("player", member) and Env.UNITHP("player") < 97 then 
+				
+				if mode == "TANK" then 
+					table.insert(A.HealingEngine.Members.TANK, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })      
+				end 
+            elseif Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then                
+                if UnitIsUnit("player", member) and memberhp < 95 then 
                     memberhp = memberhp - 2
                 else 
                     memberhp = memberhp + 2
                 end
-                table.insert(R_Heal, { Unit = member, HP = memberhp, GUID = memberGUID, AHP = memberahp, incDMG = Actual_DMG })
+				
+				if mode == "HEALER" then 
+					table.insert(A.HealingEngine.Members.HEALER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+				elseif mode == "RAID" then 	
+					table.insert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+				end 				 
+			else 
+				memberhp = memberhp - 1
+				
+				if mode == "DAMAGER" then 
+					table.insert(A.HealingEngine.Members.DAMAGER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+				elseif mode == "RAID" then  
+					table.insert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+				end			 
             end
-            -- Misc: If they are in the Custom Table add their info in
-            for i = 1, #R_CustomT do
-                if UnitGUID(member) == R_CustomT[i].GUID then
-                    R_CustomT[i].Unit = member
-                    R_CustomT[i].HP = memberhp
-                    R_CustomT[i].AHP = memberahp
-                end
-            end
-            table.insert(members, { Unit = member, HP = memberhp, GUID = memberGUID, AHP = memberahp, incDMG = Actual_DMG } )
+
+            table.insert(A.HealingEngine.Members.ALL, 				{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
         end        
         
-        -- Checking Pets in the group
-        if HE_Pets and CanHeal(group .. "pet" .. i) then
-            local memberpet, memberpethp = group .. "pet" .. i, nil
-            if CombatTime("player") > 0 then                
-                memberpethp = CalculateHP(memberpet) * 1.35
-            else                
-                memberpethp = CalculateHP(memberpet) * 1.15
-            end
-            
-            -- Checking if Pet is apart of the CustomTable
-            for i = 1, #R_CustomT do
-                if UnitGUID(memberpet) == R_CustomT[i].GUID then
-                    R_CustomT[i].Unit = memberpet
-                    R_CustomT[i].HP = memberpethp
-                    R_CustomT[i].AHP = select(2, CalculateHP(memberpet))
-                end
-            end
-            table.insert(members, { Unit = memberpet, HP = memberpethp, GUID = UnitGUID(memberpet), AHP = select(2, CalculateHP(memberpet)), incDMG = getRealTimeDMG(memberpet) }) -- incdmg(memberpet)
+        -- Pets 
+        if _G.HE_Pets then
+            local memberpet = group .. "pet" .. i
+			local memberpetGUID = UnitGUID(memberpet)
+			local memberpethp, memberpetahp, _, memberpetmhp = CalculateHP(memberpet) 
+			
+			-- Note: We can't use CanHeal here because it will take not all units results could be wrong
+			A.HealingEngine.Frequency.Temp.MAXHP = (A.HealingEngine.Frequency.Temp.MAXHP or 0) + memberpetmhp 
+			A.HealingEngine.Frequency.Temp.AHP 	 = (A.HealingEngine.Frequency.Temp.AHP   or 0) + memberpetahp			
+			
+			if CanHeal(memberpet, memberpetGUID) then 
+				if CombatTime("player") > 0 then                
+					memberpethp  = memberpethp * 1.35
+					memberpetahp = memberpetahp * 1.35
+				else                
+					memberpethp  = memberpethp * 1.15
+					memberpetahp = memberpetahp * 1.15
+				end
+				
+				table.insert(A.HealingEngine.Members.ALL, 			{ Unit = memberpet, GUID = memberpetGUID, HP = memberpethp, AHP = memberpetahp, isPlayer = false, incDMG = getRealTimeDMG(memberpet) }) 
+			end 
         end
     end
     
     -- Frequency (Summary)
-    if FrequencyPairs["MAXHP"] and FrequencyPairs["MAXHP"] > 0 then 
-        table.insert(Frequency, { 
-                TIME = TMW.time, 
-                -- Max Members Actual HP
-                MAXHP = FrequencyPairs["MAXHP"], 
-                -- Current Members Actual HP
-                AHP = FrequencyPairs["AHP"],
+    if A.HealingEngine.Frequency.Temp.MAXHP and A.HealingEngine.Frequency.Temp.MAXHP > 0 then 
+        table.insert(A.HealingEngine.Frequency.Actual, { 	                
+                -- Max Group HP
+                MAXHP	= A.HealingEngine.Frequency.Temp.MAXHP, 
+                -- Current Group Actual HP
+                AHP 	= A.HealingEngine.Frequency.Temp.AHP,
+				-- Current Time on this record 
+				TIME 	= TMW.time, 
         })
-        wipe(FrequencyPairs)
-        for i = #Frequency, 1, -1 do             
+		
+		-- Clear temp by old record
+        wipe(A.HealingEngine.Frequency.Temp)
+		
+		-- Clear actual from older records
+        for i = #A.HealingEngine.Frequency.Actual, 1, -1 do             
             -- Remove data longer than 5 seconds 
-            if TMW.time - Frequency[i].TIME > 5 then 
-                table.remove(Frequency, i)                
+            if TMW.time - A.HealingEngine.Frequency.Actual[i].TIME > 10 then 
+                table.remove(A.HealingEngine.Frequency.Actual, i)                
             end 
         end 
     end 
     
-    -- So if we pass that ActualHP is true, then we will sort by most health missing. If not, we sort by lowest % of health.
-    if #members > 1 then 
+	-- Sort for next target / incDMG (Summary)
+    if #A.HealingEngine.Members.ALL > 1 then 
         -- Sort by most damage receive
-        for k, v in pairs(members) do
-            table.insert(incDMG_members, v)
-        end
-        table.sort(incDMG_members, function(x, y)
+		for i = 1, #A.HealingEngine.Members.ALL do 
+			local t = A.HealingEngine.Members.ALL[i]
+			table.insert(A.HealingEngine.Members.MOSTLYINCDMG, 		{ Unit = t.Unit, GUID = t.GUID, incDMG = t.incDMG })
+		end 
+        table.sort(A.HealingEngine.Members.MOSTLYINCDMG, function(x, y)
                 return x.incDMG > y.incDMG
         end)  
         
-        -- Sort by HP or AHP
-        if not ActualHP then                
-            table.sort(members, function(x, y)
-                    return x.HP < y.HP
-            end)
-            if #R_Tanks > 1 then
-                table.sort(R_Tanks, function(x, y)
-                        return x.HP < y.HP
-                end)
-            end
-            if #R_DPS > 1 then
-                table.sort(R_DPS, function(x, y)
-                        return x.HP < y.HP
-                end)
-            end
-            if #R_Heal > 1 then
-                table.sort(R_Heal, function(x, y)
-                        return x.HP < y.HP
-                end)
-            end
+        -- Sort by Percent or Actual
+        if not ActualHP then
+			for k, v in pairs(A.HealingEngine.Members) do 
+				if type(v) == "table" and #v > 1 and v[1].HP then 
+					table.sort(v, function(x, y) return x.HP < y.HP end)
+				end 
+			end 		
         elseif ActualHP then
-            table.sort(members, function(x, y)
-                    return x.AHP > y.AHP
-            end)
-            if #R_Tanks > 1 then
-                table.sort(R_Tanks, function(x, y)
-                        return x.AHP > y.AHP
-                end)
-            end
-            if #R_DPS > 1 then
-                table.sort(R_DPS, function(x, y)
-                        return x.AHP > y.AHP
-                end)
-            end
-            if #R_Heal > 1 then
-                table.sort(R_Heal, function(x, y)
-                        return x.AHP > y.AHP
-                end)
-            end
+			for k, v in pairs(A.HealingEngine.Members) do 
+				if type(v) == "table" and #v > 1 and v[1].AHP then 
+					table.sort(v, function(x, y) return x.AHP > y.AHP end)
+				end 
+			end 		
         end
     end 
 end
 
-local healingTarget, healingTargetGUID = "None", "None"
-local function setHealingTarget(TARGET, HP)
-    local target = TARGET or nil
+local function setHealingTarget(MODE, HP)
+    local mode = MODE or "ALL"
     local hp = HP or 99
-    
-    if TARGET == "TANK" and #R_Tanks > 0 then
-        healingTarget = R_Tanks[1].Unit
-        healingTargetGUID = R_Tanks[1].GUID
-        return R_Tanks[1].HP
-    end
-    
-    if TARGET == "DAMAGER" and #R_DPS > 0 and R_DPS[1].HP < hp then
-        healingTarget = R_DPS[1].Unit
-        healingTargetGUID = R_DPS[1].GUID
-        return R_DPS[1].HP
-    end
-    
-    if TARGET == "HEALER" and #R_Heal > 0 and R_Heal[1].HP < hp then
-        healingTarget = R_Heal[1].Unit
-        healingTargetGUID = R_Heal[1].GUID
-        return R_Heal[1].HP
-    end
-    
-    if TARGET == "RAID" then -- No Tanks
-        if #R_DPS > 0 and #R_Heal > 0 and R_DPS[1].HP <= R_Heal[1].HP then 
-            healingTarget = R_DPS[1].Unit
-            healingTargetGUID = R_DPS[1].GUID
-            return R_DPS[1].HP 
-        elseif #R_Heal > 0 then 
-            healingTarget = R_Heal[1].Unit
-            healingTargetGUID = R_Heal[1].GUID
-            return R_Heal[1].HP
-        end
-    end
-    
-    if TARGET == nil and #members > 0 and members[1].HP < 99 then
-        healingTarget = members[1].Unit
-        healingTargetGUID = members[1].GUID
-        return members[1].HP
-    end
-    healingTarget = "None"
+	
+	if #A.HealingEngine.Members[mode] > 0 and A.HealingEngine.Members[mode][1].HP < hp then 
+		healingTarget 		= A.HealingEngine.Members[mode][1].Unit
+		healingTargetGUID 	= A.HealingEngine.Members[mode][1].GUID
+		return 
+	end 	 
+
+    healingTarget 	  = "None"
     healingTargetGUID = "None"
 end
 
-local function setColorTarget()
-    --Default START COLOR
-    TargetColor.texture:SetColorTexture(0, 0, 0, 1.0)   
-    
-    --If we have a mouseover target, stop healing engine
-    if MouseOver_Toggle and MouseHasFrame() then       
-        return
-    end
-    
-    --If we have a current target or boss then do nothing.
-    if UnitExists("target") and (healingTargetGUID == UnitGUID("target") or Env.UNITLevel("target") == -1) then
-        return
-    end
-    
-    --If we have no one to heal then do nothing.
-    if healingTarget == nil or healingTargetGUID == nil or (MouseOver_Toggle and Env.Unit("mouseover"):IsEnemy()) or Env.Unit("target"):IsEnemy() then
-        return
-    end
-    
+local function setColorTarget(isForced)
+    --Default 
+    A.HealingEngine.Frame.texture:SetColorTexture(0, 0, 0, 1.0)   
+	
+	if not isForced then 
+		--If we have no one to heal
+		if healingTarget == nil or healingTarget == "None" or healingTargetGUID == nil or healingTargetGUID == "None" then
+			return
+		end	
+		
+		--If we have a mouseover friendly unit
+		if (A.IsInitialized and A.IsUnitFriendly("mouseover")) or (not A.IsInitialized and MouseOver_Toggle and MouseHasFrame()) then       
+			return
+		end
+		
+		--If we have a current target equiled to suggested or he is a boss
+		if UnitExists("target") and (healingTargetGUID == UnitGUID("target") or Env.Unit("target", A.HealingEngine.Refresh):IsBoss()) then
+			return
+		end     
+		
+		--If we have enemy as primary unit 
+		--TODO: Remove for old profiles until June 2019
+		if not A.IsInitialized and ((MouseOver_Toggle and Env.Unit("mouseover"):IsEnemy()) or Env.Unit("target"):IsEnemy()) then 
+			-- Old profiles 
+			return 
+		end 
+		
+		if A.IsInitialized and (A.IsUnitEnemy("mouseover") or A.IsUnitEnemy("target")) then 
+			-- New profiles 
+			return 
+		end 
+		
+		--Mistweaver Monk
+		if A.IsInitialized and ACTION_CONST_MONK_MW and Env.UNITSpec("player", ACTION_CONST_MONK_MW) and A.GetToggle(2, "HealingEnginePreventSuggest") then 
+			local unit = "target"
+			if A.IsUnitFriendly("mouseover") then 
+				unit = "mouseover"
+			end 
+			if Env.Unit(unit):HasBuffs(A[ACTION_CONST_MONK_MW].SoothingMist.ID, true) > 3 and Env.UNITHP(unit) <= A.GetToggle(2, "SoothingMistHP") then 
+				return 
+			end 
+		end 
+    end 
+	
     --Party
     if healingTarget == "party1" then
-        TargetColor.texture:SetColorTexture(0.345098, 0.239216, 0.741176, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.345098, 0.239216, 0.741176, 1.0)
         return
     end
     if healingTarget == "party2" then
-        TargetColor.texture:SetColorTexture(0.407843, 0.501961, 0.086275, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.407843, 0.501961, 0.086275, 1.0)
         return
     end
     if healingTarget == "party3" then
-        TargetColor.texture:SetColorTexture(0.160784, 0.470588, 0.164706, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.160784, 0.470588, 0.164706, 1.0)
         return
     end
     if healingTarget == "party4" then
-        TargetColor.texture:SetColorTexture(0.725490, 0.572549, 0.647059, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.725490, 0.572549, 0.647059, 1.0)
         return
     end   
     
     --PartyPET
     if healingTarget == "partypet1" then
-        TargetColor.texture:SetColorTexture(0.486275, 0.176471, 1.000000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.486275, 0.176471, 1.000000, 1.0)
         return
     end
     if healingTarget == "partypet2" then
-        TargetColor.texture:SetColorTexture(0.031373, 0.572549, 0.152941, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.031373, 0.572549, 0.152941, 1.0)
         return
     end
     if healingTarget == "partypet3" then
-        TargetColor.texture:SetColorTexture(0.874510, 0.239216, 0.239216, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.874510, 0.239216, 0.239216, 1.0)
         return
     end
     if healingTarget == "partypet4" then
-        TargetColor.texture:SetColorTexture(0.117647, 0.870588, 0.635294, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.117647, 0.870588, 0.635294, 1.0)
         return
     end        
     
     --Raid
     if healingTarget == "raid1" then
-        TargetColor.texture:SetColorTexture(0.192157, 0.878431, 0.015686, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.192157, 0.878431, 0.015686, 1.0)
         return
     end
     if healingTarget == "raid2" then
-        TargetColor.texture:SetColorTexture(0.780392, 0.788235, 0.745098, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.780392, 0.788235, 0.745098, 1.0)
         return
     end
     if healingTarget == "raid3" then
-        TargetColor.texture:SetColorTexture(0.498039, 0.184314, 0.521569, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.498039, 0.184314, 0.521569, 1.0)
         return
     end
     if healingTarget == "raid4" then
-        TargetColor.texture:SetColorTexture(0.627451, 0.905882, 0.882353, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.627451, 0.905882, 0.882353, 1.0)
         return
     end
     if healingTarget == "raid5" then
-        TargetColor.texture:SetColorTexture(0.145098, 0.658824, 0.121569, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.145098, 0.658824, 0.121569, 1.0)
         return
     end
     if healingTarget == "raid6" then
-        TargetColor.texture:SetColorTexture(0.639216, 0.490196, 0.921569, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.639216, 0.490196, 0.921569, 1.0)
         return
     end
     if healingTarget == "raid7" then
-        TargetColor.texture:SetColorTexture(0.172549, 0.368627, 0.427451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.172549, 0.368627, 0.427451, 1.0)
         return
     end
     if healingTarget == "raid8" then
-        TargetColor.texture:SetColorTexture(0.949020, 0.333333, 0.980392, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.949020, 0.333333, 0.980392, 1.0)
         return
     end
     if healingTarget == "raid9" then
-        TargetColor.texture:SetColorTexture(0.109804, 0.388235, 0.980392, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.109804, 0.388235, 0.980392, 1.0)
         return
     end
     if healingTarget == "raid10" then
-        TargetColor.texture:SetColorTexture(0.615686, 0.694118, 0.435294, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.615686, 0.694118, 0.435294, 1.0)
         return
     end
     if healingTarget == "raid11" then
-        TargetColor.texture:SetColorTexture(0.066667, 0.243137, 0.572549, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.066667, 0.243137, 0.572549, 1.0)
         return
     end
     if healingTarget == "raid12" then
-        TargetColor.texture:SetColorTexture(0.113725, 0.129412, 1.000000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.113725, 0.129412, 1.000000, 1.0)
         return
     end
     if healingTarget == "raid13" then
-        TargetColor.texture:SetColorTexture(0.592157, 0.023529, 0.235294, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.592157, 0.023529, 0.235294, 1.0)
         return
     end
     if healingTarget == "raid14" then
-        TargetColor.texture:SetColorTexture(0.545098, 0.439216, 1.000000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.545098, 0.439216, 1.000000, 1.0)
         return
     end
     if healingTarget == "raid15" then
-        TargetColor.texture:SetColorTexture(0.890196, 0.800000, 0.854902, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.890196, 0.800000, 0.854902, 1.0)
         return
     end
     if healingTarget == "raid16" then
-        TargetColor.texture:SetColorTexture(0.513725, 0.854902, 0.639216, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.513725, 0.854902, 0.639216, 1.0)
         return
     end
     if healingTarget == "raid17" then
-        TargetColor.texture:SetColorTexture(0.078431, 0.541176, 0.815686, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.078431, 0.541176, 0.815686, 1.0)
         return
     end
     if healingTarget == "raid18" then
-        TargetColor.texture:SetColorTexture(0.109804, 0.184314, 0.666667, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.109804, 0.184314, 0.666667, 1.0)
         return
     end
     if healingTarget == "raid19" then
-        TargetColor.texture:SetColorTexture(0.650980, 0.572549, 0.098039, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.650980, 0.572549, 0.098039, 1.0)
         return
     end
     if healingTarget == "raid20" then
-        TargetColor.texture:SetColorTexture(0.541176, 0.466667, 0.027451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.541176, 0.466667, 0.027451, 1.0)
         return
     end
     if healingTarget == "raid21" then
-        TargetColor.texture:SetColorTexture(0.000000, 0.988235, 0.462745, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.000000, 0.988235, 0.462745, 1.0)
         return
     end
     if healingTarget == "raid22" then
-        TargetColor.texture:SetColorTexture(0.211765, 0.443137, 0.858824, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.211765, 0.443137, 0.858824, 1.0)
         return
     end
     if healingTarget == "raid23" then
-        TargetColor.texture:SetColorTexture(0.949020, 0.949020, 0.576471, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.949020, 0.949020, 0.576471, 1.0)
         return
     end
     if healingTarget == "raid24" then
-        TargetColor.texture:SetColorTexture(0.972549, 0.800000, 0.682353, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.972549, 0.800000, 0.682353, 1.0)
         return
     end
     if healingTarget == "raid25" then
-        TargetColor.texture:SetColorTexture(0.031373, 0.619608, 0.596078, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.031373, 0.619608, 0.596078, 1.0)
         return
     end
     if healingTarget == "raid26" then
-        TargetColor.texture:SetColorTexture(0.670588, 0.925490, 0.513725, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.670588, 0.925490, 0.513725, 1.0)
         return
     end
     if healingTarget == "raid27" then
-        TargetColor.texture:SetColorTexture(0.647059, 0.945098, 0.031373, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.647059, 0.945098, 0.031373, 1.0)
         return
     end
     if healingTarget == "raid28" then
-        TargetColor.texture:SetColorTexture(0.058824, 0.490196, 0.054902, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.058824, 0.490196, 0.054902, 1.0)
         return
     end
     if healingTarget == "raid29" then
-        TargetColor.texture:SetColorTexture(0.050980, 0.992157, 0.239216, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.050980, 0.992157, 0.239216, 1.0)
         return
     end
     if healingTarget == "raid30" then
-        TargetColor.texture:SetColorTexture(0.949020, 0.721569, 0.388235, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.949020, 0.721569, 0.388235, 1.0)
         return
     end
     if healingTarget == "raid31" then
-        TargetColor.texture:SetColorTexture(0.254902, 0.749020, 0.627451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.254902, 0.749020, 0.627451, 1.0)
         return
     end
     if healingTarget == "raid32" then
-        TargetColor.texture:SetColorTexture(0.470588, 0.454902, 0.603922, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.470588, 0.454902, 0.603922, 1.0)
         return
     end
     if healingTarget == "raid33" then
-        TargetColor.texture:SetColorTexture(0.384314, 0.062745, 0.266667, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.384314, 0.062745, 0.266667, 1.0)
         return
     end
     if healingTarget == "raid34" then
-        TargetColor.texture:SetColorTexture(0.639216, 0.168627, 0.447059, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.639216, 0.168627, 0.447059, 1.0)
         return
     end    
     if healingTarget == "raid35" then
-        TargetColor.texture:SetColorTexture(0.874510, 0.058824, 0.400000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.874510, 0.058824, 0.400000, 1.0)
         return
     end
     if healingTarget == "raid36" then
-        TargetColor.texture:SetColorTexture(0.925490, 0.070588, 0.713725, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.925490, 0.070588, 0.713725, 1.0)
         return
     end
     if healingTarget == "raid37" then
-        TargetColor.texture:SetColorTexture(0.098039, 0.803922, 0.905882, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.098039, 0.803922, 0.905882, 1.0)
         return
     end
     if healingTarget == "raid38" then
-        TargetColor.texture:SetColorTexture(0.243137, 0.015686, 0.325490, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.243137, 0.015686, 0.325490, 1.0)
         return
     end
     if healingTarget == "raid39" then
-        TargetColor.texture:SetColorTexture(0.847059, 0.376471, 0.921569, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.847059, 0.376471, 0.921569, 1.0)
         return
     end
     if healingTarget == "raid40" then
-        TargetColor.texture:SetColorTexture(0.341176, 0.533333, 0.231373, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.341176, 0.533333, 0.231373, 1.0)
         return
     end
     if healingTarget == "raidpet1" then
-        TargetColor.texture:SetColorTexture(0.458824, 0.945098, 0.784314, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.458824, 0.945098, 0.784314, 1.0)
         return
     end
     if healingTarget == "raidpet2" then
-        TargetColor.texture:SetColorTexture(0.239216, 0.654902, 0.278431, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.239216, 0.654902, 0.278431, 1.0)
         return
     end
     if healingTarget == "raidpet3" then
-        TargetColor.texture:SetColorTexture(0.537255, 0.066667, 0.905882, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.537255, 0.066667, 0.905882, 1.0)
         return
     end
     if healingTarget == "raidpet4" then
-        TargetColor.texture:SetColorTexture(0.333333, 0.415686, 0.627451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.333333, 0.415686, 0.627451, 1.0)
         return
     end
     if healingTarget == "raidpet5" then
-        TargetColor.texture:SetColorTexture(0.576471, 0.811765, 0.011765, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.576471, 0.811765, 0.011765, 1.0)
         return
     end
     if healingTarget == "raidpet6" then
-        TargetColor.texture:SetColorTexture(0.517647, 0.164706, 0.627451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.517647, 0.164706, 0.627451, 1.0)
         return
     end
     if healingTarget == "raidpet7" then
-        TargetColor.texture:SetColorTexture(0.439216, 0.074510, 0.941176, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.439216, 0.074510, 0.941176, 1.0)
         return
     end
     if healingTarget == "raidpet8" then
-        TargetColor.texture:SetColorTexture(0.984314, 0.854902, 0.376471, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.984314, 0.854902, 0.376471, 1.0)
         return
     end
     if healingTarget == "raidpet9" then
-        TargetColor.texture:SetColorTexture(0.082353, 0.286275, 0.890196, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.082353, 0.286275, 0.890196, 1.0)
         return
     end
     if healingTarget == "raidpet10" then
-        TargetColor.texture:SetColorTexture(0.058824, 0.003922, 0.964706, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.058824, 0.003922, 0.964706, 1.0)
         return
     end
     if healingTarget == "raidpet11" then
-        TargetColor.texture:SetColorTexture(0.956863, 0.509804, 0.949020, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.956863, 0.509804, 0.949020, 1.0)
         return
     end
     if healingTarget == "raidpet12" then
-        TargetColor.texture:SetColorTexture(0.474510, 0.858824, 0.031373, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.474510, 0.858824, 0.031373, 1.0)
         return
     end
     if healingTarget == "raidpet13" then
-        TargetColor.texture:SetColorTexture(0.509804, 0.882353, 0.423529, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.509804, 0.882353, 0.423529, 1.0)
         return
     end
     if healingTarget == "raidpet14" then
-        TargetColor.texture:SetColorTexture(0.337255, 0.647059, 0.427451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.337255, 0.647059, 0.427451, 1.0)
         return
     end
     if healingTarget == "raidpet15" then
-        TargetColor.texture:SetColorTexture(0.611765, 0.525490, 0.352941, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.611765, 0.525490, 0.352941, 1.0)
         return
     end
     if healingTarget == "raidpet16" then
-        TargetColor.texture:SetColorTexture(0.921569, 0.129412, 0.913725, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.921569, 0.129412, 0.913725, 1.0)
         return
     end
     if healingTarget == "raidpet17" then
-        TargetColor.texture:SetColorTexture(0.117647, 0.933333, 0.862745, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.117647, 0.933333, 0.862745, 1.0)
         return
     end
     if healingTarget == "raidpet18" then
-        TargetColor.texture:SetColorTexture(0.733333, 0.015686, 0.937255, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.733333, 0.015686, 0.937255, 1.0)
         return
     end
     if healingTarget == "raidpet19" then
-        TargetColor.texture:SetColorTexture(0.819608, 0.392157, 0.686275, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.819608, 0.392157, 0.686275, 1.0)
         return
     end
     if healingTarget == "raidpet20" then
-        TargetColor.texture:SetColorTexture(0.823529, 0.976471, 0.541176, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.823529, 0.976471, 0.541176, 1.0)
         return
     end
     if healingTarget == "raidpet21" then
-        TargetColor.texture:SetColorTexture(0.043137, 0.305882, 0.800000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.043137, 0.305882, 0.800000, 1.0)
         return
     end
     if healingTarget == "raidpet22" then
-        TargetColor.texture:SetColorTexture(0.737255, 0.270588, 0.760784, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.737255, 0.270588, 0.760784, 1.0)
         return
     end
     if healingTarget == "raidpet23" then
-        TargetColor.texture:SetColorTexture(0.807843, 0.368627, 0.058824, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.807843, 0.368627, 0.058824, 1.0)
         return
     end
     if healingTarget == "raidpet24" then
-        TargetColor.texture:SetColorTexture(0.364706, 0.078431, 0.078431, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.364706, 0.078431, 0.078431, 1.0)
         return
     end
     if healingTarget == "raidpet25" then
-        TargetColor.texture:SetColorTexture(0.094118, 0.901961, 1.000000, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.094118, 0.901961, 1.000000, 1.0)
         return
     end
     if healingTarget == "raidpet26" then
-        TargetColor.texture:SetColorTexture(0.772549, 0.690196, 0.047059, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.772549, 0.690196, 0.047059, 1.0)
         return
     end
     if healingTarget == "raidpet27" then
-        TargetColor.texture:SetColorTexture(0.415686, 0.784314, 0.854902, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.415686, 0.784314, 0.854902, 1.0)
         return
     end
     if healingTarget == "raidpet28" then
-        TargetColor.texture:SetColorTexture(0.470588, 0.733333, 0.047059, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.470588, 0.733333, 0.047059, 1.0)
         return
     end
     if healingTarget == "raidpet29" then
-        TargetColor.texture:SetColorTexture(0.619608, 0.086275, 0.572549, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.619608, 0.086275, 0.572549, 1.0)
         return
     end
     if healingTarget == "raidpet30" then
-        TargetColor.texture:SetColorTexture(0.517647, 0.352941, 0.678431, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.517647, 0.352941, 0.678431, 1.0)
         return
     end
     if healingTarget == "raidpet31" then
-        TargetColor.texture:SetColorTexture(0.003922, 0.149020, 0.694118, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.003922, 0.149020, 0.694118, 1.0)
         return
     end
     if healingTarget == "raidpet32" then
-        TargetColor.texture:SetColorTexture(0.454902, 0.619608, 0.831373, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.454902, 0.619608, 0.831373, 1.0)
         return
     end
     if healingTarget == "raidpet33" then
-        TargetColor.texture:SetColorTexture(0.674510, 0.741176, 0.050980, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.674510, 0.741176, 0.050980, 1.0)
         return
     end
     if healingTarget == "raidpet34" then
-        TargetColor.texture:SetColorTexture(0.560784, 0.713725, 0.784314, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.560784, 0.713725, 0.784314, 1.0)
         return
     end
     if healingTarget == "raidpet35" then
-        TargetColor.texture:SetColorTexture(0.400000, 0.721569, 0.737255, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.400000, 0.721569, 0.737255, 1.0)
         return
     end
     if healingTarget == "raidpet36" then
-        TargetColor.texture:SetColorTexture(0.094118, 0.274510, 0.392157, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.094118, 0.274510, 0.392157, 1.0)
         return
     end
     if healingTarget == "raidpet37" then
-        TargetColor.texture:SetColorTexture(0.298039, 0.498039, 0.462745, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.298039, 0.498039, 0.462745, 1.0)
         return
     end
     if healingTarget == "raidpet38" then
-        TargetColor.texture:SetColorTexture(0.125490, 0.196078, 0.027451, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.125490, 0.196078, 0.027451, 1.0)
         return
     end
     if healingTarget == "raidpet39" then
-        TargetColor.texture:SetColorTexture(0.937255, 0.564706, 0.368627, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.937255, 0.564706, 0.368627, 1.0)
         return
     end
     if healingTarget == "raidpet40" then
-        TargetColor.texture:SetColorTexture(0.929412, 0.592157, 0.501961, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.929412, 0.592157, 0.501961, 1.0)
         return
     end
     
     --Stuff
     if healingTarget == "player" then
-        TargetColor.texture:SetColorTexture(0.788235, 0.470588, 0.858824, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.788235, 0.470588, 0.858824, 1.0)
         return
     end
     if healingTarget == "focus" then
-        TargetColor.texture:SetColorTexture(0.615686, 0.227451, 0.988235, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.615686, 0.227451, 0.988235, 1.0)
         return
     end
     --[[
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.411765, 0.760784, 0.176471, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.411765, 0.760784, 0.176471, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.780392, 0.286275, 0.415686, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.780392, 0.286275, 0.415686, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.584314, 0.811765, 0.956863, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.584314, 0.811765, 0.956863, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.513725, 0.658824, 0.650980, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.513725, 0.658824, 0.650980, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.913725, 0.180392, 0.737255, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.913725, 0.180392, 0.737255, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.576471, 0.250980, 0.160784, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.576471, 0.250980, 0.160784, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.803922, 0.741176, 0.874510, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.803922, 0.741176, 0.874510, 1.0)
         return
     end
     if healingTarget == PLACEHOLDER then
-        TargetColor.texture:SetColorTexture(0.647059, 0.874510, 0.713725, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.647059, 0.874510, 0.713725, 1.0)
         return
     end   
     if healingTarget == PLACEHOLDER then --was party5
-        TargetColor.texture:SetColorTexture(0.007843, 0.301961, 0.388235, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.007843, 0.301961, 0.388235, 1.0)
         return
     end     
     if healingTarget == PLACEHOLDER then --was party5pet
-        TargetColor.texture:SetColorTexture(0.572549, 0.705882, 0.984314, 1.0)
+        A.HealingEngine.Frame.texture:SetColorTexture(0.572549, 0.705882, 0.984314, 1.0)
         return
     end
     ]]
 end
 
--- Update LOS status for target 
 local function UpdateLOS()
-    if UnitExists("target") and (not MouseOver_Toggle or Env.Unit("mouseover"):IsEnemy() or not MouseHasFrame()) then 
-        GetLOS(UnitGUID("target"))
-    end
+	if Env.IsGGLprofile and UnitExists("target") then
+		if A.IsInitialized then
+			-- New profiles 
+			if not A.IsUnitFriendly("mouseover") then 
+				GetLOS(UnitGUID("target"))
+			end 		
+		elseif not MouseOver_Toggle or Env.Unit("mouseover"):IsEnemy() or not MouseHasFrame() then 
+			-- TODO: Remove on old profiles until June 2019
+			-- Old profiles 
+			GetLOS(UnitGUID("target"))
+		end 
+	end 
 end
 
--- Wipe everything 
-local function WipeAll()
-    wipe(members)
-    wipe(incDMG_members)
-    wipe(R_Tanks)
-    wipe(R_DPS)
-    wipe(R_Heal)
-	wipe(Frequency)
-	wipe(FrequencyPairs)
-end 
-
-local function HealingEngineLaunch()
+local function HealingEngineInit()
 	if Env.IamHealer then 
-		Listener:Add('HealerEngine_Events', "PLAYER_TARGET_CHANGED", UpdateLOS)
-		Listener:Add('HealerEngine_Events', 'PLAYER_REGEN_ENABLED', function() wipe(Frequency) end)
-		Listener:Add('HealerEngine_Events', 'PLAYER_REGEN_DISABLED', function() wipe(Frequency) end)
-	elseif #members > 0 then 
-		WipeAll()
-		Listener:Remove('HealerEngine_Events', "PLAYER_TARGET_CHANGED")
-		Listener:Remove('HealerEngine_Events', 'PLAYER_REGEN_ENABLED')
-		Listener:Remove('HealerEngine_Events', 'PLAYER_REGEN_DISABLED')
+		Listener:Add("HealerEngine_Events", "PLAYER_TARGET_CHANGED", 	UpdateLOS)
+		Listener:Add("HealerEngine_Events", "PLAYER_REGEN_ENABLED", 	function() wipe(A.HealingEngine.Frequency.Actual) end)
+		Listener:Add("HealerEngine_Events", "PLAYER_REGEN_DISABLED", 	function() wipe(A.HealingEngine.Frequency.Actual) end)
+		A.HealingEngine.Frame:SetScript("OnUpdate", function(self, elapsed)
+			self.elapsed = (self.elapsed or 0) + elapsed   
+			local INTV = (TMW.UPD_INTV > 0.25 and TMW.UPD_INTV or 0.25) + A.HealingEngine.UpdatePause
+			if Env.IamHealer and self.elapsed > INTV then 
+				HealingEngine(_G.HE_Toggle) 
+				setHealingTarget(_G.HE_Toggle) 
+				setColorTarget()   
+				UpdateLOS() 
+				self.elapsed = 0
+			end			
+		end)
+	elseif #A.HealingEngine.Members.ALL > 0 then
+		A.HealingEngine.Members:Wipe()
+		A.HealingEngine.Frequency:Wipe()
+		Listener:Remove("HealerEngine_Events", "PLAYER_TARGET_CHANGED")
+		Listener:Remove("HealerEngine_Events", "PLAYER_REGEN_ENABLED")
+		Listener:Remove("HealerEngine_Events", "PLAYER_REGEN_DISABLED")
+		A.HealingEngine.Frame:SetScript("OnUpdate", nil)
 	end 
 end 
 
-Listener:Add('HealingEngine_Events', "PLAYER_ENTERING_WORLD", HealingEngineLaunch)
-Listener:Add('HealingEngine_Events', "UPDATE_INSTANCE_INFO", HealingEngineLaunch)
-Listener:Add('HealingEngine_Events', "PLAYER_SPECIALIZATION_CHANGED", HealingEngineLaunch)
+Listener:Add("HealingEngine_Events", "PLAYER_ENTERING_WORLD", 			HealingEngineInit)
+Listener:Add("HealingEngine_Events", "UPDATE_INSTANCE_INFO", 			HealingEngineInit)
+Listener:Add("HealingEngine_Events", "PLAYER_SPECIALIZATION_CHANGED", 	HealingEngineInit)
 
-local function refreshColor()
-    HealingEngine() -- Updates Arrays/Table
-    setHealingTarget(HE_Toggle) -- Who to heal?
-    setColorTarget() -- Show Pixels    
-    UpdateLOS() -- Update LOS status for target 
-end
+--- ============================= API ==============================
+--- API valid only for healer specializations  
+--- Members are depend on _G.HE_Pets variable 
 
-local updateHealing = CreateFrame("frame")
-updateHealing:SetScript("OnUpdate", function (self, elapsed)
-        self.elapsed = (self.elapsed or 0) + elapsed;    
-        if Env.IamHealer and self.elapsed > 0.25 then -- and Env.IsGGLprofile
-            refreshColor()
-            self.elapsed = 0
-        end
-end)
-
--- For refference
-function GetMembers()
-    return members
+--- SetTarget Controller 
+function A.HealingEngine.SetTargetMostlyIncDMG()
+	local GUID = UnitGUID("target")
+	if GUID and GUID ~= healingTargetGUID and #A.HealingEngine.Members.MOSTLYINCDMG > 0 then 
+		healingTargetGUID 	= A.HealingEngine.Members.MOSTLYINCDMG[1].GUID
+		healingTarget		= A.HealingEngine.Members.MOSTLYINCDMG[1].Unit
+		setColorTarget(true)
+		A.HealingEngine.UpdatePause = 2
+	end 
 end 
 
--- Other functions to use for spells 
-function MostlyIncDMG(unit)
-    -- true if current unit is unit, return value of incoming damage
-    if tableexist(incDMG_members) and incDMG_members[1] and incDMG_members[1].incDMG then 
-        return UnitIsUnit(unit, incDMG_members[1].Unit), incDMG_members[1].incDMG 
-    end 
-    return false, 0
+function A.HealingEngine.SetTarget(unitID)
+	local GUID = UnitGUID(unitID)
+	if GUID and GUID ~= healingTargetGUID and #A.HealingEngine.Members.ALL > 0 then 
+		healingTargetGUID 	= GUID
+		healingTarget		= unitID
+		setColorTarget(true)
+		A.HealingEngine.UpdatePause = 2
+	end 
 end 
 
--- Group 
-function Group_incDMG()
-    -- return averange raid/party incoming dmg
-    local total, tick = 0, 0
-    if tableexist(members) then 
-        for i = 1, #members do           
-            if UnitIsPlayer(members[i].Unit) then
-                total = total + members[i].incDMG
-                tick = tick + 1
+--- Group Controller 
+function A.HealingEngine.GetMembersAll()
+	-- @return table 
+	return A.HealingEngine.Members.ALL 
+end 
+
+function A.HealingEngine.GetMembersByMode()
+	-- @return table 
+	local mode = _G.HE_Toggle or "ALL"
+	return A.HealingEngine.Members[mode] 
+end 
+
+function A.HealingEngine.GetBuffsCount(ID, duration, source)
+	-- @return number 	
+	-- Only players 
+    local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            if m[i].isPlayer and Env.Unit(m[i].Unit):HasBuffs(ID, source) > (duration or 0) then
+                total = total + 1
             end
         end
-    end
-    if total > 0 and tick > 0 then 
-        return total / tick
     end 
-    return total or 0
-end
+    return total 
+end 
+A.HealingEngine.GetBuffsCount = A.MakeFunctionCachedDynamic(A.HealingEngine.GetBuffsCount)
 
-function Group_getHEAL()
-    -- return averange raid/party incoming heal
-    local total, tick = 0, 0
-    if tableexist(members) then 
-        for i = 1, #members do
-            if UnitIsPlayer(members[i].Unit) then
-                total = total + getHEAL(members[i].Unit)
-                tick = tick + 1
+function A.HealingEngine.GetDeBuffsCount(ID, duration)
+	-- @return number 	
+	-- Only players 
+    local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            if m[i].isPlayer and Env.Unit(m[i].Unit):HasDeBuffs(ID) > (duration or 0) then
+                total = total + 1
             end
         end
-    end
-    if total > 0 and tick > 0 then 
-        return total / tick
     end 
-    return total or 0
-end
+    return total 
+end 
+A.HealingEngine.GetDeBuffsCount = A.MakeFunctionCachedDynamic(A.HealingEngine.GetDeBuffsCount)
 
--- Dynamic Reaction on changed AHP by members in persistent lasts TIMER 
-function FrequencyAHP(TIMER)    
+function A.HealingEngine.GetHealth()
+	-- @return number 
+	-- Return actual group health 
+	local f = A.HealingEngine.Frequency.Actual 
+	if #f > 0 then 
+		return f[#f].AHP
+	end 
+	return huge
+end 
+
+function A.HealingEngine.GetHealthAVG() 
+	-- @return number 
+	-- Return current percent (%) of the group health
+	local f = A.HealingEngine.Frequency.Actual
+	if #f > 0 then 
+		return f[#f].AHP * 100 / f[#f].MAXHP
+	end 
+	return 100  
+end 
+A.HealingEngine.GetHealthAVG = A.MakeFunctionCachedStatic(A.HealingEngine.GetHealthAVG)
+
+function A.HealingEngine.GetHealthFrequency(timer)
+	-- @return number 
+	-- Return percent (%) of the group HP changed during lasts 'timer'. Positive (+) is HP lost, Negative (-) is HP gain, 0 - nothing is not changed 
     local total, counter = 0, 0
-    if #Frequency > 1 then 
-        for i = 1, #Frequency - 1 do 
+	local f = A.HealingEngine.Frequency.Actual
+    if #f > 1 then 
+        for i = 1, #f - 1 do 
             -- Getting history during that time rate
-            if TMW.time - Frequency[i].TIME <= TIMER then 
+            if TMW.time - f[i].TIME <= timer then 
                 counter = counter + 1
-                total = total + Frequency[i].AHP
+                total 	= total + f[i].AHP
             end 
         end        
     end 
 	
 	if total > 0 then           
-		total = (Frequency[#Frequency].AHP * 100 / Frequency[#Frequency].MAXHP) - (total / counter * 100 / Frequency[#Frequency].MAXHP)
+		total = (f[#f].AHP * 100 / f[#f].MAXHP) - (total / counter * 100 / f[#f].MAXHP)
 	end  	
 	
     return total 
 end 
+A.HealingEngine.GetHealthFrequency = A.MakeFunctionCachedDynamic(A.HealingEngine.GetHealthFrequency)
 
-function ValidMembers(IsPlayer)
-    local total = 0 
-    if IsPlayer and tableexist(members) then 
-        for i = 1, #members do
-            if UnitIsPlayer(members[i].Unit) then
+function A.HealingEngine.GetIncomingDMG()
+	-- @return number, number 
+	-- Return REALTIME actual: total - group HP lose per second, avg - average unit HP lose per second
+	local total, avg = 0, 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            total = total + m[i].incDMG
+        end
+		
+		avg = total / #m
+    end 
+    return total, avg 
+end 
+A.HealingEngine.GetIncomingDMG = A.MakeFunctionCachedStatic(A.HealingEngine.GetIncomingDMG)
+
+function A.HealingEngine.GetIncomingHPS()
+	-- @return number , number
+	-- Return PERSISTENT actual: total - group HP gain per second, avg - average unit HP gain per second 
+	local total, avg = 0, 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            total = total + getHEAL(m[i].Unit)
+        end
+		
+		avg = total / #m
+    end 
+    return total, avg 
+end 
+A.HealingEngine.GetIncomingHPS = A.MakeFunctionCachedStatic(A.HealingEngine.GetIncomingHPS)
+
+function A.HealingEngine.GetIncomingDMGAVG()
+	-- @return number  
+	-- Return REALTIME average percent group HP lose per second 
+	local avg = 0
+	local f = A.HealingEngine.Frequency.Actual
+    if #f > 0 then 
+		avg = A.HealingEngine.GetIncomingDMG() * 100 / f[#f].MAXHP
+    end 
+    return avg 
+end
+A.HealingEngine.GetIncomingDMGAVG = A.MakeFunctionCachedStatic(A.HealingEngine.GetIncomingDMGAVG)
+
+function A.HealingEngine.GetIncomingHPSAVG()
+	-- @return number  
+	-- Return REALTIME average percent group HP gain per second 
+	local avg = 0
+	local f = A.HealingEngine.Frequency.Actual
+    if #f > 0 then 
+		avg = A.HealingEngine.GetIncomingHPS() * 100 / f[#f].MAXHP
+    end 
+    return avg 
+end 
+A.HealingEngine.GetIncomingHPSAVG = A.MakeFunctionCachedStatic(A.HealingEngine.GetIncomingHPSAVG)
+
+function A.HealingEngine.GetTimeToDieUnits(timer)
+	-- @return number 
+	local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            if TimeToDie(m[i].Unit) <= timer then
                 total = total + 1
             end
         end
-    else 
-        total = #members
-    end
+    end 
     return total 
-end
+end 
 
--- Refference for members in range as counter which usefully to check how much units should be done for AoE heal
+function A.HealingEngine.GetTimeToDieMagicUnits(timer)
+	-- @return number 
+	local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            if TimeToDieMagic(m[i].Unit) <= timer then
+                total = total + 1
+            end
+        end
+    end 
+    return total 
+end 
+
+function A.HealingEngine.GetTimeToFullHealth()
+	-- @return number
+	local f = A.HealingEngine.Frequency.Actual
+	if #f > 0 then 
+		local HPS = A.HealingEngine.GetIncomingHPS()
+		if HPS > 0 then
+			return (f[#f].MAXHP - f[#f].AHP) / HPS
+		end 
+	end 
+	return 0 
+end 
+
+function A.HealingEngine.GetMinimumUnits(fullPartyMinus, raidLimit)
+	-- @return number 
+	-- This is easy template to known how many people minimum required be to heal by AoE with different group size or if some units out of range or in cyclone and etc..
+	-- More easy to figure - which minimum units require if available group members <= 1 / <= 3 / <= 5 or > 5
+	local m = A.HealingEngine.GetMembersAll()
+	local members = #m
+	return 	( members <= 1 and 1 ) or 
+			( members <= 3 and members ) or 
+			( members <= 5 and members - (fullPartyMinus or 0) ) or 
+			(
+				members > 5 and 
+				(
+					(
+						raidLimit ~= nil and
+						(
+							(
+								members >= raidLimit and 
+								raidLimit
+							) or 
+							(
+								members < raidLimit and 
+								members
+							)
+						)
+					) or 
+					(
+						raidLimit == nil and 
+						members
+					)
+				)
+			)
+end 
+
+function A.HealingEngine.GetBelowHealthPercentUnits(pHP, range)
+	local total = 0 
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+            if (not range or Env.SpellInteract(m[i].Unit, range)) and m[i].HP <= pHP then
+                total = total + 1
+            end
+        end
+    end 
+	return total 
+end 
+
+function A.HealingEngine.HealingByRange(range, predictName, spellID, isMelee)
+	-- @return number 
+	-- Return how much members can be healed by specified range with spell
+	local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+	if #m > 0 then 		
+		for i = 1, #m do 
+			if 	(not isMelee or Env.Unit(m[i].Unit, A.HealingEngine.Refresh):IsMelee()) and 
+				Env.SpellInteract(m[i].Unit, range) and
+				(
+					-- Old profiles 
+					-- TODO: Remove after rewrite old profiles 
+					(not A.IsInitialized and Env.PredictHeal(predictName, m[i].Unit)) or 
+					-- New profiles 
+					(A.IsInitialized and Env.PredictHeal(predictName, spellID, m[i].Unit))
+				)
+			then
+                total = total + 1
+            end
+		end 		
+	end 
+	return total 
+end 
+
+function A.HealingEngine.HealingBySpell(predictName, spellID, isMelee)
+	-- @return number 
+	-- Return how much members can be healed by specified spell 
+	local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+	if #m > 0 then 		
+		for i = 1, #m do 
+			if 	(not isMelee or Env.Unit(m[i].Unit, A.HealingEngine.Refresh):IsMelee()) and 
+				Env.SpellInRange(m[i].Unit, spellID) and
+				(
+					-- Old profiles 
+					-- TODO: Remove after rewrite old profiles 
+					(not A.IsInitialized and Env.PredictHeal(predictName, m[i].Unit)) or 
+					-- New profiles 
+					(A.IsInitialized and Env.PredictHeal(predictName, spellID, m[i].Unit))
+				)
+			then
+                total = total + 1
+            end
+		end 		
+	end 
+	return total 
+end 
+
+--- Unit Controller 
+function A.HealingEngine.IsMostlyIncDMG(unitID)
+	-- @return boolean, number (realtime incoming damage)	
+	if #A.HealingEngine.Members.MOSTLYINCDMG > 0 then 
+		return UnitIsUnit(unitID, A.HealingEngine.Members.MOSTLYINCDMG[1].Unit), A.HealingEngine.Members.MOSTLYINCDMG[1].incDMG
+	end 
+	return false, 0
+end 
+
+function A.HealingEngine.GetTarget()
+	return healingTarget, healingTargetGUID
+end 
+
+--- =========================== OLD API ============================
+-- TODO: Remove since we have now Action
+local tableexist = tableexist
+local UnitIsPlayer = UnitIsPlayer
+function GetMembers()
+    return A.HealingEngine.GetMembersAll()
+end 
+function MostlyIncDMG(unitID)
+    return A.HealingEngine.IsMostlyIncDMG(unitID)
+end 
+function Group_incDMG()
+    return select(2, A.HealingEngine.GetIncomingDMG())
+end
+function Group_getHEAL()
+    return select(2, A.HealingEngine.GetIncomingHPS())
+end
+function FrequencyAHP(timer)    
+    return A.HealingEngine.GetHealthFrequency(timer)
+end 
+function AoETTD(timer)
+    return A.HealingEngine.GetTimeToDieUnits(timer)   
+end
+function AoEBuffsExist(ID, duration)
+	return A.HealingEngine.GetBuffsCount(ID, duration)
+end
+function AoEHP(pHP)
+    return A.HealingEngine.GetBelowHealthPercentUnits(pHP) 
+end
+function AoEHealingByRange(range, predictName, isMelee)
+	return A.HealingEngine.HealingByRange(range, predictName, nil, isMelee)
+end
+function AoEHealingBySpell(spell, predictName, isMelee) 
+	return A.HealingEngine.HealingBySpell(predictName, spell, isMelee)
+end
+-- Deprecated
+function ValidMembers(IsPlayer)
+	if not IsPlayer or not _G.HE_Pets then 
+		return #A.HealingEngine.Members.ALL
+	else 
+		local total = 0 
+		local f = A.HealingEngine.GetMembersAll()
+		if #f > 0 then 
+			for i = 1, #f do
+				if UnitIsPlayer(f[i].Unit) then
+					total = total + 1
+				end
+			end 
+		end 
+		return total 
+	end 
+end
 function AoEMembers(IsPlayer, SubStract, Limit)
     if not SubStract then SubStract = 1 end 
     if not Limit then Limit = 4 end
@@ -1019,81 +1338,9 @@ function AoEMembers(IsPlayer, SubStract, Limit)
         )
     )
 end
-
---
-function AoETTD(seconds)
-    local totalMembersDying = 0
-    if tableexist(members) then 
-        for i = 1, #members do
-            if UnitIsPlayer(members[i].Unit) and TimeToDie(members[i].Unit) <= seconds then
-                totalMembersDying = totalMembersDying + 1
-            end
-        end
-    end
-    return totalMembersDying or 0   
-end
-
-function AoEHP(hp)
-    local totalhp = 0
-    if tableexist(members) then 
-        for i = 1, #members do
-            if Env.UNITHP(members[i].Unit) <= hp then
-                totalhp = totalhp + 1
-            end
-        end
-    end
-    return totalhp or 0   
-end
-
--- Setting Low HP Members variable for AoE Healing By Range
-function AoEHealingByRange(range, predictName, isMelee)
-    local lowhpmembers = 0
-    if tableexist(members) then 
-        for i = 1, #members do
-            local unit = members[i].Unit
-            if (not isMelee or Env.Unit(unit):IsMelee())
-            and unit ~= "player"
-            and Env.SpellInteract(unit, range) 
-            and (not predictName or Env.PredictHeal(predictName, unit)) then
-                lowhpmembers = lowhpmembers + 1
-            end
-        end
-    end
-    return lowhpmembers or 0
-end
-
--- Setting Low HP Members variable for AoE Healing By Spell
-function AoEHealingBySpell(spell, predictName, isMelee) 
-    local lowhpmembers = 0
-    if tableexist(members) then 
-        for i = 1, #members do
-            local unit = members[i].Unit
-            if (not isMelee or Env.Unit(unit):IsMelee())
-            and unit ~= "player"
-            and Env.SpellInRange(unit, spell) 
-            and (not predictName or Env.PredictHeal(predictName, unit)) then
-                lowhpmembers = lowhpmembers + 1
-            end
-        end
-    end
-    return lowhpmembers or 0
-end
-
-function AoEBuffsExist(id, dur)
-    local total = 0
-    if not dur then dur = 0 end
-    if tableexist(members) then 
-        for i = 1, #members do
-            if Env.Unit(members[i].Unit):HasBuffs(id, "player") > dur then
-                total = total + 1
-            end
-        end
-    end 
-    return total 
-end
-
 function AoEHPAvg(isPlayer, minCount)
     local total, maxhp, counter = 0, 0, 0
+	local members = A.HealingEngine.GetMembersAll()
     if tableexist(members) then 
         for i = 1, #members do
             if (not isPlayer or UnitIsPlayer(members[i].Unit)) then                
@@ -1108,9 +1355,9 @@ function AoEHPAvg(isPlayer, minCount)
     end
     return total  
 end
-
 -- Restor Druid 
-function Env.AoEFlourish(pHP)    
+function Env.AoEFlourish(pHP)   
+	local members = A.HealingEngine.GetMembersAll()
     if tableexist(members) then 
         local total = 0
         for i = 1, #members do
@@ -1131,9 +1378,7 @@ function Env.AoEFlourish(pHP)
     end 
     return false
 end
-
 -- PVE Dispels
--- TODO: Remove since we have now Action
 local types = {
     Poison = {
         -- Venomfang Strike
