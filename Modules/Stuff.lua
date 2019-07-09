@@ -72,8 +72,8 @@ local function UpdateZoneAndPvP(event, ...)
         return
     end    
     
-    if event == "UI_INFO_MESSAGE" then        
-        if type(...) == "number" and ... >= 996 and ... <= 998 then
+    if event == "UI_INFO_MESSAGE" then     
+		if Env.UI_INFO_MESSAGE_IS_WARMODE(...) then 
             Env.InPvP_Status = C_PvP.IsWarModeDesired()
 			TMW:Fire("TMW_ACTION_MODE_CHANGED")
         end                
@@ -106,6 +106,13 @@ local function UpdateZoneAndPvP(event, ...)
         Env.InPvP_Status = Env.CheckInPvP()  
 		TMW:Fire("TMW_ACTION_MODE_CHANGED")
     end   
+end 
+
+function Env.UI_INFO_MESSAGE_IS_WARMODE(ID)
+    if type(ID) == "number" and ((ID >= 996 and ID <= 998) or (ID >= 1001 and ID <= 1002)) then
+		return true 
+	end 
+	return false 
 end 
 
 Env.InPvP_Status, Env.InPvP_Toggle = false, false
