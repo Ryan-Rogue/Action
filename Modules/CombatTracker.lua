@@ -625,7 +625,7 @@ function getDR(UNIT, drCat)
 	"silence"        
 	"taunt"     -- PvE unlocked      
 	"incapacitate"   
-	"knockback" -- removed in 1.1
+	"knockback" 
 ]]
 	local GUID = UnitGUID(UNIT)
 	-- Default 100% means no DR at all, and 0 if no ticks then no remaning time, Application is how much DR was applied and how much by that category can be applied totally 
