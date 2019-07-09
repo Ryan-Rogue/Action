@@ -1,5 +1,5 @@
 --- 
-local DateTime = "30.06.2019"
+local DateTime = "09.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -24,9 +24,16 @@ local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpeci
 	  
 local GameLocale = GetLocale()	 
 	  
-local FindSpellBookSlotBySpellID, IsAttackSpell = FindSpellBookSlotBySpellID, IsAttackSpell
+local FindSpellBookSlotBySpellID, IsAttackSpell, IsHarmfulSpell, IsHelpfulSpell, IsHarmfulItem, ItemHasRange = 
+	  FindSpellBookSlotBySpellID, IsAttackSpell, IsHarmfulSpell, IsHelpfulSpell, IsHarmfulItem, ItemHasRange 
 
 local AzeriteEssence = _G.C_AzeriteEssence
+
+-- For Queue to help get unit if not specified
+local isSpellRangeException = {
+	-- Chi Burst 
+	[123986] = true,
+}
 
 --------------------------------------
 -- Localization
@@ -1715,11 +1722,19 @@ local Localization = {
 		},
 	},
 }
+if not Localization[GameLocale] then 
+	Localization[GameLocale] = {} 
+end 
+setmetatable(Localization[GameLocale], { __index = Localization["enUS"] })
 local function GetLocalization()
-	CL = TMW and TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or Localization[GameLocale] and GameLocale or "enUS"
+	CL = TMW and TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or next(Localization[GameLocale]) and GameLocale or "enUS"
 	L = Localization[CL] or Localization["enUS"]
 	-- This need to prevent any errors caused by missed keys 
 	setmetatable(L, { __index = Localization["enUS"] })
+end 
+function Action.GetLocalization()
+	GetLocalization()
+	return L
 end 
 
 --------------------------------------
@@ -3481,7 +3496,7 @@ local function ActionDB_Initialization()
 	end 
 		
 	-- Modified update engine of TMW core with additional FPS Optimization	
-	if not Action.IsInitializedModifiedTMW then 
+	if not Action.IsInitializedModifiedTMW and TMW then 
 		local LastUpdate = 0
 		local updateInProgress, shouldSafeUpdate
 		local start 
@@ -3628,9 +3643,14 @@ local function ActionDB_Initialization()
 			end 			
 		end)			
 		
+		-- Loading options 
+		if TMW.Classes.Resizer_Generic == nil then 
+			TMW:LoadOptions()
+		end 		
+		
 		Action.IsInitializedModifiedTMW = true 
 	end 
-		
+			
 	-- Make frames work able 
 	Action.IsInitialized = true 	
 end
@@ -3804,11 +3824,24 @@ local function GetWidthByColumn(parent, col, offset)
 	local columns = parent.layout.columns
 	return (width / (columns / col)) - 2 * gutter + (offset or 0)
 end 
+local function GetAnchor(tab, spec)
+	-- Uses for EasyLayout (only resizer / comfort remap)
+	if tab.name == 2 then 
+		return tab.childs[spec].scrollChild
+	else 
+		return tab.childs[spec]
+	end  
+end 
+local function GetKids(tab, spec)
+	-- Uses for EasyLayout (resizer / toggles)
+	if tab.name == 2 then 
+		return tab.childs[spec].scrollChild:GetChildrenWidgets()
+	else 
+		return tab.childs[spec]:GetChildrenWidgets()
+	end  
+end 
 local function CreateResizer(parent)
 	if not TMW or parent.resizer then return end 
-	if TMW.Classes.Resizer_Generic == nil then 
-		TMW:LoadOptions()
-	end 
 	local frame = {}
 	frame.resizer = TMW.Classes.Resizer_Generic:New(parent)
 	frame.resizer:Show()
@@ -4117,7 +4150,8 @@ function Action.SetToggle(arg, custom)
 		local spec = Env.PlayerSpec .. CL
 		local tab = tabFrame.tabs[n]
 		if tab and tab.childs[spec] then 
-			local kids = tab.childs[spec]:GetChildrenWidgets()
+			local anchor = GetAnchor(tab, spec)
+			local kids = GetKids(tab, spec)
 			for _, child in ipairs(kids) do 				
 				if child.Identify and child.Identify.Toggle == toggle then 
 					-- SetValue not uses here because it will trigger OnValueChanged which we don't need in case of performance optimization
@@ -4367,7 +4401,7 @@ local function UpdateChat(...)
 							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 8 })
 						end 
 					elseif unit == "player" then 
-						Action.MacroQueue(msgList[Name].Key, { Unit = "player", Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = Env.IamHealer and 6 or nil })
+						Action.MacroQueue(msgList[Name].Key, { Unit = "player", Value = msgList[Name].DisableReToggle == true and true or nil }) -- , MetaSlot = Env.IamHealer and 6 or nil
 					else 
 						Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
 					end 
@@ -4376,12 +4410,12 @@ local function UpdateChat(...)
 				if msgList[Name].LUA then 
 					local Key = Action[Env.PlayerSpec][msgList[Name].Key]					 
 					if self.Type == "Spell" then 
-						if SpellHasRange(Key:Info()) then
-							unit = ((Env.IamHealer or IsAttackSpell(Key:Info()) or IsHarmfulSpell(Key:Info())) and "target") or "player"
+						if SpellHasRange(Key:Info()) and not isSpellRangeException[Key.ID] then
+							unit = ((IsAttackSpell(Key:Info()) or IsHarmfulSpell(Key:Info()) or IsHelpfulSpell(Key:Info())) and "target") or "player"
 						end 
 					else
 						if ItemHasRange(Key:Info()) then 						
-							unit = (IsHarmfulItem(Key:Info()) and "target") or (not Env.IamHealer and "player") or "target"
+							unit = ((IsHarmfulItem(Key:Info()) or (IsHelpfulItem(Key:Info()) and Env.IamHealer)) and "target") or (not Env.IamHealer and "player") or "target"
 						end 
 					end 
 				end 
@@ -4412,7 +4446,8 @@ function Action.ToggleMSG(isLaunch)
 		local spec = Env.PlayerSpec .. CL
 		local tab = tabFrame.tabs[7]
 		if tab and tab.childs[spec] then 
-			local kids = tab.childs[spec]:GetChildrenWidgets()
+			local anchor = GetAnchor(tab, spec)
+			local kids = GetKids(tab, spec)
 			for _, child in ipairs(kids) do 				
 				if child.Identify and child.Identify.Toggle == "DisableReToggle" then 
 					if Action.GetToggle(7, "MSG_Toggle") then 
@@ -4441,7 +4476,7 @@ function Action.ToggleMinimap(isLaunch)
 end 
 
 function Action.ToggleMainUI()
-	if (InCombatLockdown() and (not Action.MainUI or not Action.MainUI.resizer)) or not Env.PlayerSpec then 
+	if not Env.PlayerSpec or (not Action.MainUI and not Action.IsInitialized) then 
 		return 
 	end 
 	local specID, specName = Env.PlayerSpec, Env.PlayerSpecName 
@@ -4635,22 +4670,24 @@ function Action.ToggleMainUI()
 		
 		-- Create resizer		
 		Action.MainUI.resizer = CreateResizer(Action.MainUI)
-		if Action.MainUI.resizer then 
+		if Action.MainUI.resizer then 			
 			function Action.MainUI.UpdateResize() 
 				tabFrame:EnumerateTabs(function(tab)
 					for spec in pairs(tab.childs) do						
 						local specCL = string.gsub(spec, "%d", "")
-						if specCL == CL then									
+						if tab.childs[spec] and specCL == CL then									
 							-- Easy Layout (main)
-							if tab.childs[spec].layout then 
-								tab.childs[spec]:DoLayout()
+							local anchor = GetAnchor(tab, spec)							
+							if anchor.layout then 
+								anchor:DoLayout()
 							end	
-							local kids = tab.childs[spec]:GetChildrenWidgets()
-							for _, child in ipairs(kids) do 
+						
+							local kids = GetKids(tab, spec)
+							for _, child in ipairs(kids) do								
 								-- EasyLayout (additional)
 								if child.layout then 
 									child:DoLayout()
-								end 
+								end 	
 								-- Dropdown 
 								if child.dropTex then 
 									-- EasyLayout will resize button so we can don't care
@@ -4709,19 +4746,27 @@ function Action.ToggleMainUI()
 			tab.childs[spec]:Show()			
 			return
 		end  
-		tab.childs[spec] = StdUi:Frame(tab.frame)
-		tab.childs[spec]:SetAllPoints()
-		tab.childs[spec]:Show()
-			
-		local UI_Title = StdUi:FontString(tab.childs[spec], tab.title)
+		if tab.name == 2 then 
+			tab.childs[spec] = StdUi:ScrollFrame(tab.frame, tab.frame:GetWidth(), tab.frame:GetHeight()) 			
+			tab.childs[spec]:SetAllPoints()
+			tab.childs[spec]:Show()			
+		else 
+			tab.childs[spec] = StdUi:Frame(tab.frame) 
+			tab.childs[spec]:SetAllPoints()		
+			tab.childs[spec]:Show()
+		end
+		
+		local anchor = GetAnchor(tab, spec)
+		
+		local UI_Title = StdUi:FontString(anchor, tab.title)
 		UI_Title:SetFont(UI_Title:GetFont(), 15)
-        StdUi:GlueTop(UI_Title, tab.childs[spec], 0, -10)
+        StdUi:GlueTop(UI_Title, anchor, 0, -10)
 		if not StdUi.config.font.color.yellow then 
 			local colored = { UI_Title:GetTextColor() }
 			StdUi.config.font.color.yellow = { r = colored[1], g = colored[2], b = colored[3], a = colored[4] }
 		end 
 		
-		local UI_Separator = StdUi:FontString(tab.childs[spec], '')
+		local UI_Separator = StdUi:FontString(anchor, '')
         StdUi:GlueBelow(UI_Separator, UI_Title, 0, -5)
 		
 		-- We should leave "OnShow" handlers because user can swap language, otherwise in performance case better remove it 		
@@ -4747,6 +4792,7 @@ function Action.ToggleMainUI()
 				Env.InPvP_Toggle = false
 				Env.InPvP_Status = Env.CheckInPvP()	
 				Action.Print(L["RESETED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))
+				TMW:Fire("TMW_ACTION_MODE_CHANGED")
 			end)
 			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)					
 
@@ -4793,8 +4839,8 @@ function Action.ToggleMainUI()
 							end
 							ScrollTable:ClearSelection()							
 						else 
-							-- Redraw statement by Identify if that langue frame is already drawed
-							local kids = tab.childs[spec]:GetChildrenWidgets()
+							-- Redraw statement by Identify if that langue frame is already drawed							
+							local kids = GetKids(tab, spec)
 							for _, child in ipairs(kids) do 				
 								if child.Identify and child.Identify.Toggle then 
 									-- SetValue not uses here because it will trigger OnValueChanged which we don't need in case of performance optimization
@@ -5278,31 +5324,53 @@ function Action.ToggleMainUI()
 		end 
 		
 		if tab.name == 2 then 	
-            UI_Title:SetText(specName)
+            UI_Title:SetText(specName)			
 			tab.title = specName
-			tabFrame:DrawButtons()															
-		
-			if not Action.Data.ProfileUI or not Action.Data.ProfileUI[tab.name] or not Action.Data.ProfileUI[tab.name][specID] then 
+			tabFrame:DrawButtons()	
+			-- Fix StdUi 
+			-- Lib has missed scrollframe as widget
+			StdUi:InitWidget(anchor)
+			
+			if not Action.Data.ProfileUI or not Action.Data.ProfileUI[tab.name] or not Action.Data.ProfileUI[tab.name][specID] or not next(Action.Data.ProfileUI[tab.name][specID]) then 
 				UI_Title:SetText(L["TAB"]["NOTHING"])
 				return 
-			end 
-			StdUi:EasyLayout(tab.childs[spec], Action.Data.ProfileUI[tab.name][specID][LayoutOptions] or { padding = { top = 40 } })			
+			end 				
+
+			local options = Action.Data.ProfileUI[tab.name][specID].LayoutOptions
+			if options then 
+				if not options.padding then 
+					options.padding = {}
+				end 
+				
+				if not options.padding.top then 
+					options.padding.top = 40 
+				end 	
+
+				-- Cut out scrollbar 
+				if not options.padding.right then 
+					options.padding.right = 10 + 20
+				elseif options.padding.right < 20 then 
+					options.padding.right = options.padding.right + 20
+				end 
+			end 			
+			
+			StdUi:EasyLayout(anchor, options or { padding = { top = 40, right = 10 + 20 } })			
 			for row = 1, #Action.Data.ProfileUI[tab.name][specID] do 
-				local SpecRow = tab.childs[spec]:AddRow(Action.Data.ProfileUI[tab.name][specID][row].RowOptions)	
+				local SpecRow = anchor:AddRow(Action.Data.ProfileUI[tab.name][specID][row].RowOptions)	
 				for element = 1, #Action.Data.ProfileUI[tab.name][specID][row] do 
 					local config = Action.Data.ProfileUI[tab.name][specID][row][element]	
 					local CL = (config.L and (TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and config.L[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or config.L[GameLocale] and GameLocale)) or "enUS"
 					local CTT = (config.TT and (TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and config.TT[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or config.TT[GameLocale] and GameLocale)) or "enUS"
 					local obj					
 					if config.E == "Label" then 
-						obj = StdUi:Label(tab.childs[spec], config.L.ANY or config.L[CL], config.S or 14)
+						obj = StdUi:Label(anchor, config.L.ANY or config.L[CL], config.S or 14)
 					elseif config.E == "Header" then 
-						obj = StdUi:Header(tab.childs[spec], config.L.ANY or config.L[CL])
+						obj = StdUi:Header(anchor, config.L.ANY or config.L[CL])
 						obj:SetAllPoints()			
 						obj:SetJustifyH("MIDDLE")						
 						obj:SetFontSize(config.S or 14)	
 					elseif config.E == "Checkbox" then 						
-						obj = StdUi:Checkbox(tab.childs[spec], config.L.ANY or config.L[CL])
+						obj = StdUi:Checkbox(anchor, config.L.ANY or config.L[CL])
 						obj:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])
 						obj:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 						obj:SetScript("OnClick", function(self, button, down)	
@@ -5317,12 +5385,12 @@ function Action.ToggleMainUI()
 							end
 						end)
 						obj.Identify = { Type = config.E, Toggle = config.DB }
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "BOTTOM", true)
 						if config.isDisabled then 
 							obj:Disable()
 						end 
 					elseif config.E == "Dropdown" then
-						obj = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.OT, nil, config.MULT)
+						obj = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.OT, nil, config.MULT)
 						if config.SetPlaceholder then 
 							obj:SetPlaceholder(config.SetPlaceholder[CL])
 						end 
@@ -5362,12 +5430,12 @@ function Action.ToggleMainUI()
 						obj.FontStringTitle = StdUi:FontString(obj, config.L.ANY or config.L[CL])
 						obj.text:SetJustifyH("CENTER")
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "BOTTOM", true)	
 						if config.isDisabled then 
 							obj:Disable()
 						end 
 					elseif config.E == "Slider" then	
-						obj = StdUi:Slider(tab.childs[spec], math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), config.H or 20, TMW.db.profile.ActionDB[tab.name][specID][config.DB], false, config.MIN or -1, config.MAX or 100)	
+						obj = StdUi:Slider(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), config.H or 20, TMW.db.profile.ActionDB[tab.name][specID][config.DB], false, config.MIN or -1, config.MAX or 100)	
 						if config.Precision then 
 							obj:SetPrecision(config.Precision)
 						end
@@ -5378,6 +5446,17 @@ function Action.ToggleMainUI()
 									end					
 							end)
 						end 
+						local function ONOFF(value)
+							if config.ONLYON then 
+								return (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (value >= config.MAX and "|cff00ff00AUTO|r" or value)
+							elseif config.ONLYOFF then 
+								return (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value)
+							elseif config.ONOFF then 
+								return (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= config.MAX and "|cff00ff00AUTO|r" or value)
+							else
+								return (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. value .. "|r"
+							end 
+						end 
 						obj.OnValueChanged = function(self, value)
 							if not config.Precision then 
 								value = math.floor(value) 
@@ -5385,25 +5464,43 @@ function Action.ToggleMainUI()
 								value = config.MIN or -1
 							end
 							TMW.db.profile.ActionDB[tab.name][specID][config.DB] = value
-							self.FontStringTitle:SetText((config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= config.MAX and "|cff00ff00AUTO|r" or value))
+							self.FontStringTitle:SetText(ONOFF(value))
 						end
-						obj.Identify = { Type = config.E, Toggle = config.DB }
-						obj.FontStringTitle = StdUi:FontString(obj, (config.L.ANY or config.L[CL]) .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID][config.DB] < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB] >= config.MAX and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID][config.DB]))						
+						obj.Identify = { Type = config.E, Toggle = config.DB }						
+						obj.FontStringTitle = StdUi:FontString(obj, ONOFF(TMW.db.profile.ActionDB[tab.name][specID][config.DB]))
+						obj.FontStringTitle:SetJustifyH("CENTER")						
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
-						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)						
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "BOTTOM", true)						
 					elseif config.E == "LayoutSpace" then	
-						obj = LayoutSpace(tab.childs[spec])
+						obj = LayoutSpace(anchor)
 					end 
 					
 					local margin = config.ElementOptions and config.ElementOptions.margin or { top = 10 } 					
 					SpecRow:AddElement(obj, { column = math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), margin = margin })
 				end
 			end
+			
+			-- Fix StdUi 			
+			-- Lib is not optimized for resize since resizer changes only source parent, this is deep child parent 
+			function anchor:DoLayout()
+				local l = self.layout
+				local width = tab.frame:GetWidth() - l.padding.left - l.padding.right
 
-			tab.childs[spec]:DoLayout()
+				local y = -l.padding.top
+				for i = 1, #self.rows do
+					local r = self.rows[i]
+					y = y - r:DrawRow(width, y)
+				end
+			end			
+
+			anchor:DoLayout()	
 		end 
 		
 		if tab.name == 3 then 
+			if not Action[specID] then 
+				UI_Title:SetText(L["TAB"]["NOTHING"])
+				return 
+			end 
 			UI_Title:SetText(L["TAB"][tab.name]["HEADTITLE"])
 			
 			StdUi:EasyLayout(tab.childs[spec], { padding = { top = 50 } })	
@@ -5415,7 +5512,7 @@ function Action.ToggleMainUI()
 			local function ScrollTableActionsData()
 				local data = {}
 				if Action[specID] then 
-					local ToggleAutoHidden = TMW.db.profile.ActionDB[tab.name].AutoHidden
+					local ToggleAutoHidden = Action.GetToggle(tab.name, "AutoHidden")
 					for k, v in pairs(Action[specID]) do 
 						if type(v) ~= "function" and not v.Hidden then 
 							local Enabled = "True"
@@ -5564,6 +5661,7 @@ function Action.ToggleMainUI()
 				["ACTIVE_TALENT_GROUP_CHANGED"]		= true,
 				["BAG_UPDATE_COOLDOWN"]				= true,
 				["PLAYER_EQUIPMENT_CHANGED"]		= true,
+				["UI_INFO_MESSAGE"]					= true,
 			}
 			local function EVENTS_INIT() 
 				if Action.GetToggle(tab.name, "AutoHidden") then 
@@ -5575,15 +5673,21 @@ function Action.ToggleMainUI()
 						tab.childs[spec].ScrollTable:UnregisterEvent(k)
 					end 
 				end 
-			end 			
+			end 	
+			EVENTS_INIT() 
 			tab.childs[spec].ScrollTable.ts = 0
 			tab.childs[spec].ScrollTable:SetScript("OnEvent", function(self, event, ...)
 				-- It triggers even if UI is hidden 
-				if TMW.time ~= self.ts and TMW.db.profile.ActionDB[tab.name].AutoHidden and EVENTS[event] then 
+				if TMW.time ~= self.ts and Action.GetToggle(tab.name, "AutoHidden") and EVENTS[event] then 
 					self.ts = TMW.time 
 					-- Update ScrollTable if pet gone or summoned or swaped
 					if event == "UNIT_PET" then 
 						if ... == "player" then 						
+							self:SetData(ScrollTableActionsData())	
+							self:SortData(self.SORTBY)
+						end 
+					elseif event == "UI_INFO_MESSAGE" then 
+						if Env.UI_INFO_MESSAGE_IS_WARMODE(...) then 
 							self:SetData(ScrollTableActionsData())	
 							self:SortData(self.SORTBY)
 						end 
@@ -7088,7 +7192,7 @@ function Action.ToggleMainUI()
 		end 
 		
 		if tab.name == 7 then 
-			if not Action.Data.ProfileUI or not Action.Data.ProfileUI[tab.name] or not Action.Data.ProfileUI[tab.name][specID] then 
+			if not Action.Data.ProfileUI or not Action.Data.ProfileUI[tab.name] or not Action.Data.ProfileUI[tab.name][specID] or not next(Action.Data.ProfileUI[tab.name][specID]) then 
 				UI_Title:SetText(L["TAB"]["NOTHING"])
 				return 
 			end 		
@@ -7587,14 +7691,17 @@ Action.PlayerRace = select(2, UnitRace("player"))
 
 local IsStealthed = IsStealthed
 
-local GetSpellTexture, GetSpellLink, GetSpellInfo = TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
-local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
-local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
+local GetSpellTexture, GetSpellLink, GetSpellInfo = 
+  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
+local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = 
+	  GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
+local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = 
+	  UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
 
-local UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals = UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals
-local GetMouseFocus, IsMouseButtonDown = GetMouseFocus, IsMouseButtonDown
-
-local ItemHasRange = ItemHasRange
+local UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitInParty, UnitInRaid = 
+	  UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitInParty, UnitInRaid
+local GetMouseFocus, IsMouseButtonDown = 
+	  GetMouseFocus, IsMouseButtonDown
 
 ACTION_CONST_TRINKET1 = 		1030902 	-- GetSpellTexture(179071)
 ACTION_CONST_TRINKET2 = 		1030910 	-- GetSpellTexture(224540)
@@ -7942,11 +8049,11 @@ function Action:SetQueue(args)
 	--- QueueAuto: Action:SetQueue({ Silence = true, Priority = 1 }) just sometimes simcraft use it in some place
 	--[[@usage: args (table)
 	 	Optional: 
-			PowerType (number) custom offset 
-			PowerCost (number) custom offset 
-			ExtraCD (number) custom offset
+			PowerType (number) custom offset 													(passing conditions to func QueueValidCheck)
+			PowerCost (number) custom offset 													(passing conditions to func QueueValidCheck)
+			ExtraCD (number) custom offset														(passing conditions to func QueueValidCheck)
 			Silence (boolean) if true don't display print 
-			Unit (string) specified for spells usually to check their for range on certain unit
+			Unit (string) specified for spells usually to check their for range on certain unit (passing conditions to func QueueValidCheck)
 			Value (boolean) sets custom fixed statement for queue
 			Priority (number) put in specified priority 
 			MetaSlot (number) usage for MSG system to set queue on fixed position 
@@ -8071,25 +8178,29 @@ function Action:QueueValidCheck()
 	-- Why "player"? Coz while @target an enemy you can set queue of supportive spells for "self" and if they will be used on enemy then they will be applied on "player" 
 	local unit 
 	if self.Type == "Spell" then 
-		if not SpellHasRange(self:Info()) then 
+		if not SpellHasRange(self:Info()) or isSpellRangeException[self.ID] then 
 			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
 		else
-			unit = self.Unit or ((Env.IamHealer or IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())) and "target") or "player"
-			if IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info()) then 
+			local isHarm = IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())
+			unit = self.Unit or ((isHarm or IsHelpfulSpell(self:Info())) and "target") or "player"
+			if isHarm then 
 				return Env.Unit(unit):IsEnemy() and Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache)
 			else 
-				return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache))
+				return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))
 			end 
 		end 
 	else 
 		if not ItemHasRange(self.ID) then 
 			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
 		else
-			unit = self.Unit or (IsHarmfulItem(self:Info()) and "target") or (not Env.IamHealer and "player") or "target"
-			if IsHarmfulItem(self:Info()) then 
+			local isHarm = IsHarmfulItem(self:Info())
+			-- IsHelpfulItem under testing phase
+			-- unit = self.Unit or ((isHarm or IsHelpfulItem(self:Info())) and "target") or (not Env.IamHealer and "player") or "target"
+			unit = self.Unit or (isHarm and "target") or (not Env.IamHealer and "player") or "target"
+			if isHarm then 
 				return Env.Unit(unit):IsEnemy() and self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache)
 			else 
-				return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache))
+				return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit))
 			end 
 		end 		
 	end 
@@ -8123,7 +8234,7 @@ end
 
 function Action.MacroQueue(key, args)
 	-- Avoid lua errors for non exist key
-	if not Action[Env.PlayerSpec][key] then 
+	if not Action[Env.PlayerSpec] or not Action[Env.PlayerSpec][key] then 
 		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
 		return 	 
 	end 
@@ -8510,7 +8621,7 @@ local PauseChecks = Cache:WrapStatic(function()
 		return "texture", 236399
 	end 
 		
-	if Action.GetToggle(1, "CheckDeadOrGhostTarget") and Env.UNITDead("target") and (not Env.InPvP() or select(2, UnitClass("target")) ~= "HUNTER") then 
+	if Action.GetToggle(1, "CheckDeadOrGhostTarget") and Env.UNITDead("target") and (not Env.InPvP() or select(2, UnitClass("target")) ~= "HUNTER") then -- exception in PvP Hunter
 		return "texture", 236399
 	end 	
 	
@@ -8518,7 +8629,7 @@ local PauseChecks = Cache:WrapStatic(function()
 		return "texture", 975744
 	end 
 
-	if Action.GetToggle(1, "CheckCombat") and CombatTime("player") == 0 and CombatTime("target") == 0 and not Env.global_invisible() and not Action.BossMods_IsPulling() then -- exception Stealthed and DBM pulling event 
+	if Action.GetToggle(1, "CheckCombat") and CombatTime("player") == 0 and CombatTime("target") == 0 and not Env.global_invisible() and Action.BossMods_Pulling() == 0 then -- exception Stealthed and DBM pulling event 
 		return "texture", 134376
 	end 	
 	
@@ -8565,7 +8676,8 @@ function Action.IsUnitFriendly(thisunit)
 					not UnitExists("mouseover") or 
 					Env.Unit("mouseover"):IsEnemy()
 				) and 
-				not Env.Unit(thisunit):IsEnemy() 
+				not Env.Unit(thisunit):IsEnemy() and
+				UnitExists(thisunit)
 	end 
 end 
 Action.IsUnitFriendly = Action.MakeFunctionCachedDynamic(Action.IsUnitFriendly)
@@ -8642,8 +8754,8 @@ function Action.BossMods_IsBossPull(unit, counter)
 	end 
 end 
 
-function Action.BossMods_IsPulling()
-	return Action.GetToggle(1, "DBM") and Env.DBM_PullTimer() > 0
+function Action.BossMods_Pulling()
+	return Action.GetToggle(1, "DBM") and Env.DBM_PullTimer() or 0
 end 
 
 function Action.BurstIsON(thisunit)
@@ -8837,18 +8949,18 @@ function Action:AutoRacial(unit, isReadyCheck)
 				(
 					Env.InPvP() and 
 					Env.FriendlyTeam():ArcaneTorrentMindControl()
+				) or 				 
+				(
+					unit and 
+					(not Env.Unit(unit):IsEnemy() or UnitInParty(unit) or UnitInRaid(unit)) and 
+					Env.Unit(unit):GetRange() <= 8 and 
+					Action.AuraIsValid(unit, "UsePurge", "PurgeFriendly")					
 				) or 
 				(
 					unit and 
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 8 and 
 					Action.AuraIsValid(unit, "UsePurge", "PurgeHigh")
-				) or 
-				(
-					unit and 
-					not Env.Unit(unit):IsEnemy() and 
-					Env.Unit(unit):GetRange() <= 8 and 
-					Action.AuraIsValid(unit, "UsePurge", "PurgeFriendly")					
 				)
 			)
 		then 
@@ -8896,7 +9008,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 			not ShouldStop and 
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
-			Env.Unit(unit):IsControlAble("incapacitate") and 
+			Env.Unit(unit):IsControlAble("incapacitate", 0) and 
 			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true 			  
@@ -8907,7 +9019,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 			not ShouldStop and 
 			Env.SpellInRange(unit, self.ID) and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
-			Env.Unit(unit):IsControlAble("stun") and 
+			Env.Unit(unit):IsControlAble("stun", 0) and 
 			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 		then
 			return true			  
@@ -8922,7 +9034,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 					Env.Unit(unit):IsEnemy() and 
 					Env.Unit(unit):GetRange() <= 8 and 					
 					select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.7 and 
-					Env.Unit(unit):IsControlAble("stun") and 
+					Env.Unit(unit):IsControlAble("stun", 0) and 
 					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 				) or 
 				(
@@ -8942,7 +9054,7 @@ function Action:AutoRacial(unit, isReadyCheck)
 			not ShouldStop and 
 			Env.Unit(unit):GetRange() <= 6 and 
 			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and
-			-- Env.Unit(unit):IsControlAble("knockback") and -- I removed it from 1.1 seems it hasn't DR either it's not so often to be checked 
+			Env.Unit(unit):IsControlAble("knockback") and 
 			self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
 		then
 			return true				  
@@ -9071,12 +9183,12 @@ function Action:AutoRacialP(unit, isReadyCheck)
 		elseif 	Action.PlayerRace == "Pandaren" then 
 			return 	unit and 
 					Env.SpellInRange(unit, self.ID) and 		
-					Env.Unit(unit):IsControlAble("incapacitate") and 
+					Env.Unit(unit):IsControlAble("incapacitate", 0) and 
 					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true) 			  				
 		elseif 	Action.PlayerRace == "KulTiran" then 
 			return 	unit and 
 					Env.SpellInRange(unit, self.ID) and 
-					Env.Unit(unit):IsControlAble("stun") and 
+					Env.Unit(unit):IsControlAble("stun", 0) and 
 					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)		  		 
 		elseif 	Action.PlayerRace == "Tauren" then 
 			return 	(
@@ -9084,7 +9196,7 @@ function Action:AutoRacialP(unit, isReadyCheck)
 							unit and 	
 							Env.Unit(unit):IsEnemy() and 
 							Env.Unit(unit):GetRange() <= 8 and 					
-							Env.Unit(unit):IsControlAble("stun") and 
+							Env.Unit(unit):IsControlAble("stun", 0) and 
 							self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
 						) or 
 						(
@@ -9224,7 +9336,7 @@ function Action.Rotation(icon)
 	if meta == 5 then 
 		-- Use racial available trinkets if we don't have additional LOS 
 		-- Note: Additional LOS is the main reason why I avoid here :AutoRacial (see below 'if isApplied then ')
-		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) then 
+		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) and (not Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]] or not Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]]:IsBlocked()) then 
 			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
 			if result then 
 				Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
@@ -9341,7 +9453,7 @@ function Action.Rotation(icon)
 		return Action.ShowQueue(icon)                                          		-- if everything success then set frame 				 
     end 
 	
-	-- [3] Single / [4] AoE / [7-8] Passive: @party1-2, @raid2-3, @arena2-3
+	-- [3] Single / [4] AoE / [6-8] Passive: @player-party1-2, @raid1-3, @arena1-3
 	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
 		return true 
 	end 
