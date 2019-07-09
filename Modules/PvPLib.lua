@@ -14,8 +14,8 @@ local IsInRaid, IsInGroup =
 local RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetItemCooldown, GetSpellInfo = 
 	  RequestBattlefieldScoreData, GetNumArenaOpponentSpecs, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers, GetItemCooldown, A.GetSpellInfo
 
-local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification = 
-	  UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification
+local UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification, UnitThreatSituation = 
+	  UnitAttackSpeed, UnitPowerType, UnitClass, UnitGUID, UnitPower, UnitIsUnit, UnitIsPlayer, UnitExists, UnitInRange, UnitCreatureType, UnitName, UnitCastingInfo, UnitChannelInfo, UnitClassification, UnitThreatSituation
 
 local GetSpecialization, GetSpecializationInfo, GetNumClasses, GetClassInfo, GetNumSpecializationsForClassID, GetSpecializationInfoForClassID = 
 	  GetSpecialization, GetSpecializationInfo, GetNumClasses, GetClassInfo, GetNumSpecializationsForClassID, GetSpecializationInfoForClassID
@@ -1063,16 +1063,18 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsTanking = Cache:Wrap(function(self, otherunit, range)  
 			local UnitID = self.UnitID
-			local ThreatThreshold = ThreatThreshold or 2			
+			local ThreatThreshold = 3			
 			local ThreatSituation = UnitThreatSituation(UnitID, otherunit or "target")
-			return ThreatSituation and ThreatSituation >= ThreatThreshold or Env.Unit(UnitID):IsTankingAoE(range)	       
+			return ((Env.InPvP() and UnitIsUnit(UnitID, (otherunit or "target") .. "target")) or (not Env.InPvP() and ThreatSituation and ThreatSituation >= ThreatThreshold)) or Env.Unit(UnitID):IsTankingAoE(range)	       
 	end, "UnitID"),
 	IsTankingAoE = Cache:Wrap(function(self, range)  
 			local UnitID = self.UnitID
+			local ThreatThreshold = 3
 			local activeUnitPlates = GetActiveUnitPlates("enemy")
 			if activeUnitPlates then
 				for reference, unit in pairs(activeUnitPlates) do
-					if UnitIsUnit(UnitID, unit .. "target") and ( not range or Env.SpellInteract(unit, range) ) then 
+					local ThreatSituation = UnitThreatSituation(UnitID, unit)
+					if ((Env.InPvP() and UnitIsUnit(UnitID, unit .. "target")) or (not Env.InPvP() and ThreatSituation and ThreatSituation >= ThreatThreshold)) and ( not range or Env.SpellInteract(unit, range) ) then 
 						return true  
 					end
 				end   
@@ -1125,7 +1127,7 @@ Env.Unit = PseudoClass({
 		"silence"        
 		"taunt"     -- PvE unlocked   
 		"incapacitate"   
-		"knockback" -- removed in 1.1 DRData
+		"knockback" 
 ]]	
 		local UnitID = self.UnitID 
 		if not Env.InPvP() then 
@@ -1355,12 +1357,12 @@ function Env.Unit:New(UnitID, Refresh)
 end
 
 Env.EnemyTeam = PseudoClass({
-	GetUnitID = Cache:Wrap(function(self, range)
+	GetUnitID = Cache:Wrap(function(self, range, specs)
 			local ROLE = self.ROLE
 			local value = "none" 
 			if tableexist(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) then 
 				for k, arena in pairs(Env.PvPCache[Misc.ArrayEnemy[ROLE]]) do
-					if not Env.UNITDead(arena) and (not range or Env.Unit(arena):GetRange() <= range) then 
+					if not Env.UNITDead(arena) and (not specs or Env.UNITSpec(arena, specs)) and (not range or Env.Unit(arena):GetRange() <= range) then 
 						value = arena 
 						break 
 					end 
@@ -1537,6 +1539,28 @@ Env.EnemyTeam = PseudoClass({
 				end  
 			end
 	        return value, pet 
+	end, "ROLE"),
+	IsCastingBreakAble = Cache:Wrap(function(self, offset)
+			local value, arena = false, "none"
+			if tableexist(Env.PvPCache["Group_EnemySize"]) then  
+				if not offset then offset = 0.5 end
+				for i = 1, Env.PvPCache["Group_EnemySize"] do 
+					arena = "arena" .. i
+					local _, left, _, _, spellNAME = Env.CastTime(nil, arena)
+					if left > 0 and left <= offset then 
+						for i = 1, #AuraList["Premonition"] do 
+							if GetSpellInfo(AuraList["Premonition"][i][1]) == spellNAME and Env.Unit(arena):GetRange() <= AuraList["Premonition"][i][2] then 
+								value = true 
+								break
+							end
+						end
+					end
+					if value then 
+						break
+					end
+				end
+			end  
+	        return value, arena
 	end, "ROLE"),
 	IsReshiftAble = Cache:Wrap(function(self, offset)
 			local value, arena = false, "none"
