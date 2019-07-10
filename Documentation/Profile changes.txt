@@ -1,0 +1,4 @@
+[Monk beta v7]
+MW fixed lua errors due totalMembers
+MW changed timings for LifeCocoon with default slider 
+Changed default sliders for ProfileUI
