@@ -4459,7 +4459,7 @@ function Action.ToggleMSG(isLaunch)
 		Listener:Add("MSG_Events", "CHAT_MSG_RAID", UpdateChat)
 		Listener:Add("MSG_Events", "CHAT_MSG_RAID_LEADER", UpdateChat)
 	end 	
-	if Action.MainUI then 
+	if Action.MainUI and Action.Data.ProfileUI and Action.Data.ProfileUI[7] and next(Action.Data.ProfileUI[7][Env.PlayerSpec]) then 
 		local spec = Env.PlayerSpec .. CL
 		local tab = tabFrame.tabs[7]
 		if tab and tab.childs[spec] then 
@@ -5917,6 +5917,7 @@ function Action.ToggleMainUI()
 			local Add = StdUi:Button(tab.childs[spec], InputBox:GetWidth(), 25, L["TAB"][tab.name]["ADD"])
 			local Remove = StdUi:Button(tab.childs[spec], InputBox:GetWidth(), 25, L["TAB"][tab.name]["REMOVE"])					
 			local InterruptUnits = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 12, 30), Action.Data.theme.dd.height, {
+				{ text = "BlackList", value = "BlackList" },
 				{ text = "[Main]PvE: @target / @mouseover / @targettarget", value = "PvETargetMouseover" },
 				{ text = "[Main]PvP: @target / @mouseover / @targettarget", value = "PvPTargetMouseover" },				
 				{ text = "[Heal] @arena1-3", value = "Heal" },				
@@ -6013,6 +6014,18 @@ function Action.ToggleMainUI()
 			end 	
 			local function CheckboxsUpdate()				
 				local val = InterruptUnits:GetValue()			
+				
+				if val == "BlackList" then 
+					-- TargetMouseover
+					if not KickTargetMouseover.isDisabled then KickTargetMouseover:Disable() end 
+					if not TargetMouseoverList.isDisabled then TargetMouseoverList:Disable() end 
+					-- Heal
+					if not KickHeal.isDisabled then KickHeal:Disable() end 
+					if not KickHealOnlyHealers.isDisabled then KickHealOnlyHealers:Disable() end
+					-- PvP 
+					if not KickPvP.isDisabled then KickPvP:Disable() end 
+					if not KickPvPOnlySmart.isDisabled then KickPvPOnlySmart:Disable() end 
+				end 
 				
 				if val:match("TargetMouseover") then 
 					if KickTargetMouseover.isDisabled then KickTargetMouseover:Enable() end
@@ -8338,6 +8351,18 @@ function Action.InterruptIsON(list)
 	return TMW.db.profile.ActionDB[4][Env.PlayerSpec]["Kick" .. list]
 end 
 
+function Action.InterruptIsBlackListed(unit, spellName)
+	-- @return boolean 
+	local blackListed = TMW.db.profile.ActionDB[4].BlackList[GameLocale][spellName]
+	if blackListed and blackListed.Enabled then 
+		local luaCode = blackListed.LUA or nil
+		if RunLua(luaCode, unit) then 
+			return true 
+		end 
+	end 
+	return false 
+end 
+
 function Action.InterruptEnabled(list, spellName)
 	-- @return table 
 	return TMW.db.profile.ActionDB[4][list][GameLocale][spellName] and TMW.db.profile.ActionDB[4][list][GameLocale][spellName].Enabled
@@ -8352,17 +8377,35 @@ function Action.InterruptIsValid(unit, list, ignoreToggle)
 	-- list as "PvETargetMouseover" and "PvPTargetMouseover" must be always "TargetMouseover"
 	if ignoreToggle or Action.InterruptIsON(list) then 	
 		local spellName = Env.Unit(unit, 0):IsCasting()
-		if spellName then 
+		if spellName and not Action.InterruptIsBlackListed(unit, spellName) then 
 			if list == "TargetMouseover" then 
 				list = (Env.InPvP() and "PvP" or "PvE") .. "TargetMouseover"
-			end 		
-			local luaCode = TMW.db.profile.ActionDB[4][list][GameLocale][spellName] and TMW.db.profile.ActionDB[4][list][GameLocale][spellName].LUA or nil
+			end 	
+
+			local Interrupt = TMW.db.profile.ActionDB[4][list][GameLocale][spellName]
+			local luaCode = Interrupt and Interrupt.LUA or nil
+			
 			if list:match("TargetMouseover") then
 				return not Action.GetToggle(4, "TargetMouseoverList") or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) 
+				--[[ 
+				if not Action.GetToggle(4, "TargetMouseoverList") or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) then 
+					return Interrupt.useKick, Interrupt.useCC
+				end 
+				]]
 			elseif list == "Heal" then 
 				return Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Env.Unit(unit):IsHealer()) and RunLua(luaCode, unit)
+				--[[
+				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Env.Unit(unit):IsHealer()) and RunLua(luaCode, unit) then 
+					return Interrupt.useKick, Interrupt.useCC
+				end 
+				]]
 			elseif list == "PvP" then 
 				return Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unit)
+				--[[
+				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unit) then 
+					return Interrupt.useKick, Interrupt.useCC
+				end 
+				]]
 			end
 		end 
 	end 
