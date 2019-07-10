@@ -9,6 +9,7 @@ local AzeriteTraits = {}
 
 local AzeriteEssence = _G.C_AzeriteEssence
 local AzeriteEssences = { Total = {} }
+local FindSpellOverrideByID = FindSpellOverrideByID
 
 if AzeriteEssence then 
 	AzeriteEssences.IsPassive = {
@@ -171,12 +172,11 @@ function AzeriteEssences.GetInfo(milestone)
 			local temp = {
 				spellID = spellID,
 				spellName = Action.GetSpellInfo(spellID),
-				essenceID = essenceID,
+				essenceID = essenceID,							-- same info.ID
 				milestoneID = milestone.ID,
 				requiredLevel = milestone.requiredLevel,
 				slot = milestone.slot, 							-- selected position in AzeriteEssenceUI
-				canUnlock = milestone.canUnlock,
-				ID = info.ID, 									-- ID of what? (number)
+				--canUnlock = milestone.canUnlock,				-- bullshit
 				Name = info.name, 								-- Name of Essence (not a spell) 
 				Rank = info.rank, 
 				Unlocked = info.unlocked, 						-- or milestone.unlocked?
