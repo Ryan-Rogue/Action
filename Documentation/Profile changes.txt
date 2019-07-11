@@ -1,3 +1,7 @@
+[Monk beta v8]
+MW Refreshment and Concentrated Flame changed priority to higher if moving or not channeling
+BM Changed priority for ConcentratedFlame, AnimaofDeath, SuppressingPulse, ArcanePulse, Gift of Naaru, Expel Harm
+
 [Monk beta v7]
 MW fixed lua errors due totalMembers
 MW changed timings for LifeCocoon with default slider 
