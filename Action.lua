@@ -8282,12 +8282,11 @@ function Action:IsCastable(thisunit, skipRange)
 	-- Checks toggle, cooldown and range 
 	if 	self.Type == "Spell" and 
 		not SpellLevel.IsBlocked(self) and
-		( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and AzeriteEssenceGetMajor() and AzeriteEssenceGetMajor().spellName == self:Info()) ) and 
 		IsUsableSpell(self.ID) and
 		Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
 		( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) )
 	then 
-		return true 		
+		return true 				
 	end 
 	
 	if 	self.Type == "Trinket" and 
