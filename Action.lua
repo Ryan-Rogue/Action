@@ -8280,22 +8280,14 @@ end
 --- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA + CD/RANGE CHECK ]]
 function Action:IsCastable(thisunit, skipRange)
 	-- Checks toggle, cooldown and range 
-	if 	self.Type == "Spell" then 
-		if self.SubType == "HeartOfAzeroth" then 
-			local Major = AzeriteEssenceGetMajor()
-			if Major then 
-				self.ID = Major.spellID 
-			end 
-		end 
-		
-		if  not SpellLevel.IsBlocked(self) and
-			( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and Major and Major.spellName == self:Info() ) ) and 
-			IsUsableSpell(self.ID) and
-			Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-			( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) )
-		then
-			return true 
-		end 
+	if 	self.Type == "Spell" and 
+		not SpellLevel.IsBlocked(self) and
+		( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and AzeriteEssenceGetMajor() and AzeriteEssenceGetMajor().ID == self.ID ) ) and 
+		IsUsableSpell(self.ID) and
+		Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
+		( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) )
+	then 
+		return true 		
 	end 
 	
 	if 	self.Type == "Trinket" and 
