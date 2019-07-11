@@ -1,5 +1,5 @@
 --- 
-local DateTime = "09.07.2019"
+local DateTime = "12.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -1819,8 +1819,8 @@ local function ClearTrash()
 				TMW.db.global.CodeSnippets[i] = nil 
 				TMW.db.global.CodeSnippets.n = TMW.db.global.CodeSnippets.n - 1
 			end
-		end
-	end 
+		end		 	
+	end 	
 end 
 hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 
@@ -3387,8 +3387,9 @@ local function ActionDB_Initialization()
 	-- Register Localization
 	----------------------------------	
 	GetLocalization()
+	
 	local profile = TMW.db:GetCurrentProfile()
-		
+	
 	-- Load default profile if current profile is generated as default
 	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
 	if profile == defaultprofile then 
@@ -3396,12 +3397,15 @@ local function ActionDB_Initialization()
 		if AllProfiles then 			
 			for i = 1, #AllProfiles do 
 				if AllProfiles[i] == Action.Data.DefaultProfile[pclass] then 
+					if TMW.Locked then 
+						TMW:LockToggle()
+					end 
 					TMW.db:SetProfile(Action.Data.DefaultProfile[pclass])
 					return
 				end
 			end 
 		end
-	end 
+	end 		
 		
 	-- Check if profile support Action
 	if not Action.Data.ProfileEnabled[profile] then 				
@@ -3619,7 +3623,7 @@ local function ActionDB_Initialization()
 			end
 		end 
 
-		local Coroutine
+		local Coroutine 
 		function TMW:OnUpdate()
 			start = debugprofilestop()			
 			
@@ -3679,9 +3683,9 @@ end
 local SpellLevel = { Blocked = {} }
 function SpellLevel.Wipe()
 	wipe(SpellLevel.Blocked)
-	SpellLevel.PlayerSpec = nil
-	SpellLevel.PlayerLVL = nil
-	SpellLevel.Initialized = nil
+	SpellLevel.PlayerSpec = -1
+	SpellLevel.PlayerLVL = -1
+	SpellLevel.Initialized = false
 end 
 function SpellLevel.Update(...)
 	if SpellLevel.Initialized then
@@ -5539,7 +5543,7 @@ function Action.ToggleMainUI()
 				if Action[specID] then 
 					local ToggleAutoHidden = Action.GetToggle(tab.name, "AutoHidden")
 					for k, v in pairs(Action[specID]) do 
-						if type(v) ~= "function" and not v.Hidden then 
+						if type(v) == "table" and not v.Hidden then 
 							local Enabled = "True"
 							if v:IsBlocked() then 
 								Enabled = "False"
@@ -5680,9 +5684,9 @@ function Action.ToggleMainUI()
 			local EVENTS = {
 				["UNIT_PET"] 						= true,
 				["PLAYER_LEVEL_UP"]					= true,
-				["PLAYER_TALENT_UPDATE"]			= true,
+				--["PLAYER_TALENT_UPDATE"]			= true, -- caused not really normal behaivor while loading screen with opened [3] tab
 				["ACTIVE_TALENT_GROUP_CHANGED"]		= true,
-				["BAG_UPDATE_COOLDOWN"]				= true,
+				["BAG_UPDATE_DELAYED"]				= true,
 				["PLAYER_EQUIPMENT_CHANGED"]		= true,
 				["UI_INFO_MESSAGE"]					= true,
 			}
@@ -5700,8 +5704,7 @@ function Action.ToggleMainUI()
 			EVENTS_INIT() 
 			tab.childs[spec].ScrollTable.ts = 0
 			tab.childs[spec].ScrollTable:SetScript("OnEvent", function(self, event, ...)
-				-- It triggers even if UI is hidden 
-				if TMW.time ~= self.ts and Action.GetToggle(tab.name, "AutoHidden") and EVENTS[event] then 
+				if self:IsVisible() and TMW.time ~= self.ts and Action.GetToggle(tab.name, "AutoHidden") and EVENTS[event] then 
 					self.ts = TMW.time 
 					-- Update ScrollTable if pet gone or summoned or swaped
 					if event == "UNIT_PET" then 
@@ -5714,7 +5717,7 @@ function Action.ToggleMainUI()
 							self:SetData(ScrollTableActionsData())	
 							self:SortData(self.SORTBY)
 						end 
-					else 				
+					else 		
 						self:SetData(ScrollTableActionsData())	
 						self:SortData(self.SORTBY)
 					end 
@@ -7677,12 +7680,12 @@ local HealerSpecs = {
 }
 local PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = 0
 function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
-	if (TMW.time == PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP) or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") then
-		return
-	end
-	
 	Env.PlayerSpec, Env.PlayerSpecName = GetSpecializationInfo(GetSpecialization()) 
     Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
+	
+	if (TMW.time == PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP) or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") or not Env.PlayerSpec then
+		return
+	end
 	
 	if Action.IsInitialized then 
 		if Action.MainUI then 
