@@ -2433,7 +2433,7 @@ local function tMerge(default, new, special, nonexistremove)
 				result[k] = {}
 				for ID in pairs(v) do
 					if type(ID) == "number" then 												
-						result[k][Spell:CreateFromSpellID(ID):GetSpellName()] = { Enabled = true, ID = ID }
+						result[k][Spell:CreateFromSpellID(ID):GetSpellName()] = { Enabled = true, ID = ID, useKick = true, useCC = true }
 					end 
 				end
 			elseif special and v.ISCURSOR then 
@@ -8292,7 +8292,7 @@ function Action:IsCastable(thisunit, skipRange)
 			( self.SubType ~= "HeartOfAzeroth" or (Action.GetToggle(1, "HeartOfAzeroth") and Major and Major.spellName == self:Info() ) ) and 
 			IsUsableSpell(self.ID) and
 			Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-			( skipRange or not thisunit or thisunit == "player" or not SpellHasRange(self:Info()) or Env.SpellInRange(thisunit, self.ID) )
+			( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) )
 		then
 			return true 
 		end 
