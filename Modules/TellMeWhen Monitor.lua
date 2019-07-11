@@ -240,10 +240,13 @@ local LastCastException = {
     ["MAGE"] = 12051,    -- Evocation
     ["PRIEST"] = 15407,  -- Mind Fly
 }
+local CurrentCastException = {
+	[293491] = true, -- Cyclotronic Blast
+}
 function Env.ShouldStop() -- true 
     local ping = (select(4, GetNetStats()) / 1000 * 2) + 0.05 
 	local cGCD = Env.CurrentTimeGCD()
-    return (Env.GCD() - cGCD > 0.3 and cGCD >= ping + 0.45) or ((not LastCastException[pclass] or Env.LastPlayerCastID ~= LastCastException[pclass]) and PlayerCastingEnd() > ping) or false
+    return (Env.GCD() - cGCD > 0.3 and cGCD >= ping + 0.45) or ((not LastCastException[pclass] or Env.LastPlayerCastID ~= LastCastException[pclass]) and PlayerCastingEnd() > ping) or CurrentCastException[select(5, Env.Unit("player", 0):IsCasting())] or false
 end
 
 --- =========================== UNITS ============================
