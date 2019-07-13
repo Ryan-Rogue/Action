@@ -48,8 +48,13 @@ function Listener.Trigger(_, event, ...)
 end
 
 --- =========================== GENERAL ===========================
-local IsInInstance, IsActiveBattlefieldArena = IsInInstance, IsActiveBattlefieldArena
-local UnitIsPlayer, UnitExists, UnitInBattleground = UnitIsPlayer, UnitExists, UnitInBattleground
+local IsInInstance, IsActiveBattlefieldArena = 
+	  IsInInstance, IsActiveBattlefieldArena
+local UnitIsPlayer, UnitExists, UnitInBattleground = 
+	  UnitIsPlayer, UnitExists, UnitInBattleground
+local GetInstanceInfo =
+	  GetInstanceInfo
+	  
 function Env.CheckInPvP()
     return 
     Env.Zone == "arena" or 
@@ -66,8 +71,25 @@ local function UpdateZoneAndPvP(event, ...)
         return 
     end 
     
+	-- Update Instance 
     Env.Instance, Env.Zone = IsInInstance()
-    Env.ZoneTimeStampSinceJoined = TMW.time
+	if 	event == "ZONE_CHANGED" or
+        event == "ZONE_CHANGED_INDOORS" or 
+        event == "ZONE_CHANGED_NEW_AREA" or
+        event == "PLAYER_ENTERING_WORLD" or
+        event == "PLAYER_ENTERING_BATTLEGROUND"
+	then 
+		local name, instanceType, difficultyID, _, _, _, _, instanceID, instanceGroupSize = GetInstanceInfo()
+		Env.InstanceInfo = { 
+			name = name,
+			instanceType = instanceType,
+			difficultyID = difficultyID,
+			instanceID = instanceID,
+			instanceGroupSize = instanceGroupSize,
+		} 
+		Env.ZoneTimeStampSinceJoined = TMW.time
+	end 
+	
     if Env.InPvP_Toggle then
         return
     end    
@@ -117,20 +139,27 @@ end
 
 Env.InPvP_Status, Env.InPvP_Toggle = false, false
 Env.Instance, Env.Zone = "none", "none"
-Listener:Add('Stuff_Events', "PLAYER_ENTERING_WORLD", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "PLAYER_ENTERING_BATTLEGROUND", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "PLAYER_TARGET_CHANGED", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "DUEL_FINISHED", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "DUEL_REQUESTED", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "ZONE_CHANGED", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "ZONE_CHANGED_INDOORS", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "ZONE_CHANGED_NEW_AREA", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "UI_INFO_MESSAGE", UpdateZoneAndPvP)
-Listener:Add('Stuff_Events', "PLAYER_LOGIN", UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "PLAYER_ENTERING_WORLD", 			UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "PLAYER_ENTERING_BATTLEGROUND", 	UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "PLAYER_TARGET_CHANGED", 			UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "DUEL_FINISHED", 					UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "DUEL_REQUESTED", 					UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "ZONE_CHANGED", 					UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "ZONE_CHANGED_INDOORS", 			UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "ZONE_CHANGED_NEW_AREA", 			UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "UI_INFO_MESSAGE", 				UpdateZoneAndPvP)
+Listener:Add("Stuff_Events", "PLAYER_LOGIN", 					UpdateZoneAndPvP)
 
 function Env.InPvP()    
     return Env.InPvP_Status or false
 end
+
+function Env.GetTimeSinceJoinInstance()
+	if Env.ZoneTimeStampSinceJoined then 
+		return TMW.time - Env.ZoneTimeStampSinceJoined
+	end 
+	return math.huge 
+end 
 
 --- ============================= FRAME =============================
 function Env.IsIconShown(icon)
