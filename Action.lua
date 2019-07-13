@@ -192,8 +192,8 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Interrupts",	
 				HEADTITLE = "Profile Interrupts",					
-				ID = "SpellID",
-				NAME = "SpellName",
+				ID = "ID",
+				NAME = "Name",
 				ICON = "Icon",
 				CONFIGPANEL = "'Add Interrupt' Configuration",
 				INTERRUPTFRONTSTRINGTITLE = "Select list:",
@@ -216,6 +216,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "Unchecked: @arena1-3 [PvP] custom list don't work\nChecked: @arena1-3 [PvP] custom list will work\n\nRightClick: Create macro",	
 				KICKPVPONLYSMART = "[PvP] SMART",
 				KICKPVPONLYSMARTTOOLTIP = "Checked: will interrupt only accordingly to logic established in profile lua configuration. Example:\n1) Chain control on your healer\n2) Someone friendly (or you) has Burst buffs >4 sec\n3) Someone will die in less than 8 sec\n4) Your (or @target) HP going to execute phase\nUnchecked: will interrupt this list always without any kind of logic\n\nNote: Cause high CPU demand\nRightClick: Create macro",
+				USEKICK = "Kick",
+				USECC = "CC",
+				USERACIAL = "Racial",
 				ADD = "Add Interrupt",					
 				ADDERROR = "|cffff0000You didn't specify anything in 'Write spell' or spell is not found!|r",
 				ADDTOOLTIP = "Add spell from 'Write spell'\neditbox to current selected list",
@@ -473,8 +476,8 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Прерывания",	
 				HEADTITLE = "Прерывания Профиля",					
-				ID = "ID способности",
-				NAME = "Название способности",
+				ID = "ID",
+				NAME = "Название",
 				ICON = "Значок",
 				CONFIGPANEL = "'Добавить Прерывание' Конфигурация",
 				INTERRUPTFRONTSTRINGTITLE = "Выберите список:",	
@@ -497,6 +500,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "НЕ включено: @arena1-3 [PvP] список не работает\nВключено: @arena1-3 [PvP] список будет работать\n\nПравая кнопка мыши: Создать макрос",	
 				KICKPVPONLYSMART = "[PvP] УМНЫЙ",					
 				KICKPVPONLYSMARTTOOLTIP = "Включено: будет прерывать только по логике заложенной в профиле на lua конфигурации. Например:\n1) Цепочку контроля по своему лекарю\n2) Кто-либо из союзников в бурстах >4 сек\n3) Кто-либо из союзников может умереть меньше чем за 8 сек\n4) Вы (или @target) здоровье близко к смертельной фазе\nНЕ включено: будет прерывать этот список всегда без какой либо логики\n\nЗаметка: Вызывает высокое потребление CPU\nПравая кнопка мыши: Создать макрос",					
+				USEKICK = "Киком",
+				USECC = "СС",
+				USERACIAL = "Расовой",
 				ADD = "Добавить Прерывание",
 				ADDERROR = "|cffff0000Вы ничего не указали в 'Введите способность'\nили способность не найдена!|r",				
 				ADDTOOLTIP = "Добавить способность из поля ввода 'Введите способность' в текущий выбранный список",					
@@ -754,8 +760,8 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Unterbrechungen",	
 				HEADTITLE = "Profile Unterbrechungen",				
-				ID = "SpellID",
-				NAME = "SpellName",
+				ID = "ID",
+				NAME = "Name",
 				ICON = "Icon",
 				CONFIGPANEL = "'Unterbrechungen hinzufügen' Menu",
 				INTERRUPTFRONTSTRINGTITLE = "Liste auswählen:",
@@ -778,6 +784,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "Deaktiviert: @arena1-3 [PvP] Benutzerlist funktioniert nicht\nChecked: @arena1-3 [PvP] Benutzerliste funktioniert \n\n Rechtsklick: Create macro",	
 				KICKPVPONLYSMART = "[PvP] Einfach",
 				KICKPVPONLYSMARTTOOLTIP = "Aktiviert: wird nur durch logische Aktionen in der profil lua konfiguration unterbrochen. Beispiel:\n1) CC Kette auf deinen Heiler \n2) Dein partner (oder du) hat seinen Burst Aktiv >4 sec\n3) Wenn jemand in weniger als 8 Sekunden stirbt\n4) Dein (oder @target) HP kommt in die execute Phase\n Deaktiviert: Wird alles mögliche ohne Logik unterbrechen von deiner Liste\n\nNote: Hohe CPU Auslastung\nRightClick: Create macro",
+				USEKICK = "Kick",
+				USECC = "CC",
+				USERACIAL = "Rassisch",
 				ADD = "Unterbrechung hinzufügen",					
 				ADDERROR = "|cffff0000Du hast in 'Zauberspell' nichts angegeben, oder der Zauber wurde nicht gefunden!|r",
 				ADDTOOLTIP = "Füge Fähigkeit von 'Zauberspell'\n Zu deiner Liste",
@@ -1035,7 +1044,7 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Interruptions",	
 				HEADTITLE = "Profile pour les Interruptions",					
-				ID = "SpellID",
+				ID = "ID",
 				NAME = "Nom du sort",
 				ICON = "Icone",
 				CONFIGPANEL = "Configuration 'Ajouter une interuption'",
@@ -1059,6 +1068,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "Décoché: @arena1-3 [PvP] la liste ne fontionne pas\nCoché: @arena1-3 [PvP] La liste fonctionne\n\nClique droit : Créer la macro",	
 				KICKPVPONLYSMART = "[PvP] SMART",
 				KICKPVPONLYSMARTTOOLTIP = "Coché: interrompera seulement en suivant la logic établi dans le profile LUA. Exemple:\n1) Enchaînement de contrôle sur votre heal\n2) Quelqu'un d'amical (ou vous) avait des buffs de Burst >4 sec\n3) Quelqu'un va mourir en moins de 8 sec\n4) Vous (ou @target) HP rentre en phase d'execution \nDécoché: va interrompre les sorts de la liste sans aucune sorte de logique\n\nNote: Cause une demande élevée sur le CPU\nClique droit : Créer la macro",
+				USEKICK = "Kick",
+				USECC = "CC",
+				USERACIAL = "Racial",
 				ADD = "Ajouter une Interruption",					
 				ADDERROR = "|cffff0000Vous n'avez rien préciser dans 'Ajouter un sort' ou le sort n'est pas trouvé!|r",
 				ADDTOOLTIP = "Ajouter un sort depuis 'Ajouter un sort'\nDe la boite de texte à votre liste actuelle",
@@ -1316,8 +1328,8 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Interruzioni",	
 				HEADTITLE = "Profile per le interruzioni",					
-				ID = "ID Incantesimo",
-				NAME = "Nome Incantesimo",
+				ID = "ID",
+				NAME = "Nome",
 				ICON = "Icona",
 				CONFIGPANEL = "'Aggiungi Interruzione' Configurazione",
 				INTERRUPTFRONTSTRINGTITLE = "Seleziona lista:",
@@ -1340,6 +1352,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "Non selezionato: @arena1-3 [PvP] lista custom non attiva\nSelezionato: @arena1-3 [PvP] lista custom attiva\n\nTastodestro: Crea macro",	
 				KICKPVPONLYSMART = "[PvP] SMART",
 				KICKPVPONLYSMARTTOOLTIP = "Selezionato: interompe seguendo la logica definita nella configurazione del profilo. Esempio:\n1) Controllo a catena sul curatore\n2) Bersaglio amico (o tu) ha il raffica di buff con tempo residuo >4 sec\n3) Qualcuno muore in meno di 8 sec\n4) I punti vita tuoi (o @target) vengono considerati\nnon selezionato: interrompe sempre gli incantesimi nella lista senza ulteriori logiche\n\nNota: può causare un alto uso della CPU\nTastodestro: Crea macro",
+				USEKICK = "Calcio",
+				USECC = "CC",
+				USERACIAL = "Razziale",
 				ADDERROR = "|cffff0000Non hai specificato niente in 'Scrivi Incantesimo' o l'incantesimo non é stato trovato!|r",
 				ADD = "Aggiungi Interruzione",					
 				ADDTOOLTIP = "Aggiungi incantesimo indicato in 'Scrivi Incantesimo'\nalla lista selezionata",
@@ -1597,8 +1612,8 @@ local Localization = {
 			[4] = {
 				HEADBUTTON = "Interrupciones",	
 				HEADTITLE = "Perfil de Interrupciones",					
-				ID = "ID de la habilidad",
-				NAME = "Nombre de la habilidad",
+				ID = "ID",
+				NAME = "Nombre",
 				ICON = "Icono",
 				CONFIGPANEL = "'Añadir Interrupción' Configuración",
 				INTERRUPTFRONTSTRINGTITLE = "Seleccionar lista:",
@@ -1621,6 +1636,9 @@ local Localization = {
 				KICKPVPTOOLTIP = "Desmarcado: @arena1-3 [PvP] lista personalizada no funcionará\nChecked: @arena1-3 [PvP] lista personalizada funcionará\n\nClickDerecho: Crear macro",	
 				KICKPVPONLYSMART = "[PvP] INTELIGENTE",
 				KICKPVPONLYSMARTTOOLTIP = "Marcado: interrumpirá solamente acorden a la lógica establecida en la configuración del perfil lua. Ejemplo:\n1) Chain control en tu healer\n2) Alguien amigo (o tu) teneis buffs de Burst > 4 segundos\n3) Alguien morirá en menos de 8 segundos\n4) Tu (o @target) HP va a ejecutar la fase\nDesmarcado: interrumpirá esta lista siempre sin ningún tipo de lógica\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
+				USEKICK = "Patada",
+				USECC = "CC",
+				USERACIAL = "Racial",
 				ADD = "Añadir Interrupción",					
 				ADDERROR = "|cffff0000No has especificado nada en 'Escribir Habilidad' o la habilidad no ha sido encontrada!|r",
 				ADDTOOLTIP = "Añade habilidad del 'Escribir Habilidad'\n edita el cuadro a la lista seleccionada actual",
@@ -2433,7 +2451,7 @@ local function tMerge(default, new, special, nonexistremove)
 				result[k] = {}
 				for ID in pairs(v) do
 					if type(ID) == "number" then 												
-						result[k][Spell:CreateFromSpellID(ID):GetSpellName()] = { Enabled = true, ID = ID, useKick = true, useCC = true }
+						result[k][Spell:CreateFromSpellID(ID):GetSpellName()] = { Enabled = true, ID = ID, useKick = true, useCC = true, useRacial = true }
 					end 
 				end
 			elseif special and v.ISCURSOR then 
@@ -5684,7 +5702,6 @@ function Action.ToggleMainUI()
 			local EVENTS = {
 				["UNIT_PET"] 						= true,
 				["PLAYER_LEVEL_UP"]					= true,
-				--["PLAYER_TALENT_UPDATE"]			= true, -- caused not really normal behaivor while loading screen with opened [3] tab
 				["ACTIVE_TALENT_GROUP_CHANGED"]		= true,
 				["BAG_UPDATE_DELAYED"]				= true,
 				["PLAYER_EQUIPMENT_CHANGED"]		= true,
@@ -5899,7 +5916,7 @@ function Action.ToggleMainUI()
 			UI_Title:SetText(L["TAB"][tab.name]["HEADTITLE"])			
 
 			StdUi:EasyLayout(tab.childs[spec], { padding = { top = 50 } })
-			local ConfigPanel = StdUi:PanelWithTitle(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 12, 30), 120, L["TAB"][tab.name]["CONFIGPANEL"])	
+			local ConfigPanel = StdUi:PanelWithTitle(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 12, 30), 145, L["TAB"][tab.name]["CONFIGPANEL"])	
 			ConfigPanel.titlePanel.label:SetFontSize(14)
 			StdUi:GlueTop(ConfigPanel.titlePanel, ConfigPanel, 0, -5)
 			StdUi:EasyLayout(ConfigPanel, { padding = { top = 50 } })
@@ -5908,12 +5925,16 @@ function Action.ToggleMainUI()
 			local KickHeal = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["KICKHEAL"])
 			local KickPvP = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["KICKPVP"])			
 			local KickTargetMouseover = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["KICKTARGETMOUSEOVER"])
+			local useKick = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["USEKICK"])
+			local useCC = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["USECC"])
+			local useRacial = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["USERACIAL"])
 			local InputBox = StdUi:SearchEditBox(tab.childs[spec], GetWidthByColumn(ConfigPanel, 12), 20, L["TAB"][tab.name]["SEARCH"])
 			local How = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 12), 25, {				
 				{ text = L["TAB"]["GLOBAL"], value = "GLOBAL" },				
 				{ text = L["TAB"]["ALLSPECS"], value = "ALLSPECS" },
 			}, "ALLSPECS")
 			local TargetMouseoverList = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["TARGETMOUSEOVERLIST"])
+			local ResetConfigPanel = StdUi:Button(tab.childs[spec], 70, Action.Data.theme.dd.height, L["RESET"])
 			local LuaButton = StdUi:Button(tab.childs[spec], 50, Action.Data.theme.dd.height, "LUA")
 			LuaButton.FontStringLUA = StdUi:FontString(LuaButton, Action.Data.theme.off)
 			local LuaEditor = CreateLuaEditor(tab.childs[spec], L["TAB"]["LUAWINDOW"], Action.MainUI.default_w, Action.MainUI.default_h, L["TAB"]["LUATOOLTIP"])
@@ -5936,12 +5957,15 @@ function Action.ToggleMainUI()
 					end 
 					InputBox:SetNumber(rowData.ID)
 					InputBox:ClearFocus()
+					useKick:SetChecked(rowData.useKick)
+					useCC:SetChecked(rowData.useCC)
+					useRacial:SetChecked(rowData.useRacial)
 				end 				
 			end 
 			local ScrollTable = StdUi:ScrollTable(tab.childs[spec], {
                 {
                     name = L["TAB"][tab.name]["ID"],
-                    width = 150,
+                    width = 60,
                     align = "LEFT",
                     index = "ID",
                     format = "number",  
@@ -5951,8 +5975,8 @@ function Action.ToggleMainUI()
                 },
                 {
                     name = L["TAB"][tab.name]["NAME"],
-                    width = 277,
-					defaultwidth = 277,
+                    width = 172,
+					defaultwidth = 172,
                     align = "LEFT",
                     index = "Name",
                     format = "string",
@@ -5961,6 +5985,60 @@ function Action.ToggleMainUI()
 					},
                 },
                 {
+                    name = L["TAB"][tab.name]["USEKICK"],
+                    width = 65,
+                    align = "CENTER",
+                    index = "useKickIndex",
+                    format = "string",
+                    color = function(table, value, rowData, columnData)
+                        if value == "ON" then
+                            return { r = 0, g = 1, b = 0, a = 1 }
+                        end
+                        if value == "OFF" then
+                            return { r = 1, g = 0, b = 0, a = 1 }
+                        end
+                    end,
+					events = {
+						OnClick = OnClickCell,
+					},
+                },
+				{
+                    name = L["TAB"][tab.name]["USECC"],
+                    width = 65,
+                    align = "CENTER",
+                    index = "useCCIndex",
+                    format = "string",
+                    color = function(table, value, rowData, columnData)
+                        if value == "ON" then
+                            return { r = 0, g = 1, b = 0, a = 1 }
+                        end
+                        if value == "OFF" then
+                            return { r = 1, g = 0, b = 0, a = 1 }
+                        end
+                    end,
+					events = {
+						OnClick = OnClickCell,
+					},
+                },
+				{
+                    name = L["TAB"][tab.name]["USERACIAL"],
+                    width = 65,
+                    align = "CENTER",
+                    index = "useRacialIndex",
+                    format = "string",
+                    color = function(table, value, rowData, columnData)
+                        if value == "ON" then
+                            return { r = 0, g = 1, b = 0, a = 1 }
+                        end
+                        if value == "OFF" then
+                            return { r = 1, g = 0, b = 0, a = 1 }
+                        end
+                    end,
+					events = {
+						OnClick = OnClickCell,
+					},
+                },
+				{
                     name = L["TAB"][tab.name]["ICON"],
                     width = 50,
                     align = "LEFT",
@@ -5977,7 +6055,7 @@ function Action.ToggleMainUI()
 						OnClick = OnClickCell,
                     },
                 },
-            }, 10, 25)			
+            }, 9, 25)			
 			local headerEvents = {
 				OnClick = function(table, columnFrame, columnHeadFrame, columnIndex, button, ...)
 					if button == "LeftButton" then
@@ -5996,15 +6074,25 @@ function Action.ToggleMainUI()
 				InputBox:SetText("")
 				InputBox.val = ""
 				LuaEditor.EditBox:SetText("")
-				LuaButton.FontStringLUA:SetText(Action.Data.theme.off)			
+				LuaButton.FontStringLUA:SetText(Action.Data.theme.off)	
+				useKick:SetChecked(false)
+				useCC:SetChecked(false)
+				useRacial:SetChecked(false)
 			end 
 			local function ScrollTableInterruptData(InterruptUnits)
 				local data = {}
 				for k, v in pairs(TMW.db.profile.ActionDB[4][InterruptUnits][GameLocale]) do 
 					if v.Enabled then 
+						local useKickIndex, useCCIndex, useRacialIndex = v.useKick, v.useCC, v.useRacial
+						useKickIndex 	= useKickIndex 		and "ON" or "OFF"
+						useCCIndex 		= useCCIndex 		and "ON" or "OFF"
+						useRacialIndex 	= useRacialIndex 	and "ON" or "OFF"
 						table.insert(data, setmetatable({ 									
-								Name = k,
-								Icon = select(3, Action.GetSpellInfo(v.ID)),								
+								Name 			= k,
+								Icon 			= select(3, Action.GetSpellInfo(v.ID)),	
+								useKickIndex 	= useKickIndex,
+								useCCIndex 		= useCCIndex,
+								useRacialIndex 	= useRacialIndex,
 							}, {__index = v}))
 					end 
 				end
@@ -6028,6 +6116,18 @@ function Action.ToggleMainUI()
 					-- PvP 
 					if not KickPvP.isDisabled then KickPvP:Disable() end 
 					if not KickPvPOnlySmart.isDisabled then KickPvPOnlySmart:Disable() end 
+					-- Disable use checkboxs
+					useKick:SetChecked(false)
+					useCC:SetChecked(false)
+					useRacial:SetChecked(false)
+					if not useKick.isDisabled then useKick:Disable() end 
+					if not useCC.isDisabled then useCC:Disable() end 
+					if not useRacial.isDisabled then useRacial:Disable() end 
+				else 
+					-- Enable use checkboxs 
+					if useKick.isDisabled then useKick:Enable() end 
+					if useCC.isDisabled then useCC:Enable() end 
+					if useRacial.isDisabled then useRacial:Enable() end 
 				end 
 				
 				if val:match("TargetMouseover") then 
@@ -6086,8 +6186,8 @@ function Action.ToggleMainUI()
 					return 
 				end 
 				local SpellID = InputBox.val
-				local Name, _, _, castTime = Action.GetSpellInfo(SpellID)	
-				if not SpellID or Name == nil or Name == "" or SpellID <= 1 or castTime == 0 then 
+				local Name = Action.GetSpellInfo(SpellID)	
+				if not SpellID or Name == nil or Name == "" or SpellID <= 1 then 
 					Action.Print(L["TAB"][tab.name]["ADDERROR"]) 
 				else 
 					local InterruptList = InterruptUnits:GetValue()
@@ -6096,21 +6196,27 @@ function Action.ToggleMainUI()
 						CodeLua = nil 
 					end 
 					
+					local Kick, CC, Racial = useKick:GetChecked(), useCC:GetChecked(), useRacial:GetChecked()
+					
 					local HowTo = How:GetValue()
 					if HowTo == "GLOBAL" then 
 						for _, profile in pairs(TMW.db.profiles) do 
 							if profile.ActionDB and profile.ActionDB[tab.name] and profile.ActionDB[tab.name][InterruptList] and profile.ActionDB[tab.name][InterruptList][GameLocale] then 	
-								profile.ActionDB[tab.name][InterruptList][GameLocale][Name] = { Enabled = true, ID = SpellID, Name = Name, LUA = CodeLua }
+								profile.ActionDB[tab.name][InterruptList][GameLocale][Name] = { Enabled = true, ID = SpellID, Name = Name, LUA = CodeLua, useKick = Kick, useCC = CC, useRacial = Racial }
 							end 
 						end 					
 					elseif HowTo == "ALLSPECS" then 
-						TMW.db.profile.ActionDB[tab.name][InterruptList][GameLocale][Name] = { Enabled = true, ID = SpellID, Name = Name, LUA = CodeLua }
+						TMW.db.profile.ActionDB[tab.name][InterruptList][GameLocale][Name] = { Enabled = true, ID = SpellID, Name = Name, LUA = CodeLua, useKick = Kick, useCC = CC, useRacial = Racial }
 					end 					
 
 					ScrollTableUpdate()	
 					InputBox:ClearFocus()
 					InputBox:SetText("")
 					InputBox.val = ""
+					-- Clear checkboxs 
+					useKick:SetChecked(false)
+					useCC:SetChecked(false)
+					useRacial:SetChecked(false)
 				end 
 			end)          
             StdUi:FrameTooltip(Add, L["TAB"][tab.name]["ADDTOOLTIP"], nil, "TOPRIGHT", true)		
@@ -6342,10 +6448,14 @@ function Action.ToggleMainUI()
 			ConfigPanel:AddRow({ margin = { top = -20, left = -10, right = -10 } }):AddElements(KickPvPOnlySmart, KickHealOnlyHealers, KickTargetMouseover, { column = "even" })
 			ConfigPanel:AddRow({ margin = { top = -10, left = -10, right = -10 } }):AddElements(KickPvP, KickHeal, TargetMouseoverList, { column = "even" })
 			ConfigPanel:AddRow({ margin = { top = 5, left = -15, right = -15 } }):AddElement(InputBox)
+			ConfigPanel:AddRow({ margin = { top = -10, left = -10, right = -10 } }):AddElements(useKick, useCC, useRacial, { column = "even" })
 			ConfigPanel:DoLayout()		
 			tab.childs[spec]:AddRow({ margin = { left = -15, right = -15 } }):AddElement(How)
 			tab.childs[spec]:AddRow({ margin = { top = -10, left = -15, right = -15 } }):AddElements(Add, Remove, { column = "even" })
-			tab.childs[spec]:DoLayout()	
+			tab.childs[spec]:DoLayout()
+
+			ResetConfigPanel:SetScript("OnClick", Reset)
+			StdUi:GlueTop(ResetConfigPanel, ConfigPanel, 0, 0, "LEFT")			
 			
 			LuaButton:SetScript("OnClick", function()
 				if not LuaEditor:IsShown() then 
@@ -6354,7 +6464,7 @@ function Action.ToggleMainUI()
 					LuaEditor.closeBtn:Click()
 				end 
 			end)
-			StdUi:GlueAbove(LuaButton, InputBox, 0, 0, "RIGHT")
+			StdUi:GlueTop(LuaButton, ConfigPanel, 0, 0, "RIGHT")
 			StdUi:GlueLeft(LuaButton.FontStringLUA, LuaButton, -5, 0)
 
 			LuaEditor:HookScript("OnHide", function(self)
@@ -7716,7 +7826,6 @@ function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
 	PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = TMW.time 
 end
 Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-Action:RegisterEvent("PLAYER_TALENT_UPDATE", "PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_LOGIN", "PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_SPECIALIZATION_CHANGED")
@@ -8287,7 +8396,10 @@ function Action:IsCastable(thisunit, skipRange)
 		not SpellLevel.IsBlocked(self) and
 		IsUsableSpell(self.ID) and
 		Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-		( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) )
+		( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) ) and 
+		-- 8.2 Queen Court - Repeat Performance (DeBuff)
+		-- 2164 is The Eternal Palace  
+		( not Env.InstanceInfo or Env.InstanceInfo.instanceID ~= 2164 or Env.Unit("player"):HasDeBuffs(301244) == 0 or (Env.LastPlayerCastID ~= self.ID and select(2, Env.CastTime(self.ID)) == 0) ) 		
 	then 
 		return true 				
 	end 
@@ -8368,6 +8480,7 @@ local function SmartInterrupt()
 end 
 
 function Action.InterruptIsValid(unit, list, ignoreToggle)
+	-- @return boolean (Kick, CC, Racial)
 	-- list as "PvETargetMouseover" and "PvPTargetMouseover" must be always "TargetMouseover"
 	if ignoreToggle or Action.InterruptIsON(list) then 	
 		local spellName = Env.Unit(unit, 0):IsCasting()
@@ -8380,30 +8493,33 @@ function Action.InterruptIsValid(unit, list, ignoreToggle)
 			local luaCode = Interrupt and Interrupt.LUA or nil
 			
 			if list:match("TargetMouseover") then
-				return not Action.GetToggle(4, "TargetMouseoverList") or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) 
-				--[[ 
 				if not Action.GetToggle(4, "TargetMouseoverList") or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) then 
-					return Interrupt.useKick, Interrupt.useCC
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true 
+					end 
 				end 
-				]]
 			elseif list == "Heal" then 
-				return Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Env.Unit(unit):IsHealer()) and RunLua(luaCode, unit)
-				--[[
 				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Env.Unit(unit):IsHealer()) and RunLua(luaCode, unit) then 
-					return Interrupt.useKick, Interrupt.useCC
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true
+					end 
 				end 
-				]]
 			elseif list == "PvP" then 
-				return Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unit)
-				--[[
 				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unit) then 
-					return Interrupt.useKick, Interrupt.useCC
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true 
+					end 
 				end 
-				]]
 			end
 		end 
 	end 
-	return false 
+	return false, false, false
 end 
 
 --- [[ AURAS ]]
@@ -8719,7 +8835,9 @@ function Action.PauseChecks()
 end 
 Action.PauseChecks = Action.MakeFunctionCachedStatic(Action.PauseChecks)
 
+-- INTERRUPT 
 SmartInterrupt = Action.MakeFunctionCachedStatic(SmartInterrupt)
+
 -- MOUSE 
 MouseHasFrame = Cache:WrapStatic(function()
     local focus = UnitExists("mouseover") and GetMouseFocus()
