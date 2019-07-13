@@ -1,3 +1,7 @@
+[Monk beta v9]
+MW Fixed condition for Soothing Mist channeling if you playing with statue
+Updated APL for changes with new Interrupts configure about Kick, CC, Racial
+
 [Monk beta v8]
 MW Refreshment and Concentrated Flame changed priority to higher if moving or not channeling
 BM Changed priority for ConcentratedFlame, AnimaofDeath, SuppressingPulse, ArcanePulse, Gift of Naaru, Expel Harm
