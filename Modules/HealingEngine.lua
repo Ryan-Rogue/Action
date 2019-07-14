@@ -94,6 +94,14 @@ local function CanHeal(unitID, unitGUID)
 					Env.Unit("player"):HasDeBuffs(Aura.SmokeBomb) > 0
 				)  
 			)
+		) 
+		-- 8.2 Underwater Monstrosity - Darkest Depths (DeBuff)
+		-- 2164 is The Eternal Palace  
+		and 
+		( 
+			not Env.InstanceInfo or 
+			Env.InstanceInfo.instanceID ~= 2164 or 
+			Env.Unit(unitID):HasDeBuffs(292127) == 0
 		)
 end
 
