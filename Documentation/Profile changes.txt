@@ -1,12 +1,27 @@
+[Monk v1]
+Full release
+BM MW 	- Added ParalysisAntiFake unique key to block [2]
+BM MW 	- SpearHandStrikeGreen is blockable now in AntiFake Kick rotation
+BM MW	- IsStealthed is now upvalue for arena rotations 
+MW 		- DiffuseMagic AUTO now checking real time appear magic damage 
+MW 		- Changed again Soothing Mist default in UI work mode and HP offset is now allowed use AUTO (through predictable Vivify with variation 250%)
+MW 		- Added PvP SpinningCraneKick logic to preuse if on arena existed classes which can have invisible
+MW 		- Fixed Party rotation missed condition for talent check on TigerLust
+BM		- Added Stoneform as self dispel for PvE
+BM		- Kick in rotation now skipping in PvP Karma check
+BM 		- Fixed primary kick logic, now will pass next conditions if main kick is available
+BM 		- Changed PrePull rotation 
+WW		- Added  
+
 [Monk beta v9]
-MW Fixed condition for Soothing Mist channeling if you playing with statue
-Updated APL for changes with new Interrupts configure about Kick, CC, Racial
+MW 		- Fixed condition for Soothing Mist channeling if you playing with statue
+BM MW 	- Updated APL for changes with new Interrupts configure about Kick, CC, Racial
 
 [Monk beta v8]
-MW Refreshment and Concentrated Flame changed priority to higher if moving or not channeling
-BM Changed priority for ConcentratedFlame, AnimaofDeath, SuppressingPulse, ArcanePulse, Gift of Naaru, Expel Harm
+MW 	- Refreshment and Concentrated Flame changed priority to higher if moving or not channeling
+BM 	- Changed priority for ConcentratedFlame, AnimaofDeath, SuppressingPulse, ArcanePulse, Gift of Naaru, Expel Harm
 
 [Monk beta v7]
-MW fixed lua errors due totalMembers
-MW changed timings for LifeCocoon with default slider 
+MW 	- Fixed lua errors due totalMembers
+MW 	- Changed timings for LifeCocoon with default slider 
 Changed default sliders for ProfileUI
