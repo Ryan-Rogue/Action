@@ -468,20 +468,63 @@ function Env.ComboPoints()
     return UnitPower("player", Enum.PowerType.ComboPoints) or 0
 end
 
+local EnergyPowerType = Enum.PowerType.Energy
+-- energy.max
+function Env.EnergyMax()
+	return UnitPowerMax("player", EnergyPowerType)
+end
+  
+-- energy
 function Env.Energy()
-    return UnitPower("player", Enum.PowerType.Energy) or 0
+    return UnitPower("player", EnergyPowerType) or 0
 end
 
-function Env.EnergyDeficit()
-    local max = UnitPowerMax("player", Enum.PowerType.Energy) or 0
-    return max - Env.Energy()
-end
-
+-- energy.regen
 function Env.EnergyRegen()
     return GetPowerRegen("player")
 end
 
-function Env.EnergyRemainingCastRegen(Offset) -- "energy.cast_regen"
+-- energy.pct
+function Env.EnergyPercentage()
+	return (Env.Energy() / Env.EnergyMax()) * 100
+end
+  
+-- energy.deficit 
+function Env.EnergyDeficit()
+    local max = UnitPowerMax("player", EnergyPowerType) or 0
+    return max - Env.Energy()
+end
+
+-- "energy.deficit.pct"
+function Env.EnergyDeficitPercentage()
+	return (Env.EnergyDeficit() / Env.EnergyMax()) * 100
+end
+
+-- "energy.regen.pct"
+function Env.EnergyRegenPercentage()
+	return (Env.EnergyRegen() / Env.EnergyMax()) * 100
+end
+
+-- energy.time_to_max
+function Env.EnergyTimeToMax()
+	if Env.EnergyRegen() == 0 then return -1 end
+	return Env.EnergyDeficit() / Env.EnergyRegen()
+end
+
+-- "energy.time_to_x"
+function Env.EnergyTimeToX(Amount, Offset)
+	if Env.EnergyRegen() == 0 then return -1 end
+	return Amount > Env.Energy() and (Amount - Env.Energy()) / (Env.EnergyRegen() * (1 - (Offset or 0))) or 0
+end
+
+-- "energy.time_to_x.pct"
+function Env.EnergyTimeToXPercentage(Amount)
+	if Env.EnergyRegen() == 0 then return -1 end
+	return Amount > Env.EnergyPercentage() and (Amount - Env.EnergyPercentage()) / Env.EnergyRegenPercentage() or 0
+end
+
+-- "energy.cast_regen"
+function Env.EnergyRemainingCastRegen(Offset)
     local EnergyRegen, Casting = Env.EnergyRegen(), select(2, Env.CastTime())
     if EnergyRegen == 0 then return -1 end
     -- If we are casting, we check what we will regen until the end of the cast
@@ -493,10 +536,26 @@ function Env.EnergyRemainingCastRegen(Offset) -- "energy.cast_regen"
     end
 end
 
-function Env.EnergyPredicted(Offset) -- Predict the expected Energy at the end of the Cast/GCD.
-    local EnergyRegen = Env.EnergyRegen()
-    if EnergyRegen == 0 then return -1 end;
-    return math.min(UnitPowerMax("player", Enum.PowerType.Energy), UnitPower("player", Enum.PowerType.Energy) + Env.EnergyRemainingCastRegen(Offset))
+-- Predict the expected Energy at the end of the Cast/GCD.
+function Env.EnergyPredicted(Offset) 
+    if Env.EnergyRegen() == 0 then return -1 end
+    return math.min(Env.EnergyMax(), Env.Energy() + Env.EnergyRemainingCastRegen(Offset))
+end
+
+-- Predict the expected Energy Deficit at the end of the Cast/GCD.
+function Env.EnergyDeficitPredicted(Offset)
+	if Env.EnergyRegen() == 0 then return -1 end
+	return math.max(0, Env.EnergyDeficit() - Env.EnergyRemainingCastRegen(Offset))
+end
+
+-- Predict time to max energy at the end of Cast/GCD
+function Env.EnergyTimeToMaxPredicted()
+	if Env.EnergyRegen() == 0 then return -1 end
+	local EnergyDeficitPredicted = Env.EnergyDeficitPredicted()
+	if EnergyDeficitPredicted <= 0 then
+		return 0
+	end
+	return EnergyDeficitPredicted / Env.EnergyRegen()
 end
 
 function Env.Rage()
