@@ -1527,6 +1527,20 @@ Env.EnemyTeam = PseudoClass({
 	        return value, count, arena 
 	end, "ROLE"),
 	-- Without ROLE argument
+	HasInvisibleUnits = Cache:Wrap(function(self)
+			local value, arena = false, "none"
+			if tableexist(Env.PvPCache["Group_EnemySize"]) then 
+				for i = 1, Env.PvPCache["Group_EnemySize"] do 
+					arena = "arena" .. i
+					local class = select(2, UnitClass(arena))
+					if not Env.UNITDead(arena) and (class == "MAGE" or class == "ROGUE" or class == "DRUID") then 
+						value = true  
+						break 
+					end 
+				end 
+			end 
+	        return value, arena
+	end, "ROLE"), 
 	IsTauntPetAble = Cache:Wrap(function(self, spellID)
 			local value, pet = false, "none"
 			if tableexist(Env.PvPCache["Group_EnemySize"]) then
