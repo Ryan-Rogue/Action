@@ -60,7 +60,7 @@ local AzeriteEssences = {
 		FocusedAzeriteBeam			= { Type = "HeartOfAzeroth", ID = 295258 	}, -- aoe 
 		GuardianofAzeroth			= { Type = "HeartOfAzeroth", ID = 295840 	}, -- burst 
 		BloodoftheEnemy				= { Type = "HeartOfAzeroth", ID = 297108 	}, -- aoe 
-		PurifyingBlast				= { Type = "HeartOfAzeroth", ID = 295337 	}, -- filler (high priority)
+		PurifyingBlast				= { Type = "HeartOfAzeroth", ID = 295337 	}, -- filler (aoe, high priority)
 		TheUnboundForce				= { Type = "HeartOfAzeroth", ID = 298452 	}, -- filler (high priority)
 	},
 }
@@ -924,7 +924,7 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 						skipAuto or 
 						(
 							(
-								AoE(3, 10) or 
+								AoE(2, 10) or 
 								(
 									Env.InPvP() and 
 									Env.Unit("player"):IsMelee() and 
@@ -989,7 +989,7 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 					(
 						skipAuto or 
 						Env.InPvP() or
-						AoE(4, 12)
+						AoE(2, 12)
 					)
 				then 
 					return true  
