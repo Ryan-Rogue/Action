@@ -1,5 +1,5 @@
 --- 
-local DateTime = "12.07.2019"
+local DateTime = "17.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -8415,7 +8415,7 @@ function Action:IsCastable(thisunit, skipRange)
 	if 	self.Type == "Potion" and 
 		not Env.InPvP() and 
 		Action.GetToggle(1, "Potion") and 
-		Action.BurstIsON(thisunit or Env.IamHealer and "targettarget") and 
+		Action.BurstIsON(thisunit or Env.IamHealer and "targettarget" or "target") and 
 		self:GetCount() > 0 and 
 		self:GetItemCooldown() == 0 
 	then
@@ -8493,7 +8493,7 @@ function Action.InterruptIsValid(unit, list, ignoreToggle)
 			local luaCode = Interrupt and Interrupt.LUA or nil
 			
 			if list:match("TargetMouseover") then
-				if not Action.GetToggle(4, "TargetMouseoverList") or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) then 
+				if (not Action.GetToggle(4, "TargetMouseoverList") and (not Env.InPvP() or (Env.Unit(unit):IsHealer() and TimeToDie(unit) < 6))) or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) then 
 					if Interrupt then 
 						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
 					else
@@ -8686,6 +8686,21 @@ function Action:Show(icon)
 	return true 
 end 
 
+function Action.FrameHasSpell(frame, spell)
+	if frame and frame.Enabled and frame:IsVisible() and frame.attributes and type(frame.attributes.texture) == "number" then 
+		local texture = frame.attributes.texture
+		if type(spell) == "table" then 
+			for i = 1, #spell do 
+				if texture == GetSpellTexture(spell[i]) then 
+					return true 
+				end 
+			end 
+		else 
+			return texture == GetSpellTexture(spell) 
+		end 	
+	end 
+	return false 
+end 
 --------------------------------------
 -- UTILS 
 --------------------------------------
@@ -8932,16 +8947,8 @@ function Action:AbsentImun(thisunit, imunBuffs, skipKarma)
 	end 
 end 
 
-function Action.BossMods_IsBossPull(unit, counter)
-	if not Action.GetToggle(1, "DBM") then 
-		return true 
-	else  
-		return Env.DBM_PullTimer() > 0 and Env.DBM_PullTimer() <= counter
-	end 
-end 
-
 function Action.BossMods_Pulling()
-	return Action.GetToggle(1, "DBM") and Env.DBM_PullTimer() or 0
+	return Action.GetToggle(1, "DBM") and DBM and Env.DBM_PullTimer() or -1
 end 
 
 function Action.BurstIsON(thisunit)
@@ -9287,9 +9294,15 @@ function Action:AutoRacialP(unit, isReadyCheck)
 	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
 		Action.PlayerRace = GetRaceBySpellName[self:Info()]
 		
+		local ShouldStop = false
+		if isReadyCheck then
+			ShouldStop = Action.ShouldStop()
+		end 
+		
 		-- Damaging  
 		if 	Action.PlayerRace == "LightforgedDraenei" then 
-			return 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
+			return 	not ShouldStop and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
 					Action.LossOfControlIsMissed("SILENCE") and 
 					(
 						(
@@ -9305,7 +9318,8 @@ function Action:AutoRacialP(unit, isReadyCheck)
 						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
 					)	
 		elseif 	Action.PlayerRace == "Nightborne" then
-			return	LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+			return	not ShouldStop and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
 					Action.LossOfControlIsMissed("SILENCE") and		
 					(
 						(
@@ -9328,7 +9342,8 @@ function Action:AutoRacialP(unit, isReadyCheck)
 					)	 				
 		-- Purge 
 		elseif 	Action.PlayerRace == "BloodElf" then 
-			return 	LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
+			return 	not ShouldStop and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
 					Action.LossOfControlIsMissed("SILENCE") and
 					(	
 						(
@@ -9348,10 +9363,13 @@ function Action:AutoRacialP(unit, isReadyCheck)
 			if not unit or Env.Unit(unit):IsEnemy() then 
 				unit = "player" 
 			end 
-			return 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and Action.LossOfControlIsMissed("SILENCE") and 
+			return 	not ShouldStop and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
+					Action.LossOfControlIsMissed("SILENCE") and 
 					(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit)))
 		elseif 	Action.PlayerRace == "ZandalariTroll" then 
-			return 	LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
+			return 	not ShouldStop and 
+					LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
 					Action.LossOfControlIsMissed("SILENCE") and 
 					Env.UNITStaying("player") > 0 and 
 					(				
