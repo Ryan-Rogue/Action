@@ -349,7 +349,11 @@ local function HealingEngine(MODE, useActualHP)
 				end 
             elseif Env.Unit(member, A.HealingEngine.Refresh):IsHealer() then                
                 if UnitIsUnit("player", member) and memberhp < 95 then 
-                    memberhp = memberhp - 2
+					if Env.InPvP() and Env.Unit("player"):IsFocused(nil, true) then 
+						memberhp = memberhp - 20
+					else 
+						memberhp = memberhp - 2
+					end 
                 else 
                     memberhp = memberhp + 2
                 end
