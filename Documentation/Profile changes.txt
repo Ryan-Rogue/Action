@@ -1,3 +1,13 @@
+[Paladin v15]
+Holy	- Fixed issue when MARKED toggle didn't displayed SET toggle 
+
+[Monk v2]
+WW 		- Fortifying Brew added PvP talent check 
+WW 		- Disable tweaked and now slow target even if it's just staying, placed as highest priority 
+WW 		- Added low priority self supportive manager for Tigers Lust, Detox, Gift of Naaru
+WW 		- Added PvP additional action for ReverseHarm as filler while out of melee and opener against invisible team on arena 
+WW 		- Fixed lua errors for PvP switcher 
+
 [Monk v1]
 Full release
 BM MW 	- Added ParalysisAntiFake unique key to block [2]
