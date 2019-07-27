@@ -130,8 +130,9 @@ local function UpdateZoneAndPvP(event, ...)
     end   
 end 
 
-function Env.UI_INFO_MESSAGE_IS_WARMODE(ID)
-    if type(ID) == "number" and ((ID >= 996 and ID <= 998) or (ID >= 1001 and ID <= 1002)) then
+function Env.UI_INFO_MESSAGE_IS_WARMODE(...)
+	local ID, MSG = ...		
+    if type(MSG) == "string" and (MSG == ERR_PVP_WARMODE_TOGGLE_OFF or MSG == ERR_PVP_WARMODE_TOGGLE_ON) then 
 		return true 
 	end 
 	return false 
