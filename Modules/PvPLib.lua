@@ -1948,12 +1948,13 @@ Listener:Add('PvP_Events_Logs', "COMBAT_LOG_EVENT_UNFILTERED", function()
 end)
 
 Listener:Add('PvP_Events_UI', "UI_ERROR_MESSAGE", function(...)
-        if LOSCheck and ... == 50 and LOSUnit and not InLOS[LOSUnit]["unit_LOS"] and InLOS[LOSUnit]["unit_time"] and TMW.time >= InLOS[LOSUnit]["unit_time"] then
+        if LOSCheck and select(2, ...) == SPELL_FAILED_LINE_OF_SIGHT and LOSUnit and not InLOS[LOSUnit]["unit_LOS"] and InLOS[LOSUnit]["unit_time"] and TMW.time >= InLOS[LOSUnit]["unit_time"] then
             local skip_timer = 3.5
             -- Fix for HealingEngine on targets by GUID 
             if not string.find(LOSUnit, "party") 
             and not string.find(LOSUnit, "raid") 
-            and not string.find(LOSUnit, "arena") then
+            and not string.find(LOSUnit, "arena") 
+			and LOSUnit ~= "focus" then
                 -- Check that current target is still same unit which should be checked for los 
                 if UnitGUID("target") ~= LOSUnit then 
                     return -- skip
