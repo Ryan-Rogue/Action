@@ -2,12 +2,16 @@
 local TMW = TMW
 local CNDT = TMW.CNDT
 local Env = CNDT.Env
+local A = Action
 
-local pairs, next, type = 
-	  pairs, next, type
+local pairs, next = 
+	  pairs, next
 	  
 local UnitIsPlayer, UnitExists, UnitGUID, UnitAffectingCombat = 
 	  UnitIsPlayer, UnitExists, UnitGUID, UnitAffectingCombat
+	  
+local InCombatLockdown =
+	  InCombatLockdown
 	  
 local GetNamePlateForUnit = _G.C_NamePlate.GetNamePlateForUnit
 local activeUnitPlates = dynamic_array(2)
@@ -190,27 +194,13 @@ function CastingUnits(stop, range, kickAble)
     return (stop and totalmobs >= stop) or (not stop and totalmobs) 
 end 
 
--- Checking by spell
-local function GetMobsBySpell(count, spellId, reaction)
-    local totalmobs = 0
-    for reference, unit in pairs(activeUnitPlates[reaction]) do
-        if Env.SpellInRange(unit, spellId) then
-            totalmobs = totalmobs + 1            
-            if count and type(count) == "number" and totalmobs >= count then                
-                break                
-            end              
-        end
-    end    
-    return totalmobs
-end
-
 -- Checking by range
 local function GetMobsByRange(count, range, reaction)
     local totalmobs = 0
     for reference, unit in pairs(activeUnitPlates[reaction]) do
         if Env.SpellInteract(unit, range) then
             totalmobs = totalmobs + 1            
-            if count and type(count) == "number" and totalmobs >= count then                
+            if count and totalmobs >= count then                
                 break            
             end        
         end
@@ -218,31 +208,38 @@ local function GetMobsByRange(count, range, reaction)
     return totalmobs
 end
 
--- General result (usually melee usage / or range if active_enemies is empty)
--- TODO: Make another cache
-local mobs = { ["friendly"] = {}, ["enemy"] = {} }
+-- Checking by spell
+local function GetMobsBySpell(count, spellId, reaction)
+    local totalmobs = 0
+    for reference, unit in pairs(activeUnitPlates[reaction]) do
+        if Env.SpellInRange(unit, spellId) then
+            totalmobs = totalmobs + 1            
+            if count and totalmobs >= count then                
+                break                
+            end              
+        end
+    end    
+    return totalmobs
+end
+
 function AoE(count, num, type) 
-    if not type then type = "enemy" end  
-    if not num then num = 40 end 
-    if not count then count = "" end
-    -- If last refresh for these arguments wasn't early than 0.2 (global) timer then update it 
-    if fLastCall("AoE" .. count .. num .. type) then  
-        -- FPS saver, prevent refresh with same arguments by preset time       
-        oLastCall["AoE" .. count .. num .. type] = TMW.time + oLastCall["global"]               
-        
-        if num < 100 then
-            mobs[type][count .. num] = GetMobsByRange(count, num, type)
-        else 
-            mobs[type][count .. num] = GetMobsBySpell(count, num, type)
-        end                         
-    end       
-    
-    if not count or count == "" then
-        return mobs[type][count .. num] or 0
+    if not type  then type = "enemy" end  
+    if not num 	 then num = 40 end 
+	
+	local units 
+	if num <= 100 then
+		units = GetMobsByRange(count, num, type)
+	else 
+		units = GetMobsBySpell(count, num, type)
+	end                         
+               
+    if not count then
+        return units or 0
     else
-        return mobs[type][count .. num] and mobs[type][count .. num] >= count
+        return units and units >= count
     end    
 end
+AoE = A.MakeFunctionCachedDynamic(AoE, 0.1)
 
 -- Range
 local logUnits, activeUnits = {}, {}
