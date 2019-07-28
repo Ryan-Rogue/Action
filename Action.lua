@@ -1,5 +1,5 @@
 --- 
-local DateTime = "27.07.2019"
+local DateTime = "28.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -4274,8 +4274,18 @@ function Action.ToggleMode()
 	TMW:Fire("TMW_ACTION_MODE_CHANGED")
 end 
 
-function Action.ToggleBurst(fixed)
+function Action.ToggleBurst(fixed, between)
 	local Current = Action.GetToggle(1, "Burst")
+	
+	local set
+	if between and fixed ~= between then 	
+		if Current == fixed then 
+			set = between
+		else 
+			set = fixed
+		end 
+	end 
+	
 	if Current ~= "Off" then 		
 		Action.Data.TG.Burst = Current
 		Current = "Off"
@@ -4284,8 +4294,9 @@ function Action.ToggleBurst(fixed)
 		Action.Data.TG.Burst = Current
 	else
 		Current = Action.Data.TG.Burst
-	end 		
-	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, fixed or Current)				
+	end 			
+	
+	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)				
 end 
 
 function Action.ToggleHE(fixed)
@@ -7863,6 +7874,21 @@ ACTION_CONST_ATARGET = 			133015 		-- GetSpellTexture(153911)
 
 ACTION_CONST_HEARTOFAZEROTH =	1869493 	-- GetSpellTexture(280431)
 
+local ClassPortaits = {
+	["WARRIOR"] = 626008,
+	["PALADIN"] = 626003,
+	["HUNTER"] = 626000,
+	["ROGUE"] = 626005,
+	["PRIEST"] = 626004,
+	["DEATHKNIGHT"] = 135771,
+	["SHAMAN"] = 454482, -- Custom because it making conflict with Bloodlust
+	["MAGE"] = 626001,
+	["WARLOCK"] = 626007,
+	["MONK"] = 626002,
+	["DRUID"] = 625999,
+	["DEMONHUNTER"] = 236415,
+}
+
 --- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
     local a = { GetSpellInfo(v) }
@@ -9662,6 +9688,12 @@ function Action.Rotation(icon)
 		return true 
 	end 
 	
-	Action.Hide(icon)		
+	-- [3] Set Class Portrait
+	if meta == 3 then 
+		Action.TMWAPL(icon, "texture", ClassPortaits[pclass])
+		return true
+	end 
+	
+	Action.Hide(icon)			
 end 
 
