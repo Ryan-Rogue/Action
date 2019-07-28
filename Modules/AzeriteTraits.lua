@@ -19,6 +19,66 @@ if AzeriteEssence then
 		-- Conflict and Strife
 		[Spell:CreateFromSpellID(304017):GetSpellName()] = true, 
 	}
+	AzeriteEssences.IsTalentPvP = {
+		-- Death Knight: Unholy Command (Blood)
+		[202727] = true,
+		-- Death Knight: Chill Streak (Frost)
+		[204160] = true,
+		-- Death Knight: Necrotic Strike (Unholy)
+		[223829] = true,
+		-- Demon Hunter: Demonic Origins (Vengance)
+		[235893] = true,
+		-- Demon Hunter: Cleansed by Flame (Havoc)
+		[205625] = true,
+		-- Druid: Thorns (Balance / Feral)
+		[236696] = true,
+		-- Druid: Sharpened Claws (Guardian)
+		[202110] = true,
+		-- Druid: Overgrowth (Restoration)
+		[203651] = true,
+		-- Hunter: Hi-Explosive Trap (Beast Mastery / Marksmanship / Survival)
+		[236776] = true,
+		-- Mage: Temporal Shield (Arcane / Frost / Fire)
+		[198111] = true,
+		-- Monk: Hot Trub (Brewmaster)
+		[202126] = true,
+		-- Monk: Way of the Crane (Mistweaver)
+		[216113] = true,
+		-- Monk: Reverse Harm (Windwalker)
+		[287771] = true,
+		-- Paladin: Divine Favor (Holy)
+		[210294] = true,
+		-- Paladin: Steed of Glory (Protection)
+		[199542] = true,
+		-- Paladin: Unbound Freedom (Retribution)
+		[199325] = true,
+		-- Priest: Premonition (Discipline)
+		[209780] = true,
+		-- Priest: Holy Ward (Holy)
+		[213610] = true,
+		-- Priest: Void Shift (Shadow)
+		[108968] = true,
+		-- Rogue: Maneuverability (Assassination / Outlaw / Subtlety)
+		[197000] = true,
+		-- Shaman: Lightning Lasso (Elemental)
+		[204437] = true,
+		-- Shaman: Thundercharge (Enhancement)
+		[204366] = true,
+		-- Shaman: Ancestral Gift (Restoration)
+		[290254] = true,
+		-- Warlock: Endless Affliction (Affliction)
+		[305391] = true,
+		-- Warlock: Nether Ward (Demonology)
+		[212295] = true,
+		-- Warlock: Demon Armor (Destruction)
+		[285933] = true,
+		-- Warrior: Sharpen Blade (Arms)
+		[198817] = true,
+		-- Warrior: Battle Trance (Fury)
+		[213857] = true,
+		-- Warrior: Thunderstruck (Protection)
+		[199045] = true,		
+	}
 end 
 
 function AzeriteEssences.GetInfo(milestone) 	
@@ -174,6 +234,15 @@ function AzeriteEssenceHasMinor(spellID)
 		if (AzeriteEssences.MinorOne and AzeriteEssences.MinorOne.spellName == spellName) or (AzeriteEssences.MinorTwo and AzeriteEssences.MinorTwo.spellName == spellName) then 
 			return true 
 		end 
+	end 
+	return false 
+end 
+
+function AzeriteEssenceConflictandStrife(spellID)
+	-- @return boolean 
+	-- Note: Using in Env.PvPTalentLearn to return properly learned PvP talent if it's not selected in TalentUI
+	if AzeriteEssenceHasMajor(304017) then 
+		return AzeriteEssences.IsTalentPvP[spellID]
 	end 
 	return false 
 end 
