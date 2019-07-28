@@ -203,7 +203,7 @@ function Env.TalentLearn(id)
 end
 
 function Env.PvPTalentLearn(id)
-    return Env.PvpTalentMap[strlowerCache[GetSpellInfo(id)]] or false
+    return Env.PvpTalentMap[strlowerCache[GetSpellInfo(id)]] or AzeriteEssenceConflictandStrife(id) or false
 end
 
 function Env.Stance(n)
@@ -231,22 +231,38 @@ function Env.GetFalling()
     return false 
 end
 --- ========================== ROTATION ===========================
+local LastCastException = {
+	-- List of spells which can be interrupted by next rotation conditions
+    [12051]  = true,  -- Evocation
+    [15407]  = true,  -- Mind Fly
+}
+
+local PassCastToTrue = {
+	[293491] = true,  -- Cyclotronic Blast
+	[295258] = true,  -- Focused Azerite Beam Rank1
+	[299336] = true,  -- Focused Azerite Beam Rank2 
+	[299338] = true,  -- Focused Azerite Beam Rank3
+}
+
+local function PlayerCastingException()
+	local castID = select(5, Env.Unit("player", 0):IsCasting())
+	return castID and LastCastException[castID]
+end 
+
 local function PlayerCastingEnd()
-    local castingendtime = (select(5, UnitCastingInfo("player"))) or (select(5, UnitChannelInfo("player"))) or -1    
-    return (castingendtime > 0 and castingendtime / 1000 - TMW.time) or -1
+    local _, castingendtime = Env.CastTime() 
+    return (castingendtime > 0 and castingendtime) or -1
 end
 
-local LastCastException = {
-    ["MAGE"] = 12051,    -- Evocation
-    ["PRIEST"] = 15407,  -- Mind Fly
-}
-local CurrentCastException = {
-	[293491] = true, -- Cyclotronic Blast
-}
+local function PlayerCastingPassToTrue()
+	local castID = select(5, Env.Unit("player", 0):IsCasting())
+	return castID and PassCastToTrue[castID]
+end 
+
 function Env.ShouldStop() -- true 
-    local ping = (select(4, GetNetStats()) / 1000 * 2) + 0.05 
+    local ping = select(4, GetNetStats()) / 1000 * 2
 	local cGCD = Env.CurrentTimeGCD()
-    return (Env.GCD() - cGCD > 0.3 and cGCD >= ping + 0.45) or ((not LastCastException[pclass] or Env.LastPlayerCastID ~= LastCastException[pclass]) and PlayerCastingEnd() > ping) or CurrentCastException[select(5, Env.Unit("player", 0):IsCasting())] or false
+    return (Env.GCD() - cGCD > 0.3 and cGCD >= ping + 0.5) or PlayerCastingPassToTrue() or (not PlayerCastingException() and PlayerCastingEnd() > ping) or false
 end
 
 --- =========================== UNITS ============================
@@ -341,6 +357,16 @@ function Env.UNITHP(unitID)
     return UnitHealth(unitID) * 100 / UnitHealthMax(unitID)
 end
 
+local NPCISNOTBOSS = {
+	-- Shadow of Zul
+	[138489] = true,
+}
+
+local function UnitIsBossException(unitID)
+	local type, zero, server_id, instance_id, zone_uid, npc_id, spawn_uid = Env.Unit(unitID):InfoGUID()
+	return npc_id and NPCISNOTBOSS[npc_id]
+end 
+
 local function UnitIsBoss(unitID)
     for i = 1, MAX_BOSS_FRAMES do 
         if UnitIsUnit(unitID, "boss" .. i) then 
@@ -349,8 +375,12 @@ local function UnitIsBoss(unitID)
     end 
     return false 
 end 
+
 function Env.UNITBoss(unitID)
-    return Env.UNITLevel(unitID) == -1 or UnitEffectiveLevel(unitID) == -1 or UnitIsQuestBoss(unitID) or UnitIsBoss(unitID) or false 
+    if not UnitIsBossException(unitID) and (Env.UNITLevel(unitID) == -1 or UnitEffectiveLevel(unitID) == -1 or UnitIsQuestBoss(unitID) or UnitIsBoss(unitID)) then 
+		return true 
+	end 
+	return false 
 end 
 
 -- TODO: Remove on old profile until June 2019
