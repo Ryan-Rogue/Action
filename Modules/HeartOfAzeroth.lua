@@ -417,9 +417,9 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			--[[ Damager ]]
 			if MajorSpellName == "Focused Azerite Beam" then 
 				-- GCD 1.5 sec (channeled)
-				if (AzeriteRank(spellID) >= 3 or Env.UNITStaying("player") >= 1) and Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):GetRange() <= 10 then 
+				if (AzeriteRank(spellID) >= 3 or Env.UNITStaying("player") >= 1) and Action.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):GetRange() <= 10 and CombatTime("player") > 3 then 
 					local isMelee = Env.Unit("player"):IsMelee()
-					if (AoE(3, 10) or (isMelee and Env.InPvP() and Env.Unit(unitID):GetRange() >= 6)) and (not Env.InPvP() or (UnitIsPlayer(unitID) and not Env.EnemyTeam("HEALER"):IsBreakAble(10) and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0) ) then 
+					if ( not Env.InPvP() or (UnitIsPlayer(unitID) and not Env.EnemyTeam("HEALER"):IsBreakAble(10) and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0) ) then 
 						return Action.HeartOfAzerothShow(icon)
 					end 
 				end 
@@ -904,7 +904,8 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 					unitID = "target"
 				end 
 				
-				if 	not ShouldStop and -- GCD 1.5 sec (channeled)				
+				if 	not ShouldStop and -- GCD 1.5 sec (channeled)	
+					CombatTime("player") > 2 and
 					(
 						AzeriteRank(self.ID) >= 3 or 
 						Env.UNITStaying("player") >= 1
@@ -919,20 +920,7 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 						not Env.InPvP() or 
 						not Env.EnemyTeam("HEALER"):IsBreakAble(10)
 					) and 
-					not Env.Unit(unitID):IsTotem() and 
-					(
-						skipAuto or 
-						(
-							(
-								AoE(2, 10) or 
-								(
-									Env.InPvP() and 
-									Env.Unit("player"):IsMelee() and 
-									Env.Unit(unitID):GetRange() >= 6
-								)
-							)
-						)
-					)
+					not Env.Unit(unitID):IsTotem() 
 				then 
 					return true 
 				end 
