@@ -5,8 +5,8 @@ local Env = CNDT.Env
 local A = Action 
 local LibRangeCheck = LibStub("LibRangeCheck-2.0")
 
-local next, pairs, tostring, tableexist, wipe = 
-	  next, pairs, tostring, tableexist, wipe 
+local next, pairs, tostring, tonumber, unpack, tableexist, wipe = 
+	  next, pairs, tostring, tonumber, unpack, tableexist, wipe 
 	  
 local IsInRaid, IsInGroup = 
 	  IsInRaid, IsInGroup
@@ -1039,6 +1039,19 @@ local ControlAbleClassification = {
 	[""] = true,
 }
 Env.Unit = PseudoClass({
+	InfoGUID = Cache:Wrap(function(self)   
+		-- @return type, zero, server_id, instance_id, zone_uid, npc_id, spawn_uid or nil
+		local GUID = UnitGUID(self.UnitID)
+		local massiv
+		if GUID then 
+			massiv = { strsplit("-", GUID) }
+			for i = 2, #massiv do 
+				massiv[i] = tonumber(massiv[i])
+			end 
+			return unpack(massiv)
+		end 
+		return massiv
+	end, "UnitID"),
 	IsBoss = Cache:Wrap(function(self)       
 	        return Env.UNITBoss(self.UnitID) 
 	end, "UnitID"),
