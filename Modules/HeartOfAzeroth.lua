@@ -248,7 +248,8 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 			
 			if MajorSpellName == "Memory of Lucid Dreams" then
 				-- GCD 1.5 sec
-				if not ShouldStop and Env.UNITPW("player") <= 50 and (Env.Zone == "none" or Env.Unit(unitID):IsBoss() or UnitIsPlayer(unitID)) and (Env.Unit("player"):HasBuffs("DamageBuffs", true) > 0 or (Env.InPvP() and Env.Unit(unitID):UseBurst())) then 				
+				-- Note: Retribution, Protection, Elemental, Warlock, Mage, Balance an exception for power check 
+				if not ShouldStop and (Env.UNITSpec("player", {66, 70, 263, 265, 266, 267, 62, 63, 64, 102}) or Env.UNITPW("player") <= 50) and (Env.Zone == "none" or Env.Unit(unitID):IsBoss() or UnitIsPlayer(unitID)) and (Env.Unit("player"):HasBuffs("DamageBuffs", true) > 0 or (Env.InPvP() and Env.Unit(unitID):UseBurst())) then 				
 					-- PvP condition
 					if not Env.InPvP() or not UnitIsPlayer(unitID) or (not Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):DeBuffCyclone() == 0) or (Env.Unit(unitID):IsEnemy() and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0) then 
 						return Action.HeartOfAzerothShow(icon)
@@ -596,6 +597,8 @@ function Action:AutoHeartOfAzeroth(unitID, skipAuto)
 					self:IsReady(unitID, true) and 
 					(
 						skipAuto or 
+						-- Note: Retribution, Protection, Elemental, Warlock, Mage, Balance an exception for power check 
+						Env.UNITSpec("player", {66, 70, 263, 265, 266, 267, 62, 63, 64, 102}) or
 						Env.UNITPW("player") <= 50
 					) 
 				then 
