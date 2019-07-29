@@ -1449,6 +1449,8 @@ local types = {
         { id = 252687, dur = 0, stack = 2},
     },
     Magic = {
+		-- Blazing Chomp
+		{ id = 294929, dur = 0, stack = 0 },
 		-- 8.2 Queen Azshara - Arcane Burst
 		{ id = 303657, dur = 10, stack = 0 },
 		-- 8.2 Za'qul - Dread

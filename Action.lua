@@ -1,5 +1,5 @@
 --- 
-local DateTime = "28.07.2019"
+local DateTime = "29.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -2173,6 +2173,8 @@ local GlobalFactory = {
 				[252687] = { stack = 2 },				
 			},
 			Magic = {
+				-- Blazing Chomp
+				[294929] = { byID = true },
 				-- 8.2 Queen Azshara - Arcane Burst
 				[303657] = { byID = true, dur = 10 },
 				-- 8.2 Za'qul - Dread
