@@ -1,3 +1,6 @@
+[Priest v8]
+Shadow				- Fixed Surrendered To Madness
+
 [Priest v7]
 Shadow: Added support Shadowy Insight
 Holy: Fixed issue w hen rotation tried use trinkets, Heart of Azeroth and another items while been in Spirit
