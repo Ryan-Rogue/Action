@@ -90,9 +90,9 @@ local function UpdateCVAR()
 	end
     if GetCVar("colorblindsimulator")~="0" then SetCVar("colorblindsimulator", 0) end; 
     if GetCVar("RenderScale")~="1" then SetCVar("RenderScale", 1) end; 
+	--[[
     if GetCVar("MSAAQuality")~="0" then SetCVar("MSAAQuality", 0) end;
     -- Could effect bugs if > 0 but FXAA should work, some people saying MSAA working too 
-	--[[
 	local AAM = tonumber(GetCVar("ffxAntiAliasingMode"))
     if AAM > 2 and AAM ~= 6 then 		
 		SetCVar("ffxAntiAliasingMode", 0) 
