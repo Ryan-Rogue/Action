@@ -1055,8 +1055,9 @@ Env.Unit = PseudoClass({
 	IsBoss = Cache:Wrap(function(self)       
 	        return Env.UNITBoss(self.UnitID) 
 	end, "UnitID"),
-	IsEnemy = Cache:Wrap(function(self)       
-	        return Env.UNITEnemy(self.UnitID)
+	IsEnemy = Cache:Wrap(function(self, isPlayer) 
+			local UnitID = self.UnitID
+	        return Env.UNITEnemy(UnitID) and (not isPlayer or UnitIsPlayer(UnitID))
 	end, "UnitID"),
 	IsHealer = Cache:Wrap(function(self)  
 			local UnitID = self.UnitID

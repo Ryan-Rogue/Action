@@ -431,7 +431,7 @@ function Action.LazyHeartOfAzeroth(icon, unit)
 				if not ShouldStop and Env.Unit(unitID):IsEnemy() then 
 					local isMelee = Env.Unit("player"):IsMelee()
 					if 	((not isMelee and Env.Unit(unitID):GetRange() <= 40 and Action.LossOfControlIsMissed({"SILENCE", "DISARM"})) or (isMelee and Env.Unit(unitID):GetRange() <= 10 and Action.LossOfControlIsMissed("DISARM"))) and 
-						(Env.Unit("player"):HasBuffs("DamageBuffs") > 8 or Env.Unit("player"):HasBuffs("BurstHaste") > 2 or (Env.InPvP() and UnitIsPlayer(unitID) and Env.Unit(unitID):UseBurst())) and 
+						(Env.Unit(unitID):IsBoss() or Env.Unit("player"):HasBuffs("DamageBuffs") > 8 or Env.Unit("player"):HasBuffs("BurstHaste") > 2 or (Env.InPvP() and UnitIsPlayer(unitID) and Env.Unit(unitID):UseBurst())) and 
 						(not Env.InPvP() or (UnitIsPlayer(unitID) and Env.Unit(unitID):WithOutKarmed() and Env.Unit(unitID):HasBuffs("TotalImun") == 0 and Env.Unit(unitID):HasBuffs("DamageMagicImun") == 0)) 					
 					then 
 						return Action.HeartOfAzerothShow(icon)
