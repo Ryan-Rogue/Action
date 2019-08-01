@@ -1,3 +1,7 @@
+[Death Knight v12]
+Unholy PvP			- Fixed issue with Outbreak use in AMS
+Frost PvP 			- Fixed issue with Chill Streak use in AMS
+
 [Death Knight v11]
 Frost PvP: Fixed Chill Streak old ID
 
