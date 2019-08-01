@@ -7991,15 +7991,15 @@ end
 function Action.Create(attributes)
 	--[[@usage: attributes (table)
 		Required: 
-			Type (string)
-			ID (number - spellID | itemID)
-			Color (string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in Action.Data.C[Color] or here can be own hex 
+			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|HeartOfAzeroth
+			ID (@number) 	- spellID | itemID
+			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in Action.Data.C[Color] or here can be own hex 
 	 	Optional: 
-			Desc (string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
-			QueueForbidden (boolean) uses to preset for action fixed queue valid (default true for type Potion, Trinkets, Item)
-			Texture (number) valid only for spellID|itemID (if Type is Spell|Item)
-			MetaSlot (number) allows set fixed position for action whenever it will be tried to set in queue 
-			Hidden (boolean) allows to hide from UI action 
+			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
+			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
+			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
+			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
+			Hidden (@boolean) allows to hide from UI this action 
 	]]
 	if not attributes then 
 		local attributes = {}

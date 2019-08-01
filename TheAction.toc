@@ -29,3 +29,4 @@ Modules\MSGEvents.lua
 Modules\PetLib.lua
 Modules\HealingEngine.lua
 Modules\HeartOfAzeroth.lua
+Modules\Helper HeroAPI.lua
