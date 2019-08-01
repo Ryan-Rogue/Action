@@ -1,3 +1,6 @@
+[Druid v19]
+Restor 		- Changed Prowl priority
+
 [Druid v18]
 Restor 		- Added Prowl use if you have @target or @mouseover enemy and learned Feral Affinity
 
