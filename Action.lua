@@ -5540,6 +5540,15 @@ function Action.ToggleMainUI()
 				end
 			end
 			
+			-- Add some empty space after all elements 
+			if #Action.Data.ProfileUI[tab.name][specID] > 12 then 
+				for row = 1, 2 do 
+					local SpecRow = anchor:AddRow()		
+					local obj = LayoutSpace(anchor)
+					SpecRow:AddElement(obj, { column = 12, margin = { top = 10 } })
+				end 
+			end 
+			
 			-- Fix StdUi 			
 			-- Lib is not optimized for resize since resizer changes only source parent, this is deep child parent 
 			function anchor:DoLayout()
@@ -8353,32 +8362,35 @@ function Action:QueueValidCheck()
 	-- Example of issue: WW Monk can set Queue for Resuscitate while has @target an enemy and it will true because it will set to variable "player" which is also true and correct!
 	-- Why "player"? Coz while @target an enemy you can set queue of supportive spells for "self" and if they will be used on enemy then they will be applied on "player" 
 	local unit 
-	if self.Type == "Spell" then 
-		if not SpellHasRange(self:Info()) or isSpellRangeException[self.ID] then 
-			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
-		else
-			local isHarm = IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())
-			unit = self.Unit or ((isHarm or IsHelpfulSpell(self:Info())) and "target") or "player"
-			if isHarm then 
-				return Env.Unit(unit):IsEnemy() and Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache)
-			else 
-				return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))
+	local isCastingName, _, _, _, _, isChannel = Env.Unit("player"):IsCasting()
+	if not isCastingName or (isCastingName ~= self:Info() and not isChannel) then 
+		if self.Type == "Spell" then 
+			if not SpellHasRange(self:Info()) or isSpellRangeException[self.ID] then 
+				return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
+			else
+				local isHarm = IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())
+				unit = self.Unit or ((isHarm or IsHelpfulSpell(self:Info())) and "target") or "player"
+				if isHarm then 
+					return Env.Unit(unit):IsEnemy() and Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache)
+				else 
+					return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))
+				end 
 			end 
+		else 
+			if not ItemHasRange(self.ID) then 
+				return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
+			else
+				local isHarm = IsHarmfulItem(self:Info())
+				-- IsHelpfulItem under testing phase
+				-- unit = self.Unit or ((isHarm or IsHelpfulItem(self:Info())) and "target") or (not Env.IamHealer and "player") or "target"
+				unit = self.Unit or (isHarm and "target") or (not Env.IamHealer and "player") or "target"
+				if isHarm then 
+					return Env.Unit(unit):IsEnemy() and self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache)
+				else 
+					return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit))
+				end 
+			end 		
 		end 
-	else 
-		if not ItemHasRange(self.ID) then 
-			return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
-		else
-			local isHarm = IsHarmfulItem(self:Info())
-			-- IsHelpfulItem under testing phase
-			-- unit = self.Unit or ((isHarm or IsHelpfulItem(self:Info())) and "target") or (not Env.IamHealer and "player") or "target"
-			unit = self.Unit or (isHarm and "target") or (not Env.IamHealer and "player") or "target"
-			if isHarm then 
-				return Env.Unit(unit):IsEnemy() and self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache)
-			else 
-				return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit))
-			end 
-		end 		
 	end 
 	return false 
 end 

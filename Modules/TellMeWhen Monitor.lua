@@ -242,6 +242,7 @@ local PassCastToTrue = {
 	[295258] = true,  -- Focused Azerite Beam Rank1
 	[299336] = true,  -- Focused Azerite Beam Rank2 
 	[299338] = true,  -- Focused Azerite Beam Rank3
+	[191837] = true,  -- Essence Font
 }
 
 local function PlayerCastingException()

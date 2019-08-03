@@ -1124,11 +1124,15 @@ Env.Unit = PseudoClass({
 	end, "UnitID"),
 	IsCasting = Cache:Wrap(function(self) 
 			local UnitID = self.UnitID
+			local isChannel = false
 			local castName, _, _, castStartTime, castEndTime, _, _, notInterruptable, spellID = UnitCastingInfo(UnitID)
 			if not castName then 
 				castName, _, _, castStartTime, castEndTime, _, notInterruptable, spellID = UnitChannelInfo(UnitID)
+				if castName then 
+					isChannel = true
+				end 
 			end  
-			return castName, castStartTime, castEndTime, notInterruptable, spellID
+			return castName, castStartTime, castEndTime, notInterruptable, spellID, isChannel
 	end, "UnitID"),
 	IsControlAble = Cache:Wrap(function(self, drCat, drDiminishing)
 	-- drDiminishing preferly 0 for [1], [2] 
