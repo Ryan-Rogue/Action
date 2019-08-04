@@ -1,5 +1,5 @@
 --- 
-local DateTime = "01.07.2019"
+local DateTime = "04.07.2019"
 ---
 --- ============================ HEADER ============================
 local TMW = TMW
@@ -3375,12 +3375,16 @@ end
 -- This function calls only if TMW finished EVERYTHING load
 -- This will initialize ActionDB for current profile by Action.Data.ProfileUI > Action.Data.ProfileDB (which in profile snippet)
 local function ActionDB_Initialization()	
+	local profile = TMW.db:GetCurrentProfile()
+	
 	Action.IsInitialized = nil	
+	Action.IsGGLprofile = profile:match("GGL") or false  -- Don't remove it because this is validance for HealingEngine   
 	
 	----------------------------------
 	-- TMW CORE SNIPPETS FIX
-	----------------------------------		
-	if not Action.IsInitializedSnippetsFix then 
+	----------------------------------	
+	-- Finally owner of TMW fixed it in 8.6.6
+	if TELLMEWHEN_VERSIONNUMBER < 86603 and not Action.IsInitializedSnippetsFix then 
 		-- TMW owner has trouble with ICON and GROUP PRE SETUP, he trying :setup() frames before lua snippets would be loaded 
 		-- Yeah he has callback ON PROFILE to run it but it's POST handler which triggers AFTER :setup() and it cause errors for nil objects (coz they are in snippets :D which couldn't be loaded before frames)
 		local function OnProfileFix()
@@ -3408,8 +3412,9 @@ local function ActionDB_Initialization()
 	----------------------------------	
 	GetLocalization()
 	
-	local profile = TMW.db:GetCurrentProfile()
-	
+	----------------------------------
+	-- Profile Manipulation
+	----------------------------------	
 	-- Load default profile if current profile is generated as default
 	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
 	if profile == defaultprofile then 
@@ -3489,17 +3494,24 @@ local function ActionDB_Initialization()
 	end
 	TMW.db.global.ActionDB = tCompare(GlobalFactory, TMW.db.global.ActionDB)	
 	
+	----------------------------------
 	-- All remaps and additional sort DB 
+	----------------------------------		
 	-- Note: These functions must be call whenever relative settings in UI has been changed in their certain places!
 	GlobalsRemap() -- by profile to _G.
 	DispelPurgeEnrageRemap() -- by global to profile
 	
+	----------------------------------	
 	-- Welcome Notification
+	----------------------------------	
     Action.Print(L["SLASH"]["LIST"])
 	Action.Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])
 	Action.Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])		
 	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")
 
+	----------------------------------	
+	-- Initialization
+	----------------------------------	
 	-- Initialization ReTarget ReFocus 
 	Action.ReInit()
 	
@@ -4382,7 +4394,7 @@ function Action.LOSInit(isLaunch)
 	end 
 	if Action.GetToggle(1, "LOSCheck") then 
 		Listener:Add("ACTION_LOS", "UI_ERROR_MESSAGE", function(...)
-			if Env.IamHealer and ... == 50 and Action.IsUnitDMG("targettarget") then          
+			if Env.IamHealer and select(2, ...) == SPELL_FAILED_LINE_OF_SIGHT and Action.IsUnitDMG("targettarget") then          
 				LOS[UnitGUID("targettarget")] = TMW.time + 5
 			end 
 		end)
@@ -7778,7 +7790,7 @@ function Action:OnInitialize()
 		Listener:Remove("MSG_Events", "CHAT_MSG_RAID")
 		Listener:Remove("MSG_Events", "CHAT_MSG_RAID_LEADER")	
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
-		-- Note: Can cause issues if there loops, timers, frames or hooks 		
+		-- Note: Can cause issues if there loops, timers, frames or hooks 	
 		if profileEvent == "OnProfileChanged" then
 			local snippets = {}
 			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
@@ -7793,7 +7805,7 @@ function Action:OnInitialize()
 		end 		
 		ActionDB_Initialization()		       
 	end
-	TMW:RegisterCallback("TMW_ON_PROFILE", OnSwap, "ActionDB_TMW_ON_PROFILE")
+	TMW:RegisterCallback("TMW_ON_PROFILE", OnSwap)
 	TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")	
 	----------------------------------
 	-- Register Slash Commands
@@ -7863,8 +7875,8 @@ local IsStealthed = IsStealthed
 
 local GetSpellTexture, GetSpellLink, GetSpellInfo = 
   TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
-local GetItemTexture, GetItemInfo, GetItemInfoInstant, GetInventoryItemID = 
-	  GetItemInfoInstant, GetItemInfo, GetItemInfoInstant, GetInventoryItemID
+local GetItemInfo, GetItemInfoInstant, GetInventoryItemID = 
+	  GetItemInfo, GetItemInfoInstant, GetInventoryItemID
 local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = 
 	  UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
 
@@ -8291,11 +8303,12 @@ function Action:SetQueue(args)
 	end 
 	
 	local priority = (args.Priority and (args.Priority > #Action.Data.Q + 1 and #Action.Data.Q + 1 or args.Priority)) or #Action.Data.Q + 1	
-    if not args.Silence then 
+    if not args.Silence then
+		local printKey = self.Desc .. (self.Color or "") 
 		if self.Queued then 
-			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]" .. L["TAB"][3]["QUEUEPRIORITY"] .. priority .. ". " .. L["TAB"][3]["KEYTOTAL"] .. #Action.Data.Q + 1 .. "]")
+			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]") or "") .. L["TAB"][3]["QUEUEPRIORITY"] .. priority .. ". " .. L["TAB"][3]["KEYTOTAL"] .. #Action.Data.Q + 1 .. "]")
 		else
-			Action.Print(L["TAB"][3]["QUEUEREMOVED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
+			Action.Print(L["TAB"][3]["QUEUEREMOVED"] .. self:Link() .. (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]") or ""))
 		end 
     end 
     
@@ -8888,7 +8901,6 @@ function Action.PauseChecks()
 		return PauseChecks()
 	end 
 end 
-Action.PauseChecks = Action.MakeFunctionCachedStatic(Action.PauseChecks)
 
 -- INTERRUPT 
 SmartInterrupt = Action.MakeFunctionCachedStatic(SmartInterrupt)

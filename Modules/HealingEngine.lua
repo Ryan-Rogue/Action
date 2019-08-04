@@ -145,7 +145,7 @@ local function HealingEngine(MODE, useActualHP)
             end            
             
 			-- Enable specific instructions by profile 
-			if Env.IsGGLprofile then 
+			if A.IsGGLprofile then 
 				-- Holy Paladin 
 				if Env.UNITSpec("player", 65) then                 
 					if (not isQueuedDispel or Env.Unit(member, A.HealingEngine.Refresh):IsHealer()) and Env.SpellUsable(4987) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
@@ -921,13 +921,13 @@ local function setColorTarget(isForced)
 end
 
 local function UpdateLOS()
-	if Env.IsGGLprofile and UnitExists("target") then
+	if UnitExists("target") then
 		if A.IsInitialized then
 			-- New profiles 
 			if not A.IsUnitFriendly("mouseover") then 
 				GetLOS(UnitGUID("target"))
 			end 		
-		elseif not MouseOver_Toggle or Env.Unit("mouseover"):IsEnemy() or not MouseHasFrame() then 
+		elseif Env.IsGGLprofile and (not MouseOver_Toggle or Env.Unit("mouseover"):IsEnemy() or not MouseHasFrame()) then 
 			-- TODO: Remove on old profiles until June 2019
 			-- Old profiles 
 			GetLOS(UnitGUID("target"))

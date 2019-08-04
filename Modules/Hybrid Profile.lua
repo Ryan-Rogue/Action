@@ -282,23 +282,17 @@ function LocalToggles()
     local current = TMW.db:GetCurrentProfile()
     local profile = strmatch(current, "Chesder")     
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
-    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" -- Don't remove it because this validance for HealingEngine
+    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" 
     if ProfileToggle[current] and TellMeWhen_Group3 then
         ProfileToggle[current]()
     end
 end
 
-function RunLocalToggles(profile)
-    if ProfileToggle[current] and TellMeWhen_Group3 and TellMeWhen_Group3:IsEnabled() then
-        ProfileToggle[current]()
-    end 
-end 
-
 local function UpdateChesderGroups()   
     local current = TMW.db:GetCurrentProfile()
     local profile = strmatch(current, "Chesder")     
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
-    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" -- Don't remove it because this validance for HealingEngine   
+    Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" 
     
     if profile ~= "Chesder" then         
         -- Chesder Groups
@@ -354,6 +348,13 @@ local function UpdateChesderGroups()
     DEFAULT_CHAT_FRAME.editBox:AddHistoryLine("")
 end
 
+local function HybridProfileLaunch()
+    if TellMeWhen_GlobalGroup8 then
+        SystemToggles()
+        LocalToggles() 
+    end    
+end 
+
 TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
         if 
         profileEvent == "OnProfileChanged" or
@@ -362,17 +363,18 @@ TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
         profileEvent == "OnNewProfile" 
         then
             UpdateChesderGroups()
+			HybridProfileLaunch()
         end        
 end)
-
-local function HybridProfileLaunch()
-    ptgroup = 3
-    if TellMeWhen_GlobalGroup8 then
-        SystemToggles()
-        LocalToggles() 
-    end    
-end 
 
 Listener:Add('HybridProfile_Events', "UPDATE_INSTANCE_INFO", HybridProfileLaunch)
 Listener:Add('HybridProfile_Events', "PLAYER_ENTERING_WORLD", HybridProfileLaunch)
 
+-- Used for debug 
+--[[
+function RunLocalToggles(profile)
+    if ProfileToggle[current] and TellMeWhen_Group3 and TellMeWhen_Group3:IsEnabled() then
+        ProfileToggle[current]()
+    end 
+end 
+]]

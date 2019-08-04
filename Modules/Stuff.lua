@@ -7,14 +7,19 @@ local pairs, tostring = pairs, tostring
 local IsAddOnLoaded = IsAddOnLoaded
 
 --- ============================ ERRORS ============================
+local toDisable
 for k, v in pairs({"ButtonFacade", "Masque", "Masque_ElvUIesque", "GSE", "Gnome Sequencer Enhanced", "Gnome Sequencer", "AddOnSkins"}) do    
     if IsAddOnLoaded(v) then
-        message("Disable next addon: " .. v)
+        toDisable = (toDisable or "\n") .. v .. "\n"
     end
+end
+if toDisable then 
+	message("Disable next addons:" .. toDisable)
 end
 
 --- =========================== Listener ===========================
-Listener, listeners = {}, {}
+Listener = {}
+local listeners = {}
 local frame = CreateFrame("Frame", "Listener_Events")
 frame:SetScript("OnEvent", function(_, event, ...)
         if not listeners[event] then return end
@@ -55,6 +60,7 @@ local UnitIsPlayer, UnitExists, UnitInBattleground =
 local GetInstanceInfo =
 	  GetInstanceInfo
 	  
+-- TODO: Make if local after fix old profiles	  
 function Env.CheckInPvP()
     return 
     Env.Zone == "arena" or 
@@ -178,33 +184,6 @@ function Env.IsIconEnabled(icon)
     return (FRAME and FRAME.Enabled) or false
 end
 
---- ToolTip
---[[
-local scanTip = CreateFrame("GameTooltip", "Scanner", UIParent, "GameTooltipTemplate")
-local scanLine
-function ScanToolTip(spellID)
-    scanTip:SetOwner(UIParent, "ANCHOR_NONE")
-    scanTip:SetSpellByID(spellID)
-    scanLine = ScannerTextLeft3
-    local t = scanLine:GetText()
-    if (not t) then return end
-    
-    local numbers = {}
-    for i=1,Scanner:NumLines() do
-        local tooltipText = _G["ScannerTextLeft"..i]:GetText()
-        tooltipText = string.gsub( tooltipText, "%p", '' )
-        tooltipText = string.gsub( tooltipText, "%s", '' )
-        
-        for num in string.gmatch(tooltipText, "%d+") do
-            table.insert(numbers, num)
-        end
-    end
-    
-    scanTip:Hide()
-    return numbers
-end
-]]
-
 --- ============================= UTILS =============================
 function quote(str)
     return "\""..str.."\""
@@ -214,7 +193,6 @@ function round(num, numDecimalPlaces)
     return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 end
 
---- Table functions 
 function tableexist(self)  
     return (type(self) == "table" and next(self)) or false
 end
@@ -230,38 +208,7 @@ function dynamic_array(dimension)
             end
         }
     end
-    return setmetatable({}, metatable[1]);
-end
-
---- TODO: Remove from old profiles realesed until Priest 
-function deepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for i = 1, #orig do
-            table.insert(copy, orig[1])
-        end
-        --[[ meta table
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
-        setmetatable(copy, deepcopy(getmetatable(orig)))
-        --]]
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
---- Protector against FPS drop
---- TODO: Remove from old profiles realesed until Priest 
-oLastCall = { ["global"] = 0.2 } -- refresh interval for few lua funcs
-function fLastCall(obj)
-    if not oLastCall[obj] then
-        oLastCall[obj] = 0
-    end
-    return TMW.time >= oLastCall[obj]
+    return setmetatable({}, metatable[1])
 end
 
 -- ElvUI Fix
@@ -311,5 +258,65 @@ if ElvUI then
         
         object = EnumerateFrames(object)
     end
-
 end 
+
+-------------------------------------------------------------------------------
+-- Deprecated
+-------------------------------------------------------------------------------
+--- TODO: Remove from old profiles realesed until Priest 
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for i = 1, #orig do
+            table.insert(copy, orig[1])
+        end
+        --[[ meta table
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+        --]]
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
+--- Protector against FPS drop
+--- TODO: Remove from old profiles realesed until Priest 
+oLastCall = { ["global"] = 0.2 } -- refresh interval for few lua funcs
+function fLastCall(obj)
+    if not oLastCall[obj] then
+        oLastCall[obj] = 0
+    end
+    return TMW.time >= oLastCall[obj]
+end
+
+--- ToolTip
+--[[
+local scanTip = CreateFrame("GameTooltip", "Scanner", UIParent, "GameTooltipTemplate")
+local scanLine
+function ScanToolTip(spellID)
+    scanTip:SetOwner(UIParent, "ANCHOR_NONE")
+    scanTip:SetSpellByID(spellID)
+    scanLine = ScannerTextLeft3
+    local t = scanLine:GetText()
+    if (not t) then return end
+    
+    local numbers = {}
+    for i=1,Scanner:NumLines() do
+        local tooltipText = _G["ScannerTextLeft"..i]:GetText()
+        tooltipText = string.gsub( tooltipText, "%p", '' )
+        tooltipText = string.gsub( tooltipText, "%s", '' )
+        
+        for num in string.gmatch(tooltipText, "%d+") do
+            table.insert(numbers, num)
+        end
+    end
+    
+    scanTip:Hide()
+    return numbers
+end
+]]
