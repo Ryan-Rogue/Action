@@ -33,6 +33,8 @@ local AzeriteEssence = _G.C_AzeriteEssence
 local isSpellRangeException = {
 	-- Chi Burst 
 	[123986] = true,
+	-- Eye Beam
+	[198013] = true,
 }
 
 --------------------------------------
@@ -2578,6 +2580,99 @@ local function DispelPurgeEnrageRemap()
 	end 
 	-- Creates relative to each specs which can dispel or purje anyhow
 	local UnitAuras = {
+		-- Demon Hunter (Consume Magic)
+		[577] = {
+			PvE = {
+				Dispel = {					
+					Action.Data.Auras.PvE.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvE.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvE.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvE.PurgeLow,
+				},
+			},
+			PvP = {
+				Dispel = {					
+					Action.Data.Auras.PvP.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvP.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvP.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvP.PurgeLow,
+				},
+			},
+		},
+		-- Warrior Fury
+		[72] = {
+			PvE = {
+				Dispel = {					
+					Action.Data.Auras.PvE.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvE.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvE.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvE.PurgeLow,
+				},
+			},
+			PvP = {
+				Dispel = {					
+					Action.Data.Auras.PvP.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvP.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvP.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvP.PurgeLow,
+				},
+			},
+		},
+		-- Warrior Protection
+		[73] = {
+			PvE = {
+				Dispel = {					
+					Action.Data.Auras.PvE.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvE.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvE.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvE.PurgeLow,
+				},
+			},
+			PvP = {
+				Dispel = {					
+					Action.Data.Auras.PvP.Magic,					
+				},
+				PurgeFriendly = {
+					Action.Data.Auras.PvP.PurgeFriendly,
+				},
+				PurgeHigh = {
+					Action.Data.Auras.PvP.PurgeHigh,
+				},
+				PurgeLow = {
+					Action.Data.Auras.PvP.PurgeLow,
+				},
+			},
+		},
 		-- Restor Druid 
 		[105] = {
 			PvE = {
@@ -4286,6 +4381,34 @@ function Action.ToggleMode()
 	Env.InPvP_Status = not Env.InPvP_Status	
 	Action.Print(L["SELECTED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))
 	TMW:Fire("TMW_ACTION_MODE_CHANGED")
+end 
+
+-- CD Status on Main Icon
+function Action.CDToggleMode()
+	Env.UseCDs = Action.GetToggle(2, "CDs")
+	--Env.InPvP_Status = not Env.InPvP_Status	
+	if Env.UseCDs == false then 
+	    Env.UseCDs = true
+    else
+        Env.UseCDs = false
+	end
+	Action.SetToggle({2, "CDs"})	    
+	Action.Print(L["SELECTED"] .. ": " .. (Env.UseCDs and "CDs ON" or not Env.UseCDs and "CDs OFF"))
+	TMW:Fire("TMW_ACTION_CD_MODE_CHANGED")
+end 
+
+-- AoE Status on Main Icon
+function Action.AoEToggleMode()
+	Env.UseAoE = Action.GetToggle(2, "AoE")
+	--Env.InPvP_Status = not Env.InPvP_Status	
+	if Env.UseAoE == false then 
+	    Env.UseAoE = true
+    else
+        Env.UseAoE = false
+	end
+	Action.SetToggle({2, "AoE"})	    
+	Action.Print(L["SELECTED"] .. ": " .. (Env.UseAoE and "AoE ON" or not Env.UseAoE and "AoE OFF"))
+	TMW:Fire("TMW_ACTION_AOE_MODE_CHANGED")
 end 
 
 function Action.ToggleBurst(fixed, between)
@@ -6033,7 +6156,31 @@ function Action.ToggleMainUI()
                         end
                     end,
 					events = {
-						OnClick = OnClickCell,
+                        --OnClick = OnClickCell,						
+						OnClick = function(table, cellFrame, rowFrame, rowData, columnData, rowIndex)
+					        InputBox:SetNumber(rowData.ID)
+					        InputBox:ClearFocus()
+					        useKick:SetChecked(rowData.useKick)
+					        useCC:SetChecked(rowData.useCC)
+				         	useRacial:SetChecked(rowData.useRacial)
+					 		
+							local spellName = rowData.Name
+							
+                            if rowData.useKickIndex == 'ON' then
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useKick:SetChecked(false)
+								rowData.useKick = "OFF"
+                                Action.Print(spellName .. " won't be kicked.")
+                            else
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useKick:SetChecked(true)
+								rowData.useKick = "ON"
+                                Action.Print(spellName .. " will be kicked.")
+                            end
+                           Add:Click()
+                        end,
 					},
                 },
 				{
@@ -6051,7 +6198,32 @@ function Action.ToggleMainUI()
                         end
                     end,
 					events = {
-						OnClick = OnClickCell,
+						--OnClick = OnClickCell,						
+						OnClick = function(table, cellFrame, rowFrame, rowData, columnData, rowIndex)
+					        InputBox:SetNumber(rowData.ID)
+					        InputBox:ClearFocus()
+					        useKick:SetChecked(rowData.useKick)
+					        useCC:SetChecked(rowData.useCC)
+					        useRacial:SetChecked(rowData.useRacial)
+							local spellName = rowData.Name
+							
+                            if rowData.useCCIndex == 'ON' then
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useCC:SetChecked(false)
+								rowData.useCC = "OFF"
+                                Action.Print(spellName .. " won't be CC'ed.")             
+							else
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useCC:SetChecked(true)
+								rowData.useCC = "ON"
+                                Action.Print(spellName .. " will be CC'ed.")
+                           
+    						end
+                            Add:Click()
+                        end,
+						
 					},
                 },
 				{
@@ -6069,7 +6241,31 @@ function Action.ToggleMainUI()
                         end
                     end,
 					events = {
-						OnClick = OnClickCell,
+						--OnClick = OnClickCell,
+    					OnClick = function(table, cellFrame, rowFrame, rowData, columnData, rowIndex)
+					        InputBox:SetNumber(rowData.ID)
+					        InputBox:ClearFocus()
+					        useKick:SetChecked(rowData.useKick)
+					        useCC:SetChecked(rowData.useCC)
+					        useRacial:SetChecked(rowData.useRacial)
+							local spellName = rowData.Name
+							
+                            if rowData.useRacialIndex == 'ON' then
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useRacial:SetChecked(false)
+								rowData.useRacial = "OFF"
+                                Action.Print(spellName .. " won't be kicked by racial.")  
+							else
+   							    InputBox:SetNumber(rowData.ID)
+				                InputBox.val = rowData.ID 
+								useRacial:SetChecked(true)
+								rowData.useRacial = "ON"
+                                Action.Print(spellName .. " will be kicked by racial.")
+                           
+    						end
+                            Add:Click()
+                        end,
 					},
                 },
 				{
