@@ -4383,24 +4383,9 @@ function Action.ToggleMode()
 	TMW:Fire("TMW_ACTION_MODE_CHANGED")
 end 
 
--- CD Status on Main Icon
-function Action.CDToggleMode()
-	Env.UseCDs = Action.GetToggle(2, "CDs")
-	--Env.InPvP_Status = not Env.InPvP_Status	
-	if Env.UseCDs == false then 
-	    Env.UseCDs = true
-    else
-        Env.UseCDs = false
-	end
-	Action.SetToggle({2, "CDs"})	    
-	Action.Print(L["SELECTED"] .. ": " .. (Env.UseCDs and "CDs ON" or not Env.UseCDs and "CDs OFF"))
-	TMW:Fire("TMW_ACTION_CD_MODE_CHANGED")
-end 
-
 -- AoE Status on Main Icon
 function Action.AoEToggleMode()
-	Env.UseAoE = Action.GetToggle(2, "AoE")
-	--Env.InPvP_Status = not Env.InPvP_Status	
+	Env.UseAoE = Action.GetToggle(2, "AoE")	
 	if Env.UseAoE == false then 
 	    Env.UseAoE = true
     else
@@ -4413,7 +4398,7 @@ end
 
 function Action.ToggleBurst(fixed, between)
 	local Current = Action.GetToggle(1, "Burst")
-	
+	Env.UseCDs = Action.GetToggle(1, "Burst")
 	local set
 	if between and fixed ~= between then 	
 		if Current == fixed then 
@@ -4426,13 +4411,17 @@ function Action.ToggleBurst(fixed, between)
 	if Current ~= "Off" then 		
 		Action.Data.TG.Burst = Current
 		Current = "Off"
+		Env.UseCDs = false
 	elseif Action.Data.TG.Burst == nil then  
 		Current = "Everything"
 		Action.Data.TG.Burst = Current
+		Env.UseCDs = true
 	else
 		Current = Action.Data.TG.Burst
-	end 			
+		Env.UseCDs = true
+	end 
 	
+	TMW:Fire("TMW_ACTION_CD_MODE_CHANGED")
 	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)				
 end 
 
