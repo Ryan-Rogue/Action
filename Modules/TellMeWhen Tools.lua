@@ -12,12 +12,12 @@ TMW:RegisterCallback("TMW_ACTION_AOE_MODE_CHANGED", DogTag.FireEvent, DogTag)
 -- CDs
 if DogTag then
     DogTag:AddTag("TMW", "ActionModeCD", {
-        code = function()            
+        code = function()            			
 			if Env.UseCDs == true then
 			    return "|cff00ff00CD|r"
 			else 
 				return "|cFFFF0000CD|r"
-			end
+			end			
         end,
         ret = "string",
         doc = "Displays CDs Mode",
@@ -30,7 +30,7 @@ end
 -- AoE
 if DogTag then
     DogTag:AddTag("TMW", "ActionModeAoE", {
-        code = function()            
+        code = function()		
 			if Env.UseAoE == true then
 			    return "|cff00ff00AoE|r"
 			else 
