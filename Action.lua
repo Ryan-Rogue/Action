@@ -4383,22 +4383,9 @@ function Action.ToggleMode()
 	TMW:Fire("TMW_ACTION_MODE_CHANGED")
 end 
 
--- AoE Status on Main Icon
-function Action.AoEToggleMode()
-	Env.UseAoE = Action.GetToggle(2, "AoE")	
-	if Env.UseAoE == false then 
-	    Env.UseAoE = true
-    else
-        Env.UseAoE = false
-	end
-	Action.SetToggle({2, "AoE"})	    
-	Action.Print(L["SELECTED"] .. ": " .. (Env.UseAoE and "AoE ON" or not Env.UseAoE and "AoE OFF"))
-	TMW:Fire("TMW_ACTION_AOE_MODE_CHANGED")
-end 
-
 function Action.ToggleBurst(fixed, between)
 	local Current = Action.GetToggle(1, "Burst")
-	Env.UseCDs = Action.GetToggle(1, "Burst")
+	Action.UseCDs = Action.GetToggle(1, "Burst")
 	local set
 	if between and fixed ~= between then 	
 		if Current == fixed then 
@@ -4411,14 +4398,14 @@ function Action.ToggleBurst(fixed, between)
 	if Current ~= "Off" then 		
 		Action.Data.TG.Burst = Current
 		Current = "Off"
-		Env.UseCDs = false
+		Action.UseCDs = false
 	elseif Action.Data.TG.Burst == nil then  
 		Current = "Everything"
 		Action.Data.TG.Burst = Current
-		Env.UseCDs = true
+		Action.UseCDs = true
 	else
 		Current = Action.Data.TG.Burst
-		Env.UseCDs = true
+		Action.UseCDs = true
 	end 
 	
 	TMW:Fire("TMW_ACTION_CD_MODE_CHANGED")
