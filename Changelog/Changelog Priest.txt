@@ -1,3 +1,12 @@
+[Priest v9]
+Holy Disc Shadow 	- Fixed lags and memory leak 
+Holy Disc 		 	- Fixed old ID for line of sight and replaced but localized message 
+Holy Disc			- Holy Nova now will check combat state if around enemy
+Disc 				- PoW:S now will buff yourself higher priority than Holy Nova 
+Shadow 				- Shadowfind (Mind Breaker) now at 15+ stacks of Void Form 
+Shadow 				- Memory of Lucid Dreams at 20+ stacks of Void Form 
+Shadow 				- Added PoW:S and PoW:P while moving if nothing to do 
+
 [Priest v8]
 Shadow				- Fixed Surrendered To Madness
 
