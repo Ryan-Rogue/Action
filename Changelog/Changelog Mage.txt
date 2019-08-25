@@ -1,3 +1,10 @@
+[Mage v24]
+Fire 		- Fixed replaced texture issue of Ice Lance on Fire Mage with Fire Blast
+Arcane 		- Fixed Arcane Barrage wrong usage 
+
+[Mage v23]
+Something was missed here (?)
+
 [Mage v22]
 Fixed error due swap profiles﻿
 
