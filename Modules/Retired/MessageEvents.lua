@@ -1,14 +1,22 @@
+-------------------------------------------------------------------------------
+--
+-- DON'T USE THIS API, IT'S OLD AND WILL BE REMOVED, THIS IS LEAVED HERE TO 
+-- PROVIDE SUPPORT FOR OLD PROFILES
+--
+-------------------------------------------------------------------------------
 --- TODO: Delete this after all profile upgrade for Action
-local TMW = TMW
-local CNDT = TMW.CNDT
-local Env = CNDT.Env
+local TMW 							= TMW
+local CNDT 							= TMW.CNDT
+local Env 							= CNDT.Env
+local A 							= Action
 
-local pairs = pairs 
-local _, pclass = UnitClass("Player")
+local pairs, _G 					= 
+	  pairs, _G 
+	  
 local oMSG, starttime = {}, 0
 local frame = CreateFrame("Frame", nil) 
 frame:SetScript("OnUpdate", function() 
-        if TMW.time >= starttime + Env.GCD() * 2 then
+        if TMW.time >= starttime + A.GetGCD() * 2 then
             wipe(oMSG)            
             frame:Hide()              
         end        
@@ -77,12 +85,12 @@ local EventTextList = {
 }
 
 local function UpdateChat(...)
-    if not MSG_Toggle then 
+    if not MSG_Toggle or A.IsInitialized then 
         return 
     end
     
     local msg, _, _, name = ...
-    for ICON, v in pairs(EventTextList[pclass]) do        
+    for ICON, v in pairs(EventTextList[A.PlayerClass]) do        
         for i = 1, #v do            
             if strmatch(msg, v[i]) == v[i] then  
                 local cu = strmatch(v[i], "raid%d+")
@@ -90,9 +98,9 @@ local function UpdateChat(...)
                 if not cu then                            
                     oMSG[ICON] = v[i]                           
                 elseif 
-                (ICON == "Icon6" and UnitIsUnit("player", cu)) or
-                (ICON == "Icon7" and UnitIsUnit("party1", cu)) or
-                (ICON == "Icon8" and UnitIsUnit("party2", cu))
+					(ICON == "Icon6" and UnitIsUnit("player", cu)) or
+					(ICON == "Icon7" and UnitIsUnit("party1", cu)) or
+					(ICON == "Icon8" and UnitIsUnit("party2", cu))
                 then                            
                     oMSG[ICON] = select(1, gsub(v[i], "%s"..cu, "", 1))
                 else
@@ -105,10 +113,10 @@ local function UpdateChat(...)
     end  
 end 
 
-Listener:Add('MSG_Events', "CHAT_MSG_PARTY", UpdateChat)
-Listener:Add('MSG_Events', "CHAT_MSG_PARTY_LEADER", UpdateChat)
-Listener:Add('MSG_Events', "CHAT_MSG_RAID", UpdateChat)
-Listener:Add('MSG_Events', "CHAT_MSG_RAID_LEADER", UpdateChat)
+A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY", 		UpdateChat)
+A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY_LEADER", 	UpdateChat)
+A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID", 			UpdateChat)
+A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID_LEADER", 	UpdateChat)
 
 
 function MacroSpells(ICON, MSG)    

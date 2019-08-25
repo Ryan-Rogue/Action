@@ -15,10 +15,7 @@ Write in chat /tmw > LUA Snippets > Profile (left side) > "+" > Write name "Prof
 -------------------------------------------------------------------------------
 -- №2: Set profile defaults 
 -------------------------------------------------------------------------------
--- Constances 
-ACTION_CONST_MONK_BM = 268
-ACTION_CONST_MONK_MW = 270
-ACTION_CONST_MONK_WW = 269
+-- Constances (wrriten in Constans.lua)
 
 -- Map
 local TMW = TMW 
@@ -39,7 +36,7 @@ A.Data.ProfileUI is a table where you have to set UI elements with DB (DataBase)
 A.Data.ProfileUI = {	
 	DateTime = "v0 (00.00.0000)", 	-- 'v' is version (Day, Month, Year)
 	[tab.name] = {					-- supports [2] (spec tab), [7] (MSG tab) in /action
-		[PLAYERSPEC] = {			-- is Constance (look above, [ACTION_CONST_MONK_BM], [ACTION_CONST_MONK_MW], [ACTION_CONST_MONK_WW]
+		[PLAYERSPEC] = {			-- is Constanse (look above, [ACTION_CONST_MONK_BREWMASTER], [ACTION_CONST_MONK_MISTWEAVER], [ACTION_CONST_MONK_WINDWALKER])
 			-- Configure if [tab.name] is [2] (spec tab)			
 			LayoutOptions = {},		-- (optional) is table which can be used to configure layout position
 			{						-- {} brackets on this level will create one row 
@@ -109,6 +106,28 @@ A.Data.ProfileUI = {
 						ANY = '@string',
 					},
 					S = '@string', 			-- font (text) size					
+				},
+				{
+					E = "Button",
+					L = {			
+						-- Fixed 
+						[LANGUAGE1] = '@string', 
+						[LANGUAGE2] = '@string',
+						-- OR Forced
+						ANY = '@string',
+					},
+					OnClick = function(self, button, down) 	-- 'self' is own frame button, 'button' is left or right mouse click event, 'down' state of that 
+						-- your code here 
+					end, 
+					-- Optional:
+					TT = {									-- tooltip		
+						-- Fixed 
+						[LANGUAGE] = '@string', 
+						-- OR Forced
+						ANY = '@string',
+					},
+					M = '@any' or nil, 						-- non-nill will display tooltip if it's empty about "Right Click to create macro"
+					isDisabled = true or nil,
 				},
 				{
 					E = "Checkbox",
@@ -216,7 +235,8 @@ A.Data.ProfileUI = {
 				Enabled = true,
 				Key = '@string',			-- is a key from A[PLAYERSPEC] table in your rotation lua snippet, you also can see this key in /action > [3] 'Actions' tab 
 				-- Optional:
-				LUA = '@string',			-- LUA code which should return true to react on message (has an embedded environment TMW.CNDT.Env so any what has after Env. no need to use, it's let's say easier will be attributed)				
+				LUA = '@string',			-- LUA code which should return true to react on message (has an embedded environment Action[Action.PlayerSpec]. so any what has after Action. or Action[Action.PlayerSpec]. no need to use, it's let's say easier will be attributed)	
+				LUAVER = '@number',			-- This key helps to reset for current MSG default assigned LUA if version of LUA code is different than current user has
 				Source = '@string',			-- who said "phrase", if same server then probably no need to add server name after name of speaker
 			},
 		},
@@ -227,7 +247,7 @@ A.Data.ProfileUI = {
 A.Data.ProfileUI = {	
 	DateTime = "v1.2a (01.01.2850)",
 	[2] = {
-		[ACTION_CONST_MONK_BM] = { 						
+		[ACTION_CONST_MONK_BREWMASTER] = { 						
 			{
 				{	
 					E = "Header",
@@ -412,8 +432,8 @@ A.Data.ProfileUI = {
 		},
 	},
 	[7] = {
-		[ACTION_CONST_MONK_BM] = { 
-			["shield"] = { Enabled = true, Key = "POWS", LUA = [[
+		[ACTION_CONST_MONK_BREWMASTER] = { 
+			["shield"] = { Enabled = true, Key = "POWS", LUAVER = 1, LUA = [[
 				-- thisunit is a special thing which will be replaced by string of unitID. Example: some one said phrase "shield party1" then thisunit will be replaced by "party1" and for this MSG will be used meta [7] which is Party1 Rotation which is A[7]()
 				-- Confused? huh yeah but that's how it works, to make it easier you can simply set "target" right into this code as example if you want only "target", then SpellInRange("target", Action[PlayerSpec].POWS.ID) 
 				-- More info in Action.lua 
@@ -432,7 +452,7 @@ A.Data.ProfileUI = {
 -- So don't take attention on it unless you need it for some purposes like visual comfort
 A.Data.ProfileDB = {
 	[2] = {
-		[ACTION_CONST_MONK_BM] = { 		
+		[ACTION_CONST_MONK_BREWMASTER] = { 		
 			Feint = true, 
 			Shiv = false, 
 			CKnoMacro = true,
@@ -453,27 +473,27 @@ A.Data.ProfileDB = {
 -------------------------------------------------------------------------------
 -- №4: Use remain space for shared code between all specializations in profile 
 -------------------------------------------------------------------------------
--- I prefer use here configuration for "Shown CastBars" because it's shared 
+-- I prefer use here configuration for "Shown Cast Bars" because it's shared 
 -- Example:
-function Env.Main_CastBars(unit, list)
+function A.Main_CastBars(unit, list)
 	-- Is [1] -> [3] meta icons in "Shown CastBars", green (Heals) / red (PvP)
-	if not A.IsInitialized or Env.IamHealer or not Env.InPvP() then 
+	if not A.IsInitialized or A.IamHealer or not A.IsInPvP then 
 		return false 
 	end 
 	
-	if A[Env.PlayerSpec] and A[Env.PlayerSpec].SpearHandStrike and A[Env.PlayerSpec].SpearHandStrike:IsReadyP(unit, nil, true) and A[Env.PlayerSpec].SpearHandStrike:AbsentImun(unit, {"KickImun", "TotalImun", "DamagePhysImun"}, true) and A.InterruptIsValid(unit, list) then 
+	if A[A.PlayerSpec] and A[A.PlayerSpec].SpearHandStrike and A[A.PlayerSpec].SpearHandStrike:IsReadyP(unit, nil, true) and A[A.PlayerSpec].SpearHandStrike:AbsentImun(unit, {"KickImun", "TotalImun", "DamagePhysImun"}, true) and A.InterruptIsValid(unit, list) then 
 		return true 		
 	end 
 end 
 
-function Env.Second_CastBars(unit)
+function A.Second_CastBars(unit)
 	-- Is [1] -> [3] meta icons in "Shown CastBars", yellow
-	if not A.IsInitialized or not Env.InPvP() then 
+	if not A.IsInitialized or not A.IsInPvP then 
 		return false 
 	end 
 	
 	local Toggle = A.GetToggle(2, "ParalysisPvP")	
-	if Toggle and Toggle ~= "OFF" and A[Env.PlayerSpec] and A[Env.PlayerSpec].Paralysis and A[Env.PlayerSpec].Paralysis:IsReadyP(unit, nil, true) and A[Env.PlayerSpec].Paralysis:AbsentImun(unit, {"CCTotalImun", "TotalImun", "DamagePhysImun"}, true) and Env.Unit(unit):IsControlAble("incapacitate", 0) then 
+	if Toggle and Toggle ~= "OFF" and A[A.PlayerSpec] and A[A.PlayerSpec].Paralysis and A[A.PlayerSpec].Paralysis:IsReadyP(unit, nil, true) and A[A.PlayerSpec].Paralysis:AbsentImun(unit, {"CCTotalImun", "TotalImun", "DamagePhysImun"}, true) and A.Unit(unit):IsControlAble("incapacitate", 0) then 
 		if Toggle == "BOTH" then 
 			return select(2, A.InterruptIsValid(unit, "Heal", true)) or select(2, A.InterruptIsValid(unit, "PvP", true)) 
 		else
@@ -481,3 +501,5 @@ function Env.Second_CastBars(unit)
 		end 
 	end 
 end 
+-- Now add these functions in "Shown Cast Bars" group in /tmw by right click on each icon > Conditions > "+" > LUA > YOUR FUNCTION
+-- return Action.Second_CastBars(thisobj.Unit) --or return Action.Second_CastBars("arena1")

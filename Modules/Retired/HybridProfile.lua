@@ -1,3 +1,9 @@
+-------------------------------------------------------------------------------
+--
+-- DON'T USE THIS API, IT'S OLD AND WILL BE REMOVED, THIS IS LEAVED HERE TO 
+-- PROVIDE SUPPORT FOR OLD PROFILES
+--
+-------------------------------------------------------------------------------
 -- TODO: Remove ALL this for old profile which until June 2019
 ptgroup = 3
 local TMW = TMW
@@ -318,8 +324,7 @@ local function UpdateChesderGroups()
             DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 10")
             ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
         end        
-    elseif TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled 
-    then   
+    elseif TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled then   
         -- Chesder Groups
         if TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled then
             for i = 1, 5 do
@@ -355,6 +360,12 @@ local function HybridProfileLaunch()
     end    
 end 
 
+local function UpdateAll()
+	UpdateChesderGroups()
+	HybridProfileLaunch()
+	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", UpdateAll, "TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")
+end 
+
 TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
         if 
         profileEvent == "OnProfileChanged" or
@@ -362,19 +373,18 @@ TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
         profileEvent == "OnProfileReset" or 
         profileEvent == "OnNewProfile" 
         then
-            UpdateChesderGroups()
-			HybridProfileLaunch()
+            UpdateAll()
         end        
 end)
 
-Listener:Add('HybridProfile_Events', "UPDATE_INSTANCE_INFO", HybridProfileLaunch)
-Listener:Add('HybridProfile_Events', "PLAYER_ENTERING_WORLD", HybridProfileLaunch)
+TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", UpdateAll, "TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")	
+
+Listener:Add("ACTION_EVENT_DEPRECATED_HYBRIDPROFILE", "UPDATE_INSTANCE_INFO",  HybridProfileLaunch)
+Listener:Add("ACTION_EVENT_DEPRECATED_HYBRIDPROFILE", "PLAYER_ENTERING_WORLD", HybridProfileLaunch)
 
 -- Used for debug 
---[[
 function RunLocalToggles(profile)
     if ProfileToggle[current] and TellMeWhen_Group3 and TellMeWhen_Group3:IsEnabled() then
         ProfileToggle[current]()
     end 
 end 
-]]

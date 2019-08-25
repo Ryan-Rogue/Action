@@ -16,7 +16,7 @@ Make sure what Action[PLAYERSPEC] has same KEY names as it has HeroRotation code
 You have to put them with same name and same case sensitive in Action[PLAYERSPEC]
 ]]
 Action[PLAYERSPEC] = {
-	-- your actions to create same as it has HeroRotation 
+	-- your actions to create same as it has HeroRotation but with Action structure 
 }
 
 -- Below as you remember we push essences
@@ -40,7 +40,7 @@ if HL then
 	local Item   = HL.Item
 	-- HeroRotation
 	-- You can skip HeroRotation if you do not plan to use by Hero API short table 'HR.' and if APL function in HeroRotation hasn't 'HR.' or if you will remove these parts 
-	-- However you can just leave it as it, even if you don't will have enabled HeroRotation some parts of that will be remaped by code in Modules/Helper HeroAPI.lua
+	-- However you can just leave it as it, even if you don't will have enabled HeroRotation some parts of that will be remaped by code in Modules/Misc/HeroLib.lua
 	-- You can open that module to see what it remap and what not for more info 
 	local HR   = HeroRotation	
 	
@@ -55,7 +55,7 @@ if HL then
 		[3] = "TellMeWhen_Group4_Icon3",
 	})
 	
-	-- You can use standalone table keys, you're not limited to use Action.HeroSetHookAllTable for only one table always, look 'Helper HeroAPI.lua' for more info 
+	-- You can use standalone table keys, you're not limited to use Action.HeroSetHookAllTable for only one table always, look 'HeroLib.lua' for more info 
 	
 	
 	-- Copy past here code which you have in HeroRotation after S and I 
@@ -67,7 +67,7 @@ if HL then
 		Settings 
 		General 
 		Commons 		
-		Because they will be nil and it will bring lua error if they will remain in copied code 
+		Because they can be nil and it will bring lua error if they will remain in copied code 
 	]]
 	local function APL()
 		-- This is usually always exist and we will use it
@@ -80,7 +80,7 @@ end
 -- It does use this structure:
 A['@number'] = function(icon)
 	-- use here next code taken from HeroRotation 
-	if APL() then 
+	if HL and APL() then 
 		return true 
 	end 
 	-- you can use additional rotation here after or above 'if APL() then' either even inside APL()
@@ -97,7 +97,7 @@ local CNDT = TMW.CNDT
 local Env = CNDT.Env
 local Action = Action
 
-Action[ACTION_CONST_MONK_BM] = {
+Action[ACTION_CONST_MONK_BREWMASTER] = {
 	-- Racial
 	ArcaneTorrent                         	= Action.Create({ Type = "Spell", ID = 50613 	}),
 	BloodFury                             	= Action.Create({ Type = "Spell", ID = 20572  	}),
@@ -171,9 +171,9 @@ Action[ACTION_CONST_MONK_BM] = {
 	SuperiorBattlePotionOfAgility			= Action.Create({ Type = "Potion", ID = 168489 }),	
 }
 
-Action:CreateEssencesFor(ACTION_CONST_MONK_BM)
+Action:CreateEssencesFor(ACTION_CONST_MONK_BREWMASTER)
 
-local A = setmetatable(Action[ACTION_CONST_MONK_BM], { __index = Action })
+local A = setmetatable(Action[ACTION_CONST_MONK_BREWMASTER], { __index = Action })
 
 -- Simcraft Imported
 -- HeroLib
@@ -191,13 +191,18 @@ local HR   = HeroRotation
 ---------------------------
 -- PORT TO ACTION 
 local S, I = A:HeroCreate()
-Action.HeroSetHookAllTable(S, {
+Action.HeroSetHookAllTable(S, { -- Spells 
+	[3] = "TellMeWhen_Group4_Icon3",
+})
+Action.HeroSetHookAllTable(I, { -- Items
 	[3] = "TellMeWhen_Group4_Icon3",
 })
 -- Adding manually missed staff
 S.Brews                                 = Spell(115308)
 S.BlackoutCombo                         = Spell(196736)
 S.BlackoutComboBuff                     = Spell(228563)
+-- MultiSpell as well need manually to add 
+S.Execute 								= MultiSpell(1,2)
 ---------------------------
 
 -- Rotation Var
@@ -409,7 +414,7 @@ end
 
 -- [3] Single Rotation
 A[3] = function(icon)
-	if APL() then 
+	if HL and APL() then 
 		return true 
 	end 
 	-- test after simcraft our api like if nothing to do

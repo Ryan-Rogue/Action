@@ -9,7 +9,6 @@ This documentation describes the behavior and methods of writing user profiles
 -- Conception and Basics
 -------------------------------------------------------------------------------
 --[[
-The concept here is very simple and consists of a hierarchy: TellMeWhen > The Action > TMW.db (DataBase - DB)
 TellMeWhen initiates the frame editor with self API, and 'The Action' loads own API
 
 API (Application Programming Interface)
@@ -75,7 +74,7 @@ Begin starts by profile create: Write in chat /tmw go to 'General' then 'Main Op
 
 Use template profile named '[GGL] Template' or ('[GGL] Basic' if you don't plan to use LUA) with own name either keep in mind and follow by the next tips:
 1. Your profile name must be different than it has loaded from ProfileInstall > Import TellMeWhen (from server)
-2. Your profile must have first groups with following names: "Shown Main", "Shown CastBars"
+2. Your profile must have first groups with following names: "Shown Main", "Shown Cast Bars"
 3. "Shown Main" must have 8 icons with type "meta icon" and group type "Icon" in only 1 row at the left upper corner of your screen
 4. "Shown Cast Bars" must have max 3 icons with type "meta icon" per 1 row and group type "Bar" following in the right side of "Shown Main"
 5. "Shown Cast Bars" uses "Flat" texture of casting bar, make sure what you have selected it in /tmw > 'General' > 'Main Options' (or 'Main Settings') 

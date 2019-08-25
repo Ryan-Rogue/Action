@@ -1,46 +1,42 @@
 --- 
-local DateTime = "04.08.2019"
+local DateTime 						= "25.08.2019"
 ---
---- ============================ HEADER ============================
-local TMW = TMW
-local CNDT = TMW.CNDT
-local Env = CNDT.Env
-local huge = math.huge
+local TMW 							= TMW
+local strlowerCache  				= TMW.strlowerCache
+local huge	 						= math.huge
 
+local StdUi 						= LibStub("StdUi")
+local LibDBIcon	 					= LibStub("LibDBIcon-1.0")
+local LSM 							= LibStub("LibSharedMedia-3.0")
+	  LSM:Register(LSM.MediaType.STATUSBAR, "Flat", [[Interface\Addons\TheAction\Media\Flat]])
 
-local pcall, ipairs, pairs, type, assert, tostring, tonumber, hooksecurefunc = pcall, ipairs, pairs, type, assert, tostring, tonumber, hooksecurefunc
-local StdUi = LibStub("StdUi")
-local LibDBIcon = LibStub("LibDBIcon-1.0")
-local LSM = LibStub("LibSharedMedia-3.0")
-LSM:Register(LSM.MediaType.STATUSBAR, "Flat",				[[Interface\Addons\TheAction\Media\Flat]])
+local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe = 
+	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe
 
-Action = LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
-
-local UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID = UnitName, UnitClass, UnitExists, UnitIsUnit, UnitGUID
-local _, pclass = UnitClass("player")
-
-local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate = 
-	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate
+local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale = 
+	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale
 	  
-local GameLocale = GetLocale()	 
-	  
-local FindSpellBookSlotBySpellID, IsAttackSpell, IsHarmfulSpell, IsHelpfulSpell, IsHarmfulItem, ItemHasRange = 
-	  FindSpellBookSlotBySpellID, IsAttackSpell, IsHarmfulSpell, IsHelpfulSpell, IsHarmfulItem, ItemHasRange 
+local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower = 
+	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower	  
+	    
+local GameLocale 					= GetLocale()	
+local Spell							= _G.Spell 	  								-- ObjectAPI/Spell.lua
+local FindSpellBookSlotBySpellID 	= _G.FindSpellBookSlotBySpellID	   
+local AzeriteEssence 				= _G.C_AzeriteEssence
+local CreateFrame 					= _G.CreateFrame	
+local PlaySound						= _G.PlaySound	  
 
-local AzeriteEssence = _G.C_AzeriteEssence
+Action 								= LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
+Action.PlayerRace 					= select(2, UnitRace("player"))
+Action.PlayerClass  				= select(2, UnitClass("player"))
 
--- For Queue to help get unit if not specified
-local isSpellRangeException = {
-	-- Chi Burst 
-	[123986] = true,
-}
-
---------------------------------------
+-------------------------------------------------------------------------------
 -- Localization
---------------------------------------
+-------------------------------------------------------------------------------
 -- Note: L (@table localized with current language of interface), CL (@string current selected language of interface), GameLocale (@string game language default), Localization (@table clear with all locales)
-local CL, L = "enUS", nil
+local CL, L = "enUS"
 local Localization = {
+	[GameLocale] = {},
 	enUS = {			
 		NOSUPPORT = "this profile is not supported ActionUI yet",	
 		DEBUG = "|cffff0000[Debug] Error Identification: |r",			
@@ -71,7 +67,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Each spec] relative for CURRENT selected specialization",
 			INTERFACEGUIDANCEALLSPECS = "[All specs] relative for your ALL available character specializations",
 			INTERFACEGUIDANCEGLOBAL = "[Global] relative for ALL your account, ALL characters, ALL specializations",
-			ATTENTION = "|cffff0000PAY ATTENTION|r functional of Action available only for profiles released after 31.05.2019. The old profile will be updated for this system in future",				
+			ATTENTION = "|cffff0000PAY ATTENTION|r functional of Action available only for profiles released after 31.05.2019. The old profile will be updated for this system in future",		
+			TOTOGGLEBURST = "to toggle Burst Mode",
+			TOTOGGLEMODE = "to toggle PvP / PvE",
+			TOTOGGLEAOE = "to toggle AoE",
 		},
 		TAB = {
 			RESETBUTTON = "Reset settings",
@@ -82,7 +81,7 @@ local Localization = {
 			SAVEMOUSE = "Save Cursor Lists",
 			SAVEMSG = "Save MSG Lists",
 			LUAWINDOW = "LUA Configure",
-			LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need to use .Env or TMW.CNDT.Env. for anything that have it\n\nIf you want to remove already default code you will need to write 'return true' without quotes instead of remove them all",
+			LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need to use Action. for anything that have it\n\nIf you want to remove already default code you will need to write 'return true' without quotes instead of remove them all",
 			BRACKETMATCH = "Bracket Matching",
 			CLOSELUABEFOREADD = "Close LUA Configuration before add",
 			FIXLUABEFOREADD = "You need to fix errors in LUA Configuration before to add",
@@ -108,6 +107,7 @@ local Localization = {
 				POTION = "Potion",
 				HEARTOFAZEROTH = "Heart of Azeroth",
 				RACIAL = "Racial spell",
+				STOPCAST = "Stop casting",
 				SYSTEMSECTION = "System Section",
 				LOSSYSTEM = "LOS System",
 				LOSSYSTEMTOOLTIP = "ATTENTION: This option causes delay of 0.3s + current spinning gcd\nif unit being checked it is located in a lose (for example, behind a box at arena)\nYou must also enable the same setting in Advanced Settings\nThis option blacklists unit which in a lose and\nstops providing actions to it for N seconds\n\nRightClick: Create macro",
@@ -155,6 +155,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Hides chat notifications from everything\nATTENTION: This will also hide [Debug] Error Identification!",
 				DISABLEMINIMAP = "Hide icon on minimap",
 				DISABLEMINIMAPTOOLTIP = "Hides minimap icon of this UI",
+				DISABLEPORTRAITS = "Hide class portrait",
+				DISABLEROTATIONMODES = "Hide rotation modes",
+				DISABLESOUNDS = "Disable sounds",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -182,7 +185,7 @@ local Localization = {
 				AUTOHIDDEN = "[All specs] AutoHide unavailable actions",
 				AUTOHIDDENTOOLTIP = "Makes Scroll Table smaller and clear by visual hide\nFor example character class has few racials but can use one, this option will hide others racials\nJust for comfort view",
 				CHECKSPELLLVL = "[All specs] Check required spell level",
-				CHECKSPELLLVLTOOLTIP = "All spells which is not available by character level will be blocked\nThey will be updated every time with level up\n\nNote: Cause high CPU demand\nRightClick: Create macro",
+				CHECKSPELLLVLTOOLTIP = "All spells which is not available by character level will be blocked\nThey will be updated every time with level up",
 				CHECKSPELLLVLERROR = "Already initialized!",
 				CHECKSPELLLVLERRORMAXLVL = "You're at MAX possible level!",
 				CHECKSPELLLVLMACRONAME = "CheckSpellLevel",
@@ -270,7 +273,7 @@ local Localization = {
 				USELEFT = "Use Left click",
 				USELEFTTOOLTIP = "This using macro /target mouseover which is not itself click!\n\nRightClick: Create macro",
 				USERIGHT = "Use Right click",
-				LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nIf you use LUA in Category 'GameToolTip' then thisunit is not valid\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need use .Env or TMW.CNDT.Env. for anything that have it\n\nIf you want to remove already default code you will need write 'return true' without quotes instead of remove all",							
+				LUATOOLTIP = "To refer to the checking unit, use 'thisunit' without quotes\nIf you use LUA in Category 'GameToolTip' then thisunit is not valid\nCode must have boolean return (true) to process conditions\nThis code has setfenv which means what you no need use Action. for anything that have it\n\nIf you want to remove already default code you will need write 'return true' without quotes instead of remove all",							
 				BUTTON = "Click",
 				NAME = "Name",
 				LEFT = "Left click",
@@ -355,7 +358,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Каждый спек] относится к ТЕКУЩЕЙ выбранной специализации",
 			INTERFACEGUIDANCEALLSPECS = "[Все спеки] относится ко ВСЕМ доступным на персонаже специализациям",
 			INTERFACEGUIDANCEGLOBAL = "[Глобально] относится к ВСЕМУ вашему аккаунту, к ВСЕМ персонажам, к ВСЕМ специализациям",
-			ATTENTION = "|cffff0000ОБРАТИТЕ ВНИМАНИЕ|r функционал Action доступен лишь для профилей вышедших после 31.05.2019. Предыдущие профиля будут обновлены для этой системы в будущем",				
+			ATTENTION = "|cffff0000ОБРАТИТЕ ВНИМАНИЕ|r функционал Action доступен лишь для профилей вышедших после 31.05.2019. Предыдущие профиля будут обновлены для этой системы в будущем",		
+			TOTOGGLEBURST = "чтобы переключить Режим Бурстов",
+			TOTOGGLEMODE = "чтобы переключить PvP / PvE",
+			TOTOGGLEAOE = "чтобы переключить AoE",
 		},
 		TAB = {
 			RESETBUTTON = "Сбросить настройки",
@@ -366,7 +372,7 @@ local Localization = {
 			SAVEMOUSE = "Сохранить Списки Курсора",
 			SAVEMSG = "Сохранить Списки MSG",
 			LUAWINDOW = "LUA Конфигурация",
-			LUATOOLTIP = "Для обращения к проверяемому юниту используйте 'thisunit' без кавычек\nКод должен иметь логический возрат (true) для того чтобы условия срабатывали\nКод имеет setfenv, это означает, что не нужно использовать .Env или TMW.CNDT.Env для чего-либо что имеет это\n\nЕсли вы хотите удалить по-умолчанию установленный код, то нужно написать 'return true' без кавычек,\nвместо простого удаления",	
+			LUATOOLTIP = "Для обращения к проверяемому юниту используйте 'thisunit' без кавычек\nКод должен иметь логический возрат (true) для того чтобы условия срабатывали\nКод имеет setfenv, это означает, что не нужно использовать Action. для чего-либо что имеет это\n\nЕсли вы хотите удалить по-умолчанию установленный код, то нужно написать 'return true' без кавычек,\nвместо простого удаления",	
 			BRACKETMATCH = "Закрывать Скобки",
 			CLOSELUABEFOREADD = "Закройте LUA Конфигурацию прежде чем добавлять",
 			FIXLUABEFOREADD = "Исправьте ошибки в LUA Конфигурации прежде чем добавлять",
@@ -392,6 +398,7 @@ local Localization = {
 				POTION = "Зелье",
 				HEARTOFAZEROTH = "Сердце Азерота",
 				RACIAL = "Расовая способность",
+				STOPCAST = "Стоп кастить",
 				SYSTEMSECTION = "Секция Систем",
 				LOSSYSTEM = "LOS Система",
 				LOSSYSTEMTOOLTIP = "ВНИМАНИЕ: Эта опция вызывает задержку 0.3сек + тек. крутящийся гкд\nесли проверяемый юнит находится в лосе (например за столбом на арене)\nВы также должны включить такую же настройку в Advanced Settings\nДанная опция заносит в черный список проверяемого юнита\nи перестает на N секунд предоставлять к нему действия если юнит в лосе\n\nПравая кнопка мышки: Создать макрос",
@@ -439,6 +446,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Скрывает уведомления этого UI в чате\nВНИМАНИЕ: Это также скрывает [Debug] Идентификатор ошибки!",
 				DISABLEMINIMAP = "Скрыть значок на миникарте",
 				DISABLEMINIMAPTOOLTIP = "Скрывает значок этого UI",
+				DISABLEPORTRAITS = "Скрыть классовый портрет",
+				DISABLEROTATIONMODES = "Скрыть режимы ротации",
+				DISABLESOUNDS = "Отключить звуки",
 			},			
 			[3] = {
 				HEADBUTTON = "Действия",
@@ -466,7 +476,7 @@ local Localization = {
 				AUTOHIDDEN = "[Все спеки] АвтоСкрытие недоступных действий",
 				AUTOHIDDENTOOLTIP = "Делает прокручивающейся список меньше и чистее за счет визуального скрытия\nНапример, класс персонажа имеет несколько расовых способностей, но может использовать лишь одну, эта опция скроет остальные\nПросто для удобства просмотра",
 				CHECKSPELLLVL = "[Все спеки] Проверять необходимый уровень способности",
-				CHECKSPELLLVLTOOLTIP = "Все способности которые не доступны по уровню персонажа будут заблокированы\nОни будут обновляться каждый раз по достижению нового уровня\n\nЗаметка: Вызывает высокое потребление CPU\n\nПравая кнопка мышки: Создать макрос",					
+				CHECKSPELLLVLTOOLTIP = "Все способности которые не доступны по уровню персонажа будут заблокированы\nОни будут обновляться каждый раз по достижению нового уровня",					
 				CHECKSPELLLVLERROR = "Уже инициализировано!",
 				CHECKSPELLLVLERRORMAXLVL = "Вы на МАКСИМАЛЬНО возможном уровне!",
 				CHECKSPELLLVLMACRONAME = "Проверять Уровень Способностей",
@@ -554,7 +564,7 @@ local Localization = {
 				USELEFT = "Использовать Левый щелчок",
 				USELEFTTOOLTIP = "Используется макрос /target mouseover это не является самим щелчком!\n\nПравая кнопка мыши: Создать макрос",
 				USERIGHT = "Использовать Правый щелчок",
-				LUATOOLTIP = "Для обращения к проверяемому юниту используйте 'thisunit' без кавычек\nЕсли вы используете LUA в категории 'GameToolTip' тогда thisunit не имеет никакого значения\nКод должен иметь логический возрат (true) для того чтобы условия срабатывали\nКод имеет setfenv, это означает, что не нужно использовать .Env или TMW.CNDT.Env для чего-либо что имеет это\n\nЕсли вы хотите удалить по-умолчанию установленный код, то нужно написать 'return true'без кавычек,\nвместо простого удаления",														
+				LUATOOLTIP = "Для обращения к проверяемому юниту используйте 'thisunit' без кавычек\nЕсли вы используете LUA в категории 'GameToolTip' тогда thisunit не имеет никакого значения\nКод должен иметь логический возрат (true) для того чтобы условия срабатывали\nКод имеет setfenv, это означает, что не нужно использовать Action. для чего-либо что имеет это\n\nЕсли вы хотите удалить по-умолчанию установленный код, то нужно написать 'return true'без кавычек,\nвместо простого удаления",														
 				BUTTON = "Щелчок",
 				NAME = "Название",
 				LEFT = "Левый щелчок",
@@ -639,7 +649,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Jede Klasse] Spezifiziert für deine jetzige Skillung",
 			INTERFACEGUIDANCEALLSPECS = "[Alle Klassen] Spezifiziert für alle Skillungen deines Characters",
 			INTERFACEGUIDANCEGLOBAL = "[Global] Spezifiziert für alle auf deinem Account, Alle Charaktere, Alle Skillungen",
-			ATTENTION = "|cffff0000TAKE ATTENTION|r Funktionsumfang von Action nur für Profile verfügbar, die nach dem 31.05.2019 veröffentlicht wurden. Das alte Profil würde zukünftig für dieses System aktualisiert",				
+			ATTENTION = "|cffff0000TAKE ATTENTION|r Funktionsumfang von Action nur für Profile verfügbar, die nach dem 31.05.2019 veröffentlicht wurden. Das alte Profil würde zukünftig für dieses System aktualisiert",
+			TOTOGGLEBURST = "um den Burst-Modus umzuschalten",
+			TOTOGGLEMODE = "PvP / PvE umschalten",
+			TOTOGGLEAOE = "um AoE umzuschalten",			
 		},
 		TAB = {
 			RESETBUTTON = "Einstellungen zurücksetzten",
@@ -650,7 +663,7 @@ local Localization = {
 			SAVEMOUSE = "Speicher Cursorliste",
 			SAVEMSG = "Speicher Nachrichtrenliste",
 			LUAWINDOW = "LUA Einstellung",
-			LUATOOLTIP = "Verwenden Sie 'thisunit' ohne Anführungszeichen, um auf die Prüfungseinheit zu verweisen.\nCode muss einen booleschen Rückgabewert (true) haben, um Bedingungen zu verarbeiten\nDieser Code hat setfenv, was bedeutet, dass Sie .Env oder TMW.CNDT.Env nicht benötigen. für alles, was es hat\n\nWenn Sie bereits Standardcode entfernen möchten, müssen Sie 'return true' ohne Anführungszeichen schreiben, anstatt alle zu entfernen",
+			LUATOOLTIP = "Verwenden Sie 'thisunit' ohne Anführungszeichen, um auf die Prüfungseinheit zu verweisen.\nCode muss einen booleschen Rückgabewert (true) haben, um Bedingungen zu verarbeiten\nDieser Code hat setfenv, was bedeutet, dass Sie Action. nicht benötigen. für alles, was es hat\n\nWenn Sie bereits Standardcode entfernen möchten, müssen Sie 'return true' ohne Anführungszeichen schreiben, anstatt alle zu entfernen",
 			BRACKETMATCH = "Bracket Matching",
 			CLOSELUABEFOREADD = "Vor dem Adden LUA Konfiguration schließen!",
 			FIXLUABEFOREADD = "LUA Fehler beheben bevor du es hinzufügst",
@@ -676,6 +689,7 @@ local Localization = {
 				POTION = "Potion",
 				HEARTOFAZEROTH = "Herz von Azeroth",
 				RACIAL = "Rassenfähigkeit",
+				STOPCAST = "Hör auf zu gießen",
 				SYSTEMSECTION = "Systemmenu",
 				LOSSYSTEM = "LOS System",
 				LOSSYSTEMTOOLTIP = "ACHTUNG: Diese Option führt zu einer Verzögerung von 0,3 s + der aktuellen Spinning-GCD.\nwenn überprüft wird, ob sich die Einheit in Sichtweite befindet (z. B. hinter einer Box in der Arena).\nDiese Option muss auch in den erweiterten Einstellungen aktiviert werden a lose und\nunterbricht die Bereitstellung von Aktionen für N Sekunden\n\nRechtsklick: Makro erstellen",
@@ -723,6 +737,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Verbirgt Chat-Benachrichtigungen vor allem\nACHTUNG: Dadurch wird auch die [Debug] -Fehleridentifikation ausgeblendet!",
 				DISABLEMINIMAP = "Verstecke Minimap Symbol",
 				DISABLEMINIMAPTOOLTIP = "Blendet das Minikartensymbol dieser Benutzeroberfläche aus",
+				DISABLEPORTRAITS = "Klassenporträt ausblenden",
+				DISABLEROTATIONMODES = "Drehmodi ausblenden",
+				DISABLESOUNDS = "Sounds deaktivieren",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -750,7 +767,7 @@ local Localization = {
 				AUTOHIDDEN = "[Alle Spezialisierungen] Nicht verfügbare Aktionen automatisch ausblenden",
 				AUTOHIDDENTOOLTIP = "Verkleinern Sie die Bildlauftabelle und löschen Sie sie durch visuelles Ausblenden\nZum Beispiel hat die Charakterklasse nur wenige Rassen, kann aber eine verwenden. Diese Option versteckt andere Rassen\nNur zur Komfortsicht",
 				CHECKSPELLLVL = "[Alle Spezialisierungen] Überprüfe den vorrausgesetzten Spell Level",
-				CHECKSPELLLVLTOOLTIP = "Alle Zaubersprüche, die auf Charakterebene nicht verfügbar sind, werden blockiert.\nSie werden jedes Mal mit einer höheren Stufe aktualisiert.\n\nHinweis: Verursacht einen hohen CPU-Bedarf.\nRechtsklick: Makro erstellen",
+				CHECKSPELLLVLTOOLTIP = "Alle Zaubersprüche, die auf Charakterebene nicht verfügbar sind, werden blockiert.\nSie werden jedes Mal mit einer höheren Stufe aktualisiert",
 				CHECKSPELLLVLERROR = "Schon installiert!",
 				CHECKSPELLLVLERRORMAXLVL = "Max Level erreicht!",
 				CHECKSPELLLVLMACRONAME = "Spell Level überprüfen",
@@ -838,7 +855,7 @@ local Localization = {
 				USELEFT = "Benutze Links Klick",
 				USELEFTTOOLTIP = "Dies erfolgt mit einem Makro / Ziel-Mouseover, bei dem es sich nicht um einen Klick handelt!\n\nRechtsklick: Makro erstellen",
 				USERIGHT = "Benutze Rechts Klick",
-				LUATOOLTIP = "Verwenden Sie 'thisunit' ohne Anführungszeichen, um auf die Prüfungseinheit zu verweisen.\nWenn Sie in der Kategorie 'GameToolTip' LUA verwenden, ist diese Einheit ungültig.\nCode muss eine boolesche Rückgabe (trifft zu) für die Verarbeitung von Bedingungen haben Verwenden Sie .Env oder TMW.CNDT.Env. für alles, was es hat\n\nWenn Sie bereits Standardcode entfernen möchten, müssen Sie 'return true' ohne Anführungszeichen schreiben, anstatt alle zu entfernen",							
+				LUATOOLTIP = "Verwenden Sie 'thisunit' ohne Anführungszeichen, um auf die Prüfungseinheit zu verweisen.\nWenn Sie in der Kategorie 'GameToolTip' LUA verwenden, ist diese Einheit ungültig.\nCode muss eine boolesche Rückgabe (trifft zu) für die Verarbeitung von Bedingungen haben Verwenden Sie Action. für alles, was es hat\n\nWenn Sie bereits Standardcode entfernen möchten, müssen Sie 'return true' ohne Anführungszeichen schreiben, anstatt alle zu entfernen",							
 				BUTTON = "Klick",
 				NAME = "Name",
 				LEFT = "Linkklick",
@@ -923,7 +940,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Each spec] concernant votre spécialisation ACTUELLE",
 			INTERFACEGUIDANCEALLSPECS = "[All specs] concernant TOUTES les spécialisations de votre personnage",
 			INTERFACEGUIDANCEGLOBAL = "[Global] concernant TOUT vos compte, TOUT vos personnage et TOUTES vos spécialisations",
-			ATTENTION = "|cffff0000FAIS ATTENTION|r Les fonction de ActionUI est disponible uniquement pour les profiles publié après le 31.05.2019. Les anciens profiles seront mise à jour pour ce système",				
+			ATTENTION = "|cffff0000FAIS ATTENTION|r Les fonction de ActionUI est disponible uniquement pour les profiles publié après le 31.05.2019. Les anciens profiles seront mise à jour pour ce système",	
+			TOTOGGLEBURST = "pour basculer en mode rafale",
+			TOTOGGLEMODE = "pour basculer PvP / PvE",
+			TOTOGGLEAOE = "pour basculer en zone d'effet (AoE)",			
 		},
 		TAB = {
 			RESETBUTTON = "Réinitiliser les paramètres",
@@ -934,7 +954,7 @@ local Localization = {
 			SAVEMOUSE = "Sauvergarder la liste de Curseur",
 			SAVEMSG = "Sauvergarder La liste MSG",
 			LUAWINDOW = "Configuration LUA",
-			LUATOOLTIP = "Pour se réferer à l'unité vérifié, utiliser 'thisunit' sans les guillemets\nLe code doit retourner un booléen (true) pour activer les conditions\nLe code contient setfenv ce qui siginfie que vous n'avez pas bessoin d'utiliser .Env or TMW.CNDT.Env. pour tout ce qui l'a\n\nSi vous voulez supprimer le code déjà par défaut, vous devez écrire 'return true' sans guillemets au lieu de tout supprimer",
+			LUATOOLTIP = "Pour se réferer à l'unité vérifié, utiliser 'thisunit' sans les guillemets\nLe code doit retourner un booléen (true) pour activer les conditions\nLe code contient setfenv ce qui siginfie que vous n'avez pas bessoin d'utiliser Action. pour tout ce qui l'a\n\nSi vous voulez supprimer le code déjà par défaut, vous devez écrire 'return true' sans guillemets au lieu de tout supprimer",
 			BRACKETMATCH = "Repérage des paires de\nparenthèse", 
 			CLOSELUABEFOREADD = "Fermer la configuration LUA avant de l'ajouter",
 			FIXLUABEFOREADD = "Vous devez corriger les erreurs dans la configuration LUA avant de l'ajouter",
@@ -960,6 +980,7 @@ local Localization = {
 				POTION = "Potion",
 				HEARTOFAZEROTH = "Coeur d'Azeroth",
 				RACIAL = "Sort raciaux",
+				STOPCAST = "Arrêtez le casting",
 				SYSTEMSECTION = "Section système",
 				LOSSYSTEM = "Système LOS",
 				LOSSYSTEMTOOLTIP = "ATTENTION: Cette option cause un delai de 0.3s + votre gcd en cours\nSi la cible verifié n'est pas dans la ligne de vue (par exemple, derrière une boite en arène) \nVous devez aussi activer ce paramètre dans les paramètres avancés\nCette option blacklistes l'unité qui n'est pas à vue et\narrête d'effectuer des actions sur elle pendant N secondes\n\nClique droit : Créer la macro",
@@ -1007,6 +1028,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Cacher toutes les notification du chat\nATTENTION: Cela cache aussi les message de [Debug] Identification d'erreur!",
 				DISABLEMINIMAP = "Cacher l'icone de la minimap",
 				DISABLEMINIMAPTOOLTIP = "Cacher l'icone de la minmap de cette interface",
+				DISABLEPORTRAITS = "Masquer le portrait de classe",
+				DISABLEROTATIONMODES = "Masquer les modes de rotation",
+				DISABLESOUNDS = "Désactiver les sons",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -1034,7 +1058,7 @@ local Localization = {
 				AUTOHIDDEN = "[All specs] Masquer automatiquement les actions non disponibles",
 				AUTOHIDDENTOOLTIP = "Rendre la table de défilement plus petite et claire en masquant visuellement\nPar exemple, la classe de personnage a peu de caractères raciaux, mais peut en utiliser un. Cette option masquera les autres caractères raciaux\nJuste pour le confort vue",
 				CHECKSPELLLVL = "[All specs] Vérifier le niveau du sort",
-				CHECKSPELLLVLTOOLTIP = "Tout les sort qui ne sont pas disponible par le personnage à cause de son level seront bloqué\nCela se met à jour à chaque fois que vous gagnez un niveau\n\nNote: Cause une demande élevé sur le CPU \nClique droit : Créer la macro",
+				CHECKSPELLLVLTOOLTIP = "Tout les sort qui ne sont pas disponible par le personnage à cause de son level seront bloqué\nCela se met à jour à chaque fois que vous gagnez un niveau",
 				CHECKSPELLLVLERROR = "Déjà initialisé!",
 				CHECKSPELLLVLERRORMAXLVL = "Vous êtes au niveau MAX!",
 				CHECKSPELLLVLMACRONAME = "VérifierNiveauSort",
@@ -1122,7 +1146,7 @@ local Localization = {
 				USELEFT = "Utiliser Clique Gauche",
 				USELEFTTOOLTIP = "Cette macro utilise le survol de la souris pas bessoin de clique!\n\nClique droit : Créer la macro",
 				USERIGHT = "Utiliser Clique Droit",
-				LUATOOLTIP = "Pour se réferer à l'unité vérifié, utiliser 'thisunit' sans les guillemets\nSi vous utiliser le code LUA dans la catégorie 'GameToolTip' alors 'thisunit' n'est pas valide\nLe code doit retourner un booléen (true) pour activer les conditions\nLe code contient setfenv ce qui siginfie que vous n'avez pas bessoin d'utiliser .Env or TMW.CNDT.Env. pour tout ce qui l'a\n\nSi vous voulez supprimer le code déjà par défaut, vous devez écrire 'return true' sans guillemets au lieu de tout supprimer",
+				LUATOOLTIP = "Pour se réferer à l'unité vérifié, utiliser 'thisunit' sans les guillemets\nSi vous utiliser le code LUA dans la catégorie 'GameToolTip' alors 'thisunit' n'est pas valide\nLe code doit retourner un booléen (true) pour activer les conditions\nLe code contient setfenv ce qui siginfie que vous n'avez pas bessoin d'utiliser Action. pour tout ce qui l'a\n\nSi vous voulez supprimer le code déjà par défaut, vous devez écrire 'return true' sans guillemets au lieu de tout supprimer",
 				BUTTON = "Cliquer",
 				NAME = "Nom",
 				LEFT = "Clique Gauche",
@@ -1207,7 +1231,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Spec Corrente] si riferisce alla CORRENTE specializzazione",
 			INTERFACEGUIDANCEALLSPECS = "[Spec Tutte] si applica a TUTTE le specializzazioni di un personaggio.",
 			INTERFACEGUIDANCEGLOBAL = "[Spec Globale] si applica GLOBALMENTE al tuo account TUTTI i personaggi TUTTE le specializzazioni.",
-			ATTENTION = "|cffff0000FAI ATTENZIONE|r La funzionalità Action è disponibile solo per i profili rilasciati dopo il 31.05.2019. I profili precedenti verranno aggiornati in futuro.",				
+			ATTENTION = "|cffff0000FAI ATTENZIONE|r La funzionalità Action è disponibile solo per i profili rilasciati dopo il 31.05.2019. I profili precedenti verranno aggiornati in futuro.",			
+			TOTOGGLEBURST = "per attivare / disattivare la modalità Burst",
+			TOTOGGLEMODE = "per attivare / disattivare PvP / PvE",
+			TOTOGGLEAOE = "per attivare / disattivare AoE",
 		},
 		TAB = {
 			RESETBUTTON = "Riavvia settaggi",
@@ -1218,7 +1245,7 @@ local Localization = {
 			SAVEMOUSE = "Salva liste cursori",
 			SAVEMSG = "Salva liste MSG",
 			LUAWINDOW = "Configura LUA",
-			LUATOOLTIP = "Per fare riferimento all unità da controllare, usa il nome senza virgolette \nIl codice deve avere un valore(true) per funzionare \nIl codice ha setfenv, significa che non devi usare .Env o TMW.CNDT.Env \n\nSe vuoi rimpiazzare il codice predefinito, devi rimpiazzare con un 'return true' senza virgolette, \n invece di cancellarlo",
+			LUATOOLTIP = "Per fare riferimento all unità da controllare, usa il nome senza virgolette \nIl codice deve avere un valore(true) per funzionare \nIl codice ha setfenv, significa che non devi usare Action. \n\nSe vuoi rimpiazzare il codice predefinito, devi rimpiazzare con un 'return true' senza virgolette, \n invece di cancellarlo",
 			BRACKETMATCH = "Verifica parentesi",
 			CLOSELUABEFOREADD = "Chiudi la configurazione LUA prima di aggiungere",
 			FIXLUABEFOREADD = "Devi correggere gli errori nella configurazione LUA prima di aggiungere",
@@ -1244,6 +1271,7 @@ local Localization = {
 				POTION = "Pozione",
 				HEARTOFAZEROTH = "Cuore di Azeroth",
 				RACIAL = "Abilitá Raziale",
+				STOPCAST = "Smetti di lanciare",
 				SYSTEMSECTION = "Area systema",
 				LOSSYSTEM = "Sistema di linea di vista [LOS]",
 				LOSSYSTEMTOOLTIP = "ATTENZIONE: Questa opzione causa un ritardo di 0.3s + piu tempo del sistema di recupero globale [srg]\nse il bersaglio é in los (per esempio dietro una cassa in arena)\nDevi anche abilitare lo stesso settaggio in Settaggi Avanzati\nQuesta opzione mette in blacklists bersagli fuori los e\nferma le azioni verso il bersaglio per N secondio\n\nTastodestro: Crea macro",
@@ -1291,6 +1319,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Nasconde notifice di chat per tutto\nATTENZIONE: Questa opzione nasconde anche le notifiche [Debug] Identificazione errori!",
 				DISABLEMINIMAP = "Nasconde icona nella minimap",
 				DISABLEMINIMAPTOOLTIP = "Nasconde l'icona di questa UI dalla minimappa",
+				DISABLEPORTRAITS = "Nascondi ritratto di classe",
+				DISABLEROTATIONMODES = "Nascondi le modalità di rotazione",
+				DISABLESOUNDS = "Disabilita i suoni",
 			},
 			[3] = {
 				HEADBUTTON = "Azioni",
@@ -1318,7 +1349,7 @@ local Localization = {
 				AUTOHIDDEN = "[All specs] Nascondi automaticamente le azioni non disponibili",
 				AUTOHIDDENTOOLTIP = "Rende la Tabella di Scorrimento più piccola e chiara per nascondere l'immagine\nAd esempio, la classe personaggio ha poche razze ma può usarne una, questa opzione nasconderà altre razze\nSolo per una visione confortevole",
 				CHECKSPELLLVL = "[All specs] Verifica il livello richiesto",
-				CHECKSPELLLVLTOOLTIP = "Tutti gli spell non disponibilit dat il livello del personaggio sono bloccati\nTorneranno disponibili non appena il personaggio raggiunge il livello richiesto\n\nNota: Potrebbe causare un intenso uso di CPU\nTastodestro: Crea macro",
+				CHECKSPELLLVLTOOLTIP = "Tutti gli spell non disponibilit dat il livello del personaggio sono bloccati\nTorneranno disponibili non appena il personaggio raggiunge il livello richiesto",
 				CHECKSPELLLVLERROR = "Giá inizializzato!",
 				CHECKSPELLLVLERRORMAXLVL = "Sel al livello MAX possibile!",
 				CHECKSPELLLVLMACRONAME = "VerificaLivello",
@@ -1406,7 +1437,7 @@ local Localization = {
 				USELEFT = "Utilizza click sinistro",
 				USELEFTTOOLTIP = "Utilizza macro /target mouseover che non é un click!\n\nTastodestro: Crea macro",
 				USERIGHT = "Utilizza click destro",
-				LUATOOLTIP = "Per fare riferimento all'unitá da controllare, utilizza 'thisunit' senza virgolette\nSe usi LUA nella categoria 'GameToolTip' questa unitaá non é allora valida\nIl codice deve avere un ritorno logico (vero) perche sia attivato\nQuesto codice ha setfenv questo significa che non hai bisogno di usare .Env or TMW.CNDT.Env.\n\nSe vuoi rimuovere il codice predefinito, devi scrivere 'return true' senza virgolette\ninvece di una semplice eliminazione",							
+				LUATOOLTIP = "Per fare riferimento all'unitá da controllare, utilizza 'thisunit' senza virgolette\nSe usi LUA nella categoria 'GameToolTip' questa unitaá non é allora valida\nIl codice deve avere un ritorno logico (vero) perche sia attivato\nQuesto codice ha setfenv questo significa che non hai bisogno di usare Action.\n\nSe vuoi rimuovere il codice predefinito, devi scrivere 'return true' senza virgolette\ninvece di una semplice eliminazione",							
 				BUTTON = "Click",
 				NAME = "Nome",
 				LEFT = "Click sinistro",
@@ -1491,7 +1522,10 @@ local Localization = {
 			INTERFACEGUIDANCEEACHSPEC = "[Each spec] relativa a la ACTUAL especialización seleccionada",
 			INTERFACEGUIDANCEALLSPECS = "[All specs] relativa a TODAS las especializaciones disponibles de tus personajes",
 			INTERFACEGUIDANCEGLOBAL = "[Global] relativa a toda tu cuenta, TODOS los personajes, TODAS las especializaciones",
-			ATTENTION = "|cffff0000ATENCIÓN|r Acción funcional solo para perfiles creados después del 31.05.2019. Los perfiles antiguos serán actualizados para este sistema en el futuro",				
+			ATTENTION = "|cffff0000ATENCIÓN|r Acción funcional solo para perfiles creados después del 31.05.2019. Los perfiles antiguos serán actualizados para este sistema en el futuro",			
+			TOTOGGLEBURST = "para alternar el modo de ráfaga",
+			TOTOGGLEMODE = "para alternar PvP / PvE",
+			TOTOGGLEAOE = "para alternar AoE",
 		},
 		TAB = {
 			RESETBUTTON = "Reiniciar ajustes",
@@ -1502,7 +1536,7 @@ local Localization = {
 			SAVEMOUSE = "Guardar Lista de Cursor",
 			SAVEMSG = "Guardar Lista de Mensajes",
 			LUAWINDOW = "Configurar LUA",
-			LUATOOLTIP = "Para referirse a la unidad de comprobación, usa 'thisunit' sin comillas\nEl código debe tener retorno boolean (true) para procesar las condiciones\nEste código tiene setfenv que significa lo que no necesitas usar .Env o TMW.CNDT.Env. para cualquier cosa que tenga it\n\nSi quieres borrar un codigo default necesitas escribir 'return true' sin comillas en vez de removerlo todo",
+			LUATOOLTIP = "Para referirse a la unidad de comprobación, usa 'thisunit' sin comillas\nEl código debe tener retorno boolean (true) para procesar las condiciones\nEste código tiene setfenv que significa lo que no necesitas usar Action. para cualquier cosa que tenga it\n\nSi quieres borrar un codigo default necesitas escribir 'return true' sin comillas en vez de removerlo todo",
 			BRACKETMATCH = "Correspondencia de corchetes",
 			CLOSELUABEFOREADD = "Cerrar las configuración de LUA antes de añadir",
 			FIXLUABEFOREADD = "Debes arreglas los errores en la Configuración de LUA antes de añadir",
@@ -1528,6 +1562,7 @@ local Localization = {
 				POTION = "Poción",
 				HEARTOFAZEROTH = "Corazón de Azeroth",
 				RACIAL = "Habilidad Racial",
+				STOPCAST = "Deja de lanzar",
 				SYSTEMSECTION = "Sección del sistema",
 				LOSSYSTEM = "Sistema LOS",
 				LOSSYSTEMTOOLTIP = "ATENCIÓN: Esta opción causa un delay de 0.3s + un giro actual de gcd\nsi la unidad está siendo comprobada esta se localizará como pérdida (por ejemplo, detrás de una caja en la arena)\nDebes también habilitar las mismas opciones en Opciones Avanzadas\nEsta opción pone en una lista negra la unidad con perdida y\n deja de producir acciones a esta durante N segundos\n\nClickDerecho: Crear macro",
@@ -1575,6 +1610,9 @@ local Localization = {
 				DISABLEPRINTTOOLTIP = "Esconder notificaciones de chat de todo\nATENCIÓN: Esto también esconderá [Debug] Error Identificado!",
 				DISABLEMINIMAP = "Esconder icono en el minimapa",
 				DISABLEMINIMAPTOOLTIP = "Esconder icono de esta UI en el minimapa",
+				DISABLEPORTRAITS = "Ocultar retrato de clase",
+				DISABLEROTATIONMODES = "Ocultar modos de rotación",
+				DISABLESOUNDS = "Desactivar sonidos",
 			},
 			[3] = {
 				HEADBUTTON = "Acciones",
@@ -1602,7 +1640,7 @@ local Localization = {
 				AUTOHIDDEN = "[All specs] AutoOcultar acciones no disponibles",
 				AUTOHIDDENTOOLTIP = "Hace que la tabla de desplazamiento sea más pequeña y clara ocultándola visualmente\nPor ejemplo, el tipo de personaje tiene pocos racials pero puede usar uno, esta opción hará que se escondan los demás raciales\nPara que sea más cómodo visualmente",				
 				CHECKSPELLLVL = "[All specs] Comprueba el nivel requerido de la habilidad",
-				CHECKSPELLLVLTOOLTIP = "Todas las habilidades que no estén disponibles por el nivel del personaje serán bloqueadas\nSerán actualizadas cada vez que se sube de nivel\n\nNota: Causa una demanda alta de la CPU\nClickDerecho: Crear macro",
+				CHECKSPELLLVLTOOLTIP = "Todas las habilidades que no estén disponibles por el nivel del personaje serán bloqueadas\nSerán actualizadas cada vez que se sube de nivel",
 				CHECKSPELLLVLERROR = "Ya inicializado!",
 				CHECKSPELLLVLERRORMAXLVL = "Estás al MÁXIMO nivel posible!",
 				CHECKSPELLLVLMACRONAME = "Comprueba el nivel de la habilidad",
@@ -1690,7 +1728,7 @@ local Localization = {
 				USELEFT = "Usar click izquierdo",
 				USELEFTTOOLTIP = "Estás usando macro /target mouseover lo que no significa click!\n\nClickDerecho: Crear macro",
 				USERIGHT = "Usar click derecho",
-				LUATOOLTIP = "Para referirse a la unidad seleccionada, usa 'thisunit' sin comillas\nSi usas LUA en Categoría 'GameToolTip' entonces thisunit no es válido\nEl código debe tener boolean return (true) para procesar las condiciones\nEste código tiene setfenv que significa que no necesitas usar .Env or TMW.CNDT.Env. para ninguna que lo tenga\n\nSi quieres borrar el codigo por defecto necesitarás escribir 'return true' sin comillas en vez de borrarlo todo",							
+				LUATOOLTIP = "Para referirse a la unidad seleccionada, usa 'thisunit' sin comillas\nSi usas LUA en Categoría 'GameToolTip' entonces thisunit no es válido\nEl código debe tener boolean return (true) para procesar las condiciones\nEste código tiene setfenv que significa que no necesitas usar Action. para ninguna que lo tenga\n\nSi quieres borrar el codigo por defecto necesitarás escribir 'return true' sin comillas en vez de borrarlo todo",							
 				BUTTON = "Click",
 				NAME = "Nombre",
 				LEFT = "Click izquierdo",
@@ -1746,62 +1784,82 @@ local Localization = {
 		},
 	},
 }
-if not Localization[GameLocale] then 
-	Localization[GameLocale] = {} 
-end 
-setmetatable(Localization[GameLocale], { __index = Localization["enUS"] })
-local function GetLocalization()
+setmetatable(Localization[GameLocale], { __index = Localization[CL] })
+
+function Action.GetLocalization()
+	-- @return table localized with current language of interface 
 	CL = TMW and TMW.db and TMW.db.global.ActionDB and TMW.db.global.ActionDB.InterfaceLanguage ~= "Auto" and Localization[TMW.db.global.ActionDB.InterfaceLanguage] and TMW.db.global.ActionDB.InterfaceLanguage or next(Localization[GameLocale]) and GameLocale or "enUS"
-	L = Localization[CL] or Localization["enUS"]
+	L = Localization[CL]
 	-- This need to prevent any errors caused by missed keys 
 	setmetatable(L, { __index = Localization["enUS"] })
-end 
-function Action.GetLocalization()
-	GetLocalization()
 	return L
 end 
 
---------------------------------------
--- Database
---------------------------------------
-
+-------------------------------------------------------------------------------
+-- DB: Database
+-------------------------------------------------------------------------------
+Action.Enum = {}
 Action.Data = {	
-	ProfileEnabled = {
-		["[GGL] Test"] = false, 
-	},
 	ProfileUI = {},
 	ProfileDB = {},
+	ProfileEnabled = {
+		["[GGL] Test"] 		= false,
+		["[GGL] Template"] 	= false,
+	},
 	DefaultProfile = {
-		["WARRIOR"] = "[GGL] Warrior",
-		["PALADIN"] = "[GGL] Paladin",
-		["HUNTER"] = "[GGL] Hunter",
-		["ROGUE"] = "[GGL] Rogue",
-		["PRIEST"] = "[GGL] Priest",
-		["SHAMAN"] = "[GGL] Shaman",
-		["MAGE"] = "[GGL] Mage",
-		["WARLOCK"] = "[GGL] Warlock",
-		["MONK"] = "[GGL] Monk",
-		["DRUID"] = "[GGL] Druid",
-		["DEATHKNIGHT"] = "[GGL] Death Knight",
-		["DEMONHUNTER"] = "[GGL] Demon Hunter",
+		["WARRIOR"] 		= "[GGL] Warrior",
+		["PALADIN"] 		= "[GGL] Paladin",
+		["HUNTER"] 			= "[GGL] Hunter",
+		["ROGUE"] 			= "[GGL] Rogue",
+		["PRIEST"] 			= "[GGL] Priest",
+		["SHAMAN"] 			= "[GGL] Shaman",
+		["MAGE"] 			= "[GGL] Mage",
+		["WARLOCK"] 		= "[GGL] Warlock",
+		["MONK"] 			= "[GGL] Monk",
+		["DRUID"] 			= "[GGL] Druid",
+		["DEATHKNIGHT"] 	= "[GGL] Death Knight",
+		["DEMONHUNTER"] 	= "[GGL] Demon Hunter",
 	},
 	-- UI template config  
 	theme = {
-		off = "|cffff0000OFF|r",
-		on = "|cff00ff00ON|r",
+		off 				= "|cffff0000OFF|r",
+		on 					= "|cff00ff00ON|r",
 		dd = {
-			width = 125,
-			height = 25,
+			width 			= 125,
+			height 			= 25,
 		},
 	},
 	-- Color
     C = {
-        ["GREEN"] = "ff00ff00d",
-        ["RED"] = "ffff0000d",
-        ["BLUE"] = "ff0900ffd",        
-        ["YELLOW"] = "ffffff00d",
-        ["PINK"] = "ffff00ffd",
-        ["LIGHT BLUE"] = "ff00ffffd",
+		-- Standart 
+        ["GREEN"] 			= "ff00ff00",
+        ["RED"] 			= "ffff0000d",
+        ["BLUE"] 			= "ff0900ffd",        
+        ["YELLOW"]	 		= "ffffff00d",
+        ["PINK"] 			= "ffff00ffd",
+        ["LIGHT BLUE"] 		= "ff00ffffd",
+		-- Nicely
+		["LIGHTRED"]        = "ffff6060d",
+		["TORQUISEBLUE"]	= "ff00C78Cd",
+		["SPRINGGREEN"]	  	= "ff00FF7Fd",
+		["GREENYELLOW"]   	= "ffADFF2Fd",
+		["PURPLE"]		    = "ffDA70D6d",
+		["GOLD"]            = "ffffcc00d",
+		["GOLD2"]			= "ffFFC125d",
+		["GREY"]            = "ff888888d",
+		["WHITE"]           = "ffffffffd",
+		["SUBWHITE"]        = "ffbbbbbbd",
+		["MAGENTA"]         = "ffff00ffd",
+		["ORANGEY"]		    = "ffFF4500d",
+		["CHOCOLATE"]		= "ffCD661Dd",
+		["CYAN"]            = "ff00ffffd",
+		["IVORY"]			= "ff8B8B83d",
+		["LIGHTYELLOW"]	    = "ffFFFFE0d",
+		["SEXGREEN"]		= "ff71C671d",
+		["SEXTEAL"]		    = "ff388E8Ed",
+		["SEXPINK"]		    = "ffC67171d",
+		["SEXBLUE"]		    = "ff00E5EEd",
+		["SEXHOTPINK"]	    = "ffFF6EB4d",		
     },
     -- Queue List
     Q = {},
@@ -1813,37 +1871,8 @@ Action.Data = {
 	Auras = {},
 }
 
--- Clear old global snippets (always even if user accidentally installed it again)
-local function ClearTrash()
-	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and type(TMW.db.global.CodeSnippets.n) == "number" and TMW.db.global.CodeSnippets.n > 0 then 
-		local isRemove = {
-			["Stuff"] = true, 
-			["TMW Monitor"] = true,
-			["CombatTracker"] = true,
-			["LibPvP"] = true,
-			["MultiUnits"] = true,
-			["Scale and Chat"] = true,
-			["MSGEvents"] = true,
-			["AzeriteTraits"] = true,
-			["Hybrid profile"] = true,
-			["PMultiplier"] = true,
-			["HealingEngine"] = true, 
-			["PetLib"] = true, 
-			["BossMods"] = true, 
-			["DEV"] = true,
-		}
-		for i, snippet in ipairs(TMW.db.global.CodeSnippets) do
-			if isRemove[snippet.Name] then
-				TMW.db.global.CodeSnippets[i] = nil 
-				TMW.db.global.CodeSnippets.n = TMW.db.global.CodeSnippets.n - 1
-			end
-		end		 	
-	end 	
-end 
-hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
-
 -- Templates
--- Important: If there is any fail with Factory on preset LUA only ResetDB can help, otherwise will need write for each mistake own fix 
+-- Important: Default LUA overwrite problem was fixed by additional LUAVER key, however [3] "QLUA" and "LUA" was leaved and only 'Reset Settings' can clear it 
 -- TMW.db.profile.ActionDB DefaultBase
 local Factory = {
 	-- Special keys: 
@@ -1863,11 +1892,15 @@ local Factory = {
 		DisableBlackBackground = false,
 		DisablePrint = false,
 		DisableMinimap = false,
+		DisableClassPortraits = false,
+		DisableRotationModes = false,
+		DisableSounds = true,
 		PLAYERSPEC = {
 			AutoTarget = true, 
 			Potion = true, 
 			HeartOfAzeroth = true,
 			Racial = true,	
+			StopCast = true,
 			DBM = true,
 			["LOSCheck"] = _G.LOSCheck ~= nil and _G.LOSCheck or false, 
 			["HE_Toggle"] = _G.HE_Toggle ~= nil and _G.HE_Toggle or "ALL",
@@ -1889,6 +1922,7 @@ local Factory = {
 		PLAYERSPEC = {			
 			disabledActions = {},
 			luaActions = {},
+			QluaActions = {},
 		},
 	},
 	[4] = {
@@ -2042,12 +2076,13 @@ local GlobalFactory = {
 	minimap = {},
 	[5] = {		
 		PvE = {
+			BlackList = {},
 			PurgeFriendly = {
 				-- Mind Control (it's buff)
 				[605] = { canStealOrPurge = true },
 				-- Seduction
-				[270920] = { canStealOrPurge = true, LUA = [[ -- Don't purge if we're Mage
-				return select(2, UnitClass("player")) ~= "MAGE" ]] },
+				[270920] = { canStealOrPurge = true, LUAVER = 2, LUA = [[ -- Don't purge if we're Mage
+				return PlayerClass ~= "MAGE" ]] },
 			},
 			PurgeHigh = {
 				-- Gilded Claws
@@ -2057,13 +2092,13 @@ local GlobalFactory = {
 				-- Healing Balm
 				[257397] = { canStealOrPurge = true },
 				-- Bound by Shadow
-				[269935] = { canStealOrPurge = true, LUA = [[ -- Don't purge if we're Mage
-				return select(2, UnitClass("player")) ~= "MAGE" ]] },
+				[269935] = { canStealOrPurge = true, LUAVER = 2, LUA = [[ -- Don't purge if we're Mage
+				return PlayerClass ~= "MAGE" ]] },
 				-- Induce Regeneration
 				[270901] = { canStealOrPurge = true, dur = 7 },
 				-- Tidal Surge
-				[267977] = { canStealOrPurge = true, dur = 10, LUA = [[ -- Only if we're Mage
-				return select(2, UnitClass("player")) == "MAGE" ]] },
+				[267977] = { canStealOrPurge = true, dur = 10, LUAVER = 2, LUA = [[ -- Only if we're Mage
+				return PlayerClass == "MAGE" ]] },
 				-- Mending Rapids
 				[268030] = { canStealOrPurge = true, dur = 4 },
 				-- Watertight Shell
@@ -2109,8 +2144,8 @@ local GlobalFactory = {
 				-- Induce Regeneration
 				[270901] = { canStealOrPurge = true },
 				-- Tidal Surge
-				[267977] = { canStealOrPurge = true, dur = 3, LUA = [[ -- Only if we're Mage
-				return select(2, UnitClass("player")) == "MAGE" ]] },
+				[267977] = { canStealOrPurge = true, dur = 3, LUAVER = 2, LUA = [[ -- Only if we're Mage
+				return PlayerClass == "MAGE" ]] },
 				-- Consuming Void
 				[276767] = { canStealOrPurge = true },
 				-- Spirited Defense
@@ -2141,6 +2176,10 @@ local GlobalFactory = {
 				[275836] = { stack = 5 },        
 			},
 			Disease = {
+				-- 8.2 Mechagon - Consuming Slime
+				[300659] = {},
+				-- 8.2 Mechagon - Gooped
+				[298124] = {},
 				-- Infected Wound
 				[258323] = { stack = 1 },
 				-- Plague Step
@@ -2172,9 +2211,15 @@ local GlobalFactory = {
 				-- Withering Curse
 				[252687] = { stack = 2 },				
 			},
-			Magic = {
-				-- Blazing Chomp
+			Magic = {				
+				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
+				-- 8.2 Mechagon - Shrink
+				[299572] = { byID = true },
+				-- 8.2 Mechagon - Arcing Zap
+				[294195] = { byID = true },
+				-- 8.2 Mechagon - Discom-BOMB-ulator
+				[285460] = { byID = true },
 				-- 8.2 Queen Azshara - Arcane Burst
 				[303657] = { byID = true, dur = 10 },
 				-- 8.2 Za'qul - Dread
@@ -2206,7 +2251,7 @@ local GlobalFactory = {
 				-- Electrifying Shock
 				[268233] = {},
 				-- Touch of the Drowned 
-				[268322] = { LUA = [[ -- if no party member is afflicted by Mental Assault (268391)
+				[268322] = { LUAVER = 2, LUA = [[ -- if no party member is afflicted by Mental Assault (268391)
 				return FriendlyTeam():GetDeBuffs(268391) == 0 ]] },
 				-- Mental Assault 
 				[268391] = {},
@@ -2217,7 +2262,7 @@ local GlobalFactory = {
 				-- Putrid Waters
 				[274991] = {},
 				-- Flame Shock 
-				[268013] = { LUA = [[ -- if no party member is afflicted by Snake Charm (268008)
+				[268013] = { LUAVER = 2, LUA = [[ -- if no party member is afflicted by Snake Charm (268008)
 				return FriendlyTeam():GetDeBuffs(268008) == 0 ]] },
 				-- Snake Charm
 				[268008] = {},
@@ -2244,7 +2289,7 @@ local GlobalFactory = {
 				-- Reap Soul
 				[288388] = { stack = 20 },
 				-- Putrid Waters
-				[275014] = { LUA = [[ -- Don't dispel self
+				[275014] = { LUAVER = 2, LUA = [[ -- Don't dispel self
 				return not UnitIsUnit("player", thisunit) ]] },
 			}, 
 			MagicMovement = {
@@ -2263,6 +2308,7 @@ local GlobalFactory = {
 			},
 		},
 		PvP = {
+			BlackList = {},
 			PurgeFriendly = {
 				-- Mind Control (it's buff)
 				[605] = { canStealOrPurge = true },
@@ -2488,55 +2534,43 @@ local function tMerge(default, new, special, nonexistremove)
 	return result
 end
 
-local IsMerge = {
-	["minimap"] = true,
-	["disabledActions"] = true,
-	["luaActions"] = true,	
-	["msgList"] = true,
-	["PvP"] = true, 
-	["PvE"] = true,		
-	["LUA"] = true, 
-	["Dispel"] = true,
-	["Purge"] = true,
-	["Enrage"] = true, 
-	["dur"] = true,
-	["stack"] = true,
-	["canStealOrPurge"] = true,
-	["onlyBear"] = true, 
-	["byID"] = true, 
-	["isTotem"] = true,
-	[GameLocale] = true,
-}
-local function tCompare(default, new)
+local function tCompare(default, new, upkey, skip)
 	local result = {}
 	
-	if new == nil or next(new) == nil then 
-		result = tMerge(result, default)
-	else 
-		if default ~= new then 
+	if (new == nil or next(new) == nil) and default ~= nil then 
+		result = tMerge(result, default)		
+	else 		
+		if default ~= nil then 
 			for k, v in pairs(default) do
-				if new[k] ~= nil then 
+				if not skip and new[k] ~= nil then 
 					if type(v) == "table" then 
-						result[k] = tCompare(v, new[k])
+						result[k] = tCompare(v, new[k], k)
 					elseif type(v) == type(new[k]) then 
-						result[k] = new[k]
+						-- Overwrite default LUA specified in profile (default) even if user made custom (new), doesn't work for [3] "QLUA" and "LUA" 
+						if k == "LUA" and default.LUAVER ~= nil and default.LUAVER ~= new.LUAVER then 							
+							result[k] = v
+							Action.Print(L["DEBUG"] .. (upkey or "") .. " (LUA) " .. " " .. L["RESETED"]:lower())
+						elseif k == "LUAVER" then 
+							result[k] = v  
+						else 
+							result[k] = new[k]
+						end 
 					end 
 				else
 					result[k] = v 
-				end
+				end			
 			end 
 		end 
 		
 		for k, v in pairs(new) do 
-			if IsMerge[k] then 
-				if type(v) == "table" then 	
-					result[k] = tMerge(type(result[k]) == "table" and result[k] or {}, v)						
-				else
-					result[k] = v
-				end	
+			if type(v) == "table" then 	
+				result[k] = tCompare(result[k], v, k, true)		
+			elseif result[k] == nil then 
+				result[k] = v
 			--else 
-				--print(L["DEBUG"] .. "in func tCompare error by key: " .. k)
-			end 
+				-- Debugs keys which has been updated by default 
+				--Action.Print(L["DEBUG"] .. "tCompare key: " .. k .. "  upkey: " .. (upkey or ""))				
+			end	
 		end 
 	end 				
 	
@@ -2579,8 +2613,11 @@ local function DispelPurgeEnrageRemap()
 	-- Creates relative to each specs which can dispel or purje anyhow
 	local UnitAuras = {
 		-- Restor Druid 
-		[105] = {
+		[ACTION_CONST_DRUID_RESTORATION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Curse,
@@ -2594,6 +2631,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Curse,
@@ -2608,8 +2648,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Balance
-		[102] = {
+		[ACTION_CONST_DRUID_BALANCE] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2618,6 +2661,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2627,8 +2673,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Feral
-		[103] = {
+		[ACTION_CONST_DRUID_FERAL] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2637,6 +2686,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2646,8 +2698,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Guardian
-		[104] = {
+		[ACTION_CONST_DRUID_GUARDIAN] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2656,6 +2711,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2665,8 +2723,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Arcane
-		[62] = {
+		[ACTION_CONST_MAGE_ARCANE] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2681,6 +2742,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2696,8 +2760,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Fire
-		[63] = {
+		[ACTION_CONST_MAGE_FIRE] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2712,6 +2779,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2727,8 +2797,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Frost
-		[64] = {
+		[ACTION_CONST_MAGE_FROST] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,					
 				},
@@ -2743,6 +2816,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,					
 				},
@@ -2758,8 +2834,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Mistweaver
-		[270] = {
+		[ACTION_CONST_MONK_MISTWEAVER] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,
@@ -2770,6 +2849,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,
@@ -2781,14 +2863,20 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Windwalker
-		[269] = {
+		[ACTION_CONST_MONK_WINDWALKER] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,					
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,					
@@ -2796,14 +2884,20 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Brewmaster
-		[268] = {
+		[ACTION_CONST_MONK_BREWMASTER] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,					
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,					
@@ -2811,8 +2905,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Holy Paladin
-		[65] = {
+		[ACTION_CONST_PALADIN_HOLY] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,	
@@ -2823,6 +2920,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,	
@@ -2834,14 +2934,20 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Protection Paladin
-		[66] = {
+		[ACTION_CONST_PALADIN_PROTECTION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,						
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,						
@@ -2849,14 +2955,20 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Retirbution Paladin
-		[70] = {
+		[ACTION_CONST_PALADIN_RETRIBUTION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Poison,
 					Action.Data.Auras.PvE.Disease,						
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Poison,
 					Action.Data.Auras.PvP.Disease,						
@@ -2864,8 +2976,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Discipline Priest 
-		[256] = {
+		[ACTION_CONST_PRIEST_DISCIPLINE] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Magic,
 					Action.Data.Auras.PvE.Disease,						
@@ -2884,6 +2999,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Magic,
 					Action.Data.Auras.PvP.Disease,						
@@ -2903,8 +3021,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		}, 
 		-- Holy Priest 
-		[257] = {
+		[ACTION_CONST_PRIEST_HOLY] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvE.Magic,
 					Action.Data.Auras.PvE.Disease,						
@@ -2923,6 +3044,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {
 					Action.Data.Auras.PvP.Magic,
 					Action.Data.Auras.PvP.Disease,						
@@ -2942,8 +3066,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		}, 
 		-- Shadow Priest 
-		[258] = {
+		[ACTION_CONST_PRIEST_SHADOW] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Disease,						
 				},
@@ -2958,6 +3085,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Disease,						
 				},
@@ -2973,8 +3103,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Elemental
-		[262] = {
+		[ACTION_CONST_SHAMAN_ELEMENTAL] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,						
 				},
@@ -2989,6 +3122,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,						
 				},
@@ -3004,8 +3140,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Enhancement
-		[263] = {
+		[ACTION_CONST_SHAMAN_ENCHANCEMENT] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,						
 				},
@@ -3020,6 +3159,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,						
 				},
@@ -3035,8 +3177,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Restoration
-		[264] = {
+		[ACTION_CONST_SHAMAN_RESTORATION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvE.Curse,
 					Action.Data.Auras.PvE.Magic,					
@@ -3055,6 +3200,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {					
 					Action.Data.Auras.PvP.Curse,
 					Action.Data.Auras.PvP.Magic,
@@ -3074,8 +3222,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Affliction
-		[265] = {
+		[ACTION_CONST_WARLOCK_AFFLICTION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvE.Magic,					
 				},
@@ -3093,6 +3244,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvP.Magic,
 				},
@@ -3111,8 +3265,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Demonology
-		[266] = {
+		[ACTION_CONST_WARLOCK_DEMONOLOGY] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvE.Magic,					
 				},
@@ -3130,6 +3287,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvP.Magic,
 				},
@@ -3148,8 +3308,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Destruction
-		[267] = {
+		[ACTION_CONST_WARLOCK_DESTRUCTION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvE.Magic,					
 				},
@@ -3167,6 +3330,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Dispel = {										
 					Action.Data.Auras.PvP.Magic,
 				},
@@ -3185,47 +3351,68 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Assassination
-		[259] = {
+		[ACTION_CONST_ROGUE_ASSASSINATION] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
 				},
 			},
 		},
 		-- Outlaw
-		[260] = {
+		[ACTION_CONST_ROGUE_OUTLAW] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
 				},
 			},
 		},
 		-- Subtlety 
-		[261] = {
+		[ACTION_CONST_ROGUE_SUBTLETY] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
 				},
 			},
 		},
 		-- Beast Mastery
-		[253] = {
+		[ACTION_CONST_HUNTER_BEASTMASTERY] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvE.PurgeFriendly,
 				},
@@ -3240,6 +3427,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvP.PurgeFriendly,
 				},
@@ -3255,8 +3445,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Marksmanship
-		[254] = {
+		[ACTION_CONST_HUNTER_MARKSMANSHIP] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvE.PurgeFriendly,
 				},
@@ -3271,6 +3464,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvP.PurgeFriendly,
 				},
@@ -3286,8 +3482,11 @@ local function DispelPurgeEnrageRemap()
 			},
 		},
 		-- Survival
-		[255] = {
+		[ACTION_CONST_HUNTER_SURVIVAL] = {
 			PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvE.PurgeFriendly,
 				},
@@ -3302,6 +3501,9 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 			PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
 				PurgeFriendly = {
 					Action.Data.Auras.PvP.PurgeFriendly,
 				},
@@ -3316,13 +3518,50 @@ local function DispelPurgeEnrageRemap()
 				},
 			},
 		},
+		-- Havoc
+        [ACTION_CONST_DEMONHUNTER_HAVOC] = {
+            PvE = {
+				BlackList = {
+					Action.Data.Auras.PvE.BlackList,
+				},
+                Dispel = {                    
+                    Action.Data.Auras.PvE.Magic,                    
+                },
+                PurgeFriendly = {
+                    Action.Data.Auras.PvE.PurgeFriendly,
+                },
+                PurgeHigh = {
+                    Action.Data.Auras.PvE.PurgeHigh,
+                },
+                PurgeLow = {
+                    Action.Data.Auras.PvE.PurgeLow,
+                },
+            },
+            PvP = {
+				BlackList = {
+					Action.Data.Auras.PvP.BlackList,
+				},
+                Dispel = {                    
+                    Action.Data.Auras.PvP.Magic,                    
+                },
+                PurgeFriendly = {
+                    Action.Data.Auras.PvP.PurgeFriendly,
+                },
+                PurgeHigh = {
+                    Action.Data.Auras.PvP.PurgeHigh,
+                },
+                PurgeLow = {
+                    Action.Data.Auras.PvP.PurgeLow,
+                },
+            },
+        },
 	}
 	-- Insert to profile db generated above 
+	if not Action.Data.Auras.DisableCheckboxes then 
+		Action.Data.Auras.DisableCheckboxes = {}
+	end 	
 	for specID in pairs(TMW.db.profile.ActionDB[5]) do 
 		if UnitAuras[specID] then 
-			if not Action.Data.Auras.DisableCheckboxes then 
-				Action.Data.Auras.DisableCheckboxes = {}
-			end 
 			Action.Data.Auras.DisableCheckboxes[specID] = { UseDispel = true, UsePurge = true, UseExpelEnrage = true }
 			for Mode, Mode_v in pairs(UnitAuras[specID]) do 
 				for Category, Category_v in pairs(Mode_v) do 
@@ -3332,9 +3571,10 @@ local function DispelPurgeEnrageRemap()
 					if not TMW.db.profile.ActionDB[5][specID][Mode][Category] then 
 						TMW.db.profile.ActionDB[5][specID][Mode][Category] = {}
 					end 
-					if not TMW.db.profile.ActionDB[5][specID][Mode][Category][GameLocale] then 
-						TMW.db.profile.ActionDB[5][specID][Mode][Category][GameLocale] = {}
-					end 				
+
+					-- Always to reset
+					TMW.db.profile.ActionDB[5][specID][Mode][Category][GameLocale] = {}
+				
 					if Category:match("Dispel") then 
 						Action.Data.Auras.DisableCheckboxes[specID].UseDispel = false 
 					elseif Category:match("Purge") then 
@@ -3359,480 +3599,25 @@ local function DispelPurgeEnrageRemap()
 	end 
 end
 
--- Modules (old name "TMW Global Snippets")
+-- TODO: Remove modules (old name "TMW Global Snippets")
 local function GlobalsRemap()
-	local specID = GetSpecializationInfo(GetSpecialization())
-	if specID and TMW and TMW.db and TMW.db.profile.ActionDB then 
-		_G.HE_Toggle = TMW.db.profile.ActionDB[1][specID].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][specID].HE_Toggle or nil
-		_G.HE_Pets = TMW.db.profile.ActionDB[1][specID].HE_Pets
-		_G.LOSCheck = TMW.db.profile.ActionDB[1][specID].LOSCheck	
+	Action.PlayerSpec, Action.PlayerSpecName = GetSpecializationInfo(GetSpecialization())
+	TMW:Fire("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED")	-- For MultiUnits to initialize CLEU and other purposes to be sure what variables was updated properly 
+	if Action.PlayerSpec and TMW and TMW.db and TMW.db.profile.ActionDB then 
+		_G.HE_Toggle = TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Toggle or nil
+		_G.HE_Pets = TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Pets	
 		if TMW.db.profile.ActionDB[1].DisableBlackBackground then 
-			Env.BlackBackgroundSet(not TMW.db.profile.ActionDB[1].DisableBlackBackground)
+			Action.BlackBackgroundSet(not TMW.db.profile.ActionDB[1].DisableBlackBackground)
 		end 
 	end 
 end
 
--- This function calls only if TMW finished EVERYTHING load
--- This will initialize ActionDB for current profile by Action.Data.ProfileUI > Action.Data.ProfileDB (which in profile snippet)
-local function ActionDB_Initialization()	
-	local profile = TMW.db:GetCurrentProfile()
-	
-	Action.IsInitialized = nil	
-	Action.IsGGLprofile = profile:match("GGL") or false  -- Don't remove it because this is validance for HealingEngine   
-	
-	----------------------------------
-	-- TMW CORE SNIPPETS FIX
-	----------------------------------	
-	-- Finally owner of TMW fixed it in 8.6.6
-	if TELLMEWHEN_VERSIONNUMBER < 86603 and not Action.IsInitializedSnippetsFix then 
-		-- TMW owner has trouble with ICON and GROUP PRE SETUP, he trying :setup() frames before lua snippets would be loaded 
-		-- Yeah he has callback ON PROFILE to run it but it's POST handler which triggers AFTER :setup() and it cause errors for nil objects (coz they are in snippets :D which couldn't be loaded before frames)
-		local function OnProfileFix()
-			if not TMW.Initialized or not TMW.InitializedDatabase then
-				return
-			end		
-			
-			local snippets = {}
-			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
-				snippets[#snippets + 1] = v
-			end 
-			TMW:SortOrderedTables(snippets)
-			for _, snippet in ipairs(snippets) do
-				if snippet.Enabled and not TMW.SNIPPETS:HasRanSnippet(snippet) then
-					TMW.SNIPPETS:RunSnippet(snippet)						
-				end										
-			end						      
-		end	
-		TMW:RegisterCallback("TMW_GLOBAL_UPDATE", OnProfileFix, "TMW_SNIPPETS_FIX")	
-		Action.IsInitializedSnippetsFix = true 
-	end 	
-	
-	----------------------------------
-	-- Register Localization
-	----------------------------------	
-	GetLocalization()
-	
-	----------------------------------
-	-- Profile Manipulation
-	----------------------------------	
-	-- Load default profile if current profile is generated as default
-	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
-	if profile == defaultprofile then 
-		local AllProfiles = TMW.db:GetProfiles()
-		if AllProfiles then 			
-			for i = 1, #AllProfiles do 
-				if AllProfiles[i] == Action.Data.DefaultProfile[pclass] then 
-					if TMW.Locked then 
-						TMW:LockToggle()
-					end 
-					TMW.db:SetProfile(Action.Data.DefaultProfile[pclass])
-					return
-				end
-			end 
-		end
-	end 		
-		
-	-- Check if profile support Action
-	if not Action.Data.ProfileEnabled[profile] then 				
-		if TMW.db.profile.ActionDB then 
-			TMW.db.profile.ActionDB = nil
-			Action.Print("|cff00cc66" .. profile .. " - profile.ActionDB|r " .. L["RESETED"]:lower())
-		end 			
-		if Action.Minimap and LibDBIcon then 
-			LibDBIcon:Hide("ActionUI")
-		end 
-		Action.QueueEventReset()
-		wipe(Action.Data.ProfileUI)
-		wipe(Action.Data.ProfileDB)		
-		return 
-	end 	 
-	
-	-- Action.Data.ProfileUI > Action.Data.ProfileDB creates template to merge in Factory after
-	if next(Action.Data.ProfileUI) or #Action.Data.ProfileUI > 0 then 				
-		for i, i_value in pairs(Action.Data.ProfileUI) do
-			if ( i == 2 or i == 7 ) and type(i) == "number" and type(i_value) == "table" then 	-- get tab 
-				for specID in pairs(i_value) do 												-- get spec in tab 	
-					if not Action.Data.ProfileDB[i] then 
-						Action.Data.ProfileDB[i] = {}
-					end 
-					if not Action.Data.ProfileDB[i][specID] then 
-						Action.Data.ProfileDB[i][specID] = {}
-					end 				
-					if i == 2 then 																-- tab [2] for toggles 					
-						for row = 1, #Action.Data.ProfileUI[i][specID] do 						-- get row for spec in tab 						
-							for element = 1, #Action.Data.ProfileUI[i][specID][row] do 			-- get element in row for spec in tab 
-								local DB = Action.Data.ProfileUI[i][specID][row][element].DB 
-								local DBV = Action.Data.ProfileUI[i][specID][row][element].DBV
-								if DB ~= nil and DBV ~= nil then 								-- if default value for DB inside UI 
-									Action.Data.ProfileDB[i][specID][DB] = DBV
-								end 
-							end						
-						end
-					elseif i == 7 then 															-- tab [7] for MSG 	
-						if not Action.Data.ProfileDB[i][specID].msgList then 
-							Action.Data.ProfileDB[i][specID].msgList = {}
-						end 	
-						
-						for Name, Val in pairs(i_value[specID]) do 
-							Action.Data.ProfileDB[i][specID].msgList[Name] = Val
-						end 
-					end
-				end 
-			end 
-		end 
-	end 	
-		
-	-- profile	
-	if not TMW.db.profile.ActionDB then 
-		Action.Print("|cff00cc66ActionDB.profile|r " .. L["CREATED"])		
-	end	
-	TMW.db.profile.ActionDB = tCompare(tMerge(Factory, Action.Data.ProfileDB, true), TMW.db.profile.ActionDB) 
-		
-	-- global
-	if not TMW.db.global.ActionDB then 		
-		Action.Print("|cff00cc66ActionDB.global|r " .. L["CREATED"])
-	end
-	TMW.db.global.ActionDB = tCompare(GlobalFactory, TMW.db.global.ActionDB)	
-	
-	----------------------------------
-	-- All remaps and additional sort DB 
-	----------------------------------		
-	-- Note: These functions must be call whenever relative settings in UI has been changed in their certain places!
-	GlobalsRemap() -- by profile to _G.
-	DispelPurgeEnrageRemap() -- by global to profile
-	
-	----------------------------------	
-	-- Welcome Notification
-	----------------------------------	
-    Action.Print(L["SLASH"]["LIST"])
-	Action.Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])
-	Action.Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])		
-	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")
-
-	----------------------------------	
-	-- Initialization
-	----------------------------------	
-	-- Initialization ReTarget ReFocus 
-	Action.ReInit()
-	
-	-- Initialization LOS 
-	Action.LOSInit(true)
-	
-	-- Initialization SpellLevelCheck if it was selected in db or player level lower than MAX on this expansion
-	Action.SpellLevelInit(true)
-	
-	-- Initialization Cursor hooks 
-	Action.CursorInit()
-	
-	-- Unregister from old interface MSG events and use new ones 
-	Action.ToggleMSG(true)	
-	
-	-- Minimap 
-	if not Action.Minimap and LibDBIcon then 
-		local ldbObject = {
-			type = "launcher",
-			icon = "133015", 
-			label = "ActionUI",
-			OnClick = function(self, button)
-				Action.ToggleMainUI()
-			end,
-			OnTooltipShow = function(tooltip)
-				tooltip:AddLine("ActionUI")
-			end,
-		}
-		LibDBIcon:Register("ActionUI", ldbObject, TMW.db.global.ActionDB.minimap)
-		LibDBIcon:Refresh("ActionUI", TMW.db.global.ActionDB.minimap)
-		Action.Minimap = true 
-		Action.ToggleMinimap(true)
-	else
-		Action.ToggleMinimap(true)
-	end 
-		
-	-- Modified update engine of TMW core with additional FPS Optimization	
-	if not Action.IsInitializedModifiedTMW and TMW then 
-		local LastUpdate = 0
-		local updateInProgress, shouldSafeUpdate
-		local start 
-		-- Assume in combat unless we find out otherwise.
-		local inCombatLockdown = 1
-
-		-- Limit in milliseconds for each OnUpdate cycle.
-		local CoroutineLimit = 50
-		
-		TMW:RegisterEvent("UNIT_FLAGS", function(event, unit)
-				if unit == "player" then
-					inCombatLockdown = InCombatLockdown()
-				end
-		end)	
-		
-		local function checkYield()
-				if inCombatLockdown and debugprofilestop() - start > CoroutineLimit then
-					TMW:Debug("OnUpdate yielded early at %s", TMW.time)
-
-					coroutine.yield()
-				end
-		end	
-		
-		-- This is the main update engine of TMW.
-		local function OnUpdate()
-			while true do
-				TMW:UpdateGlobals()
-
-				if updateInProgress then
-					-- If the previous update cycle didn't finish (updateInProgress is still true)
-					-- then we should enable safecalling icon updates in order to prevent catastrophic failure of the whole addon
-					-- if only one icon or icon type is malfunctioning.
-					if not shouldSafeUpdate then
-						TMW:Debug("Update error detected. Switching to safe update mode!")
-						shouldSafeUpdate = true
-					end
-				end
-				updateInProgress = true
-				
-				TMW:Fire("TMW_ONUPDATE_PRE", TMW.time, TMW.Locked)
-				-- FPS Optimization
-				local FPS = Action.GetToggle(1, "FPS")
-				if FPS < 0 then 
-					local Framerate = GetFramerate() or 0
-					if Framerate > 0 and Framerate < 100 then
-						FPS = (100 - Framerate) / 900
-						if FPS < 0.04 then 
-							FPS = 0.04
-						end 
-					else
-						FPS = 0.03
-					end					
-				end 				
-				TMW.UPD_INTV = FPS + 0.001					
-			
-				if LastUpdate <= TMW.time - TMW.UPD_INTV then
-					LastUpdate = TMW.time
-					if TMW.profilingEnabled and TellMeWhen_CpuProfileDialog:IsShown() then 
-						TMW:CpuProfileReset()
-					end 
-
-					TMW:Fire("TMW_ONUPDATE_TIMECONSTRAINED_PRE", TMW.time, TMW.Locked)
-					
-					if TMW.Locked then
-						for i = 1, #TMW.GroupsToUpdate do
-							-- GroupsToUpdate only contains groups with conditions
-							local group = TMW.GroupsToUpdate[i]
-							local ConditionObject = group.ConditionObject
-							if ConditionObject and (ConditionObject.UpdateNeeded or ConditionObject.NextUpdateTime < TMW.time) then
-								ConditionObject:Check()
-
-								if inCombatLockdown then checkYield() end
-							end
-						end
-				
-						if shouldSafeUpdate then
-							for i = 1, #TMW.IconsToUpdate do
-								local icon = TMW.IconsToUpdate[i]
-								TMW.safecall(icon.Update, icon)
-								if inCombatLockdown then checkYield() end
-							end
-						else
-							for i = 1, #TMW.IconsToUpdate do
-								--local icon = IconsToUpdate[i]
-								TMW.IconsToUpdate[i]:Update()
-
-								-- inCombatLockdown check here to avoid a function call.
-								if inCombatLockdown then checkYield() end
-							end
-						end
-					end
-
-					TMW:Fire("TMW_ONUPDATE_TIMECONSTRAINED_POST", TMW.time, TMW.Locked)
-				end
-
-				updateInProgress = nil
-				
-				if inCombatLockdown then checkYield() end
-
-				TMW:Fire("TMW_ONUPDATE_POST", TMW.time, TMW.Locked)
-
-				coroutine.yield()
-			end
-		end 
-
-		local Coroutine 
-		function TMW:OnUpdate()
-			start = debugprofilestop()			
-			
-			if not Coroutine or coroutine.status(Coroutine) == "dead" then
-				if Coroutine then
-					TMW:Debug("Rebirthed OnUpdate coroutine at %s", TMW.time)
-				end
-				
-				Coroutine = coroutine.create(OnUpdate)
-			end
-			
-			assert(coroutine.resume(Coroutine))
-		end
-
-		local function UnlockExtremelyInterval(forced)
-			if Action.IsInitialized or forced then 
-				local PREV_INTERVAL = TMW.db.global.Interval 
-				TMW.db.global.Interval = 0
-				TMW:Update()
-				TMW.db.global.Interval = PREV_INTERVAL
-			end 
-		end
-		
-		TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", function() UnlockExtremelyInterval(true) end) 
-		
-		local isIconEditorHooked
-		hooksecurefunc(TMW, "LockToggle", function() 
-			if not isIconEditorHooked then 
-				TellMeWhen_IconEditor:HookScript("OnHide", function() 
-					if TMW.Locked then 
-						UnlockExtremelyInterval()						
-					end 
-				end)
-				isIconEditorHooked = true
-			end
-			if TMW.Locked then 
-				UnlockExtremelyInterval()
-			end 			
-		end)			
-		
-		-- Loading options 
-		if TMW.Classes.Resizer_Generic == nil then 
-			TMW:LoadOptions()
-		end 		
-		
-		Action.IsInitializedModifiedTMW = true 
-	end 
-			
-	-- Make frames work able 
-	Action.IsInitialized = true 	
-end
-
---------------------------------------
--- AutoBlocker spells (which isn't known by character level)
---------------------------------------
-
-local SpellLevel = { Blocked = {} }
-function SpellLevel.Wipe()
-	wipe(SpellLevel.Blocked)
-	SpellLevel.PlayerSpec = -1
-	SpellLevel.PlayerLVL = -1
-	SpellLevel.Initialized = false
-end 
-function SpellLevel.Update(...)
-	if SpellLevel.Initialized then
-		local lvl = ... or UnitLevel("player")
-		if lvl and (lvl ~= SpellLevel.PlayerLVL or Env.PlayerSpec ~= SpellLevel.PlayerSpec) then 
-			SpellLevel.PlayerLVL = lvl 
-			SpellLevel.PlayerSpec = Env.PlayerSpec		
-			if SpellLevel.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
-				Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERRORMAXLVL"])
-				Action.SpellLevelInit()		
-				return 
-			end 
-			wipe(SpellLevel.Blocked)
-			for k, v in pairs(Action[Env.PlayerSpec]) do 
-				if type(v) ~= "function" and v.Type == "Spell" then 
-					local book = BOOKTYPE_SPELL 
-					local slot = FindSpellBookSlotBySpellID(v.ID, false) 
-					if not slot then 
-						book = BOOKTYPE_PET 
-						slot = FindSpellBookSlotBySpellID(v.ID, true)
-					end 
-					if slot then 
-						local AvailableLevel = GetSpellAvailableLevel(slot, book)
-						if AvailableLevel and AvailableLevel > SpellLevel.PlayerLVL then 
-							SpellLevel.Blocked[v.ID] = true 
-						end 
-					end
-				end 
-			end 
-		end
-	end 
-end 
-
-function SpellLevel.IsBlocked(self)
-	return self.Type == "Spell" and SpellLevel.Initialized and SpellLevel.Blocked[self.ID]
-end 
-
-function Action.SpellLevelInit(isLaunch)
-	if Action[Env.PlayerSpec] and UnitLevel("player") < MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
-		if isLaunch then 
-			TMW.db.profile.ActionDB[3].CheckSpellLevel = true  
-		else 
-			Action.SetToggle({3, "CheckSpellLevel"})
-		end
-		
-		local toggle = Action.GetToggle(3, "CheckSpellLevel") 
-		if toggle then 
-			if not SpellLevel.Initialized then 		
-				SpellLevel.Initialized = true
-				Listener:Add("SpellLevel_Events", "PLAYER_LEVEL_UP", SpellLevel.Update)
-				Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
-				SpellLevel.Update()
-			else 
-				Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERROR"])
-			end 
-		elseif SpellLevel.Initialized then 	
-			Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
-			Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")			
-			SpellLevel.Wipe()
-		end 
-	elseif SpellLevel.Initialized then 	
-		Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
-		Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")
-		SpellLevel.Wipe()
-	end 
-end 
-
---------------------------------------
--- SLASH Commands 
---------------------------------------
-
-local function SlashCommands(input) 
-	if not L then return end -- If we trying show UI before DB finished load locales 
-	local profile = TMW.db:GetCurrentProfile()
-	if not Action.Data.ProfileEnabled[profile] then 
-		Action.Print(profile .. "  " .. L["NOSUPPORT"])
-		return 
-	end 
-	if not input or #input > 0 then 
-		-- without checks for another options for /action since right now only "help" enough even if user did wrong input 
-		Action.Print(L["SLASH"]["LIST"])
-		Action.Print("|cff00cc66/action|r - " .. L["SLASH"]["OPENCONFIGMENU"])
-		Action.Print('|cff00cc66/run Action.MacroQueue("TABLE_NAME")|r - ' .. L["SLASH"]["QUEUEHOWTO"])
-		Action.Print('|cff00cc66/run Action.MacroQueue("WordofGlory")|r - ' .. L["SLASH"]["QUEUEEXAMPLE"])		
-		Action.Print('|cff00cc66/run Action.MacroBlocker("TABLE_NAME")|r - ' .. L["SLASH"]["BLOCKHOWTO"])
-		Action.Print('|cff00cc66/run Action.MacroBlocker("FelRush")|r - ' .. L["SLASH"]["BLOCKEXAMPLE"])	
-		Action.Print(L["SLASH"]["RIGHTCLICKGUIDANCE"])
-		Action.Print(L["SLASH"]["INTERFACEGUIDANCE"])
-		Action.Print(L["SLASH"]["INTERFACEGUIDANCEEACHSPEC"])
-		Action.Print(L["SLASH"]["INTERFACEGUIDANCEALLSPECS"])
-		Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
-		Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
-		Action.Print(L["SLASH"]["ATTENTION"])
-	else 
-		Action.ToggleMainUI()
-	end 
-end 
-
-function Action.Print(text, bool, ignore)
-	if not ignore and TMW.db and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1].DisablePrint then 
-		return 
-	end 
-    local hex = "00ccff"
-    local prefix = string.format("|cff%s%s|r", hex:upper(), "Action:")	
-	local fulltext = text .. (bool ~= nil and tostring(bool) or "")
-    DEFAULT_CHAT_FRAME:AddMessage(string.join(" ", prefix, fulltext))
-end
-
---------------------------------------
--- UI 
---------------------------------------
-
-local tabFrame
+-------------------------------------------------------------------------------
+-- UI: Containers
+-------------------------------------------------------------------------------
+local tabFrame, strElemBuilder
 local function ConvertSpellNameToID(spellName)
-	local Name, _, _, _, _, _, ID = Action.GetSpellInfo(spellName)
+	local Name, _, _, _, _, _, ID = GetSpellInfo(spellName)
 	if not Name then 
 		for i = 1, 350000 do 
 			Name, _, _, _, _, _, ID = GetSpellInfo(i) -- Action.GetSpellInfo(i)
@@ -3843,10 +3628,10 @@ local function ConvertSpellNameToID(spellName)
 	end 
 	return ID 
 end 
-ConvertSpellNameToID = TMW:MakeFunctionCached(ConvertSpellNameToID)
+ConvertSpellNameToID = TMW:MakeSingleArgFunctionCached(ConvertSpellNameToID)
 local function GetTableKeyIdentify(action)
-	-- Using to link key in TMW.db.profile.ActionDB[Env.PlayerSpec].disabledActions
-	return (action.SubType or "") .. action.ID .. action.Desc .. (action.Color or "") 
+	-- Using to link key in TMW.db.profile.ActionDB[Action.PlayerSpec].disabledActions
+	return strElemBuilder(nil, action.SubType, action.ID, action.Desc, action.Color)
 end
 local function ShowTooltip(parent, show, ID, Type)
 	if show then
@@ -3879,7 +3664,7 @@ local function GetWidthByColumn(parent, col, offset)
 end 
 local function GetAnchor(tab, spec)
 	-- Uses for EasyLayout (only resizer / comfort remap)
-	if tab.name == 2 then 
+	if tab.name == 1 or tab.name == 2 then 
 		return tab.childs[spec].scrollChild
 	else 
 		return tab.childs[spec]
@@ -3887,7 +3672,7 @@ local function GetAnchor(tab, spec)
 end 
 local function GetKids(tab, spec)
 	-- Uses for EasyLayout (resizer / toggles)
-	if tab.name == 2 then 
+	if tab.name == 1 or tab.name == 2 then 
 		return tab.childs[spec].scrollChild:GetChildrenWidgets()
 	else 
 		return tab.childs[spec]:GetChildrenWidgets()
@@ -3926,32 +3711,35 @@ local function CraftMacro(Name, Macro, perCharacter, QUESTIONMARK, leaveNewLine)
 	Action.Print(L["MACRO"] .. " " .. Name .. " " .. L["CREATED"] .. "!")
 	GameMenuButtonMacros:Click()
 end
---- LUA snippets 
+
+-------------------------------------------------------------------------------
+-- UI: LUA - Container
+-------------------------------------------------------------------------------
 local Functions = {}
 local function GetCompiledFunction(luaCode, thisunit)
-	local key
+	local func, key, err
 	luaCode = luaCode:gsub("thisunit", '"' .. (thisunit or "") .. '"') 
 	if Functions[luaCode] then
-		key, err = tostring(Functions[luaCode]):gsub("function: ", "ALF_")
+		key, err = tostring(Functions[luaCode]):gsub("function: ", "LF_")
 		return Functions[luaCode], key, err
 	end	
 
 	func, err = loadstring(luaCode)
 	
 	if func then
-		setfenv(func, TMW.CNDT.Env)
-		key = tostring(func):gsub("function: ", "ALF_")
+		setfenv(func, setmetatable(Action, { __index = _G }))
+		key = tostring(func):gsub("function: ", "LF_")
 		Functions[luaCode] = func
-		Env[key] = func
 	end	
 	return func, key, err
-end 
+end
 local function RunLua(luaCode, thisunit)
 	if not luaCode or luaCode == "" then 
 		return true 
 	end 
+	
 	local func, key, err = GetCompiledFunction(luaCode, thisunit)
-	return func and Env[key]() 
+	return func and func()
 end
 local function CreateLuaEditor(parent, title, w, h, editTT)
 	-- @return frame which is simular between WeakAura and TellMeWhen (if IndentationLib loaded, otherwise without effects like colors and tabulations)
@@ -4106,23 +3894,1040 @@ local function CreateLuaEditor(parent, title, w, h, editTT)
 	return LuaWindow
 end 
 
---- @usage: Action.SetToggle({ tab.name (number), key (taken from DB), text (optional Print) }, custom (optional - any value))
+-- [3] LUA API 
+function Action:GetLUA()
+	return TMW.db.profile.ActionDB[3][Action.PlayerSpec].luaActions[GetTableKeyIdentify(self)] 
+end
+
+function Action:SetLUA(luaCode)
+	TMW.db.profile.ActionDB[3][Action.PlayerSpec].luaActions[GetTableKeyIdentify(self)] = luaCode
+end 
+
+function Action:RunLua(thisunit)
+	return RunLua(self:GetLUA(), thisunit)
+end
+
+-- [3] QLUA API 
+function Action:GetQLUA()
+	return TMW.db.profile.ActionDB[3][Action.PlayerSpec].QluaActions[GetTableKeyIdentify(self)] 
+end
+
+function Action:SetQLUA(luaCode)
+	TMW.db.profile.ActionDB[3][Action.PlayerSpec].QluaActions[GetTableKeyIdentify(self)] = luaCode
+end 
+
+function Action:RunQLua(thisunit)
+	return RunLua(self:GetQLUA(), thisunit)
+end
+
+-------------------------------------------------------------------------------
+-- UI: API
+-------------------------------------------------------------------------------
+-- [1] Mode 
+function Action.ToggleMode()
+	Action.IsLockedMode = true
+	Action.IsInPvP = not Action.IsInPvP	
+	Action.Print(L["SELECTED"] .. ": " .. (Action.IsInPvP and "PvP" or "PvE"))
+	TMW:Fire("TMW_ACTION_MODE_CHANGED")
+end 
+
+-- [1] Burst 
+function Action.ToggleBurst(fixed, between)
+	local Current = Action.GetToggle(1, "Burst")
+	
+	local set
+	if between and fixed ~= between then 	
+		if Current == fixed then 
+			set = between
+		else 
+			set = fixed
+		end 
+	end 
+	
+	if Current ~= "Off" then 		
+		Action.Data.TG.Burst = Current
+		Current = "Off"
+	elseif Action.Data.TG.Burst == nil then  
+		Current = "Everything"
+		Action.Data.TG.Burst = Current
+	else
+		Current = Action.Data.TG.Burst
+	end 			
+	
+	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)	
+end 
+
+function Action.BurstIsON(unitID)	
+	-- @return boolean
+	-- Note: This function is cached
+	local Current = Action.GetToggle(1, "Burst")
+	
+	if Current == "Auto" then  
+		local unit = unitID or "target"
+		return Action.Unit(unitID):IsPlayer() or Action.Unit(unitID):IsBoss()
+	elseif Current == "Everything" then 
+		return true 
+	end 		
+	
+	return false 			
+end 
+
+-- [1] Racial 
+function Action.RacialIsON(self)
+	-- @usage Action.RacialIsON() or Action:RacialIsON()
+	-- @return boolea
+	return Action.GetToggle(1, "Racial") and (not self or self:IsExists())
+end 
+
+-- [1] HealingEngine 
+function Action.ToggleHE(fixed)
+	local Current = Action.GetToggle(1, "HE_Toggle")
+	if Current == "ALL" then 		
+		Current = "RAID"
+	elseif Current == "RAID" then  
+		Current = "TANK"
+	elseif Current == "TANK" then 
+		Current = "DAMAGER"
+	elseif Current == "DAMAGER" then 
+		Current = "HEALER"
+	else 
+		Current = "ALL"
+	end 		
+	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
+end 
+
+-- [1] ReTarget // ReFocus
+local Re = {
+	Units = { "arena1", "arena2", "arena3" },
+	-- Textures 
+	target = {
+		["arena1"] = ACTION_CONST_PVP_TARGET_ARENA1,
+		["arena2"] = ACTION_CONST_PVP_TARGET_ARENA2,
+		["arena3"] = ACTION_CONST_PVP_TARGET_ARENA3,
+	},
+	focus = {
+		["arena1"] = ACTION_CONST_PVP_FOCUS_ARENA1,
+		["arena2"] = ACTION_CONST_PVP_FOCUS_ARENA2,
+		["arena3"] = ACTION_CONST_PVP_FOCUS_ARENA3,
+	},	
+	-- OnEvent 
+	PLAYER_TARGET_CHANGED = function(self)
+		if (Action.Zone == "arena" or Action.Zone == "pvp") then 			
+			if UnitExists("target") then 
+				Action.LastTargetIsExists = true 
+				for i = 1, #self.Units do
+					if UnitIsUnit("target", self.Units[i]) then 
+						Action.LastTargetUnitID = self.Units[i]
+						Action.LastTargetTexture = self.target[Action.LastTargetUnitID]
+					end 
+				end 
+			else
+				Action.LastTargetIsExists = false 
+			end 
+		end 		
+	end,	
+	PLAYER_FOCUS_CHANGED = function(self)
+		if (Action.Zone == "arena" or Action.Zone == "pvp") then 
+			if UnitExists("focus") then 
+				Action.LastFocusIsExists = true 
+				for i = 1, #self.Units do 
+					if UnitIsUnit("focus", self.Units[i]) then 
+						Action.LastFocusUnitID = self.Units[i]
+						Action.LastFocusTexture = self.focus[Action.LastFocusUnitID]
+					end 
+				end 
+			else
+				Action.LastFocusIsExists = false 
+			end 
+		end 
+	end,
+	Wipe			= function(self)
+		Action.LastTargetIsExists	= nil
+		Action.LastTargetUnitID 	= nil 
+		Action.LastTargetTexture 	= nil 
+		Action.LastFocusIsExists 	= nil 
+		Action.LastFocusUnitID 		= nil
+		Action.LastFocusTexture 	= nil		
+	end,
+	Reset 			= function(self)		
+		Action.Listener:Remove("ACTION_EVENT_RE", 		"PLAYER_TARGET_CHANGED")
+		Action.Listener:Remove("ACTION_EVENT_RE", 		"PLAYER_FOCUS_CHANGED")
+		self:Wipe()
+	end,
+	Initialize		= function(self)
+		if Action.GetToggle(1, "ReTarget") then 
+			Action.Listener:Add(   "ACTION_EVENT_RE", 	"PLAYER_TARGET_CHANGED", function() self:PLAYER_TARGET_CHANGED() end)
+			self:PLAYER_TARGET_CHANGED()
+		else 
+			Action.Listener:Remove("ACTION_EVENT_RE", 	"PLAYER_TARGET_CHANGED")
+			Action.LastTargetIsExists	= nil
+			Action.LastTargetUnitID 	= nil 
+			Action.LastTargetTexture 	= nil 			
+		end 
+		
+		if Action.GetToggle(1, "ReFocus") then 
+			Action.Listener:Add(   "ACTION_EVENT_RE", 	"PLAYER_FOCUS_CHANGED",  function() self:PLAYER_FOCUS_CHANGED()  end)
+			self:PLAYER_FOCUS_CHANGED()
+		else 
+			Action.Listener:Remove("ACTION_EVENT_RE", 	"PLAYER_FOCUS_CHANGED")
+			Action.LastFocusIsExists 	= nil 
+			Action.LastFocusUnitID 		= nil
+			Action.LastFocusTexture 	= nil			
+		end 	
+	end,
+}
+
+-- [1] LOS System (Line of Sight)
+local LineOfSight = {
+	Cache 			= setmetatable({}, { __mode == "kv" }),
+	Timer			= 5,	
+	-- Functions
+	UnitInLOS 		= function(self, unitID, unitGUID)		
+		if Action.IsInitialized and not Action.GetToggle(1, "LOSCheck") then  -- TODO: Remove Action.IsInitialized (old profiles)
+			return false 
+		end 
+		local GUID = unitGUID or UnitGUID(unitID)
+		return GUID and self.Cache[GUID] and TMW.time < self.Cache[GUID]
+	end,
+	Wipe 			= function(self)
+		-- Physical reset 
+		self.PhysicalUnitID 	= nil
+		self.PhysicalUnitGUID	= nil	
+		self.PhysicalUnitWait 	= nil
+	end,
+	Reset 			= function(self)		
+		Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", 	"UI_ERROR_MESSAGE")
+		Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", 	"COMBAT_LOG_EVENT_UNFILTERED")
+		Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", 	"PLAYER_REGEN_ENABLED")
+		Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", 	"PLAYER_REGEN_DISABLED")
+		self:Wipe()
+	end,
+	-- OnEvent
+	UI_ERROR_MESSAGE = function(self, ...)
+		if (Action.IsInitialized or LOSCheck) and select(2, ...) == ACTION_CONST_SPELL_FAILED_LINE_OF_SIGHT then   -- TODO: Remove Action.IsInitialized and LOSCheck (old profiles)
+			if self.PhysicalUnitID and TMW.time >= self.PhysicalUnitWait then 
+				local SkipTimer = self.Timer
+				-- Fix for HealingEngine
+				if Action.IamHealer and self.PhysicalUnitID == "target" and self.PhysicalUnitGUID == UnitGUID(self.PhysicalUnitID) then 
+					if Action.Zone == "arena" then 
+						SkipTimer = 3 
+					else 
+						SkipTimer = 9
+					end 
+				end 
+
+				if self.PhysicalUnitGUID then 
+					self.Cache[self.PhysicalUnitGUID] = TMW.time + SkipTimer
+				else 
+					self.Cache[UnitGUID(self.PhysicalUnitID)] = TMW.time + SkipTimer
+				end 
+				
+				self:Wipe()
+				return
+			end 
+
+			if Action.IsInitialized and Action.IamHealer and Action.IsUnitEnemy("targettarget") then -- TODO: Remove Action.IsInitialized (old profiles)
+				self.Cache[UnitGUID("targettarget")] = TMW.time + self.Timer
+			end 
+		end 	
+	end,
+	COMBAT_LOG_EVENT_UNFILTERED = function(self, ...)
+		if Action.IsInitialized or LOSCheck then -- TODO: Remove Action.IsInitialized and LOSCheck (old profiles)
+			local _, event, _, SourceGUID, _,_,_, DestGUID = CombatLogGetCurrentEventInfo()	
+			if event == "SPELL_CAST_SUCCESS" and self.Cache[DestGUID] and SourceGUID and SourceGUID == UnitGUID("player") then 
+				self.Cache[DestGUID] = nil 
+				if self.PhysicalUnitID and DestGUID == (self.PhysicalUnitGUID or UnitGUID(self.PhysicalUnitID)) then 
+					self:Wipe()
+				end 
+			end 	
+		end 
+	end,
+	Initialize		= function(self, isLaunchOLD) -- TODO: Remove isLaunchOLD (old profiles)
+		if isLaunchOLD or Action.GetToggle(1, "LOSCheck") then 	
+			Action.Listener:Add("ACTION_EVENT_LOS_SYSTEM", "UI_ERROR_MESSAGE", 				function(...) self:UI_ERROR_MESSAGE(...) 			end)
+			Action.Listener:Add("ACTION_EVENT_LOS_SYSTEM", "COMBAT_LOG_EVENT_UNFILTERED", 	function(...) self:COMBAT_LOG_EVENT_UNFILTERED(...) end)
+			Action.Listener:Add("ACTION_EVENT_LOS_SYSTEM", "PLAYER_REGEN_ENABLED", 			function() 	  wipe(self.Cache)						end)
+			Action.Listener:Add("ACTION_EVENT_LOS_SYSTEM", "PLAYER_REGEN_DISABLED", 		function() 	  wipe(self.Cache)						end)
+		else 
+			wipe(self.Cache)
+			Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", "UI_ERROR_MESSAGE")
+			Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", "COMBAT_LOG_EVENT_UNFILTERED")
+			Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", "PLAYER_REGEN_ENABLED")
+			Action.Listener:Remove("ACTION_EVENT_LOS_SYSTEM", "PLAYER_REGEN_DISABLED")			
+		end 
+	end,
+}
+
+function Action.SetTimerLOS(timer)
+	-- Sets timer for non @target units to skip during 'timer' (seconds) after message receive
+	LineOfSight.Timer = timer 
+end 
+
+function Action.UnitInLOS(unitID, unitGUID)
+	-- @return boolean
+	return LineOfSight:UnitInLOS(unitID, unitGUID)
+end 
+
+function GetLOS(unitID) 
+	-- External physical button use 
+	if (not Action.IsInitialized and LOSCheck) or (Action.IsInitialized and Action.GetToggle(1, "LOSCheck")) then -- TODO: Remove LOSCheck (old profiles)		
+		if not Action.IsActiveGCD() and (not LineOfSight.PhysicalUnitID or TMW.time > LineOfSight.PhysicalUnitWait) and (unitID ~= "target" or not LineOfSight.PhysicalUnitWait or TMW.time > LineOfSight.PhysicalUnitWait + 1) and not Action.UnitInLOS(unitID) then 
+			LineOfSight.PhysicalUnitID = unitID
+			if unitID == "target" then 
+				LineOfSight.PhysicalUnitGUID = UnitGUID(unitID)
+			end 
+			-- 0.3 seconds is how much time need wait before start trigger message because if make it earlier it can trigger message from another unit  
+			LineOfSight.PhysicalUnitWait = TMW.time + 0.3 
+		end 
+	end 
+end 
+
+-- [2] AoE toggle through Ctrl+Left Click on main picture 
+function Action.ToggleAoE()
+	Action.SetToggle({2, "AoE"})
+end 
+
+-- [3] SpellLevel (skipping unknown spells by character level)
+local SpellLevel = { 
+	Blocked 		= {},
+	Wipe			= function(self)
+		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_LEVEL_UP")
+		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_SPECIALIZATION_CHANGED")
+		wipe(self.Blocked)
+		self.Initialized = nil
+		self.PlayerLVL 	 = nil 
+		self.PlayerSpec  = nil	
+	end,
+	Reset 			= function(self)	
+		if Action.GetToggle(3, "CheckSpellLevel") then 
+			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
+		end 
+		self:Wipe()
+	end,
+	Update			= function(self, ...)
+		if self.Initialized then
+			local lvl = ... or UnitLevel("player")
+			if lvl and (lvl ~= self.PlayerLVL or Action.PlayerSpec ~= self.PlayerSpec) then 
+				self.PlayerLVL, self.PlayerSpec  = lvl, Action.PlayerSpec	
+
+				if self.PlayerLVL >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 
+					Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERRORMAXLVL"])
+					self:Reset()
+					return 
+				end 
+				
+				wipe(self.Blocked)
+				
+				for k, v in pairs(Action[Action.PlayerSpec]) do 
+					if type(v) == "table" and v.Type == "Spell" then 
+						local book, slot = BOOKTYPE_SPELL,  FindSpellBookSlotBySpellID(v.ID, false)  
+
+						if not slot then 
+							book, slot 	 = BOOKTYPE_PET, 	FindSpellBookSlotBySpellID(v.ID, true)
+						end 
+						
+						if slot then 
+							local AvailableLevel = GetSpellAvailableLevel(slot, book)
+							
+							if AvailableLevel and AvailableLevel > self.PlayerLVL then 
+								self.Blocked[v.ID] = true 
+							end 
+						end
+					end 
+				end 
+			end
+		end 	
+	end,
+	Initialize		= function(self, isLaunch)		
+		if Action[Action.PlayerSpec] and UnitLevel("player") < MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()] then 			
+			if isLaunch then 
+				TMW.db.profile.ActionDB[3].CheckSpellLevel = true 
+			else 
+				Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "})
+			end 
+			
+			local toggle = Action.GetToggle(3, "CheckSpellLevel") 
+			if toggle then 
+				if not self.Initialized then 		
+					self.Initialized = true
+					Action.Listener:Add("ACTION_EVENT_SPELLLEVEL", "PLAYER_LEVEL_UP", 				function(...) 	self:Update(...) 	end)
+					Action.Listener:Add("ACTION_EVENT_SPELLLEVEL", "PLAYER_SPECIALIZATION_CHANGED", function() 		self:Update() 		end)
+					if isLaunch then 
+						Action.Print(L["TAB"][3]["CHECKSPELLLVL"] .. ": ", toggle)
+					end 
+					self:Update()
+				elseif not isLaunch then  
+					Action.Print(L["DEBUG"] .. L["TAB"][3]["CHECKSPELLLVLERROR"])
+				end 
+			elseif self.Initialized then 	
+				self:Wipe()
+			end 
+		elseif self.Initialized then 	
+			self:Wipe()
+		end 		
+	end,
+}
+
+function Action:IsBlockedBySpellLevel()
+	-- @return boolean
+	return SpellLevel.Initialized and SpellLevel.Blocked[self.ID]
+end 
+
+-- [3] SetBlocker 
+function Action:IsBlocked()
+	-- @return boolean 
+	return TMW.db.profile.ActionDB[3][Action.PlayerSpec].disabledActions[GetTableKeyIdentify(self)] == true
+end
+
+function Action:SetBlocker()
+	-- Sets block on action
+	-- Note: /run Action[Action.PlayerSpec].WordofGlory:SetBlocker()
+	local Notification 
+	local Identify = GetTableKeyIdentify(self)
+	if self:IsBlocked() then 
+		TMW.db.profile.ActionDB[3][Action.PlayerSpec].disabledActions[Identify] = nil 
+		Notification = L["TAB"][3]["UNBLOCKED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]"		
+	else 
+		TMW.db.profile.ActionDB[3][Action.PlayerSpec].disabledActions[Identify] = true
+		Notification = L["TAB"][3]["BLOCKED"] .. self:Link() .. " " ..  L["TAB"][3]["KEY"] .. Identify .. "]"
+	end 
+    Action.Print(Notification)
+	
+	if Action.MainUI then 
+		local spec = Action.PlayerSpec .. CL	
+		local ScrollTable = tabFrame.tabs[3].childs[spec].ScrollTable
+		for i = 1, #ScrollTable.data do 
+			if Identify == GetTableKeyIdentify(ScrollTable.data[i]) then 
+				if self:IsBlocked() then 
+					ScrollTable.data[i].Enabled = "False"
+				else 
+					ScrollTable.data[i].Enabled = "True"
+				end								 			
+			end 
+		end		
+		ScrollTable:ClearSelection() 
+	end 
+end
+
+function Action.MacroBlocker(key)
+	-- Sets block on action with avoid lua errors for non exist key
+	if not Action[Action.PlayerSpec] or not Action[Action.PlayerSpec][key] then 
+		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
+		return 	 
+	end 
+	Action[Action.PlayerSpec][key]:SetBlocker()
+end
+
+-- [3] SetQueue (Queue System)
+local Queue = {
+	Reset 						= function(self)
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "UNIT_SPELLCAST_SUCCEEDED")
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "BAG_UPDATE_COOLDOWN")
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "ACTIVE_TALENT_GROUP_CHANGED")		
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "PLAYER_SPECIALIZATION_CHANGED")
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "PLAYER_REGEN_ENABLED")	
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "PLAYER_TALENT_UPDATE")
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "PLAYER_EQUIPMENT_CHANGED")	
+		Action.Listener:Remove("ACTION_EVENT_QUEUE", "PLAYER_ENTERING_WORLD")	
+		TMW:UnregisterCallback("TMW_ACTION_MODE_CHANGED", function() self:OnEventToReset() end,  "TMW_ACTION_MODE_CHANGED_QUEUE_RESET")
+	end, 
+	IsThisMeta 					= function(self, meta)
+		return (not Action.Data.Q[1].MetaSlot and (meta == 3 or meta == 4)) or Action.Data.Q[1].MetaSlot == meta
+	end, 
+	IsInterruptAbleChannel 		= {
+		-- Monk MW: Smoothing Mist 
+		[115175]				= true,
+	},
+	-- Events
+	UNIT_SPELLCAST_SUCCEEDED 	= function(self, ...)
+		local source, _, spellID = ...
+		if (source == "player" or source == "pet") and Action.Data.Q[1] and Action.Data.Q[1].Type == "Spell" and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:Info() then 			
+			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+		end 	
+	end,
+	BAG_UPDATE_COOLDOWN			= function(self)
+		if Action.Data.Q[1] and Action.Data.Q[1].Type ~= "Spell" then 
+			local start, duration, enable = Action.Data.Q[1].Item:GetCooldown()
+			if duration and math.abs(TMW.time - start) <= 2 then 
+				getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+				return 
+			end 
+			-- For things like a potion that was used in combat and the cooldown hasn't yet started counting down
+			if enable == 0 and Action.Data.Q[1].Type ~= "Trinket" then 
+				getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+			end 
+		end 	
+	end, 
+	OnEventToReset 				= function(self)
+		if #Action.Data.Q > 0 then 
+			for i = 1, #Action.Data.Q do 
+				if Action.Data.Q[i].Queued then 
+					getmetatable(Action.Data.Q[i]).__index:SetQueue({ Silence = false })
+				end 
+			end 		
+		end 
+		wipe(Action.Data.Q) 
+		self:Reset()
+	end, 
+}
+
+function Action:QueueValidCheck()
+	-- @return boolean
+	-- Note: This thing does mostly tasks but still causing some issues with certain spells which should be blacklisted or avoided through another way (ideally) 
+	-- Example of issue: Monk can set Queue for Resuscitate while has @target an enemy and it will true because it will set to variable "player" which is also true and correct!
+	-- Why "player"? Coz while @target an enemy you can set queue of supportive spells for "self" and if they will be used on enemy then they will be applied on "player" 	
+	local isCastingName, _, _, _, castID, isChannel = Action.Unit("player"):IsCasting()
+	if (not isCastingName or isCastingName ~= self:Info()) and (not isChannel or Queue.IsInterruptAbleChannel[castID]) then
+		if not self:HasRange() then 
+			return self:AbsentImun(self.UnitID, self.AbsentImunQueueCache)	-- Well at least will do something, better than nothing 
+		else 
+			local isHarm 	= self:IsHarmful()
+			local unitID 	= self.UnitID or (self.Type == "Spell" and (((isHarm or self:IsHelpful()) and "target") or "player")) or (self.Type ~= "Spell" and ((isHarm and "target") or (not Action.IamHealer and "player"))) or "target"
+			self.UnitID		= unitID
+			-- IsHelpful for Item under testing phase
+			-- unitID 		= self.UnitID or (self.Type == "Spell" and (((isHarm or self:IsHelpful()) and "target") or "player")) or (self.Type ~= "Spell" and (((isHarm or self:IsHelpful()) and "target") or (not Action.IamHealer and "player"))) or "target"
+			
+			if isHarm then 
+				return Action.Unit(unitID):IsEnemy() and self:IsInRange(unitID) and self:AbsentImun(unitID, self.AbsentImunQueueCache)
+			else 
+				return UnitIsUnit(unitID, "player") or (self:IsInRange(unitID) and self:AbsentImun(unitID))
+			end 
+		end 
+	end 
+	return false 
+end 
+
+function Action.IsQueueReady(meta)
+	-- @return boolean
+    if #Action.Data.Q > 0 and Queue:IsThisMeta(meta) then 
+		local self = Action.Data.Q[1]
+        if self.Type == "Spell" or self.Type == "Trinket" or self.Type == "Potion" or self.Type == "Item" then -- Note: Equip, Count, Existance of action already checked in Action:SetQueue 
+			if self.UnitID == "player" or self:QueueValidCheck() then 
+				return self:IsUsable(self.ExtraCD) and (not self.PowerCustom or UnitPower("player", self.PowerType) >= (self.PowerCost or 0)) and self:RunQLua(self.UnitID)    
+			end
+        else 
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"])          
+			getmetatable(self).__index:SetQueue()
+        end 
+    end 
+    return false 
+end 
+
+function Action:IsBlockedByQueue()
+	-- @return boolean 
+	return 	not self.QueueForbidden and 
+			#Action.Data.Q > 0 and 
+			self.Type == Action.Data.Q[1].Type and 
+			( not Action.Data.Q[1].PowerType or self.PowerType == Action.Data.Q[1].PowerType ) and 
+			( not Action.Data.Q[1].PowerCost or UnitPower("player", self.PowerType) < Action.Data.Q[1].PowerCost )
+end
+
+function Action:IsQueued()
+	-- @return boolean 
+    return self.Queued
+end 
+
+function Action:SetQueue(args) 
+	-- Sets queue on action 
+	-- Note: /run Action[Action.PlayerSpec].WordofGlory:SetQueue()
+	-- QueueAuto: Action:SetQueue({ Silence = true, Priority = 1 }) just sometimes simcraft use it in some place
+	--[[@usage: args (table)
+	 	Optional: 
+			PowerType (number) custom offset 													(passing conditions to func QueueValidCheck)
+			PowerCost (number) custom offset 													(passing conditions to func QueueValidCheck)
+			ExtraCD (number) custom offset														(passing conditions to func QueueValidCheck)
+			Silence (boolean) if true don't display print 
+			UnitID (string) specified for spells usually to check their for range on certain unit (passing conditions to func QueueValidCheck)
+			Value (boolean) sets custom fixed statement for queue
+			Priority (number) put in specified priority 
+			MetaSlot (number) usage for MSG system to set queue on fixed position 
+	]]
+	-- Check validance 
+	if not self.Queued and not self:IsExists() then  
+		Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
+		return 
+	end 
+	
+	local printKey 	= self.Desc .. (self.Color or "") 
+		  printKey	= (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]")) or ""
+	
+	local args = args or {}	
+	local Identify = GetTableKeyIdentify(self)
+	if self.QueueForbidden then 
+        Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. printKey)
+        return 	 
+	-- Let for user allow run blocked actions whenever he wants, anyway why not 
+	--elseif self:IsBlocked() and not self.Queued then 
+		--if not args.Silence then 
+			--Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"] .. " " .. L["TAB"][3]["KEY"] .. printKey)
+		--end 
+        --return 
+	end
+	
+	if args.Value ~= nil and self.Queued == args.Value then 
+		if not args.Silence then 
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISQUEUEDALREADY"] .. " " .. L["TAB"][3]["KEY"] .. printKey)
+		end 
+		return 
+	end 
+	
+	if args.Value ~= nil then 
+		self.Queued = args.Value 
+	else 
+		self.Queued = not self.Queued
+	end 
+	
+	local priority = (args.Priority and (args.Priority > #Action.Data.Q + 1 and #Action.Data.Q + 1 or args.Priority)) or #Action.Data.Q + 1	
+    if not args.Silence then		
+		if self.Queued then 
+			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. L["TAB"][3]["QUEUEPRIORITY"] .. priority .. ". " .. L["TAB"][3]["KEYTOTAL"] .. #Action.Data.Q + 1 .. "]")
+		else
+			Action.Print(L["TAB"][3]["QUEUEREMOVED"] .. self:Link() .. printKey)
+		end 
+    end 
+    
+	if not self.Queued then 
+		for i = #Action.Data.Q, 1, -1 do 
+			if GetTableKeyIdentify(Action.Data.Q[i]) == Identify then 
+				table.remove(Action.Data.Q, i)
+				if #Action.Data.Q == 0 then 
+					Queue:Reset()
+					return 
+				end 				
+			end 
+		end 
+		return
+	end 
+    
+	-- Do nothing if it does in spam with always true as insert to queue list 	
+	if args.Value and #Action.Data.Q > 0 then 
+		for i = #Action.Data.Q, 1, -1 do
+			if GetTableKeyIdentify(Action.Data.Q[i]) == Identify then 
+				return
+			end 
+		end 
+	end
+    table.insert(Action.Data.Q, priority, setmetatable({ UnitID = args.UnitID, MetaSlot = args.MetaSlot }, { __index = self }))
+
+	if args.PowerType then 
+		-- Note: we set it as true to use in function Action.IsQueueReady()
+		Action.Data.Q[priority].PowerType = args.PowerType   	
+		Action.Data.Q[priority].PowerCustom = true
+	end	
+	if args.PowerCost then 
+		Action.Data.Q[priority].PowerCost = args.PowerCost
+		Action.Data.Q[priority].PowerCustom = true
+	end 		 	
+	if args.ExtraCD then
+		Action.Data.Q[priority].ExtraCD = args.ExtraCD 
+	end 	
+		
+    Action.Listener:Add("ACTION_EVENT_QUEUE", "UNIT_SPELLCAST_SUCCEEDED", 		function(...) Queue:UNIT_SPELLCAST_SUCCEEDED(...) 	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "BAG_UPDATE_COOLDOWN", 			function() 	  Queue:BAG_UPDATE_COOLDOWN() 		  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "ACTIVE_TALENT_GROUP_CHANGED", 	function() 	  Queue:OnEventToReset() 			  	end)	
+    Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_SPECIALIZATION_CHANGED", 	function() 	  Queue:OnEventToReset() 			  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_REGEN_ENABLED", 			function() 	  Queue:OnEventToReset() 			  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_TALENT_UPDATE", 			function() 	  Queue:OnEventToReset() 			  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_EQUIPMENT_CHANGED", 		function() 	  Queue:OnEventToReset() 			  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_ENTERING_WORLD", 			function() 	  Queue:OnEventToReset() 			  	end)
+	TMW:RegisterCallback("TMW_ACTION_MODE_CHANGED", 							function() 	  Queue:OnEventToReset() 				end,  "TMW_ACTION_MODE_CHANGED_QUEUE_RESET")
+end
+
+function Action.MacroQueue(key, args)
+	-- Sets queue on action with avoid lua errors for non exist key
+	if not Action[Action.PlayerSpec] or not Action[Action.PlayerSpec][key] then 
+		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
+		return 	 
+	end 
+	Action[Action.PlayerSpec][key]:SetQueue(args)
+end
+
+-- [4] Interrupts
+function Action.InterruptIsON(list)
+	-- @return boolean 	
+	-- Note: list 	("TargetMouseover", "PvP", "Heal")
+	return TMW.db.profile.ActionDB[4][Action.PlayerSpec]["Kick" .. list]
+end 
+
+function Action.InterruptIsBlackListed(unitID, spellName)
+	-- @return boolean 
+	local blackListed = TMW.db.profile.ActionDB[4].BlackList[GameLocale][spellName]
+	if blackListed and blackListed.Enabled then 
+		local luaCode = blackListed.LUA or nil
+		if RunLua(luaCode, unitID) then 
+			return blackListed.useKick, blackListed.useCC, blackListed.useRacial
+		end 
+	end 
+	return false, false, false 
+end 
+
+function Action.InterruptEnabled(list, spellName)
+	-- @return boolean 
+	-- Note: list ("PvETargetMouseover", "PvPTargetMouseover", "PvP", "Heal")
+	return TMW.db.profile.ActionDB[4][list][GameLocale][spellName] and TMW.db.profile.ActionDB[4][list][GameLocale][spellName].Enabled
+end 
+
+local function SmartInterrupt()
+	-- Note: This function is cached 
+	local HealerInCC = not Action.IamHealer and Action.FriendlyTeam("HEALER"):GetCC() or 0
+	return (HealerInCC > 0 and HealerInCC < Action.GetGCD() + Action.GetCurrentGCD()) or Action.FriendlyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4 or Action.Unit("player"):HasBuffs("DamageBuffs") > 4 or Action.FriendlyTeam():GetTTD(1, 8) or Action.Unit("target"):IsExecuted() or Action.Unit("player"):IsExecuted() or Action.EnemyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4
+end 
+local ConcatenationStr = {
+	[true] = "PvPTargetMouseover",
+	[false] = "PvETargetMouseover",
+}
+
+function Action.InterruptIsValid(unitID, list, ignoreToggle)
+	-- @return boolean (Kick, CC, Racial)
+	-- Note: list 	("TargetMouseover", "PvP", "Heal")
+	-- list as "PvETargetMouseover" and "PvPTargetMouseover" must be always "TargetMouseover"
+	
+	-- ATTENTION
+	-- This thing doesn't check random interval and as well distance with imun to kick
+	
+	if ignoreToggle or Action.InterruptIsON(list) then 	
+		local spellName = Action.Unit(unitID):IsCasting()
+		if spellName and not Action.InterruptIsBlackListed(unitID, spellName) then 
+			if list == "TargetMouseover" then 
+				list = ConcatenationStr[Action.IsInPvP]
+			end 	
+
+			local Interrupt = TMW.db.profile.ActionDB[4][list][GameLocale][spellName]
+			local luaCode = Interrupt and Interrupt.LUA or nil
+			
+			if list:match("TargetMouseover") then
+				if (not Action.GetToggle(4, "TargetMouseoverList") and (not Action.IsInPvP or (Action.Unit(unitID):IsHealer() and TimeToDie(unitID) < 6))) or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unitID)) then 
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true 
+					end 
+				end 
+			elseif list == "Heal" then 
+				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Action.Unit(unitID):IsHealer()) and RunLua(luaCode, unitID) then 
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true
+					end 
+				end 
+			elseif list == "PvP" then 
+				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unitID) then 
+					if Interrupt then 
+						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+					else
+						return true, true, true 
+					end 
+				end 
+			end
+		end 
+	end 
+	return false, false, false
+end 
+
+-- [5] Auras
+-- Note: Toggles  ("UseDispel", "UsePurge", "UseExpelEnrage")  
+--		 Category ("Dispel", "MagicMovement", "PurgeFriendly", "PurgeHigh", "PurgeLow", "Enrage", "BlackList")				
+function Action.AuraIsON(Toggle)
+	-- @return boolean 
+	return TMW.db.profile.ActionDB[5][Action.PlayerSpec][Toggle]
+end 
+
+function Action.AuraGetCategory(Category)
+	-- @return table or nil (if not found category in certain Mode), string or (Filter)
+	--[[ table basic structure:
+		[Name] = { ID, Name, Enabled, Role, Dur, Stack, byID, canStealOrPurge, onlyBear, LUA }
+		-- Look DispelPurgeEnrageRemap about table create 
+	]]
+	local Mode = Action.IsInPvP and "PvP" or "PvE"
+	local Filter = "HARMFUL"
+	if Category:match("Purge") or Category:match("Enrage") then 
+		Filter = "HELPFUL"
+	elseif Category:match("BlackList") then 
+		Filter = Filter .. " HELPFUL"
+	end 
+	return TMW.db.profile.ActionDB[5][Action.PlayerSpec][Mode] and TMW.db.profile.ActionDB[5][Action.PlayerSpec][Mode][Category] and TMW.db.profile.ActionDB[5][Action.PlayerSpec][Mode][Category][GameLocale], Filter
+end
+
+function Action.AuraIsBlackListed(unitID)
+	-- @return boolean 
+	local Aura, Filter = Action.AuraGetCategory("BlackList")
+	if Aura and next(Aura) then 
+		for i = 1, huge do 
+			local Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
+			if Name then
+				if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Action.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Action.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 
+					local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
+					if Dur > Aura[Name].Dur and (Aura[Name].Stack == 0 or count >= Aura[Name].Stack) and (not Aura[Name].canStealOrPurge or canStealOrPurge == true) and (not Aura[Name].onlyBear or Action.Unit(unitID):HasBuffs(5487) > 0) and RunLua(Aura[Name].LUA, unitID) then
+						return true
+					end 
+				end 
+			else
+				break 
+			end 
+		end 
+	end 
+	return false 
+end 
+
+function Action.AuraIsValid(unitID, Toggle, Category)
+	-- @return boolean 
+	if Category ~= "BlackList" and Action.AuraIsON(Toggle) then 
+		local Aura, Filter = Action.AuraGetCategory(Category)
+		if Aura and not Action.AuraIsBlackListed(unitID) then 
+			for i = 1, huge do			
+				local Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
+				if Name then					
+					if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Action.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Action.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 					
+						local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
+						if Dur > Aura[Name].Dur and (Aura[Name].Stack == 0 or count >= Aura[Name].Stack) and (not Aura[Name].canStealOrPurge or canStealOrPurge == true) and (not Aura[Name].onlyBear or Action.Unit(unitID):HasBuffs(5487) > 0) and RunLua(Aura[Name].LUA, unitID) then
+							return true
+						end 
+					end 
+				else
+					break 
+				end 
+			end 
+		end
+	end 
+	return false 
+end
+
+-- [6] Cursor 
+function Action.CursorInit()
+	if not Action.IsGameTooltipInitializated then
+		GameTooltip:RegisterEvent("CURSOR_UPDATE")
+		GameTooltip:HookScript("OnEvent", function(self, event) 
+			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Action.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") then
+				self:Hide()				
+			end
+		end)
+		GameTooltip:HookScript("OnShow", function()
+			if Action.IsInitialized and Action[Action.PlayerSpec] then 
+				local UseLeft = Action.GetToggle(6, "UseLeft")
+				local UseRight = Action.GetToggle(6, "UseRight")
+				if UseLeft or UseRight then 
+					local M = Action.IsInPvP and "PvP" or "PvE"
+					local ObjectName = UnitName("mouseover")
+					if ObjectName then 		
+						-- UnitName 
+						ObjectName = ObjectName:lower()
+						local UnitNameKey = TMW.db.profile.ActionDB[6][Action.PlayerSpec][M]["UnitName"][GameLocale][ObjectName]
+						if UnitNameKey and UnitNameKey.Enabled and ((UnitNameKey.Button == "LEFT" and UseLeft) or (UnitNameKey.Button == "RIGHT" and UseRight)) and (not UnitNameKey.isTotem or Action.Unit("mouseover"):IsTotem() and not Action.Unit("target"):IsTotem()) and RunLua(UnitNameKey.LUA, "mouseover") then 
+							Action.GameTooltipClick = UnitNameKey.Button
+							return
+						end 
+					else			
+						-- GameTooltip 
+						local focus = GetMouseFocus() 
+						if focus and not focus:IsForbidden() and focus:GetName() == "WorldFrame" then
+							local GameTooltipTable = TMW.db.profile.ActionDB[6][Action.PlayerSpec][M]["GameToolTip"][GameLocale]
+							if next(GameTooltipTable) then 						
+								local Regions = { GameTooltip:GetRegions() }
+								for i = 1, #Regions do 					
+									local region = Regions[i]							
+									if region and region:GetObjectType() == "FontString" then 
+										local text = region:GetText() 								
+										if text then 
+											text = text:lower()
+											local GameTooltipKey = GameTooltipTable[text]
+											if GameTooltipKey and GameTooltipKey.Enabled and ((GameTooltipKey.Button == "LEFT" and UseLeft) or (GameTooltipKey.Button == "RIGHT" and UseRight)) and RunLua(GameTooltipKey.LUA, "mouseover") then 								
+												Action.GameTooltipClick = GameTooltipKey.Button
+												return 									
+											end 
+										end 
+									end 
+								end 
+							end 
+						end 
+					end
+				end 
+				Action.GameTooltipClick = nil 
+			end 	
+		end)	
+		GameTooltip:HookScript("OnHide", function() Action.GameTooltipClick = nil end)
+		Action.IsGameTooltipInitializated = true 
+	end 
+end 
+
+-- [7] MSG System (Message)
+--[[
+local CompareUnitIDwithUnitName(unitID, unitName)
+	local name, server = UnitName(unitID)
+	if unitID == "player" then 
+		server = GetRealmName():gsub(" ", "")
+	end 
+	local fullname = name .. "-" .. server 
+	return fullname == unitName
+end 
+]]
+
+local function UpdateChat(...)
+	if not Action.IsInitialized then 
+		return 
+	end 
+	
+	local msgList = Action.GetToggle(7, "msgList")
+	if next(msgList) == nil then 
+		return 
+	end 
+	
+	local msg, sname  = ... 
+	msg = msg:lower()
+	for Name in pairs(msgList) do 
+		if msgList[Name].Enabled and msg:match(Name) and (not msgList[Name].Source or msgList[Name].Source == sname) and Action[Action.PlayerSpec][msgList[Name].Key] and (not Action.GetToggle(7, "DisableReToggle") or not Action[Action.PlayerSpec][msgList[Name].Key]:IsQueued()) then  			
+			local units = { "raid%d+", "party%d+", "arena%d+", "player", "target", "focus" }
+			local unit
+			
+			for j = 1, #units do 
+				unit = msg:match(units[j])
+				if unit then 
+					break
+				end 
+			end 
+				
+			--[[
+			if not msgList[Name].Source then 
+				for j = 1, #units do 
+					unit = msg:match(units[j])
+					if unit then 
+						break
+					end 
+				end 
+			else 
+				if CompareUnitIDwithUnitName("player", sname) then 
+					unit = "player"
+				elseif CompareUnitIDwithUnitName("target", sname) then
+					unit = "target"
+				else 
+					for j = 1, Action.TeamCache.Friendly.Size do 
+						local cUnit = Action.TeamCache.Friendly.Type .. j 
+						if CompareUnitIDwithUnitName(cUnit, sname) then
+							unit = cUnit
+							break 
+						end 
+					end 
+					
+					if not unit then 
+						for j = 1, Action.TeamCache.Enemy.Size do 
+							local cUnit = Action.TeamCache.Enemy.Type .. j 
+							if CompareUnitIDwithUnitName(cUnit, sname) then
+								unit = cUnit
+								break 
+							end 
+						end 					
+					end 
+				end 
+			end
+			]]			
+			
+			if unit then 
+				if RunLua(msgList[Name].LUA, unit) then 
+					-- Note: Regarding "player" unit here is a lot of profiles which don't support slot 6 and mostly 6 slot is valid for healer which has different @target always 
+					-- Since damager / tank always has @target an enemy then "player" will be applied even if spell will be launched in slot 3-4 
+					if unit:match("raid") then 
+						local raidunits = { { u = "player", meta = Action.IamHealer and 6 or nil }, { u = "party1", meta = 7 }, { u = "party2", meta = 8} }					
+						for j = 1, #raidunits do 
+							if UnitIsUnit(unit, raidunits[j].u) then 							
+								Action.MacroQueue(msgList[Name].Key, { Unit = raidunits[j].u, MetaSlot = raidunits[j].meta })							
+								break 
+							end 
+						end 					
+					elseif unit:match("party") then 
+						if unit == "party1" then 
+							Action.MacroQueue(msgList[Name].Key, { Unit = unit, MetaSlot = 7 })
+						elseif unit == "party2" then
+							Action.MacroQueue(msgList[Name].Key, { Unit = unit, MetaSlot = 8 })
+						end 
+					elseif unit:match("arena") then 
+						if unit == "arena1" then 
+							Action.MacroQueue(msgList[Name].Key, { Unit = unit, MetaSlot = 6 })
+						elseif unit == "arena2" then 
+							Action.MacroQueue(msgList[Name].Key, { Unit = unit, MetaSlot = 7 })
+						elseif unit == "arena3" then 
+							Action.MacroQueue(msgList[Name].Key, { Unit = unit, MetaSlot = 8 })
+						end 
+					elseif unit == "player" then 
+						Action.MacroQueue(msgList[Name].Key, { Unit = "player" }) -- , MetaSlot = Action.IamHealer and 6 or nil
+					else 
+						Action.MacroQueue(msgList[Name].Key, { Unit = unit })
+					end 
+				end 
+			else
+				if msgList[Name].LUA ~= nil and msgList[Name].LUA ~= "" then 
+					local Key = Action[Action.PlayerSpec][msgList[Name].Key]		
+					if Key:HasRange() then
+						unit = (Key:IsHarmful() or (Key:IsHelpful() and (Key.Type == "Spell" or Action.IamHealer)) and "target") or (Key.Type ~= "Spell" and ((not Action.IamHealer and "player") or "target")) or "player"
+					end 
+				end 
+			
+				if RunLua(msgList[Name].LUA, unit or "target") then
+					Action.MacroQueue(msgList[Name].Key, { Unit = unit })
+				end 
+			end	
+		end        
+    end  
+end 
+
+function Action.ToggleMSG(isLaunch)
+	if not isLaunch and Action.IsInitialized then 
+		Action.SetToggle({7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "})
+	end
+	
+	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
+	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY_LEADER")
+	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
+	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
+	
+	if Action.GetToggle(7, "MSG_Toggle") then 
+		Action.Listener:Add("ACTION_EVENT_MSG", "CHAT_MSG_PARTY", 			UpdateChat)
+		Action.Listener:Add("ACTION_EVENT_MSG", "CHAT_MSG_PARTY_LEADER", 	UpdateChat)
+		Action.Listener:Add("ACTION_EVENT_MSG", "CHAT_MSG_RAID", 			UpdateChat)
+		Action.Listener:Add("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER", 	UpdateChat)
+	end 	
+	
+	if Action.MainUI and Action.Data.ProfileUI and Action.Data.ProfileUI[7] and next(Action.Data.ProfileUI[7][Action.PlayerSpec]) then 
+		local spec = Action.PlayerSpec .. CL
+		local tab = tabFrame.tabs[7]
+		if tab and tab.childs[spec] then 
+			local anchor = GetAnchor(tab, spec)
+			local kids = GetKids(tab, spec)
+			for _, child in ipairs(kids) do 				
+				if child.Identify and child.Identify.Toggle == "DisableReToggle" then 
+					if Action.GetToggle(7, "MSG_Toggle") then 
+						child:Enable()
+					else 
+						child:Disable()
+					end 
+					break 
+				end 
+			end 
+		end 
+	end 
+end 
+
+-------------------------------------------------------------------------------
+-- UI: Toggles
+-------------------------------------------------------------------------------
 function Action.SetToggle(arg, custom)
+	-- @usage: Action.SetToggle({ tab.name (@number), key (@string ActionDB), text (@string optional for Print), silence (@boolean optional for Print) }, custom (@any value to set - optional))
 	if not TMW.db.profile.ActionDB then 
 		Action.Print(TMW.db:GetCurrentProfile() .. "  " .. L["NOSUPPORT"])
 		return
 	end 
 	
 	local bool 
-	local n, toggle, text = arg[1], arg[2], arg[3]
+	local n, toggle, text, silence = arg[1], arg[2], arg[3], arg[4]
 	if TMW.db.global.ActionDB[toggle] ~= nil then 
 		TMW.db.global.ActionDB[toggle] = custom ~= nil and custom or not TMW.db.global.ActionDB[toggle]		
 		bool = TMW.db.global.ActionDB[toggle] 		
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 
 		TMW.db.profile.ActionDB[n][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][toggle]		
 		bool = TMW.db.profile.ActionDB[n][toggle] 
-	elseif TMW.db.profile.ActionDB[n] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec] == nil or TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] == nil then
-		Action.Print(L["DEBUG"] .. (n or "") .. " " .. (toggle or "") .. " " .. L["ISNOTFOUND"] .. ". Func: Action.SetToggle")
+	elseif TMW.db.profile.ActionDB[n] == nil or TMW.db.profile.ActionDB[n][Action.PlayerSpec] == nil or TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] == nil then
+		if not silence then 
+			Action.Print(L["DEBUG"] .. (n or "") .. " " .. (toggle or "") .. " " .. L["ISNOTFOUND"] .. ". Func: Action.SetToggle")
+		end
 		return 
 	else 
 		-- Usually only for Dropdown in multi. Logic is simply:
@@ -4130,15 +4935,15 @@ function Action.SetToggle(arg, custom)
 		-- 2 Or if all OFF then:
 		-- 2.1 If no cache (means all was OFF) then make ON all (next time it will repeat 1 step to create cache)
 		-- 2.2 If cache exist then turn ON from cache 
-		-- /run TMW.db.profile.ActionDB[1][TMW.CNDT.Env.PlayerSpec].Trinkets.Cache = nil
-		if type(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) == "table" then 
+		-- /run TMW.db.profile.ActionDB[1][Action.PlayerSpec].Trinkets.Cache = nil
+		if type(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) == "table" then 
 			local anyIsON = false
-			for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do 
-				if TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] and k ~= "Cache" and not anyIsON then 
-					TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle].Cache = {}								
-					for k1, v1 in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do 
+			for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do 
+				if TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] and k ~= "Cache" and not anyIsON then 
+					TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle].Cache = {}								
+					for k1, v1 in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do 
 						if k1 ~= "Cache" then 
-							TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle].Cache[k1] = v1
+							TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle].Cache[k1] = v1
 						end
 					end										
 					anyIsON = true 
@@ -4147,41 +4952,49 @@ function Action.SetToggle(arg, custom)
 			end 
 			
 			if anyIsON then 
-				for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do
-					if TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] and k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom ~= nil and custom or not v
+				for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
+					if TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] and k ~= "Cache" then 
+						TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom ~= nil and custom or not v
 						if text then 
-							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k])
+							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end 
 					end 
 				end 
-			elseif TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle].Cache then 			
-				for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle].Cache) do	
+			elseif TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle].Cache then 			
+				for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle].Cache) do	
 					if k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = v	
+						TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = v	
 						if text then 
-							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k])
+							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end
 					end
 				end 
 			else 
-				for k, v in pairs(TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]) do
+				for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
 					if k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k] = custom ~= nil and custom or not v	
+						TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom ~= nil and custom or not v	
 						if text then 
-							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle][k])
+							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end		
 					end
 				end 				
 			end 
 		else 
-			TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]						
+			TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]						
 		end
-		bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
+		bool = TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] 
 	end 
 	
-	if toggle == "HE_Toggle" or toggle == "HE_Pets" or toggle == "LOSCheck" then 
+	if toggle == "HE_Toggle" or toggle == "HE_Pets" then 
 		GlobalsRemap()
+	end 
+	
+	if toggle == "ReFocus" or toggle == "ReTarget" then 
+		Re:Initialize()
+	end 
+	
+	if toggle == "LOSCheck" then 
+		LineOfSight:Initialize()
 	end 
 	
 	if text and type(bool) ~= "table" then 
@@ -4196,11 +5009,23 @@ function Action.SetToggle(arg, custom)
 		if toggle == "HE_Toggle" then 
 			boolprint = L["TAB"][1][bool]
 		end 
-		Action.Print(text, boolprint)
-	end	
+		
+		if not silence then
+			Action.Print(text, boolprint)
+		end 
+	end
+
+	-- Fires callback for AoE to display DogTag
+	if n == 1 and toggle == "Burst" then 
+		TMW:Fire("TMW_ACTION_BURST_CHANGED")
+		TMW:Fire("TMW_ACTION_CD_MODE_CHANGED") -- Taste's callback 
+	elseif n == 2 and strlowerCache[toggle] == "aoe" then 
+		TMW:Fire("TMW_ACTION_AOE_CHANGED")
+		TMW:Fire("TMW_ACTION_AOE_MODE_CHANGED") -- Taste's callback 
+	end 		
 	
 	if Action.MainUI then 		
-		local spec = Env.PlayerSpec .. CL
+		local spec = Action.PlayerSpec .. CL
 		local tab = tabFrame.tabs[n]
 		if tab and tab.childs[spec] then 
 			local anchor = GetAnchor(tab, spec)
@@ -4218,13 +5043,13 @@ function Action.SetToggle(arg, custom)
 								child.checkedTexture:Show()
 							else 
 								child.checkedTexture:Hide()
-							end
+							end							
 						end
 					elseif child.Identify.Type == "Dropdown" then						
 						if child.multi then 
 							local SetVal = {}
 							for i = 1, #child.optsFrame.scrollChild.items do 													
-								child.optsFrame.scrollChild.items[i].isChecked = TMW.db.profile.ActionDB[tab.name][Env.PlayerSpec][toggle][i]								
+								child.optsFrame.scrollChild.items[i].isChecked = TMW.db.profile.ActionDB[tab.name][Action.PlayerSpec][toggle][i]								
 								if child.optsFrame.scrollChild.items[i].isChecked then 
 									child.optsFrame.scrollChild.items[i].checkedTexture:Show()
 									tinsert(SetVal, child.optsFrame.scrollChild.items[i].value)
@@ -4252,16 +5077,19 @@ function Action.SetToggle(arg, custom)
 	end 		 	
 end 	
 
---- @usage: Action.GetToggle(tab.name (number), key (taken from DB))
 function Action.GetToggle(n, toggle)
-	if not TMW.db.profile.ActionDB then 		
+	-- @usage: Action.GetToggle(tab.name (@number), key (@string ActionDB))
+	if not TMW.db.profile.ActionDB or not TMW.db.global.ActionDB then 		
 		if toggle == "FPS" then
 			return TMW.db.global.Interval
 		end 
-		if toggle == "DisableMinimap" or toggle == "DisableRotationDisplay" then 
+		if toggle == "DisableMinimap" or toggle == "DisableRotationDisplay" or toggle == "DisableClassPortraits" then 
 			return true
 		end 
-		Action.Print(TMW.db:GetCurrentProfile() .. " - Toggle: [" .. (n or "") .. "] " .. toggle .. " " .. (L and L["NOSUPPORT"] or ""))
+		if toggle == "CheckSpellLevel" then 
+			return 
+		end 
+		Action.Print(TMW.db:GetCurrentProfile() .. " - Toggle: [" .. (n or "") .. "] " .. toggle .. " " .. (L and L["NOSUPPORT"] or ""), nil, true)
 		return
 	end 
 	
@@ -4270,265 +5098,20 @@ function Action.GetToggle(n, toggle)
 		bool = TMW.db.global.ActionDB[toggle] 		
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 	
 		bool = TMW.db.profile.ActionDB[n][toggle] 
-	elseif TMW.db.profile.ActionDB[n] and TMW.db.profile.ActionDB[n][Env.PlayerSpec] then 
+	elseif TMW.db.profile.ActionDB[n] and TMW.db.profile.ActionDB[n][Action.PlayerSpec] then 
 		if toggle == "HeartOfAzeroth" then 
-			bool = AzeriteEssence and TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle]
+			bool = AzeriteEssence and TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]
 		else 
-			bool = TMW.db.profile.ActionDB[n][Env.PlayerSpec][toggle] 
+			bool = TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] 
 		end 
 	end 
 	
 	return bool	
 end 	
 
-function Action.ToggleMode()
-	Env.InPvP_Toggle = true
-	Env.InPvP_Status = not Env.InPvP_Status	
-	Action.Print(L["SELECTED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))
-	TMW:Fire("TMW_ACTION_MODE_CHANGED")
-end 
-
-function Action.ToggleBurst(fixed, between)
-	local Current = Action.GetToggle(1, "Burst")
-	
-	local set
-	if between and fixed ~= between then 	
-		if Current == fixed then 
-			set = between
-		else 
-			set = fixed
-		end 
-	end 
-	
-	if Current ~= "Off" then 		
-		Action.Data.TG.Burst = Current
-		Current = "Off"
-	elseif Action.Data.TG.Burst == nil then  
-		Current = "Everything"
-		Action.Data.TG.Burst = Current
-	else
-		Current = Action.Data.TG.Burst
-	end 			
-	
-	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)				
-end 
-
-function Action.ToggleHE(fixed)
-	local Current = Action.GetToggle(1, "HE_Toggle")
-	if Current == "ALL" then 		
-		Current = "RAID"
-	elseif Current == "RAID" then  
-		Current = "TANK"
-	elseif Current == "TANK" then 
-		Current = "DAMAGER"
-	elseif Current == "DAMAGER" then 
-		Current = "HEALER"
-	else 
-		Current = "ALL"
-	end 		
-	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
-end 
-
---- [[ ReTarget ReFocus ]]
-local Re = {
-	Units = { "arena1", "arena2", "arena3" },
-	-- Textures (already converted from spellID)
-	["Target"] = {
-		["arena1"] = 607512, -- spellID: 111771
-		["arena2"] = 136057, -- spellID: 45993
-		["arena3"] = 535593, -- spellID: 107141
-	},
-	["Focus"] = {
-		["arena1"] = 136243, -- spellID: 111
-		["arena2"] = 135805, -- spellID: 22200
-		["arena3"] = 135848, -- spellID: 40875
-	},
-}
-
-local function RETARGET()
-	if Env.InPvP() and UnitExists("target") then 
-		for i = 1, #Re.Units do 
-			if UnitIsUnit("target", Re.Units[i]) then 
-				Action.LastTarget = Re.Units[i]
-			end 
-		end 
-	end 
-end 
-
-local function REFOCUS()
-	if Env.InPvP() and UnitExists("focus") then 
-		for i = 1, #Re.Units do 
-			if UnitIsUnit("focus", Re.Units[i]) then 
-				Action.LastFocus = Re.Units[i]
-			end 
-		end 
-	end 
-end 
-
-function Action.ReInit()
-	if Action.GetToggle(1, "ReTarget") then 
-		Listener:Add("RE_Events", "PLAYER_TARGET_CHANGED", RETARGET)
-	else 
-		Listener:Remove("RE_Events", "PLAYER_TARGET_CHANGED")
-	end 
-	
-	if Action.GetToggle(1, "ReFocus") then 
-		Listener:Add("RE_Events", "PLAYER_FOCUS_CHANGED", REFOCUS)
-	else 
-		Listener:Remove("RE_Events", "PLAYER_FOCUS_CHANGED")
-	end 
-end 
-
---- [[ LOS ]]
-local LOS = setmetatable({}, { __mode == "kv" })
-function Action.UnitInLOS(unit)
-	if not Action.GetToggle(1, "LOSCheck") then 
-		return false 
-	end 
-	local GUID = UnitGUID(unit)
-	return LOS[GUID] and TMW.time < LOS[GUID] or false
-end 
-function Action.LOSInit(isLaunch)
-	if not isLaunch then 
-		GlobalsRemap()
-	end 
-	if Action.GetToggle(1, "LOSCheck") then 
-		Listener:Add("ACTION_LOS", "UI_ERROR_MESSAGE", function(...)
-			if Env.IamHealer and select(2, ...) == SPELL_FAILED_LINE_OF_SIGHT and Action.IsUnitDMG("targettarget") then          
-				LOS[UnitGUID("targettarget")] = TMW.time + 5
-			end 
-		end)
-		Listener:Add("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
-            local _, event, _, SourceGUID, _,_,_, DestGUID = CombatLogGetCurrentEventInfo()
-            if Env.IamHealer and event == "SPELL_CAST_SUCCESS" and LOS[DestGUID] and SourceGUID == UnitGUID("player") then 
-				LOS[DestGUID] = nil 
-			end 
-		end)
-		Listener:Add("ACTION_LOS", "PLAYER_REGEN_ENABLED", function() wipe(LOS) end)
-		Listener:Add("ACTION_LOS", "PLAYER_REGEN_DISABLED", function() wipe(LOS) end)
-	else 
-		Listener:Remove("ACTION_LOS", "UI_ERROR_MESSAGE")
-		Listener:Remove("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED")
-		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_ENABLED")
-		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_DISABLED")
-	end 
-end 
-
---- [[ MSG ]]
-local function UpdateChat(...)
-	if not Action.IsInitialized then 
-		return 
-	end 
-	
-	local msgList = Action.GetToggle(7, "msgList")
-	if next(msgList) == nil then 
-		return 
-	end 
-	
-	local msg, _, _, sname = ... 
-	msg = msg:lower()
-	for Name in pairs(msgList) do 
-		if msgList[Name].Enabled and msg:match(Name) and (not msgList[Name].Source or msgList[Name].Source == sname) and Action[Env.PlayerSpec][msgList[Name].Key] then  			
-			local units = { "raid%d+", "party%d+", "arena%d+", "player", "target", "focus" }
-			local unit
-			for j = 1, #units do 
-				unit = msg:match(units[j])
-				if unit then 
-					break
-				end 
-			end 
-			
-			if unit then 
-				if RunLua(msgList[Name].LUA, unit) then 
-					-- Note: Regarding "player" unit here is a lot of profiles which don't support slot 6 and mostly 6 slot is valid for healer which has different @target always 
-					-- Since damager / tank always has @target an enemy then "player" will be applied even if spell will be launched in slot 3-4 
-					if unit:match("raid") then 
-						local raidunits = { { u = "player", meta = Env.IamHealer and 6 or nil }, { u = "party1", meta = 7 }, { u = "party2", meta = 8} }					
-						for j = 1, #raidunits do 
-							if UnitIsUnit(unit, raidunits[j].u) then 							
-								Action.MacroQueue(msgList[Name].Key, { Unit = raidunits[j].u, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = raidunits[j].meta })							
-								break 
-							end 
-						end 					
-					elseif unit:match("party") then 
-						if unit == "party1" then 
-							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 7 })
-						elseif unit == "party2" then
-							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 8 })
-						end 
-					elseif unit:match("arena") then 
-						if unit == "arena1" then 
-							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 6 })
-						elseif unit == "arena2" then 
-							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 7 })
-						elseif unit == "arena3" then 
-							Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil, MetaSlot = 8 })
-						end 
-					elseif unit == "player" then 
-						Action.MacroQueue(msgList[Name].Key, { Unit = "player", Value = msgList[Name].DisableReToggle == true and true or nil }) -- , MetaSlot = Env.IamHealer and 6 or nil
-					else 
-						Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
-					end 
-				end 
-			else
-				if msgList[Name].LUA then 
-					local Key = Action[Env.PlayerSpec][msgList[Name].Key]					 
-					if self.Type == "Spell" then 
-						if SpellHasRange(Key:Info()) and not isSpellRangeException[Key.ID] then
-							unit = ((IsAttackSpell(Key:Info()) or IsHarmfulSpell(Key:Info()) or IsHelpfulSpell(Key:Info())) and "target") or "player"
-						end 
-					else
-						if ItemHasRange(Key:Info()) then 						
-							unit = ((IsHarmfulItem(Key:Info()) or (IsHelpfulItem(Key:Info()) and Env.IamHealer)) and "target") or (not Env.IamHealer and "player") or "target"
-						end 
-					end 
-				end 
-			
-				if RunLua(msgList[Name].LUA, unit or "target") then
-					Action.MacroQueue(msgList[Name].Key, { Unit = unit, Value = msgList[Name].DisableReToggle == true and true or nil })
-				end 
-			end	
-		end        
-    end  
-end 
-
-function Action.ToggleMSG(isLaunch)
-	if not isLaunch then 
-		Action.SetToggle({7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "})
-	end
-	Listener:Remove("MSG_Events", "CHAT_MSG_PARTY")
-	Listener:Remove("MSG_Events", "CHAT_MSG_PARTY_LEADER")
-	Listener:Remove("MSG_Events", "CHAT_MSG_RAID")
-	Listener:Remove("MSG_Events", "CHAT_MSG_RAID_LEADER")	
-	if Action.GetToggle(7, "MSG_Toggle") then 
-		Listener:Add("MSG_Events", "CHAT_MSG_PARTY", UpdateChat)
-		Listener:Add("MSG_Events", "CHAT_MSG_PARTY_LEADER", UpdateChat)
-		Listener:Add("MSG_Events", "CHAT_MSG_RAID", UpdateChat)
-		Listener:Add("MSG_Events", "CHAT_MSG_RAID_LEADER", UpdateChat)
-	end 	
-	if Action.MainUI and Action.Data.ProfileUI and Action.Data.ProfileUI[7] and next(Action.Data.ProfileUI[7][Env.PlayerSpec]) then 
-		local spec = Env.PlayerSpec .. CL
-		local tab = tabFrame.tabs[7]
-		if tab and tab.childs[spec] then 
-			local anchor = GetAnchor(tab, spec)
-			local kids = GetKids(tab, spec)
-			for _, child in ipairs(kids) do 				
-				if child.Identify and child.Identify.Toggle == "DisableReToggle" then 
-					if Action.GetToggle(7, "MSG_Toggle") then 
-						child:Enable()
-					else 
-						child:Disable()
-					end 
-					break 
-				end 
-			end 
-		end 
-	end 
-end 
-
-function Action.ToggleMinimap(isLaunch)
+function Action.ToggleMinimap()
 	if Action.Minimap then 
-		if not isLaunch then 
+		if Action.IsInitialized then 
 			Action.SetToggle({1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "})
 		end
 		if Action.GetToggle(1, "DisableMinimap") then 
@@ -4540,10 +5123,10 @@ function Action.ToggleMinimap(isLaunch)
 end 
 
 function Action.ToggleMainUI()
-	if not Env.PlayerSpec or (not Action.MainUI and not Action.IsInitialized) then 
+	if not Action.PlayerSpec or (not Action.MainUI and not Action.IsInitialized) then 
 		return 
 	end 
-	local specID, specName = Env.PlayerSpec, Env.PlayerSpecName 
+	local specID, specName = Action.PlayerSpec, Action.PlayerSpecName 
 	local spec = specID .. CL
 	if Action.MainUI then 	
 		if Action.MainUI:IsShown() then 
@@ -4668,14 +5251,14 @@ function Action.ToggleMainUI()
 					end 
 				end
 			end 
-			TMW.db.global.ActionDB = nil
-			TMW.db.profile.ActionDB = nil
+			wipe(TMW.db.global.ActionDB)
+			wipe(TMW.db.profile.ActionDB)
 			if next(ProfileSave) or #ProfileSave > 0 then 
 				TMW.db.profile.ActionDB = ProfileSave				
 			end 
 			if next(GlobalSave) or #GlobalSave > 0 then 
 				TMW.db.global.ActionDB = GlobalSave
-			end 
+			end
 			C_UI.Reload()	
 		end)
 		
@@ -4800,6 +5383,10 @@ function Action.ToggleMainUI()
 		end 
 	end 
 	
+	if not Action.GetToggle(1, "DisableSounds") then 
+		PlaySound(5977)
+	end 
+	
 	tabFrame:EnumerateTabs(function(tab)
 		for k in pairs(tab.childs) do
 			if k ~= spec then 
@@ -4810,7 +5397,7 @@ function Action.ToggleMainUI()
 			tab.childs[spec]:Show()			
 			return
 		end  
-		if tab.name == 2 then 
+		if tab.name == 1 or tab.name == 2 then 
 			tab.childs[spec] = StdUi:ScrollFrame(tab.frame, tab.frame:GetWidth(), tab.frame:GetHeight()) 			
 			tab.childs[spec]:SetAllPoints()
 			tab.childs[spec]:Show()			
@@ -4836,9 +5423,13 @@ function Action.ToggleMainUI()
 		-- We should leave "OnShow" handlers because user can swap language, otherwise in performance case better remove it 		
 		if tab.name == 1 then 	
 			UI_Title:SetText(L["TAB"][tab.name]["HEADTITLE"])
-			StdUi:EasyLayout(tab.childs[spec], { padding = { top = 40 } })	
+			-- Fix StdUi 
+			-- Lib has missed scrollframe as widget
+			StdUi:InitWidget(anchor)
 			
-			local PvEPvPToggle = StdUi:Button(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 5.5), Action.Data.theme.dd.height, L["TOGGLEIT"])
+			StdUi:EasyLayout(anchor, { padding = { top = 40, right = 10 + 20 } }) -- { padding = { top = 40 } })	
+			
+			local PvEPvPToggle = StdUi:Button(anchor, GetWidthByColumn(anchor, 5.5), Action.Data.theme.dd.height, L["TOGGLEIT"])
 			PvEPvPToggle:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			PvEPvPToggle:SetScript('OnClick', function(self, button, down)
 				if button == "LeftButton" then 
@@ -4851,11 +5442,11 @@ function Action.ToggleMainUI()
 			PvEPvPToggle.FontStringTitle = StdUi:FontString(PvEPvPToggle, L["TAB"][tab.name]["PVEPVPTOGGLE"])
 			StdUi:GlueAbove(PvEPvPToggle.FontStringTitle, PvEPvPToggle)
 			
-			local PvEPvPresetbutton = StdUi:SquareButton(tab.childs[spec], PvEPvPToggle:GetHeight(), PvEPvPToggle:GetHeight(), "DELETE")
+			local PvEPvPresetbutton = StdUi:SquareButton(anchor, PvEPvPToggle:GetHeight(), PvEPvPToggle:GetHeight(), "DELETE")
 			PvEPvPresetbutton:SetScript('OnClick', function()
-				Env.InPvP_Toggle = false
-				Env.InPvP_Status = Env.CheckInPvP()	
-				Action.Print(L["RESETED"] .. ": " .. (Env.InPvP_Status and "PvP" or "PvE"))
+				Action.IsLockedMode = false
+				Action.IsInPvP = Action:CheckInPvP()	
+				Action.Print(L["RESETED"] .. ": " .. (Action.IsInPvP and "PvP" or "PvE"))
 				TMW:Fire("TMW_ACTION_MODE_CHANGED")
 			end)
 			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)					
@@ -4866,11 +5457,11 @@ function Action.ToggleMainUI()
 			for Language in pairs(Localization) do 
 				table.insert(InterfaceLanguages, { text = Language, value = Language })
 			end 
-			tab.childs[spec].InterfaceLanguage = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6), Action.Data.theme.dd.height, InterfaceLanguages)         
-			tab.childs[spec].InterfaceLanguage:SetValue(TMW.db.global.ActionDB.InterfaceLanguage)
-			tab.childs[spec].InterfaceLanguage.OnValueChanged = function(self, val)                				
+			anchor.InterfaceLanguage = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, 6), Action.Data.theme.dd.height, InterfaceLanguages)         
+			anchor.InterfaceLanguage:SetValue(TMW.db.global.ActionDB.InterfaceLanguage)
+			anchor.InterfaceLanguage.OnValueChanged = function(self, val)                				
 				TMW.db.global.ActionDB.InterfaceLanguage = val				
-				GetLocalization()						
+				Action.GetLocalization()						
 				Action.MainUI.AllReset.text = StdUi:ButtonLabel(Action.MainUI.AllReset, L["TAB"]["RESETBUTTON"])
 				StdUi:ButtonAutoWidth(Action.MainUI.AllReset)
 				Action.MainUI.GDateTime:SetText(L["GLOBALAPI"] .. DateTime)
@@ -4891,9 +5482,9 @@ function Action.ToggleMainUI()
 				spec = specID .. CL	
 				for i = 1, #tabFrame.tabs do
 					local tab = tabFrame.tabs[i]
-					if tab and tab.childs[spec] then 
+					if tab and tab.childs[spec] then -- don't touch tab.childs[spec]
 						if i == 3 then 					
-							local ScrollTable = tab.childs[spec].ScrollTable
+							local ScrollTable = tab.childs[spec].ScrollTable -- don't touch tab.childs[spec]
 							for index = 1, #ScrollTable.data do 								
 								if ScrollTable.data[index]:IsBlocked() then 
 									ScrollTable.data[index].Enabled = "False"
@@ -4944,12 +5535,12 @@ function Action.ToggleMainUI()
 				Action.ToggleMainUI()
 				Action.ToggleMainUI()	
 			end			
-			tab.childs[spec].InterfaceLanguage.Identify = { Type = "Dropdown", Toggle = "InterfaceLanguage" }
-			tab.childs[spec].InterfaceLanguage.FontStringTitle = StdUi:FontString(tab.childs[spec].InterfaceLanguage, L["TAB"][tab.name]["CHANGELANGUAGE"])
-			StdUi:GlueAbove(tab.childs[spec].InterfaceLanguage.FontStringTitle, tab.childs[spec].InterfaceLanguage)
-			tab.childs[spec].InterfaceLanguage.text:SetJustifyH("CENTER")															
+			anchor.InterfaceLanguage.Identify = { Type = "Dropdown", Toggle = "InterfaceLanguage" }
+			anchor.InterfaceLanguage.FontStringTitle = StdUi:FontString(anchor.InterfaceLanguage, L["TAB"][tab.name]["CHANGELANGUAGE"])
+			StdUi:GlueAbove(anchor.InterfaceLanguage.FontStringTitle, anchor.InterfaceLanguage)
+			anchor.InterfaceLanguage.text:SetJustifyH("CENTER")															
 			
-			local AutoTarget = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["AUTOTARGET"])	
+			local AutoTarget = StdUi:Checkbox(anchor, L["TAB"][tab.name]["AUTOTARGET"])	
 			AutoTarget:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].AutoTarget)	
 			AutoTarget:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			AutoTarget:SetScript('OnClick', function(self, button, down)	
@@ -4966,7 +5557,7 @@ function Action.ToggleMainUI()
 			AutoTarget.FontStringTitle = StdUi:FontString(AutoTarget, L["TAB"][tab.name]["CHARACTERSECTION"])
 			StdUi:GlueAbove(AutoTarget.FontStringTitle, AutoTarget)
 			
-			local Potion = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["POTION"])		
+			local Potion = StdUi:Checkbox(anchor, L["TAB"][tab.name]["POTION"])		
 			Potion:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].Potion)
 			Potion:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			Potion:SetScript('OnClick', function(self, button, down)	
@@ -4981,7 +5572,7 @@ function Action.ToggleMainUI()
 			Potion.Identify = { Type = "Checkbox", Toggle = "Potion" }	
 			StdUi:FrameTooltip(Potion, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
 			
-			local HeartOfAzeroth = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["HEARTOFAZEROTH"])		
+			local HeartOfAzeroth = StdUi:Checkbox(anchor, L["TAB"][tab.name]["HEARTOFAZEROTH"])		
 			HeartOfAzeroth:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].HeartOfAzeroth)
 			HeartOfAzeroth:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			HeartOfAzeroth:SetScript('OnClick', function(self, button, down)	
@@ -5001,7 +5592,7 @@ function Action.ToggleMainUI()
 				HeartOfAzeroth:Disable()
 			end 
 
-			local Racial = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["RACIAL"])			
+			local Racial = StdUi:Checkbox(anchor, L["TAB"][tab.name]["RACIAL"])			
 			Racial:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].Racial)
 			Racial:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			Racial:SetScript('OnClick', function(self, button, down)	
@@ -5014,9 +5605,24 @@ function Action.ToggleMainUI()
 				end 
 			end)
 			Racial.Identify = { Type = "Checkbox", Toggle = "Racial" }
-			StdUi:FrameTooltip(Racial, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)			
+			StdUi:FrameTooltip(Racial, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)	
+
+			local StopCast = StdUi:Checkbox(anchor, L["TAB"][tab.name]["STOPCAST"])			
+			StopCast:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopCast)
+			StopCast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+			StopCast:SetScript('OnClick', function(self, button, down)	
+				if button == "LeftButton" then 
+					TMW.db.profile.ActionDB[tab.name][specID].StopCast = not TMW.db.profile.ActionDB[tab.name][specID].StopCast
+					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopCast)	
+					Action.Print(L["TAB"][tab.name]["STOPCAST"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].StopCast)	
+				elseif button == "RightButton" then 
+					CraftMacro(L["TAB"][tab.name]["STOPCAST"], [[/run Action.SetToggle({]] .. tab.name .. [[, "StopCast", "]] .. L["TAB"][tab.name]["STOPCAST"] .. [[: "})]])	
+				end 
+			end)
+			StopCast.Identify = { Type = "Checkbox", Toggle = "StopCast" }
+			StdUi:FrameTooltip(StopCast, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)	
 			
-			local ReTarget = StdUi:Checkbox(tab.childs[spec], "ReTarget")			
+			local ReTarget = StdUi:Checkbox(anchor, "ReTarget")			
 			ReTarget:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReTarget)
 			ReTarget:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			ReTarget:SetScript('OnClick', function(self, button, down)	
@@ -5024,9 +5630,9 @@ function Action.ToggleMainUI()
 					TMW.db.profile.ActionDB[tab.name][specID].ReTarget = not TMW.db.profile.ActionDB[tab.name][specID].ReTarget
 					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReTarget)	
 					Action.Print("ReTarget" .. ": ", TMW.db.profile.ActionDB[tab.name][specID].ReTarget)	
-					Action.ReInit()
+					Re:Initialize()
 				elseif button == "RightButton" then 
-					CraftMacro("ReTarget", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReTarget", "]] .. "ReTarget" .. [[: "}); Action.ReInit()]])	
+					CraftMacro("ReTarget", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReTarget", "]] .. "ReTarget" .. [[: "})]])	
 				end 
 			end)
 			ReTarget.Identify = { Type = "Checkbox", Toggle = "ReTarget" }
@@ -5034,7 +5640,7 @@ function Action.ToggleMainUI()
 			ReTarget.FontStringTitle = StdUi:FontString(ReTarget, L["TAB"][tab.name]["PVPSECTION"])
 			StdUi:GlueAbove(ReTarget.FontStringTitle, ReTarget)			
 
-			local ReFocus = StdUi:Checkbox(tab.childs[spec], "ReFocus")
+			local ReFocus = StdUi:Checkbox(anchor, "ReFocus")
 			ReFocus:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReFocus)
 			ReFocus:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			ReFocus:SetScript('OnClick', function(self, button, down)	
@@ -5042,25 +5648,25 @@ function Action.ToggleMainUI()
 					TMW.db.profile.ActionDB[tab.name][specID].ReFocus = not TMW.db.profile.ActionDB[tab.name][specID].ReFocus
 					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].ReFocus)	
 					Action.Print("ReFocus" .. ": ", TMW.db.profile.ActionDB[tab.name][specID].ReFocus)
-					Action.ReInit()					
+					Re:Initialize()					
 				elseif button == "RightButton" then 
-					CraftMacro("ReFocus", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReFocus", "]] .. "ReFocus" .. [[: "}); Action.ReInit()]])	
+					CraftMacro("ReFocus", [[/run Action.SetToggle({]] .. tab.name .. [[, "ReFocus", "]] .. "ReFocus" .. [[: "})]])	
 				end 
 			end)
 			ReFocus.Identify = { Type = "Checkbox", Toggle = "ReFocus" }
 			StdUi:FrameTooltip(ReFocus, L["TAB"][tab.name]["REFOCUS"], nil, "TOPRIGHT", true)				
 			
-			local LosSystem = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["LOSSYSTEM"])
+			local LosSystem = StdUi:Checkbox(anchor, L["TAB"][tab.name]["LOSSYSTEM"])
 			LosSystem:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].LOSCheck)
 			LosSystem:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			LosSystem:SetScript('OnClick', function(self, button, down)	
 				if button == "LeftButton" then 
 					TMW.db.profile.ActionDB[tab.name][specID].LOSCheck = not TMW.db.profile.ActionDB[tab.name][specID].LOSCheck
 					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].LOSCheck)	
-					LOSCheck = TMW.db.profile.ActionDB[tab.name][specID].LOSCheck
-					Action.Print(L["TAB"][tab.name]["LOSSYSTEM"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].LOSCheck)	
+					Action.Print(L["TAB"][tab.name]["LOSSYSTEM"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].LOSCheck)
+					LineOfSight:Initialize()	
 				elseif button == "RightButton" then 
-					CraftMacro(L["TAB"][tab.name]["LOSSYSTEM"], [[/run Action.SetToggle({]] .. tab.name .. [[, "LOSCheck", "]] .. L["TAB"][tab.name]["LOSSYSTEM"] .. [[: "}); Action.LOSInit()]])	
+					CraftMacro(L["TAB"][tab.name]["LOSSYSTEM"], [[/run Action.SetToggle({]] .. tab.name .. [[, "LOSCheck", "]] .. L["TAB"][tab.name]["LOSSYSTEM"] .. [[: "})]])	
 				end 
 			end)
 			LosSystem.Identify = { Type = "Checkbox", Toggle = "LOSCheck" }				
@@ -5068,7 +5674,7 @@ function Action.ToggleMainUI()
 			LosSystem.FontStringTitle = StdUi:FontString(LosSystem, L["TAB"][tab.name]["SYSTEMSECTION"])
 			StdUi:GlueAbove(LosSystem.FontStringTitle, LosSystem)								
 			
-			local DBMFrame = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DBM"])
+			local DBMFrame = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DBM"])
 			DBMFrame:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].DBM)
 			DBMFrame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			DBMFrame:SetScript('OnClick', function(self, button, down)	
@@ -5095,7 +5701,7 @@ function Action.ToggleMainUI()
 			end 
 			StdUi:FrameTooltip(DBMFrame, "Deadly Boss Mods\n" .. L["TAB"][tab.name]["DBMTOOLTIP"], nil, "TOPLEFT", true)
 			
-			local HE_PetsFrame = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["HEALINGENGINEPETS"])		
+			local HE_PetsFrame = StdUi:Checkbox(anchor, L["TAB"][tab.name]["HEALINGENGINEPETS"])		
 			HE_PetsFrame:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].HE_Pets)
 			HE_PetsFrame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			HE_PetsFrame:SetScript('OnClick', function(self, button, down)	
@@ -5112,18 +5718,18 @@ function Action.ToggleMainUI()
 			end)
 			HE_PetsFrame.Identify = { Type = "Checkbox", Toggle = "HE_Pets" }			
 			HE_PetsFrame:SetScript("OnShow", function()
-				if not Env.IamHealer then 
+				if not Action.IamHealer then 
 					HE_PetsFrame:Disable()
 				else 
 					HE_PetsFrame:Enable()
 				end 
 			end)
-			if not Env.IamHealer then
+			if not Action.IamHealer then
 				HE_PetsFrame:Disable()
 			end 
 			StdUi:FrameTooltip(HE_PetsFrame, L["TAB"][tab.name]["HEALINGENGINEPETSTOOLTIP"], nil, "TOPLEFT", true)
 			
-			local HE_ToggleFrame = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6), 20, {
+			local HE_ToggleFrame = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, 6), 20, {
 				{ text = L["TAB"][tab.name]["ALL"], value = "ALL" },
 				{ text = L["TAB"][tab.name]["RAID"], value = "RAID" },				
 				{ text = L["TAB"][tab.name]["TANK"], value = "TANK" },
@@ -5147,13 +5753,13 @@ function Action.ToggleMainUI()
 				end 
 			end)	
 			HE_ToggleFrame:SetScript("OnShow", function()
-				if not Env.IamHealer then 
+				if not Action.IamHealer then 
 					HE_ToggleFrame:Disable()
 				else 
 					HE_ToggleFrame:Enable()
 				end 
 			end)				
-			if not Env.IamHealer then
+			if not Action.IamHealer then
 				HE_ToggleFrame:Disable()
 			end 
 			HE_ToggleFrame.Identify = { Type = "Dropdown", Toggle = "HE_Toggle" }
@@ -5162,7 +5768,7 @@ function Action.ToggleMainUI()
 			StdUi:GlueAbove(HE_ToggleFrame.FontStringTitle, HE_ToggleFrame)	
 			HE_ToggleFrame.text:SetJustifyH("CENTER")			
 			
-			local FPS = StdUi:Slider(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 5.8), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].FPS, false, -0.01, 1.5)
+			local FPS = StdUi:Slider(anchor, GetWidthByColumn(anchor, 5.8), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].FPS, false, -0.01, 1.5)
 			FPS:SetPrecision(2)
 			FPS:SetScript('OnMouseUp', function(self, button, down)
 					if button == "RightButton" then 
@@ -5178,10 +5784,10 @@ function Action.ToggleMainUI()
 				FPS.FontStringTitle:SetText(L["TAB"][tab.name]["FPS"] .. ": |cff00ff00" .. (value < 0 and "AUTO" or (value .. L["TAB"][tab.name]["FPSSEC"])))
 			end
 			StdUi:FrameTooltip(FPS, L["TAB"][tab.name]["FPSTOOLTIP"], nil, "TOPRIGHT", true)	
-			FPS.FontStringTitle = StdUi:FontString(tab.childs[spec], L["TAB"][tab.name]["FPS"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].FPS < 0 and "AUTO" or (TMW.db.profile.ActionDB[tab.name][specID].FPS .. L["TAB"][tab.name]["FPSSEC"])))
+			FPS.FontStringTitle = StdUi:FontString(anchor, L["TAB"][tab.name]["FPS"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].FPS < 0 and "AUTO" or (TMW.db.profile.ActionDB[tab.name][specID].FPS .. L["TAB"][tab.name]["FPSSEC"])))
 			StdUi:GlueAbove(FPS.FontStringTitle, FPS)					
 			
-			local Trinkets = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6), Action.Data.theme.dd.height, {
+			local Trinkets = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, 6), Action.Data.theme.dd.height, {
 				{ text = L["TAB"][tab.name]["TRINKET"] .. " 1", value = 1 },
 				{ text = L["TAB"][tab.name]["TRINKET"] .. " 2", value = 2 },
 			}, nil, true)
@@ -5211,7 +5817,7 @@ function Action.ToggleMainUI()
 			StdUi:GlueAbove(Trinkets.FontStringTitle, Trinkets)
 			Trinkets.text:SetJustifyH("CENTER")			
 						
-			local Burst = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6), Action.Data.theme.dd.height, {
+			local Burst = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, 6), Action.Data.theme.dd.height, {
 				{ text = "Everything", value = "Everything" },
 				{ text = "Auto", value = "Auto" },				
 				{ text = "Off", value = "Off" },
@@ -5219,6 +5825,8 @@ function Action.ToggleMainUI()
 			Burst:SetValue(TMW.db.profile.ActionDB[tab.name][specID].Burst)
 			Burst.OnValueChanged = function(self, val)                
 				TMW.db.profile.ActionDB[tab.name][specID].Burst = val 
+				TMW:Fire("TMW_ACTION_BURST_CHANGED")
+				TMW:Fire("TMW_ACTION_CD_MODE_CHANGED") -- Taste's callback 
 				if val ~= "Off" then 
 					Action.Data.TG["Burst"] = val
 				end 
@@ -5238,7 +5846,7 @@ function Action.ToggleMainUI()
 			StdUi:GlueAbove(Burst.FontStringTitle, Burst)	
 			Burst.text:SetJustifyH("CENTER")				
 
-			HealthStone = StdUi:Slider(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].HealthStone, false, -1, 100)	
+			HealthStone = StdUi:Slider(anchor, GetWidthByColumn(anchor, 6), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].HealthStone, false, -1, 100)	
 			HealthStone:SetScript('OnMouseUp', function(self, button, down)
 					if button == "RightButton" then 
 						CraftMacro(L["TAB"][tab.name]["HEALTHSTONE"], [[/run Action.SetToggle({]] .. tab.name .. [[, "HealthStone", "]] .. L["TAB"][tab.name]["HEALTHSTONE"] .. [[: "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID].HealthStone .. [[)]])	
@@ -5251,15 +5859,15 @@ function Action.ToggleMainUI()
 				self.FontStringTitle:SetText(L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= 100 and "|cff00ff00AUTO|r" or value))
 			end
 			StdUi:FrameTooltip(HealthStone, L["TAB"][tab.name]["HEALTHSTONETOOLTIP"], nil, "TOPLEFT", true)	
-			HealthStone.FontStringTitle = StdUi:FontString(tab.childs[spec], L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].HealthStone < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone >= 100 and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone))
+			HealthStone.FontStringTitle = StdUi:FontString(anchor, L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (TMW.db.profile.ActionDB[tab.name][specID].HealthStone < 0 and "|cffff0000OFF|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone >= 100 and "|cff00ff00AUTO|r" or TMW.db.profile.ActionDB[tab.name][specID].HealthStone))
 			StdUi:GlueAbove(HealthStone.FontStringTitle, HealthStone)
 
-			local PauseChecksPanel = StdUi:PanelWithTitle(tab.childs[spec], tab.frame:GetWidth() - 30, 200, L["TAB"][tab.name]["PAUSECHECKS"])
+			local PauseChecksPanel = StdUi:PanelWithTitle(anchor, tab.frame:GetWidth() - 30, 250, L["TAB"][tab.name]["PAUSECHECKS"])
 			StdUi:GlueTop(PauseChecksPanel.titlePanel, PauseChecksPanel, 0, -5)
 			PauseChecksPanel.titlePanel.label:SetFontSize(14)
 			StdUi:EasyLayout(PauseChecksPanel, { padding = { top = PauseChecksPanel.titlePanel.label:GetHeight() + 10 } })	
 
-			local CheckVehicle = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["VEHICLE"])			
+			local CheckVehicle = StdUi:Checkbox(anchor, L["TAB"][tab.name]["VEHICLE"])			
 			CheckVehicle:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckVehicle)
 			function CheckVehicle:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckVehicle = not TMW.db.profile.ActionDB[tab.name].CheckVehicle		
@@ -5268,7 +5876,7 @@ function Action.ToggleMainUI()
 			CheckVehicle.Identify = { Type = "Checkbox", Toggle = "CheckVehicle" }
 			StdUi:FrameTooltip(CheckVehicle, L["TAB"][tab.name]["VEHICLETOOLTIP"], nil, "BOTTOMRIGHT", true)				
 			
-			local CheckDeadOrGhost = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DEADOFGHOSTPLAYER"])	
+			local CheckDeadOrGhost = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DEADOFGHOSTPLAYER"])	
 			CheckDeadOrGhost:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhost)
 			function CheckDeadOrGhost:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhost = not TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhost		
@@ -5276,7 +5884,7 @@ function Action.ToggleMainUI()
 			end		
 			CheckDeadOrGhost.Identify = { Type = "Checkbox", Toggle = "CheckDeadOrGhost" }
 			
-			local CheckDeadOrGhostTarget = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DEADOFGHOSTTARGET"])
+			local CheckDeadOrGhostTarget = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DEADOFGHOSTTARGET"])
 			CheckDeadOrGhostTarget:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhostTarget)
 			function CheckDeadOrGhostTarget:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhostTarget = not TMW.db.profile.ActionDB[tab.name].CheckDeadOrGhostTarget
@@ -5285,7 +5893,7 @@ function Action.ToggleMainUI()
 			CheckDeadOrGhostTarget.Identify = { Type = "Checkbox", Toggle = "CheckDeadOrGhostTarget" }
 			StdUi:FrameTooltip(CheckDeadOrGhostTarget, L["TAB"][tab.name]["DEADOFGHOSTTARGETTOOLTIP"], nil, "BOTTOMLEFT", true)						
 
-			local CheckCombat = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["COMBAT"])	
+			local CheckCombat = StdUi:Checkbox(anchor, L["TAB"][tab.name]["COMBAT"])	
 			CheckCombat:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckCombat)
 			function CheckCombat:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckCombat = not TMW.db.profile.ActionDB[tab.name].CheckCombat	
@@ -5294,7 +5902,7 @@ function Action.ToggleMainUI()
 			CheckCombat.Identify = { Type = "Checkbox", Toggle = "CheckCombat" }
 			StdUi:FrameTooltip(CheckCombat, L["TAB"][tab.name]["COMBATTOOLTIP"], nil, "BOTTOMRIGHT", true)		
 
-			local CheckMount = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["MOUNT"])
+			local CheckMount = StdUi:Checkbox(anchor, L["TAB"][tab.name]["MOUNT"])
 			CheckMount:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckMount)
 			function CheckMount:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckMount = not TMW.db.profile.ActionDB[tab.name].CheckMount
@@ -5302,7 +5910,7 @@ function Action.ToggleMainUI()
 			end	
 			CheckMount.Identify = { Type = "Checkbox", Toggle = "CheckMount" }			
 
-			local CheckSpellIsTargeting = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["SPELLISTARGETING"])		
+			local CheckSpellIsTargeting = StdUi:Checkbox(anchor, L["TAB"][tab.name]["SPELLISTARGETING"])		
 			CheckSpellIsTargeting:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellIsTargeting)
 			function CheckSpellIsTargeting:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckSpellIsTargeting = not TMW.db.profile.ActionDB[tab.name].CheckSpellIsTargeting
@@ -5311,7 +5919,7 @@ function Action.ToggleMainUI()
 			CheckSpellIsTargeting.Identify = { Type = "Checkbox", Toggle = "CheckSpellIsTargeting" }
 			StdUi:FrameTooltip(CheckSpellIsTargeting, L["TAB"][tab.name]["SPELLISTARGETINGTOOLTIP"], nil, "BOTTOMRIGHT", true)	
 
-			local CheckLootFrame = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["LOOTFRAME"])
+			local CheckLootFrame = StdUi:Checkbox(anchor, L["TAB"][tab.name]["LOOTFRAME"])
 			CheckLootFrame:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckLootFrame)
 			function CheckLootFrame:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckLootFrame = not TMW.db.profile.ActionDB[tab.name].CheckLootFrame	
@@ -5319,7 +5927,7 @@ function Action.ToggleMainUI()
 			end	
 			CheckLootFrame.Identify = { Type = "Checkbox", Toggle = "CheckLootFrame" }	
 
-			local CheckEatingOrDrinking = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["EATORDRINK"])
+			local CheckEatingOrDrinking = StdUi:Checkbox(anchor, L["TAB"][tab.name]["EATORDRINK"])
 			CheckEatingOrDrinking:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking)
 			function CheckEatingOrDrinking:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking = not TMW.db.profile.ActionDB[tab.name].CheckEatingOrDrinking	
@@ -5332,7 +5940,7 @@ function Action.ToggleMainUI()
 			Misc:SetJustifyH('MIDDLE')
 			Misc:SetFontSize(14)
 			
-			local DisableRotationDisplay = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DISABLEROTATIONDISPLAY"])
+			local DisableRotationDisplay = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEROTATIONDISPLAY"])
 			DisableRotationDisplay:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableRotationDisplay)
 			function DisableRotationDisplay:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].DisableRotationDisplay = not TMW.db.profile.ActionDB[tab.name].DisableRotationDisplay		
@@ -5341,17 +5949,17 @@ function Action.ToggleMainUI()
 			DisableRotationDisplay.Identify = { Type = "Checkbox", Toggle = "DisableRotationDisplay" }
 			StdUi:FrameTooltip(DisableRotationDisplay, L["TAB"][tab.name]["DISABLEROTATIONDISPLAYTOOLTIP"], nil, "BOTTOMRIGHT", true)	
 			
-			local DisableBlackBackground = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DISABLEBLACKBACKGROUND"])
+			local DisableBlackBackground = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEBLACKBACKGROUND"])
 			DisableBlackBackground:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableBlackBackground)
 			function DisableBlackBackground:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].DisableBlackBackground = not TMW.db.profile.ActionDB[tab.name].DisableBlackBackground	
 				Action.Print(L["TAB"][tab.name]["DISABLEBLACKBACKGROUND"] .. ": ", TMW.db.profile.ActionDB[tab.name].DisableBlackBackground)
-				Env.BlackBackgroundSet(not TMW.db.profile.ActionDB[tab.name].DisableBlackBackground)
+				Action.BlackBackgroundSet(not TMW.db.profile.ActionDB[tab.name].DisableBlackBackground)
 			end				
 			DisableBlackBackground.Identify = { Type = "Checkbox", Toggle = "DisableBlackBackground" }
 			StdUi:FrameTooltip(DisableBlackBackground, L["TAB"][tab.name]["DISABLEBLACKBACKGROUNDTOOLTIP"], nil, "BOTTOMLEFT", true)	
 
-			local DisablePrint = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DISABLEPRINT"])
+			local DisablePrint = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEPRINT"])
 			DisablePrint:SetChecked(TMW.db.profile.ActionDB[tab.name].DisablePrint)
 			function DisablePrint:OnValueChanged(self, state, value)
 				TMW.db.profile.ActionDB[tab.name].DisablePrint = not TMW.db.profile.ActionDB[tab.name].DisablePrint		
@@ -5360,30 +5968,55 @@ function Action.ToggleMainUI()
 			DisablePrint.Identify = { Type = "Checkbox", Toggle = "DisablePrint" }
 			StdUi:FrameTooltip(DisablePrint, L["TAB"][tab.name]["DISABLEPRINTTOOLTIP"], nil, "BOTTOMRIGHT", true)
 
-			local DisableMinimap = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["DISABLEMINIMAP"])
+			local DisableMinimap = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEMINIMAP"])
 			DisableMinimap:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableMinimap)
 			function DisableMinimap:OnValueChanged(self, state, value)
 				Action.ToggleMinimap()
 			end				
 			DisableMinimap.Identify = { Type = "Checkbox", Toggle = "DisableMinimap" }
 			StdUi:FrameTooltip(DisableMinimap, L["TAB"][tab.name]["DISABLEMINIMAPTOOLTIP"], nil, "BOTTOMLEFT", true)	
+						
+			local DisableClassPortraits = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEPORTRAITS"])
+			DisableClassPortraits:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableClassPortraits)
+			function DisableClassPortraits:OnValueChanged(self, state, value)
+				TMW.db.profile.ActionDB[tab.name].DisableClassPortraits = not TMW.db.profile.ActionDB[tab.name].DisableClassPortraits		
+				Action.Print(L["TAB"][tab.name]["DISABLEPORTRAITS"] .. ": ", TMW.db.profile.ActionDB[tab.name].DisableClassPortraits)
+			end				
+			DisableClassPortraits.Identify = { Type = "Checkbox", Toggle = "DisableClassPortraits" }	
+
+			local DisableRotationModes = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLEROTATIONMODES"])
+			DisableRotationModes:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableRotationModes)
+			function DisableRotationModes:OnValueChanged(self, state, value)
+				TMW.db.profile.ActionDB[tab.name].DisableRotationModes = not TMW.db.profile.ActionDB[tab.name].DisableRotationModes		
+				Action.Print(L["TAB"][tab.name]["DISABLEROTATIONMODES"] .. ": ", TMW.db.profile.ActionDB[tab.name].DisableRotationModes)
+			end				
+			DisableRotationModes.Identify = { Type = "Checkbox", Toggle = "DisableRotationModes" }	
 			
-			local GlobalOverlay = tab.childs[spec]:AddRow()					
+			local DisableSounds = StdUi:Checkbox(anchor, L["TAB"][tab.name]["DISABLESOUNDS"])
+			DisableSounds:SetChecked(TMW.db.profile.ActionDB[tab.name].DisableSounds)
+			function DisableSounds:OnValueChanged(self, state, value)
+				TMW.db.profile.ActionDB[tab.name].DisableSounds = not TMW.db.profile.ActionDB[tab.name].DisableSounds		
+				Action.Print(L["TAB"][tab.name]["DISABLESOUNDS"] .. ": ", TMW.db.profile.ActionDB[tab.name].DisableSounds)
+			end				
+			DisableSounds.Identify = { Type = "Checkbox", Toggle = "DisableSounds" }	
+			
+			local GlobalOverlay = anchor:AddRow()					
 			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5.5 })			
 			GlobalOverlay:AddElement(PvEPvPresetbutton, { column = 0 })			
-			GlobalOverlay:AddElement(LayoutSpace(tab.childs[spec]), { column = 0.5})
-			GlobalOverlay:AddElement(tab.childs[spec].InterfaceLanguage, { column = 6 })			
-			tab.childs[spec]:AddRow({ margin = { top = 10 } }):AddElements(ReTarget, Trinkets, { column = "even" })			
-			tab.childs[spec]:AddRow():AddElements(ReFocus, Burst, { column = "even" })			
-			local SpecialRow = tab.childs[spec]:AddRow()
+			GlobalOverlay:AddElement(LayoutSpace(anchor), { column = 0.5})
+			GlobalOverlay:AddElement(anchor.InterfaceLanguage, { column = 6 })			
+			anchor:AddRow({ margin = { top = 10 } }):AddElements(ReTarget, Trinkets, { column = "even" })			
+			anchor:AddRow():AddElements(ReFocus, Burst, { column = "even" })			
+			local SpecialRow = anchor:AddRow()
 			SpecialRow:AddElement(FPS, { column = 5.8 })
-			SpecialRow:AddElement(LayoutSpace(tab.childs[spec]), { column = 0.2 })
+			SpecialRow:AddElement(LayoutSpace(anchor), { column = 0.2 })
 			SpecialRow:AddElement(HealthStone, { column = 6 })
-			tab.childs[spec]:AddRow({ margin = { top = 10 } }):AddElements(AutoTarget, LosSystem, { column = "even" })
-			tab.childs[spec]:AddRow({ margin = { top = -5 } }):AddElements(Potion, DBMFrame, { column = "even" })			
-			tab.childs[spec]:AddRow({ margin = { top = -5 } }):AddElements(HeartOfAzeroth, HE_PetsFrame, { column = "even" })
-			tab.childs[spec]:AddRow():AddElements(Racial, HE_ToggleFrame, { column = "even" })	
-			tab.childs[spec]:AddRow():AddElement(PauseChecksPanel)		
+			anchor:AddRow({ margin = { top = 10 } }):AddElements(AutoTarget, LosSystem, { column = "even" })
+			anchor:AddRow({ margin = { top = -5 } }):AddElements(Potion, DBMFrame, { column = "even" })			
+			anchor:AddRow({ margin = { top = -5 } }):AddElements(HeartOfAzeroth, HE_PetsFrame, { column = "even" })
+			anchor:AddRow():AddElements(Racial, HE_ToggleFrame, { column = "even" })	
+			anchor:AddRow():AddElements(StopCast, LayoutSpace(anchor), { column = "even" })	
+			anchor:AddRow():AddElement(PauseChecksPanel)		
 			PauseChecksPanel:AddRow({ margin = { top = 10 } }):AddElements(CheckSpellIsTargeting, CheckLootFrame, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckVehicle, CheckDeadOrGhost, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckMount, CheckDeadOrGhostTarget, { column = "even" })	
@@ -5391,8 +6024,26 @@ function Action.ToggleMainUI()
 			PauseChecksPanel:AddRow({ margin = { top = -15 } }):AddElement(Misc)		
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableRotationDisplay, DisableBlackBackground, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisablePrint, DisableMinimap, { column = "even" })			
-			PauseChecksPanel:DoLayout()				
-			tab.childs[spec]:DoLayout()				
+			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableClassPortraits, DisableRotationModes, { column = "even" })		
+			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableSounds, LayoutSpace(anchor), { column = "even" })	
+			PauseChecksPanel:DoLayout()		
+			-- Add empty space for scrollframe after all elements 
+			anchor:AddRow():AddElement(LayoutSpace(anchor), { column = 12 })	
+			--anchor:AddRow():AddElement(LayoutSpace(anchor), { column = 12, margin = { top = 10 } })	
+			-- Fix StdUi 			
+			-- Lib is not optimized for resize since resizer changes only source parent, this is deep child parent 
+			function anchor:DoLayout()
+				local l = self.layout
+				local width = tab.frame:GetWidth() - l.padding.left - l.padding.right
+
+				local y = -l.padding.top
+				for i = 1, #self.rows do
+					local r = self.rows[i]
+					y = y - r:DrawRow(width, y)
+				end
+			end			
+		
+			anchor:DoLayout()				
 		end 
 		
 		if tab.name == 2 then 	
@@ -5441,6 +6092,20 @@ function Action.ToggleMainUI()
 						obj:SetAllPoints()			
 						obj:SetJustifyH("MIDDLE")						
 						obj:SetFontSize(config.S or 14)	
+					elseif config.E == "Button" then 
+						obj = StdUi:Button(anchor, GetWidthByColumn(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.L.ANY or config.L[CL])
+						obj:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+						obj:SetScript("OnClick", function(self, button, down)
+							if not self.isDisabled then 
+								config.OnClick(self, button, down) 
+							end 
+						end)
+						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "BOTTOM", true)
+						obj.FontStringTitle = StdUi:FontString(obj, config.L.ANY or config.L[CL])
+						StdUi:GlueAbove(obj.FontStringTitle, obj)
+						if config.isDisabled then 
+							obj:Disable()
+						end 
 					elseif config.E == "Checkbox" then 						
 						obj = StdUi:Checkbox(anchor, config.L.ANY or config.L[CL])
 						obj:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])
@@ -5449,7 +6114,11 @@ function Action.ToggleMainUI()
 							if not self.isDisabled then 	
 								if button == "LeftButton" then 
 									TMW.db.profile.ActionDB[tab.name][specID][config.DB] = not TMW.db.profile.ActionDB[tab.name][specID][config.DB]
-									self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])					
+									self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID][config.DB])	
+									if strlowerCache[self.Identify.Toggle] == "aoe" then 
+										TMW:Fire("TMW_ACTION_AOE_CHANGED")
+										TMW:Fire("TMW_ACTION_AOE_MODE_CHANGED") -- Taste's callback 
+									end 
 									Action.Print((config.L.ANY or config.L[CL]) .. ": ", TMW.db.profile.ActionDB[tab.name][specID][config.DB])	
 								elseif button == "RightButton" and config.M then 
 									CraftMacro( config.L.ANY or config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )	
@@ -5494,7 +6163,7 @@ function Action.ToggleMainUI()
 								if button == "LeftButton" then 
 									self:ToggleOptions()
 								elseif button == "RightButton" and config.M then 
-									CraftMacro( config.L.ANY or config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or "nil") .. [[)]]), 1 )								
+									CraftMacro( config.L.ANY or config.L[CL], config.M.Custom or ([[/run Action.SetToggle({]] .. (config.M.TabN or tab.name) .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. (config.M.Value or (not config.MULT and obj:GetValue() and ([["]] .. obj:GetValue() .. [["]])) or "nil") .. [[)]]), 1 )								
 								end
 							end
 						end)
@@ -5514,7 +6183,7 @@ function Action.ToggleMainUI()
 						if config.M then 
 							obj:SetScript("OnMouseUp", function(self, button, down)
 									if button == "RightButton" then 
-										CraftMacro( config.L.ANY or config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[": "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
+										CraftMacro( config.L.ANY or config.L[CL], [[/run Action.SetToggle({]] .. tab.name .. [[, "]] .. config.DB .. [[", "]] .. (config.M.Print or config.L.ANY or config.L[CL]) .. [[: "}, ]] .. TMW.db.profile.ActionDB[tab.name][specID][config.DB] .. [[)]], 1 )	
 									end					
 							end)
 						end 
@@ -5585,7 +6254,10 @@ function Action.ToggleMainUI()
 			UI_Title:SetText(L["TAB"][tab.name]["HEADTITLE"])
 			
 			StdUi:EasyLayout(tab.childs[spec], { padding = { top = 50 } })	
-			local LuaButton = StdUi:Button(tab.childs[spec], 50, Action.Data.theme.dd.height, "LUA")
+			local QLuaButton = StdUi:Button(tab.childs[spec], 50, Action.Data.theme.dd.height - 3, "QLUA")
+			QLuaButton.FontStringLUA = StdUi:FontString(QLuaButton, Action.Data.theme.off)
+			local QLuaEditor = CreateLuaEditor(tab.childs[spec], "QUEUE " .. L["TAB"]["LUAWINDOW"], Action.MainUI.default_w, Action.MainUI.default_h, L["TAB"]["LUATOOLTIP"])
+			local LuaButton = StdUi:Button(tab.childs[spec], 50, Action.Data.theme.dd.height - 3, "LUA")
 			LuaButton.FontStringLUA = StdUi:FontString(LuaButton, Action.Data.theme.off)
 			local LuaEditor = CreateLuaEditor(tab.childs[spec], L["TAB"]["LUAWINDOW"], Action.MainUI.default_w, Action.MainUI.default_h, L["TAB"]["LUATOOLTIP"])
 			local Key = StdUi:SimpleEditBox(tab.childs[spec], 150, Action.Data.theme.dd.height, "")							
@@ -5604,17 +6276,17 @@ function Action.ToggleMainUI()
 							local isShown = true 
 							-- AutoHidden unavailable 
 							if ToggleAutoHidden then 								
-								if v.Type == "Spell" or v.Type == "Racial" or v.Type == "HeartOfAzeroth" then 															
-									if not Env.SpellExists(v:Info()) then 
+								if v.Type == "Spell" then 															
+									if not v:IsExists() then 
 										isShown = false 
 									end 
 								else 
-									if v.Type ~= "Trinket" then 
+									if v.Type == "Trinket" then 
 										if not v:GetEquipped() then 
 											isShown = false 
 										end 
 									else 
-										if v:GetCount() <= 0 then 
+										if v:GetCount() <= 0 and not v:GetEquipped() then 
 											isShown = false 
 										end 
 									end								
@@ -5643,6 +6315,15 @@ function Action.ToggleMainUI()
 					else 
 						LuaButton.FontStringLUA:SetText(Action.Data.theme.off)
 					end 
+					
+					local QluaCode = rowData:GetQLUA() or ""
+					QLuaEditor.EditBox:SetText(QluaCode)
+					if QluaCode and QluaCode ~= "" then 
+						QLuaButton.FontStringLUA:SetText(Action.Data.theme.on)
+					else 
+						QLuaButton.FontStringLUA:SetText(Action.Data.theme.off)
+					end 					
+					
 					Key:SetText(rowData.TableKeyName)
 					Key:ClearFocus()
 				end 				
@@ -5764,7 +6445,7 @@ function Action.ToggleMainUI()
 							self:SortData(self.SORTBY)
 						end 
 					elseif event == "UI_INFO_MESSAGE" then 
-						if Env.UI_INFO_MESSAGE_IS_WARMODE(...) then 
+						if Action.UI_INFO_MESSAGE_IS_WARMODE(...) then 
 							self:SetData(ScrollTableActionsData())	
 							self:SortData(self.SORTBY)
 						end 
@@ -5821,14 +6502,11 @@ function Action.ToggleMainUI()
 			
 			local CheckSpellLevel = StdUi:Checkbox(tab.childs[spec], L["TAB"][tab.name]["CHECKSPELLLVL"])		
 			CheckSpellLevel:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellLevel)
-			CheckSpellLevel:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+			CheckSpellLevel:RegisterForClicks("LeftButtonUp")
 			CheckSpellLevel:SetScript("OnClick", function(self, button, down)
 				if not self.isDisabled then 
-					if button == "LeftButton" then 
-						Action.SpellLevelInit()
-						self:SetChecked(TMW.db.profile.ActionDB[tab.name].CheckSpellLevel)							
-					elseif button == "RightButton" then 
-						CraftMacro(L["TAB"][tab.name]["CHECKSPELLLVLMACRONAME"], [[/run Action.SpellLevelInit()]])	
+					if button == "LeftButton" then 	
+						SpellLevel:Initialize()
 					end 
 				end 
 			end)
@@ -5879,9 +6557,9 @@ function Action.ToggleMainUI()
 						--Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"])
 					else
 						if button == "LeftButton" then 	
-							Action.MacroQueue(data.TableKeyName, { Priority = 1})							
+							Action.MacroQueue(data.TableKeyName, { Priority = 1 })							
 						elseif button == "RightButton" then 						
-							CraftMacro("Queue: " .. data.TableKeyName, [[#showtip ]] .. data:Info() .. "\n" .. [[/run Action.MacroQueue("]] .. data.TableKeyName .. [[", { Priority = 1})]], 1, true, true)	
+							CraftMacro("Queue: " .. data.TableKeyName, [[#showtip ]] .. data:Info() .. "\n" .. [[/run Action.MacroQueue("]] .. data.TableKeyName .. [[", { Priority = 1 })]], 1, true, true)	
 						end
 					end 
 				end 
@@ -5895,7 +6573,13 @@ function Action.ToggleMainUI()
 			tab.childs[spec]:AddRow({ margin = { top = -10, left = -15, right = -15 } }):AddElements(SetBlocker, SetQueue, { column = "even" })
 			tab.childs[spec]:DoLayout()
 			
-			LuaButton:SetScript("OnClick", function()						
+			-- Action LUA 
+			LuaButton:SetScript("OnClick", function()		
+				if QLuaEditor:IsShown() then 
+					QLuaEditor.closeBtn:Click()
+					return 
+				end 
+				
 				if not LuaEditor:IsShown() then 
 					local spec = specID .. CL
 					local index = tab.childs[spec].ScrollTable:GetSelection()				
@@ -5909,7 +6593,7 @@ function Action.ToggleMainUI()
 				end 
 			end)
 			StdUi:GlueAbove(LuaButton, SetQueue, 0, 0, "RIGHT")
-			StdUi:GlueLeft(LuaButton.FontStringLUA, LuaButton, -5, 0)
+			StdUi:GlueLeft(LuaButton.FontStringLUA, LuaButton, 0, 0)
 
 			LuaEditor:HookScript("OnHide", function(self)
 				local spec = specID .. CL
@@ -5938,11 +6622,65 @@ function Action.ToggleMainUI()
 				end 
 			end)
 			
-			hooksecurefunc(tab.childs[spec].ScrollTable, "ClearSelection", function()
+			-- Queue LUA
+			QLuaButton:SetScript("OnClick", function()		
+				if LuaEditor:IsShown() then 
+					LuaEditor.closeBtn:Click()
+					return 
+				end 
+				
+				if not QLuaEditor:IsShown() then 
+					local spec = specID .. CL
+					local index = tab.childs[spec].ScrollTable:GetSelection()				
+					if not index then 
+						Action.Print(L["TAB"][tab.name]["SELECTIONERROR"]) 
+					else 				
+						QLuaEditor:Show()
+					end 
+				else 
+					QLuaEditor.closeBtn:Click()
+				end 
+			end)
+			StdUi:GlueAbove(QLuaButton, LuaButton, 0, 0)
+			StdUi:GlueLeft(QLuaButton.FontStringLUA, QLuaButton, 0, 0)
+
+			QLuaEditor:HookScript("OnHide", function(self)
+				local spec = specID .. CL
+				local index = tab.childs[spec].ScrollTable:GetSelection()
+				local data = index and tab.childs[spec].ScrollTable:GetRow(index) or nil
+				if not self.EditBox.LuaErrors and data then 
+					local luaCode = self.EditBox:GetText()
+					local Identify = GetTableKeyIdentify(data)
+					if luaCode == "" then 
+						luaCode = nil 
+					end 
+					local isChanged = data:GetQLUA() ~= luaCode
+					
+					data:SetQLUA(luaCode)
+					if data:GetQLUA() then 
+						QLuaButton.FontStringLUA:SetText(Action.Data.theme.on)
+						if isChanged then 
+							Action.Print("Queue " .. L["TAB"][tab.name]["LUAAPPLIED"] .. data:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
+						end 
+					else 
+						QLuaButton.FontStringLUA:SetText(Action.Data.theme.off)	
+						if isChanged then 
+							Action.Print("Queue " .. L["TAB"][tab.name]["LUAREMOVED"] .. data:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
+						end 
+					end 
+				end 
+			end)			
+			
+			hooksecurefunc(tab.childs[spec].ScrollTable, "ClearSelection", function()				
 				LuaEditor.EditBox:SetText("")
 				if LuaEditor:IsShown() then 
 					LuaEditor.closeBtn:Click()
 				end 
+				
+				QLuaEditor.EditBox:SetText("")
+				if QLuaEditor:IsShown() then 
+					QLuaEditor.closeBtn:Click()
+				end 				
 			end)
 		end 
 		
@@ -5980,7 +6718,7 @@ function Action.ToggleMainUI()
 				{ text = "[Main]PvP: @target / @mouseover / @targettarget", value = "PvPTargetMouseover" },				
 				{ text = "[Heal] @arena1-3", value = "Heal" },				
 				{ text = "[PvP] @arena1-3", value = "PvP" },
-			}, (Env.InPvP() and "PvP" or "PvE") .. "TargetMouseover")	
+			}, (Action.IsInPvP and "PvP" or "PvE") .. "TargetMouseover")	
 			local function OnClickCell(table, cellFrame, rowFrame, rowData, columnData, rowIndex, button)				
 				if button == "LeftButton" then		
 					LuaEditor.EditBox:SetText(rowData.LUA or "")
@@ -5990,10 +6728,16 @@ function Action.ToggleMainUI()
 						LuaButton.FontStringLUA:SetText(Action.Data.theme.off)
 					end 
 					InputBox:SetNumber(rowData.ID)
-					InputBox:ClearFocus()
-					useKick:SetChecked(rowData.useKick)
-					useCC:SetChecked(rowData.useCC)
-					useRacial:SetChecked(rowData.useRacial)
+					InputBox.val = rowData.ID 
+					InputBox:ClearFocus()					
+					useKick:SetChecked(		(columnData.index == "useKickIndex" 	and not rowData.useKick) 	or (columnData.index ~= "useKickIndex" 		and rowData.useKick)	)
+					useCC:SetChecked(		(columnData.index == "useCCIndex" 		and not rowData.useCC) 		or (columnData.index ~= "useCCIndex" 		and rowData.useCC)		)
+					useRacial:SetChecked(	(columnData.index == "useRacialIndex" 	and not rowData.useRacial) 	or (columnData.index ~= "useRacialIndex" 	and rowData.useRacial)	)
+					if columnData.index == "useKickIndex" or columnData.index == "useCCIndex" or columnData.index == "useRacialIndex" then 
+						Action.Print(Action.GetSpellLink(rowData.ID) .. " " .. columnData.name .. ": ", not rowData[columnData.index:gsub("Index", "")])
+						Add:Click()
+						tab.childs[spec].RefferenceScrollTable:ClearSelection()
+					end 
 				end 				
 			end 
 			local ScrollTable = StdUi:ScrollTable(tab.childs[spec], {
@@ -6101,7 +6845,9 @@ function Action.ToggleMainUI()
 			ScrollTable:RegisterEvents(nil, headerEvents)
 			ScrollTable.SORTBY = 2
 			ScrollTable.defaultrows = { numberOfRows = ScrollTable.numberOfRows, rowHeight = ScrollTable.rowHeight }
-			ScrollTable:EnableSelection(true)				          
+			ScrollTable:EnableSelection(true)	
+			-- For refference
+			tab.childs[spec].RefferenceScrollTable = ScrollTable
 			
 			local function Reset()
 				InputBox:ClearFocus()
@@ -6525,8 +7271,9 @@ function Action.ToggleMainUI()
 			local Mode = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6, 15), Action.Data.theme.dd.height, {				
 				{ text = "PvE", value = "PvE" },				
 				{ text = "PvP", value = "PvP" },
-			}, Env.InPvP() and "PvP" or "PvE")	
-			local Category = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6, 15), Action.Data.theme.dd.height, {				
+			}, Action.IsInPvP and "PvP" or "PvE")	
+			local Category = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6, 15), Action.Data.theme.dd.height, {		
+				{ text = "BlackList", value = "BlackList" },
 				{ text = L["TAB"][tab.name]["POISON"], value = "Poison" },				
 				{ text = L["TAB"][tab.name]["DISEASE"], value = "Disease" },
 				{ text = L["TAB"][tab.name]["CURSE"], value = "Curse" },				
@@ -6535,7 +7282,7 @@ function Action.ToggleMainUI()
 				{ text = L["TAB"][tab.name]["PURGEFRIENDLY"], value = "PurgeFriendly" },
 				{ text = L["TAB"][tab.name]["PURGEHIGH"], value = "PurgeHigh" },				
 				{ text = L["TAB"][tab.name]["PURGELOW"], value = "PurgeLow" },
-				{ text = L["TAB"][tab.name]["ENRAGE"], value = "Enrage" },
+				{ text = L["TAB"][tab.name]["ENRAGE"], value = "Enrage" },				
 			}, "Magic")	
 			local ConfigPanel = StdUi:PanelWithTitle(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 12, 30), 140, L["TAB"][tab.name]["CONFIGPANEL"])	
 			ConfigPanel.titlePanel.label:SetFontSize(14)
@@ -6750,7 +7497,7 @@ function Action.ToggleMainUI()
 			end)
 			UseDispel.Identify = { Type = "Checkbox", Toggle = "UseDispel" }
 			StdUi:FrameTooltip(UseDispel, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)	
-			if Action.Data.Auras.DisableCheckboxes[specID].UseDispel then 
+			if not Action.Data.Auras.DisableCheckboxes[specID] or Action.Data.Auras.DisableCheckboxes[specID].UseDispel then 
 				UseDispel:Disable()
 			end 
 	
@@ -6770,7 +7517,7 @@ function Action.ToggleMainUI()
 			end)
 			UsePurge.Identify = { Type = "Checkbox", Toggle = "UsePurge" }
 			StdUi:FrameTooltip(UsePurge, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOP", true)	
-			if Action.Data.Auras.DisableCheckboxes[specID].UsePurge then 
+			if not Action.Data.Auras.DisableCheckboxes[specID] or Action.Data.Auras.DisableCheckboxes[specID].UsePurge then 
 				UsePurge:Disable()
 			end 			
 
@@ -6790,7 +7537,7 @@ function Action.ToggleMainUI()
 			end)
 			UseExpelEnrage.Identify = { Type = "Checkbox", Toggle = "UseExpelEnrage" }	
 			StdUi:FrameTooltip(UseExpelEnrage, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPLEFT", true)	
-			if Action.Data.Auras.DisableCheckboxes[specID].UseExpelEnrage then 
+			if not Action.Data.Auras.DisableCheckboxes[specID] or Action.Data.Auras.DisableCheckboxes[specID].UseExpelEnrage then 
 				UseExpelEnrage:Disable()
 			end 
 			
@@ -6932,6 +7679,12 @@ function Action.ToggleMainUI()
 					if CodeLua == "" then 
 						CodeLua = nil 
 					end 
+					-- Prevent overwrite by next time loading if user applied own changes 
+					local LUAVER 
+					if TMW.db.global.ActionDB[tab.name][M][C][SpellID] then 
+						LUAVER = TMW.db.global.ActionDB[tab.name][M][C][SpellID].LUAVER 
+					end 
+									
 					TMW.db.global.ActionDB[tab.name][M][C][SpellID] = { 
 						ID = SpellID, 
 						Name = Name, 
@@ -6943,6 +7696,7 @@ function Action.ToggleMainUI()
 						canStealOrPurge = canStealOrPurge:GetChecked(),
 						onlyBear = onlyBear:GetChecked(),
 						LUA = CodeLua,
+						LUAVER = LUAVER,
 					}
 					ScrollTableUpdate()						
 				end 
@@ -7029,7 +7783,7 @@ function Action.ToggleMainUI()
 			local Mode = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6, 15), Action.Data.theme.dd.height, {				
 				{ text = "PvE", value = "PvE" },				
 				{ text = "PvP", value = "PvP" },
-			}, Env.InPvP() and "PvP" or "PvE")	
+			}, Action.IsInPvP and "PvP" or "PvE")	
 			local Category = StdUi:Dropdown(tab.childs[spec], GetWidthByColumn(tab.childs[spec], 6, 15), Action.Data.theme.dd.height, {				
 				{ text = "UnitName", value = "UnitName" },				
 				{ text = "GameToolTip", value = "GameToolTip" },
@@ -7130,6 +7884,8 @@ function Action.ToggleMainUI()
 			end 
 			local function ScrollTableUpdate()
 				InputBox:ClearFocus()
+				InputBox:SetText("")
+				InputBox.val = ""
 				ScrollTable:ClearSelection()			
 				ScrollTable:SetData(ScrollTableData())					
 				ScrollTable:SortData(ScrollTable.SORTBY)						
@@ -7247,7 +8003,7 @@ function Action.ToggleMainUI()
 				local Name = InputBox:GetText()
 				if Name == nil or Name == "" then 
 					Action.Print(L["TAB"][tab.name]["INPUTTITLE"]) 
-				else
+				else					
 					Name = Name:lower()
 					local M = Mode:GetValue()
 					local C = Category:GetValue()					
@@ -7260,30 +8016,51 @@ function Action.ToggleMainUI()
 						for _, profile in pairs(TMW.db.profiles) do 
 							if profile.ActionDB and profile.ActionDB[tab.name] then 
 								for SPEC_ID in pairs(profile.ActionDB[tab.name]) do
+									-- Prevent overwrite by next time loading if user applied own changes 
+									local LUAVER 
+									if profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name] then 
+										LUAVER = profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name].LUAVER 
+									end 
+									
 									profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name] = { 
 										Enabled = true,
 										Button = Button:GetValue(),
 										isTotem = isTotem:GetChecked(),
 										LUA = CodeLua,
+										LUAVER = LUAVER,
 									}
 								end 
 							end 
 						end 					
 					elseif HowTo == "ALLSPECS" then 
 						for SPEC_ID in pairs(TMW.db.profile.ActionDB[tab.name]) do 
+							-- Prevent overwrite by next time loading if user applied own changes 
+							local LUAVER 
+							if TMW.db.profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name] then 
+								LUAVER = TMW.db.profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name].LUAVER 
+							end 
+									
 							TMW.db.profile.ActionDB[tab.name][SPEC_ID][M][C][GameLocale][Name] = { 
 								Enabled = true,
 								Button = Button:GetValue(),
 								isTotem = isTotem:GetChecked(),
 								LUA = CodeLua,
+								LUAVER = LUAVER,
 							}
 						end 
 					else 
+						-- Prevent overwrite by next time loading if user applied own changes 
+						local LUAVER 
+						if TMW.db.profile.ActionDB[tab.name][specID][M][C][GameLocale][Name] then 
+							LUAVER = TMW.db.profile.ActionDB[tab.name][specID][M][C][GameLocale][Name].LUAVER 
+						end 
+							
 						TMW.db.profile.ActionDB[tab.name][specID][M][C][GameLocale][Name] = { 
 							Enabled = true,
 							Button = Button:GetValue(),
 							isTotem = isTotem:GetChecked(),
 							LUA = CodeLua,
+							LUAVER = LUAVER,
 						}
 					end 
 					ScrollTableUpdate()						
@@ -7684,12 +8461,19 @@ function Action.ToggleMainUI()
 				if CodeLua == "" then 
 					CodeLua = nil 
 				end 
+				
+				-- Prevent overwrite by next time loading if user applied own changes 
+				local LUAVER 
+				if TMW.db.profile.ActionDB[tab.name][specID].msgList[Name] then 
+					LUAVER = TMW.db.profile.ActionDB[tab.name][specID].msgList[Name].LUAVER
+				end 
 
 				TMW.db.profile.ActionDB[tab.name][specID].msgList[Name] = { 
 					Enabled = true,
 					Key = TableKey,
 					Source = SourceName,
 					LUA = CodeLua,
+					LUAVER = LUAVER,
 				}
  
 				ScrollTableUpdate()										 
@@ -7762,7 +8546,486 @@ function Action.ToggleMainUI()
 	end)		
 end
 
+-------------------------------------------------------------------------------
+-- Debug  
+-------------------------------------------------------------------------------
+function Action.Print(text, bool, ignore)
+	if not ignore and TMW.db and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1].DisablePrint then 
+		return 
+	end 
+    local hex = "00ccff"
+    local prefix = string.format("|cff%s%s|r", hex:upper(), "Action:")	
+	local fulltext = text .. (bool ~= nil and tostring(bool) or "")
+    DEFAULT_CHAT_FRAME:AddMessage(string.join(" ", prefix, fulltext))
+end
+
+function Action.PrintHelpToggle()
+	Action.Print("|cff00cc66Shift+LeftClick|r " .. L["SLASH"]["TOTOGGLEBURST"])
+	Action.Print("|cff00cc66Ctrl+LeftClick|r " .. L["SLASH"]["TOTOGGLEMODE"])
+	Action.Print("|cff00cc66Alt+LeftClick|r " .. L["SLASH"]["TOTOGGLEAOE"])
+end 
+
+-------------------------------------------------------------------------------
+-- Initialization
+-------------------------------------------------------------------------------
+local HealerSpecs = {
+	[ACTION_CONST_DRUID_RESTORATION]	= true, 
+	[ACTION_CONST_MONK_MISTWEAVER] 		= true, 
+	[ACTION_CONST_PALADIN_HOLY]  		= true, 
+	[ACTION_CONST_PRIEST_DISCIPLINE] 	= true, 
+	[ACTION_CONST_PRIEST_HOLY] 			= true, 
+	[ACTION_CONST_SHAMAN_RESTORATION] 	= true, 
+}
+local RangerSpecs = {
+	--[ACTION_CONST_PALADIN_HOLY] 		= true,
+	[ACTION_CONST_HUNTER_BEASTMASTERY]	= true,
+	[ACTION_CONST_HUNTER_MARKSMANSHIP]	= true,
+	--[ACTION_CONST_PRIEST_DISCIPLINE]	= true,
+	--[ACTION_CONST_PRIEST_HOLY]		= true,
+	[ACTION_CONST_PRIEST_SHADOW]		= true,
+	[ACTION_CONST_SHAMAN_ELEMENTAL]		= true,
+	--[ACTION_CONST_SHAMAN_RESTORATION]	= true,
+	[ACTION_CONST_MAGE_ARCANE]			= true,
+	[ACTION_CONST_MAGE_FIRE]			= true,
+	[ACTION_CONST_MAGE_FROST]			= true,
+	[ACTION_CONST_WARLOCK_AFFLICTION]	= true,
+	[ACTION_CONST_WARLOCK_DEMONOLOGY]	= true,	
+	[ACTION_CONST_WARLOCK_DESTRUCTION]	= true,	
+	--[ACTION_CONST_MONK_MISTWEAVER]	= true,	
+	[ACTION_CONST_DRUID_BALANCE]		= true,	
+	--[ACTION_CONST_DRUID_RESTORATION]	= true,	
+}
+function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
+	Action.PlayerSpec, Action.PlayerSpecName = GetSpecializationInfo(GetSpecialization()) 
+    Action.IamHealer = HealerSpecs[Action.PlayerSpec]
+	Action.IamRanger = Action.IamHealer or RangerSpecs[Action.PlayerSpec]
+	Action.IamMelee  = not Action.IamRanger
+	TMW:Fire("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED")	-- For MultiUnits to initialize CLEU and other purposes to be sure what variables was updated properly 
+	
+	TMW:Fire("TMW_ACTION_DEPRECATED")						-- TODO: Remove 
+	
+	if TMW.time == self.PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") or not Action.PlayerSpec then
+		return
+	end
+	
+	if Action.IsInitialized then 
+		if Action.MainUI then 
+			if Action.MainUI:IsShown() then 
+				Action.ToggleMainUI()
+				Action.ToggleMainUI()
+			end 
+			-- Refresh title of spec 
+			tabFrame.tabs[2].title = Action.PlayerSpecName
+			tabFrame:DrawButtons()	
+		end 
+		-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
+		GlobalsRemap()	
+		Re:Initialize()
+		LineOfSight:Initialize()
+		SpellLevel:Initialize(true)
+		
+		-- Unregister from old interface MSG events and use new ones 
+		Action.ToggleMSG(true)
+	end 
+	
+	self.PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = TMW.time 
+end
+Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("PLAYER_LOGIN", 				"PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("PLAYER_ENTERING_WORLD", 		"PLAYER_SPECIALIZATION_CHANGED")
+Action:RegisterEvent("UPDATE_INSTANCE_INFO", 		"PLAYER_SPECIALIZATION_CHANGED")
+
+local function OnInitialize()	
+	-- This function calls only if TMW finished EVERYTHING load
+	-- This will initialize ActionDB for current profile by Action.Data.ProfileUI > Action.Data.ProfileDB (which in profile snippet)
+	local profile = TMW.db:GetCurrentProfile()
+	
+	Action.IsInitialized = nil	
+	Action.IsGGLprofile = profile:match("GGL") or false  	-- Don't remove it because this is validance for HealingEngine   
+	TMW:Fire("TMW_ACTION_DEPRECATED")						-- TODO: Remove 
+	
+	----------------------------------
+	-- TMW CORE SNIPPETS FIX
+	----------------------------------	
+	-- Finally owner of TMW fixed it in 8.6.6
+	if TELLMEWHEN_VERSIONNUMBER < 86603 and not Action.IsInitializedSnippetsFix then 
+		-- TMW owner has trouble with ICON and GROUP PRE SETUP, he trying :setup() frames before lua snippets would be loaded 
+		-- Yeah he has callback ON PROFILE to run it but it's POST handler which triggers AFTER :setup() and it cause errors for nil objects (coz they are in snippets :D which couldn't be loaded before frames)
+		local function OnProfileFix()
+			if not TMW.Initialized or not TMW.InitializedDatabase then
+				return
+			end		
+			
+			local snippets = {}
+			for k, v in TMW:InNLengthTable(TMW.db.profile.CodeSnippets) do
+				snippets[#snippets + 1] = v
+			end 
+			TMW:SortOrderedTables(snippets)
+			for _, snippet in ipairs(snippets) do
+				if snippet.Enabled and not TMW.SNIPPETS:HasRanSnippet(snippet) then
+					TMW.SNIPPETS:RunSnippet(snippet)						
+				end										
+			end						      
+		end	
+		TMW:RegisterCallback("TMW_GLOBAL_UPDATE", OnProfileFix, "TMW_SNIPPETS_FIX")	
+		Action.IsInitializedSnippetsFix = true 
+	end 	
+	
+	----------------------------------
+	-- Register Localization
+	----------------------------------	
+	Action.GetLocalization()
+	
+	----------------------------------
+	-- Profile Manipulation
+	----------------------------------	
+	-- Load default profile if current profile is generated as default
+	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
+	if profile == defaultprofile then 
+		local AllProfiles = TMW.db:GetProfiles()
+		if AllProfiles then 			
+			for i = 1, #AllProfiles do 
+				if AllProfiles[i] == Action.Data.DefaultProfile[Action.PlayerClass] then 
+					if TMW.Locked then 
+						TMW:LockToggle()
+					end 
+					TMW.db:SetProfile(Action.Data.DefaultProfile[Action.PlayerClass])
+					return
+				end
+			end 
+		end
+	end 		
+		
+	-- Check if profile support Action
+	if not Action.Data.ProfileEnabled[profile] then 
+		LineOfSight:Initialize(true)	-- TODO: Remove (old profiles)
+		if TMW.db.profile.ActionDB then 
+			TMW.db.profile.ActionDB = nil
+			Action.Print("|cff00cc66" .. profile .. " - profile.ActionDB|r " .. L["RESETED"]:lower())
+		end 			
+		if Action.Minimap and LibDBIcon then 
+			LibDBIcon:Hide("ActionUI")
+		end 
+		Queue:OnEventToReset()
+		wipe(Action.Data.ProfileUI)
+		wipe(Action.Data.ProfileDB)		
+		return 
+	end 	 
+	
+	-- Action.Data.ProfileUI > Action.Data.ProfileDB creates template to merge in Factory after
+	if next(Action.Data.ProfileUI) or #Action.Data.ProfileUI > 0 then 
+		wipe(Action.Data.ProfileDB)
+		-- Prevent developer's by mistake sensitive wrong assigns 
+		local ReMap = {
+			["mouseover"] = "mouseover",
+			["targettarget"] = "targettarget", 
+			["aoe"] = "AoE",
+		}
+		for i, i_value in pairs(Action.Data.ProfileUI) do
+			if ( i == 2 or i == 7 ) and type(i) == "number" and type(i_value) == "table" then 	-- get tab 
+				for specID in pairs(i_value) do 												-- get spec in tab 	
+					if not Action.Data.ProfileDB[i] then 
+						Action.Data.ProfileDB[i] = {}
+					end 
+					if not Action.Data.ProfileDB[i][specID] then 
+						Action.Data.ProfileDB[i][specID] = {}
+					end 				
+					if i == 2 then 																-- tab [2] for toggles 					
+						for row = 1, #Action.Data.ProfileUI[i][specID] do 						-- get row for spec in tab 						
+							for element = 1, #Action.Data.ProfileUI[i][specID][row] do 			-- get element in row for spec in tab 
+								local DB = Action.Data.ProfileUI[i][specID][row][element].DB 
+								if ReMap[strlowerCache[DB]] then 
+									Action.Data.ProfileUI[i][specID][row][element].DB = ReMap[strlowerCache[DB]]
+									DB = ReMap[strlowerCache[DB]]
+								end 
+								
+								local DBV = Action.Data.ProfileUI[i][specID][row][element].DBV
+								if DB ~= nil and DBV ~= nil then 								-- if default value for DB inside UI 
+									Action.Data.ProfileDB[i][specID][DB] = DBV
+								end 
+							end						
+						end
+					elseif i == 7 then 															-- tab [7] for MSG 	
+						if not Action.Data.ProfileDB[i][specID].msgList then 
+							Action.Data.ProfileDB[i][specID].msgList = {}
+						end 	
+						
+						for Name, Val in pairs(i_value[specID]) do 
+							Action.Data.ProfileDB[i][specID].msgList[Name] = Val
+						end 
+					end
+				end 
+			end 
+		end 
+	end 	
+		
+	-- profile	
+	if not TMW.db.profile.ActionDB then 
+		Action.Print("|cff00cc66ActionDB.profile|r " .. L["CREATED"])		
+	end	
+	TMW.db.profile.ActionDB = tCompare(tMerge(Factory, Action.Data.ProfileDB, true), TMW.db.profile.ActionDB) 
+		
+	-- global
+	if not TMW.db.global.ActionDB then 		
+		Action.Print("|cff00cc66ActionDB.global|r " .. L["CREATED"])
+	end
+	TMW.db.global.ActionDB = tCompare(GlobalFactory, TMW.db.global.ActionDB)	
+	
+	----------------------------------
+	-- All remaps and additional sort DB 
+	----------------------------------		
+	-- Note: These functions must be call whenever relative settings in UI has been changed in their certain places!
+	GlobalsRemap() 			 -- by profile to _G.
+	DispelPurgeEnrageRemap() -- [5] by global to profile
+	
+	----------------------------------	
+	-- Welcome Notification
+	----------------------------------	
+    Action.Print(L["SLASH"]["LIST"])
+	Action.Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])
+	Action.Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])		
+	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", OnInitialize, "ACTION_TMW_SAFESETUP_COMPLETE")
+
+	----------------------------------	
+	-- Initialization
+	----------------------------------	
+	-- Initialization ReTarget ReFocus 
+	Re:Initialize()
+	
+	-- Initialization LOS System
+	LineOfSight:Initialize()
+	
+	-- Initialization SpellLevel if it was selected in db or player level lower than MAX on this expansion	
+	SpellLevel:Initialize(true)
+	
+	-- Initialization Cursor hooks 
+	Action.CursorInit()
+	
+	-- Unregister from old interface MSG events and use new ones 
+	Action.ToggleMSG(true)
+
+	-- Initialization Cached functions 
+	if not Action.IsInitializedCachedFunctions then 
+		SmartInterrupt 						= Action.MakeFunctionCachedStatic(SmartInterrupt)		
+		strElemBuilder						= Action.strElemBuilder
+		Action.IsInitializedCachedFunctions = true 
+	end 
+	
+	-- Minimap 
+	if not Action.Minimap and LibDBIcon then 
+		local ldbObject = {
+			type = "launcher",
+			icon = "133015", 
+			label = "ActionUI",
+			OnClick = function(self, button)
+				Action.ToggleMainUI()
+			end,
+			OnTooltipShow = function(tooltip)
+				tooltip:AddLine("ActionUI")
+			end,
+		}
+		LibDBIcon:Register("ActionUI", ldbObject, TMW.db.global.ActionDB.minimap)
+		LibDBIcon:Refresh("ActionUI", TMW.db.global.ActionDB.minimap)
+		Action.Minimap = true 
+		Action.ToggleMinimap()
+	else
+		Action.ToggleMinimap()
+	end 
+		
+	-- Modified update engine of TMW core with additional FPS Optimization	
+	if not Action.IsInitializedModifiedTMW and TMW then 
+		local LastUpdate = 0
+		local updateInProgress, shouldSafeUpdate
+		local start 
+		-- Assume in combat unless we find out otherwise.
+		local inCombatLockdown = 1
+
+		-- Limit in milliseconds for each OnUpdate cycle.
+		local CoroutineLimit = 50
+		
+		TMW:RegisterEvent("UNIT_FLAGS", function(event, unit)
+				if unit == "player" then
+					inCombatLockdown = InCombatLockdown()
+				end
+		end)	
+		
+		local function checkYield()
+				if inCombatLockdown and debugprofilestop() - start > CoroutineLimit then
+					TMW:Debug("OnUpdate yielded early at %s", TMW.time)
+
+					coroutine.yield()
+				end
+		end	
+		
+		-- This is the main update engine of TMW.
+		local function OnUpdate()
+			while true do
+				TMW:UpdateGlobals()
+
+				if updateInProgress then
+					-- If the previous update cycle didn't finish (updateInProgress is still true)
+					-- then we should enable safecalling icon updates in order to prevent catastrophic failure of the whole addon
+					-- if only one icon or icon type is malfunctioning.
+					if not shouldSafeUpdate then
+						TMW:Debug("Update error detected. Switching to safe update mode!")
+						shouldSafeUpdate = true
+					end
+				end
+				updateInProgress = true
+				
+				TMW:Fire("TMW_ONUPDATE_PRE", TMW.time, TMW.Locked)
+				-- FPS Optimization
+				local FPS = Action.GetToggle(1, "FPS")
+				if FPS < 0 then 
+					local Framerate = GetFramerate() or 0
+					if Framerate > 0 and Framerate < 100 then
+						FPS = (100 - Framerate) / 900
+						if FPS < 0.04 then 
+							FPS = 0.04
+						end 
+					else
+						FPS = 0.03
+					end					
+				end 				
+				TMW.UPD_INTV = FPS + 0.001					
+			
+				if LastUpdate <= TMW.time - TMW.UPD_INTV then
+					LastUpdate = TMW.time
+					if TMW.profilingEnabled and TellMeWhen_CpuProfileDialog:IsShown() then 
+						TMW:CpuProfileReset()
+					end 
+
+					TMW:Fire("TMW_ONUPDATE_TIMECONSTRAINED_PRE", TMW.time, TMW.Locked)
+					
+					if TMW.Locked then
+						for i = 1, #TMW.GroupsToUpdate do
+							-- GroupsToUpdate only contains groups with conditions
+							local group = TMW.GroupsToUpdate[i]
+							local ConditionObject = group.ConditionObject
+							if ConditionObject and (ConditionObject.UpdateNeeded or ConditionObject.NextUpdateTime < TMW.time) then
+								ConditionObject:Check()
+
+								if inCombatLockdown then checkYield() end
+							end
+						end
+				
+						if shouldSafeUpdate then
+							for i = 1, #TMW.IconsToUpdate do
+								local icon = TMW.IconsToUpdate[i]
+								TMW.safecall(icon.Update, icon)
+								if inCombatLockdown then checkYield() end
+							end
+						else
+							for i = 1, #TMW.IconsToUpdate do
+								--local icon = IconsToUpdate[i]
+								TMW.IconsToUpdate[i]:Update()
+
+								-- inCombatLockdown check here to avoid a function call.
+								if inCombatLockdown then checkYield() end
+							end
+						end
+					end
+
+					TMW:Fire("TMW_ONUPDATE_TIMECONSTRAINED_POST", TMW.time, TMW.Locked)
+				end
+
+				updateInProgress = nil
+				
+				if inCombatLockdown then checkYield() end
+
+				TMW:Fire("TMW_ONUPDATE_POST", TMW.time, TMW.Locked)
+
+				coroutine.yield()
+			end
+		end 
+
+		local Coroutine 
+		function TMW:OnUpdate()
+			start = debugprofilestop()			
+			
+			if not Coroutine or coroutine.status(Coroutine) == "dead" then
+				if Coroutine then
+					TMW:Debug("Rebirthed OnUpdate coroutine at %s", TMW.time)
+				end
+				
+				Coroutine = coroutine.create(OnUpdate)
+			end
+			
+			assert(coroutine.resume(Coroutine))
+		end
+
+		local function UnlockExtremelyInterval(forced)
+			if Action.IsInitialized or forced then 
+				local PREV_INTERVAL = TMW.db.global.Interval 
+				TMW.db.global.Interval = 0
+				TMW:Update()
+				TMW.db.global.Interval = PREV_INTERVAL
+			end 
+		end
+		
+		TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", function() UnlockExtremelyInterval(true) end) 
+		
+		local isIconEditorHooked
+		hooksecurefunc(TMW, "LockToggle", function() 
+			if not isIconEditorHooked then 
+				TellMeWhen_IconEditor:HookScript("OnHide", function() 
+					if TMW.Locked then 
+						UnlockExtremelyInterval()						
+					end 
+				end)
+				isIconEditorHooked = true
+			end
+			if TMW.Locked then 
+				UnlockExtremelyInterval()
+			end 			
+		end)			
+		
+		-- Loading options 
+		if TMW.Classes.Resizer_Generic == nil then 
+			TMW:LoadOptions()
+		end 		
+		
+		Action.IsInitializedModifiedTMW = true 
+	end 
+			
+	-- Make frames work able 
+	Action.IsInitialized = true 	
+	TMW:Fire("TMW_ACTION_IS_INITIALIZED")
+end
+
 function Action:OnInitialize()		
+	----------------------------------
+	-- Register Slash Commands
+	----------------------------------
+	local function SlashCommands(input) 
+		if not L then return end -- If we trying show UI before DB finished load locales 
+		local profile = TMW.db:GetCurrentProfile()
+		if not Action.Data.ProfileEnabled[profile] then 
+			Action.Print(profile .. "  " .. L["NOSUPPORT"])
+			return 
+		end 
+		if not input or #input > 0 then 
+			-- without checks for another options for /action since right now only "help" enough even if user did wrong input 
+			Action.Print(L["SLASH"]["LIST"])
+			Action.Print("|cff00cc66/action|r - " .. L["SLASH"]["OPENCONFIGMENU"])
+			Action.Print('|cff00cc66/run Action.MacroQueue("TABLE_NAME")|r - ' .. L["SLASH"]["QUEUEHOWTO"])
+			Action.Print('|cff00cc66/run Action.MacroQueue("WordofGlory")|r - ' .. L["SLASH"]["QUEUEEXAMPLE"])		
+			Action.Print('|cff00cc66/run Action.MacroBlocker("TABLE_NAME")|r - ' .. L["SLASH"]["BLOCKHOWTO"])
+			Action.Print('|cff00cc66/run Action.MacroBlocker("FelRush")|r - ' .. L["SLASH"]["BLOCKEXAMPLE"])	
+			Action.Print(L["SLASH"]["RIGHTCLICKGUIDANCE"])
+			Action.Print(L["SLASH"]["INTERFACEGUIDANCE"])
+			Action.Print(L["SLASH"]["INTERFACEGUIDANCEEACHSPEC"])
+			Action.Print(L["SLASH"]["INTERFACEGUIDANCEALLSPECS"])
+			Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
+			Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
+			Action.Print(L["SLASH"]["ATTENTION"])
+		else 
+			Action.ToggleMainUI()
+		end 
+	end 	
+	SLASH_ACTION1 = "/action"
+	SlashCmdList.ACTION = SlashCommands	
 	----------------------------------
 	-- Register ActionDB defaults
 	----------------------------------	
@@ -7771,24 +9034,18 @@ function Action:OnInitialize()
 		if Action.MainUI and Action.MainUI:IsShown() then 
 			Action.ToggleMainUI()
 		end
-		-- SpellLevelInit
-		Listener:Remove("SpellLevel_Events", "PLAYER_LEVEL_UP")
-		SpellLevel.Wipe()
-		-- ReInit 
-		Listener:Remove("RE_Events", "PLAYER_TARGET_CHANGED")
-		Action.LastTarget = nil 
-		Listener:Remove("RE_Events", "PLAYER_FOCUS_CHANGED")
-		Action.LastFocus = nil 
+		Action.IsInitialized = nil
+		-- SpellLevel
+		SpellLevel:Reset(true)
+		-- ReFocus // ReTarget 
+		Re:Reset()
 		-- LOSInit 
-		Listener:Remove("ACTION_LOS", "UI_ERROR_MESSAGE")
-		Listener:Remove("ACTION_LOS", "COMBAT_LOG_EVENT_UNFILTERED")
-		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_ENABLED")
-		Listener:Remove("ACTION_LOS", "PLAYER_REGEN_DISABLED")
+		LineOfSight:Reset()
 		-- ToggleMSG 
-		Listener:Remove("MSG_Events", "CHAT_MSG_PARTY")
-		Listener:Remove("MSG_Events", "CHAT_MSG_PARTY_LEADER")
-		Listener:Remove("MSG_Events", "CHAT_MSG_RAID")
-		Listener:Remove("MSG_Events", "CHAT_MSG_RAID_LEADER")	
+		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
+		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY_LEADER")
+		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
+		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
 		-- Note: Can cause issues if there loops, timers, frames or hooks 	
 		if profileEvent == "OnProfileChanged" then
@@ -7803,1923 +9060,8 @@ function Action:OnInitialize()
 				end										
 			end			
 		end 		
-		ActionDB_Initialization()		       
+		OnInitialize()		       
 	end
 	TMW:RegisterCallback("TMW_ON_PROFILE", OnSwap)
-	TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", ActionDB_Initialization, "ACTION_TMW_SAFESETUP_COMPLETE")	
-	----------------------------------
-	-- Register Slash Commands
-	----------------------------------	
-	SLASH_ACTION1 = "/action"
-	SlashCmdList.ACTION = SlashCommands	
+	TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", OnInitialize, "ACTION_TMW_SAFESETUP_COMPLETE")	
 end
-
-local HealerSpecs = {
-	[105] = true, 
-	[270] = true, 
-	[65] = true, 
-	[256] = true, 
-	[257] = true, 
-	[264] = true, 
-}
-local PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = 0
-function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
-	Env.PlayerSpec, Env.PlayerSpecName = GetSpecializationInfo(GetSpecialization()) 
-    Env.IamHealer = HealerSpecs[Env.PlayerSpec] or false 
-	
-	if (TMW.time == PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP) or (event == "PLAYER_SPECIALIZATION_CHANGED" and unit ~= "player") or not Env.PlayerSpec then
-		return
-	end
-	
-	if Action.IsInitialized then 
-		if Action.MainUI then 
-			if Action.MainUI:IsShown() then 
-				Action.ToggleMainUI()
-				Action.ToggleMainUI()
-			end 
-			-- Refresh title of spec 
-			tabFrame.tabs[2].title = Env.PlayerSpecName
-			tabFrame:DrawButtons()	
-		end 
-		-- I use this as reinit some things since all my db attached to each spec I have to reinit (or turn off) saved settings from another spec	
-		GlobalsRemap()	
-		Action.ReInit()
-		Action.LOSInit(true)
-		if Action[Env.PlayerSpec] then 
-			if not SpellLevel.Initialized then 
-				Action.SpellLevelInit()
-			else 
-				SpellLevel.Update()
-			end 
-		else 
-			Action.SpellLevelInit()
-		end 
-		Action.ToggleMSG(true)	
-	end 
-	
-	PLAYER_SPECIALIZATION_CHANGED_TIMESTAMP = TMW.time 
-end
-Action:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANGED")
-Action:RegisterEvent("PLAYER_LOGIN", "PLAYER_SPECIALIZATION_CHANGED")
-Action:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_SPECIALIZATION_CHANGED")
-Action:RegisterEvent("UPDATE_INSTANCE_INFO", "PLAYER_SPECIALIZATION_CHANGED")
-
---------------------------------------
--- APL 
---------------------------------------
-
-Action.PlayerRace = select(2, UnitRace("player"))
-
-local IsStealthed = IsStealthed
-
-local GetSpellTexture, GetSpellLink, GetSpellInfo = 
-  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo
-local GetItemInfo, GetItemInfoInstant, GetInventoryItemID = 
-	  GetItemInfo, GetItemInfoInstant, GetInventoryItemID
-local UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange = 
-	  UnitInVehicle, UnitIsDeadOrGhost, IsMounted, SpellIsTargeting, SpellHasRange
-
-local UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitInParty, UnitInRaid = 
-	  UnitAura, UnitRace, UnitIsPlayer, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitInParty, UnitInRaid
-local GetMouseFocus, IsMouseButtonDown = 
-	  GetMouseFocus, IsMouseButtonDown
-
-ACTION_CONST_TRINKET1 = 		1030902 	-- GetSpellTexture(179071)
-ACTION_CONST_TRINKET2 = 		1030910 	-- GetSpellTexture(224540)
-ACTION_CONST_POTION =			967532		-- GetSpellTexture(176108)
-	
-ACTION_CONST_LEFT = 			237586 		-- GetSpellTexture(98008)
-ACTION_CONST_RIGHT = 			132487 		-- GetSpellTexture(34976)
-ACTION_CONST_STOPCAST = 		249170		-- GetSpellTexture(147362)
-ACTION_CONST_HEALTHSTONE = 		538745 		-- GetSpellTexture(6262)
-ACTION_CONST_ATARGET = 			133015 		-- GetSpellTexture(153911)
-
-ACTION_CONST_HEARTOFAZEROTH =	1869493 	-- GetSpellTexture(280431)
-
-local ClassPortaits = {
-	["WARRIOR"] = 626008,
-	["PALADIN"] = 626003,
-	["HUNTER"] = 626000,
-	["ROGUE"] = 626005,
-	["PRIEST"] = 626004,
-	["DEATHKNIGHT"] = 135771,
-	["SHAMAN"] = 454482, -- Custom because it making conflict with Bloodlust
-	["MAGE"] = 626001,
-	["WARLOCK"] = 626007,
-	["MONK"] = 626002,
-	["DRUID"] = 625999,
-	["DEMONHUNTER"] = 236415,
-}
-
---- Spell  
-local spellinfocache = setmetatable({}, { __index = function(t, v)
-    local a = { GetSpellInfo(v) }
-    if a[1] then
-        t[v] = a
-    end
-    return a
-end })
-function Action:GetSpellInfo()
-	local ID = self
-	if type(self) == "table" then 
-		ID = self.ID 
-	end
-	return unpack(spellinfocache[ID])
-end
-function Action:GetSpellLink()
-	local ID = self
-	if type(self) == "table" then 
-		ID = self.ID 
-	end
-    return GetSpellLink(ID) 
-end 
-function Action:GetSpellIcon()
-	return select(3, self:GetSpellInfo())
-end
-function Action:GetSpellTexture(custom)
-	if self.SubType == "HeartOfAzeroth" then 
-		return "texture", ACTION_CONST_HEARTOFAZEROTH
-	end
-    return "texture", GetSpellTexture(custom or self.ID)
-end 
---- Spell Colored Texturre
-function Action:GetColoredSpellTexture(custom)
-    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, GetSpellTexture(custom or self.ID)
-end 
-
---- SingleColor
-function Action:GetColorTexture()
-    return "state", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = "ERROR"}
-end 
-
---- Item
-local iteminfocache = setmetatable({}, { __index = function(t, v)	
-    local a = { GetItemInfo(v) }
-    if a[1] then
-        t[v] = a
-    end
-    return a
-end })
-function Action:GetItemInfo()
-	local ID = self
-	if type(self) == "table" then 
-		ID = self.ID 
-	end
-	return unpack(iteminfocache[ID])
-end
-function Action:GetItemLink()
-    return select(2, self:GetItemInfo()) 
-end 
-function Action:GetItemIcon()
-	return select(10, self:GetItemInfo())
-end
-function Action:GetItemTexture(custom)
-	local texture
-	if self.Type == "Trinket" then 
-		if GetInventoryItemID("player", 13) == self.ID then 
-			texture = ACTION_CONST_TRINKET1
-		else 
-			texture = ACTION_CONST_TRINKET2
-		end
-	elseif self.Type == "Potion" then 
-		texture = ACTION_CONST_POTION
-	else 
-		texture = (custom and GetItemIcon(custom)) or self:GetItemIcon()
-	end
-	
-    return "texture", texture
-end 
---- Item Colored Texture
-function Action:GetColoredItemTexture(custom)
-    return "state; texture", {Color = Action.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, (custom and GetItemIcon(custom)) or self:GetItemIcon()
-end 
---- Item API ( + :IsInRange(unit) by TMW Core )
-function Action:GetItemCooldown()
-	local start, duration, enable = self:GetCooldown()
-	return enable ~= 0 and (duration == 0 and 0 or duration - (TMW.time - start)) or -1
-end 
-function Action:IsTrinketON()
-	-- This also checks equipment (in idea because slot return ID which we compare)
-	return Env.Item(13):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[1] or Env.Item(14):GetID() == self.ID and Action.GetToggle(1, "Trinkets")[2]
-end 
---- Item API by slots 
-function Action.SlotTrinketIsReady(slot, unit, itemType)
-	return Action.GetToggle(1, "Trinkets")[slot] and Env.Item(slot):IsUsable(unit) and ( not itemType or itemType == "DEFF" and Env.Item(slot):IsDEFF() or itemType == "DPS" and Env.Item(slot):IsDPS() )
-end 
-
---- [[  CREATION  ]]
-function Action.Create(attributes)
-	--[[@usage: attributes (table)
-		Required: 
-			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|HeartOfAzeroth
-			ID (@number) 	- spellID | itemID
-			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in Action.Data.C[Color] or here can be own hex 
-	 	Optional: 
-			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
-			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
-			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
-			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
-			Hidden (@boolean) allows to hide from UI this action 
-	]]
-	if not attributes then 
-		local attributes = {}
-	end 	
-	local s = {
-		ID = attributes.ID,
-		SubType = attributes.Type,
-		Desc = attributes.Desc or "",
-		QueueForbidden = attributes.QueueForbidden, 
-		MetaSlot = attributes.MetaSlot,
-		Hidden = attributes.Hidden,
-	}
-	if attributes.Type == "Spell" or attributes.Type == "HeartOfAzeroth" then 
-		s = setmetatable(s, {__index = Action})	
-		s.Type = "Spell"		
-		-- Methods (metakey:Link())			
-		s.Info = Action.GetSpellInfo
-		s.Link = Action.GetSpellLink		
-		s.Icon = Action.GetSpellIcon
-		if attributes.Color then 
-			s.Color = attributes.Color
-			if attributes.Texture then 
-				s.Texture = function()
-					return Action.GetColoredSpellTexture(s, attributes.Texture)
-				end 
-			else 
-				s.Texture = Action.GetColoredSpellTexture
-			end 		
-		else 
-			if attributes.Texture then 
-				s.Texture = function()
-					return Action.GetSpellTexture(s, attributes.Texture)
-				end 
-			else 
-				s.Texture = Action.GetSpellTexture	
-			end
-		end 
-		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)	
-	elseif attributes.Type == "SpellSingleColor" then 
-		s = setmetatable(s, {__index = Action})	
-		s.Type = "Spell"
-		s.Color = attributes.Color
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetSpellInfo
-		s.Link = Action.GetSpellLink		
-		s.Icon = Action.GetSpellIcon
-		-- This using static and fixed only color so no need texture
-		s.Texture = Action.GetColorTexture			
-		-- Power 
-		s.PowerCost, s.PowerType = Env.CacheGetSpellPowerCost(attributes.ID)		
-	elseif attributes.Type == "Trinket" or attributes.Type == "Potion" or attributes.Type == "Item" then 
-		s = setmetatable(s, {
-				__index = function(self, key)
-					if Action[key] then
-						return Action[key]
-					else
-						return self.Item[key]
-					end
-				end
-		})
-		s.Type = attributes.Type
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetItemInfo
-		s.Link = Action.GetItemLink		
-		s.Icon = Action.GetItemIcon
-		if attributes.Color then 
-			s.Color = attributes.Color
-			if attributes.Texture then 
-				s.Texture = function()
-					return Action.GetColoredItemTexture(s, attributes.Texture)
-				end 
-			else 
-				s.Texture = Action.GetColoredItemTexture
-			end 		
-		else 		
-			if attributes.Texture then 
-				s.Texture = function()
-					return Action.GetItemTexture(s, attributes.Texture)
-				end 
-			else 
-				s.Texture = Action.GetItemTexture
-			end 
-		end	
-		-- Misc
-		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server 	
-	elseif attributes.Type == "ItemSingleColor" then
-		s = setmetatable(s, {
-				__index = function(self, key)
-					if Action[key] then
-						return Action[key]
-					else
-						return self.Item[key]
-					end
-				end
-		})
-		s.Type = "Item" 
-		s.Color = attributes.Color
-		-- Methods (metakey:Link())	
-		s.Info = Action.GetItemInfo
-		s.Link = Action.GetItemLink		
-		s.Icon = Action.GetItemIcon
-		-- This using static and fixed only color so no need texture
-		s.Texture = Action.GetColorTexture		
-		-- Misc 
-		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
-		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server	
-	else 
-		s = setmetatable(s, {__index = Action})	
-		s.Hidden = true 
-	end 
-	return s
-end 
-
---- [[ LUA DB MANAGER ]]
-function Action:GetLUA()
-	return TMW.db.profile.ActionDB[3][Env.PlayerSpec].luaActions[GetTableKeyIdentify(self)] 
-end
-
-function Action:SetLUA(luaCode)
-	TMW.db.profile.ActionDB[3][Env.PlayerSpec].luaActions[GetTableKeyIdentify(self)] = luaCode
-end 
-
---- [[  SETBLOCKER  ]]
-function Action:IsBlocked()
-	return TMW.db.profile.ActionDB[3][Env.PlayerSpec].disabledActions[GetTableKeyIdentify(self)] == true
-end
-
-function Action:SetBlocker()
-	--- /run Action[TMW.CNDT.Env.PlayerSpec].WordofGlory:SetBlocker()
-	local Notification 
-	local Identify = GetTableKeyIdentify(self)
-	if self:IsBlocked() then 
-		TMW.db.profile.ActionDB[3][Env.PlayerSpec].disabledActions[Identify] = nil 
-		Notification = L["TAB"][3]["UNBLOCKED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]"		
-	else 
-		TMW.db.profile.ActionDB[3][Env.PlayerSpec].disabledActions[Identify] = true
-		Notification = L["TAB"][3]["BLOCKED"] .. self:Link() .. " " ..  L["TAB"][3]["KEY"] .. Identify .. "]"
-	end 
-    Action.Print(Notification)
-	
-	if Action.MainUI then 
-		local spec = Env.PlayerSpec .. CL	
-		local ScrollTable = tabFrame.tabs[3].childs[spec].ScrollTable
-		for i = 1, #ScrollTable.data do 
-			if Identify == GetTableKeyIdentify(ScrollTable.data[i]) then 
-				if self:IsBlocked() then 
-					ScrollTable.data[i].Enabled = "False"
-				else 
-					ScrollTable.data[i].Enabled = "True"
-				end								 			
-			end 
-		end		
-		ScrollTable:ClearSelection() 
-	end 
-end
-
-function Action.MacroBlocker(key)
-	-- Avoid lua errors for non exist key
-	if not Action[Env.PlayerSpec][key] then 
-		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
-		return 	 
-	end 
-	Action[Env.PlayerSpec][key]:SetBlocker()
-end
-
---- [[  QUEUE  ]]
-local function QueueEvent(...) 
-    local source, _, spellID = ...
-    if (source == "player" or source == "pet") and Action.Data.Q[1] and Action.Data.Q[1].Type == "Spell" and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:GetSpellInfo() then 			
-		getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
-    end 
-end 
-
-local function Queue_BAG_UPDATE_COOLDOWN()
-	if Action.Data.Q[1] and Action.Data.Q[1].Type ~= "Spell" then 
-		local start, duration, enable = Action.Data.Q[1]:GetCooldown()
-		if duration and math.abs(TMW.time - start) <= 2 then 
-			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
-			return 
-		end 
-		-- For things like a potion that was used in combat and the cooldown hasn't yet started counting down
-		if enable == 0 and Action.Data.Q[1].Type ~= "Trinket" then 
-			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
-		end 
-	end 
-end 
-
-function Action.QueueEventReset()
-	if #Action.Data.Q > 0 then 
-		for i = 1, #Action.Data.Q do 
-			if Action.Data.Q[i].Queued then 
-				getmetatable(Action.Data.Q[i]).__index:SetQueue({ Silence = true })
-			end 
-		end 		
-	end 
-	wipe(Action.Data.Q) 
-	Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
-	Listener:Remove("Queue_Events", "BAG_UPDATE_COOLDOWN")
-	Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
-	Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")	
-	Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
-	Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
-	Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")	
-	Listener:Remove("Queue_Events", "PLAYER_ENTERING_WORLD")
-end 
-
-function Action:IsQueued()
-    return self.Queued
-end 
-
-function Action:IsBlockedByQueue()
-	return 	not self.QueueForbidden and 
-			#Action.Data.Q > 0 and 
-			self.Type == Action.Data.Q[1].Type and 
-			( not Action.Data.Q[1].PowerType or self.PowerType == Action.Data.Q[1].PowerType ) and 
-			( not Action.Data.Q[1].PowerCost or UnitPower("player", self.PowerType) < Action.Data.Q[1].PowerCost )
-end
-
-function Action:SetQueue(args) 
-	--- Note: /run Action[TMW.CNDT.Env.PlayerSpec].WordofGlory:SetQueue()
-	--- QueueAuto: Action:SetQueue({ Silence = true, Priority = 1 }) just sometimes simcraft use it in some place
-	--[[@usage: args (table)
-	 	Optional: 
-			PowerType (number) custom offset 													(passing conditions to func QueueValidCheck)
-			PowerCost (number) custom offset 													(passing conditions to func QueueValidCheck)
-			ExtraCD (number) custom offset														(passing conditions to func QueueValidCheck)
-			Silence (boolean) if true don't display print 
-			Unit (string) specified for spells usually to check their for range on certain unit (passing conditions to func QueueValidCheck)
-			Value (boolean) sets custom fixed statement for queue
-			Priority (number) put in specified priority 
-			MetaSlot (number) usage for MSG system to set queue on fixed position 
-	]]
-	-- Check validance 
-	if not self.Queued then 
-		if self.Type == "Spell" and not Env.SpellExists(self:Info()) then 
-			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
-			return 
-		end 
-		
-		if self.Type == "Trinket" and not self:GetEquipped() then -- no need check here :IsTrinketON since user can has disabled toggle but prefer queue it like in PvP Fetish
-			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
-			return 
-		end 
-		
-		if (self.Type == "Item" or self.Type == "Potion") and self:GetCount() <= 0 then 
-			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"]) 
-			return 
-		end 
-	end 
-	
-	if not args then 
-		args = {}
-	end 
-	
-	local Identify = GetTableKeyIdentify(self)
-	if self.QueueForbidden then 
-        Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
-        return 	 
-	-- Let for user allow run blocked actions whenever he wants, anyway why not 
-	--elseif self:IsBlocked() and not self.Queued then 
-		--if not args.Silence then 
-			--Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["QUEUEBLOCKED"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
-		--end 
-        --return 
-	end
-	
-	if args.Value ~= nil and self.Queued == args.Value then 
-		if not args.Silence then 
-			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISQUEUEDALREADY"] .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]")
-		end 
-		return 
-	end 
-	
-	if args.Value ~= nil then 
-		self.Queued = args.Value 
-	else 
-		self.Queued = not self.Queued
-	end 
-	
-	local priority = (args.Priority and (args.Priority > #Action.Data.Q + 1 and #Action.Data.Q + 1 or args.Priority)) or #Action.Data.Q + 1	
-    if not args.Silence then
-		local printKey = self.Desc .. (self.Color or "") 
-		if self.Queued then 
-			Action.Print(L["TAB"][3]["QUEUED"] .. self:Link() .. (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]") or "") .. L["TAB"][3]["QUEUEPRIORITY"] .. priority .. ". " .. L["TAB"][3]["KEYTOTAL"] .. #Action.Data.Q + 1 .. "]")
-		else
-			Action.Print(L["TAB"][3]["QUEUEREMOVED"] .. self:Link() .. (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]") or ""))
-		end 
-    end 
-    
-	if not self.Queued then 
-		for i = #Action.Data.Q, 1, -1 do 
-			if GetTableKeyIdentify(Action.Data.Q[i]) == Identify then 
-				table.remove(Action.Data.Q, i)
-				if #Action.Data.Q == 0 then 
-					Listener:Remove("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED")
-					Listener:Remove("Queue_Events", "BAG_UPDATE_COOLDOWN")
-					Listener:Remove("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED")
-					Listener:Remove("Queue_Events", "PLAYER_REGEN_ENABLED")
-					Listener:Remove("Queue_Events", "PLAYER_TALENT_UPDATE")
-					Listener:Remove("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED")
-					Listener:Remove("Queue_Events", "PLAYER_EQUIPMENT_CHANGED")
-					Listener:Remove("Queue_Events", "PLAYER_ENTERING_WORLD")
-					return 
-				end 				
-			end 
-		end 
-		return
-	end 
-    
-	-- Do nothing if it does in spam with always true as insert to queue list 	
-	if args.Value and #Action.Data.Q > 0 then 
-		for i = #Action.Data.Q, 1, -1 do
-			if GetTableKeyIdentify(Action.Data.Q[i]) == Identify then 
-				return
-			end 
-		end 
-	end
-    table.insert(Action.Data.Q, priority, setmetatable({ Unit = args.Unit, MetaSlot = args.MetaSlot }, {__index = self}))	
-
-	if args.PowerType then 
-		-- Note: we set it as true to use in function Action.IsQueueReady()
-		Action.Data.Q[priority].PowerType = args.PowerType   	
-		Action.Data.Q[priority].PowerCustom = true
-	end	
-	if args.PowerCost then 
-		Action.Data.Q[priority].PowerCost = args.PowerCost
-		Action.Data.Q[priority].PowerCustom = true
-	end 		 	
-	if args.ExtraCD then
-		Action.Data.Q[priority].ExtraCD = args.ExtraCD 
-	end 	
-	
-    Listener:Add("Queue_Events", "UNIT_SPELLCAST_SUCCEEDED", QueueEvent)
-	Listener:Add("Queue_Events", "BAG_UPDATE_COOLDOWN", Queue_BAG_UPDATE_COOLDOWN)
-    Listener:Add("Queue_Events", "PLAYER_SPECIALIZATION_CHANGED", Action.QueueEventReset)
-	Listener:Add("Queue_Events", "PLAYER_REGEN_ENABLED", Action.QueueEventReset)	
-	Listener:Add("Queue_Events", "PLAYER_TALENT_UPDATE", Action.QueueEventReset)
-	Listener:Add("Queue_Events", "ACTIVE_TALENT_GROUP_CHANGED", Action.QueueEventReset)
-	Listener:Add("Queue_Events", "PLAYER_EQUIPMENT_CHANGED", Action.QueueEventReset)
-	Listener:Add("Queue_Events", "PLAYER_ENTERING_WORLD", Action.QueueEventReset)
-end
-
-function Action.ShowQueue(icon)
-    Action.TMWAPL(icon,  Action.Data.Q[1]:Texture())
-	return true
-end 
-
-function Action:QueueValidCheck()
-	-- Note: This thing does mostly tasks but still causing some issues with certain spells which should be blacklisted or avoided through another way (ideally) 
-	-- Example of issue: WW Monk can set Queue for Resuscitate while has @target an enemy and it will true because it will set to variable "player" which is also true and correct!
-	-- Why "player"? Coz while @target an enemy you can set queue of supportive spells for "self" and if they will be used on enemy then they will be applied on "player" 
-	local unit 
-	local isCastingName, _, _, _, _, isChannel = Env.Unit("player"):IsCasting()
-	if not isCastingName or (isCastingName ~= self:Info() and not isChannel) then 
-		if self.Type == "Spell" then 
-			if not SpellHasRange(self:Info()) or isSpellRangeException[self.ID] then 
-				return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
-			else
-				local isHarm = IsAttackSpell(self:Info()) or IsHarmfulSpell(self:Info())
-				unit = self.Unit or ((isHarm or IsHelpfulSpell(self:Info())) and "target") or "player"
-				if isHarm then 
-					return Env.Unit(unit):IsEnemy() and Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit, self.AbsentImunQueueCache)
-				else 
-					return UnitIsUnit(unit, "player") or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))
-				end 
-			end 
-		else 
-			if not ItemHasRange(self.ID) then 
-				return self:AbsentImun(self.Unit, self.AbsentImunQueueCache)
-			else
-				local isHarm = IsHarmfulItem(self:Info())
-				-- IsHelpfulItem under testing phase
-				-- unit = self.Unit or ((isHarm or IsHelpfulItem(self:Info())) and "target") or (not Env.IamHealer and "player") or "target"
-				unit = self.Unit or (isHarm and "target") or (not Env.IamHealer and "player") or "target"
-				if isHarm then 
-					return Env.Unit(unit):IsEnemy() and self:IsInRange(unit) and self:AbsentImun(unit, self.AbsentImunQueueCache)
-				else 
-					return UnitIsUnit(unit, "player") or (self:IsInRange(unit) and self:AbsentImun(unit))
-				end 
-			end 		
-		end 
-	end 
-	return false 
-end 
-
-local function IsThisMeta(meta)
-	return (not Action.Data.Q[1].MetaSlot and (meta == 3 or meta == 4)) or Action.Data.Q[1].MetaSlot == meta
-end
-function Action.IsQueueReady(meta)
-    if #Action.Data.Q > 0 and IsThisMeta(meta) then 
-        if Action.Data.Q[1].Type == "Trinket" or Action.Data.Q[1].Type == "Potion" or Action.Data.Q[1].Type == "Item" then -- Equip and Count of items already checked before set queue 
-			if Action.Data.Q[1].Unit == "player" or Action.Data.Q[1]:QueueValidCheck() then 
-				local cooldown = Action.Data.Q[1]:GetItemCooldown()
-				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= (Action.Data.Q[1].PowerCost or 0)
-				return cooldown >= 0 and cooldown <= (Action.Data.Q[1].ExtraCD or Env.CurrentTimeGCD() + 0.02) and custom     
-			end
-        elseif Action.Data.Q[1].Type == "Spell" then  
-            if Action.Data.Q[1].Unit == "player" or Action.Data.Q[1]:QueueValidCheck() then
-				local usable = (not Action.Data.Q[1].ExtraCD and Env.SpellUsable(Action.Data.Q[1].ID)) or (Action.Data.Q[1].ExtraCD and Env.SpellCD(Action.Data.Q[1].ID) <= Action.Data.Q[1].ExtraCD)
-				local custom = not Action.Data.Q[1].PowerCustom or UnitPower("player", Action.Data.Q[1].PowerType) >= Action.Data.Q[1].PowerCost
-				return usable and custom 
-			end 
-        else 
-			Action.Print(L["DEBUG"] .. Action.Data.Q[1]:Link() .. " " .. L["ISNOTFOUND"])          
-			getmetatable(Action.Data.Q[1]).__index:SetQueue()
-        end 
-    end 
-    return false 
-end 
-
-function Action.MacroQueue(key, args)
-	-- Avoid lua errors for non exist key
-	if not Action[Env.PlayerSpec] or not Action[Env.PlayerSpec][key] then 
-		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
-		return 	 
-	end 
-	Action[Env.PlayerSpec][key]:SetQueue(args)
-end
-
---- [[  SPELLLEVEL + SETBLOCKER + QUEUE + LUA + CD/RANGE CHECK ]]
-function Action:IsCastable(thisunit, skipRange)
-	-- Checks toggle, cooldown and range 
-	if 	self.Type == "Spell" and 
-		not SpellLevel.IsBlocked(self) and
-		IsUsableSpell(self.ID) and
-		Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() and 
-		( skipRange or not thisunit or thisunit == "player" or Env.SpellInRange(thisunit, self.ID) ) and 
-		-- 8.2 Queen Court - Repeat Performance (DeBuff)
-		-- 2164 is The Eternal Palace  
-		( not Env.InstanceInfo or Env.InstanceInfo.instanceID ~= 2164 or Env.Unit("player"):HasDeBuffs(301244) == 0 or (Env.LastPlayerCastID ~= self.ID and select(2, Env.CastTime(self.ID)) == 0) ) 		
-	then 
-		return true 				
-	end 
-	
-	if 	self.Type == "Trinket" and 
-		self:IsTrinketON() and 
-		self:GetItemCooldown() == 0 and 
-		( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
-	then
-		return true 
-	end 
-	
-	if 	self.Type == "Potion" and 
-		not Env.InPvP() and 
-		Action.GetToggle(1, "Potion") and 
-		Action.BurstIsON(thisunit or Env.IamHealer and "targettarget" or "target") and 
-		self:GetCount() > 0 and 
-		self:GetItemCooldown() == 0 
-	then
-		return true 
-	end 
-	
-	if  self.Type == "Item" and 
-		self:GetCount() > 0 and 
-		self:GetItemCooldown() == 0 and 
-		( skipRange or not thisunit or thisunit == "player" or not ItemHasRange(self.ID) or self:IsInRange(thisunit) )
-	then
-		return true 
-	end 
-	
-	return false 
-end
-
-function Action:IsReady(thisunit, skipRange)
-	-- For [3-4, 6-8]
-    return 	not self:IsBlocked() and 
-			not self:IsBlockedByQueue() and 
-			self:IsCastable(thisunit, skipRange) and 
-			RunLua(self:GetLUA(), thisunit)  			
-end 
-
-function Action:IsReadyP(thisunit, skipRange, skipLua)
-	-- For other purposes
-    return 	self:IsCastable(thisunit, skipRange) and 
-			(
-				skipLua or 
-				RunLua(self:GetLUA(), thisunit)  			
-			)
-end 
-
---- [[ INTERRUPTS ]]
--- Note: list ("PvETargetMouseover", "PvPTargetMouseover", "Heal", "PvP") 
-function Action.InterruptIsON(list)
-	-- @return boolean 
-	return TMW.db.profile.ActionDB[4][Env.PlayerSpec]["Kick" .. list]
-end 
-
-function Action.InterruptIsBlackListed(unit, spellName)
-	-- @return boolean 
-	local blackListed = TMW.db.profile.ActionDB[4].BlackList[GameLocale][spellName]
-	if blackListed and blackListed.Enabled then 
-		local luaCode = blackListed.LUA or nil
-		if RunLua(luaCode, unit) then 
-			return true 
-		end 
-	end 
-	return false 
-end 
-
-function Action.InterruptEnabled(list, spellName)
-	-- @return table 
-	return TMW.db.profile.ActionDB[4][list][GameLocale][spellName] and TMW.db.profile.ActionDB[4][list][GameLocale][spellName].Enabled
-end 
-
-local function SmartInterrupt()
-	local HealerInCC = not Env.IamHealer and Env.FriendlyTeam("HEALER"):GetCC() or 0
-	return (HealerInCC > 0 and HealerInCC < Env.GCD() + Env.CurrentTimeGCD()) or Env.FriendlyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4 or Env.Unit("player"):HasBuffs("DamageBuffs") > 4 or Env.FriendlyTeam():GetTTD(1, 8) or Env.Unit("target"):IsExecuted() or Env.Unit("player"):IsExecuted() or Env.EnemyTeam("DAMAGER", 2):GetBuffs("DamageBuffs") > 4
-end 
-
-function Action.InterruptIsValid(unit, list, ignoreToggle)
-	-- @return boolean (Kick, CC, Racial)
-	-- list as "PvETargetMouseover" and "PvPTargetMouseover" must be always "TargetMouseover"
-	if ignoreToggle or Action.InterruptIsON(list) then 	
-		local spellName = Env.Unit(unit, 0):IsCasting()
-		if spellName and not Action.InterruptIsBlackListed(unit, spellName) then 
-			if list == "TargetMouseover" then 
-				list = (Env.InPvP() and "PvP" or "PvE") .. "TargetMouseover"
-			end 	
-
-			local Interrupt = TMW.db.profile.ActionDB[4][list][GameLocale][spellName]
-			local luaCode = Interrupt and Interrupt.LUA or nil
-			
-			if list:match("TargetMouseover") then
-				if (not Action.GetToggle(4, "TargetMouseoverList") and (not Env.InPvP() or (Env.Unit(unit):IsHealer() and TimeToDie(unit) < 6))) or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unit)) then 
-					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
-					else
-						return true, true, true 
-					end 
-				end 
-			elseif list == "Heal" then 
-				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Env.Unit(unit):IsHealer()) and RunLua(luaCode, unit) then 
-					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
-					else
-						return true, true, true
-					end 
-				end 
-			elseif list == "PvP" then 
-				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unit) then 
-					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
-					else
-						return true, true, true 
-					end 
-				end 
-			end
-		end 
-	end 
-	return false, false, false
-end 
-
---- [[ AURAS ]]
--- Note: Toggles  ("UseDispel", "UsePurge", "UseExpelEnrage")  
---		 Category ("Dispel", "MagicMovement", "PurgeFriendly", "PurgeHigh", "PurgeLow", "Enrage")				
-function Action.AuraIsON(Toggle)
-	-- @return boolean 
-	return TMW.db.profile.ActionDB[5][Env.PlayerSpec][Toggle]
-end 
-
-function Action.AuraGetCategory(Category)
-	-- @return table or nil if not found category in certain Mode , Filter
-	--[[ table basic structure:
-		[Name] = { ID, Name, Enabled, Role, Dur, Stack, byID, canStealOrPurge, onlyBear, LUA }
-		-- Look DispelPurgeEnrageRemap about table create 
-	]]
-	local Mode = "PvE"
-	if Env.InPvP() then 
-		Mode = "PvP"
-	end
-	local Filter = "HARMFUL"
-	if Category:match("Purge") or Category:match("Enrage") then 
-		Filter = "HELPFUL"
-	end 
-	return TMW.db.profile.ActionDB[5][Env.PlayerSpec][Mode] and TMW.db.profile.ActionDB[5][Env.PlayerSpec][Mode][Category] and TMW.db.profile.ActionDB[5][Env.PlayerSpec][Mode][Category][GameLocale], Filter
-end
-
-function Action.AuraIsValid(unit, Toggle, Category)
-	if Action.AuraIsON(Toggle) then 
-		local Aura, Filter = Action.AuraGetCategory(Category)
-		if Aura then 
-			for i = 1, huge do
-				Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unit, i, Filter)
-				if Name then
-					if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Env.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Env.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 
-						local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
-						if Dur > Aura[Name].Dur and (Aura[Name].Stack == 0 or count >= Aura[Name].Stack) and (not Aura[Name].canStealOrPurge or canStealOrPurge == true) and (not Aura[Name].onlyBear or Env.Unit(unit):HasBuffs(5487) > 0) and RunLua(Aura[Name].LUA, unit) then
-							return true
-						end 
-					end 
-				else
-					break 
-				end 
-			end 
-		end
-	end 
-	return false 
-end
-
---- [[ CURSOR ]]
-local function UpdateGameTooltip()
-	if Action.IsInitialized and Action[Env.PlayerSpec] then 
-		local UseLeft = Action.GetToggle(6, "UseLeft")
-		local UseRight = Action.GetToggle(6, "UseRight")
-		if UseLeft or UseRight then 
-			local M = Env.InPvP() and "PvP" or "PvE"
-			local ObjectName = UnitName("mouseover")
-			if ObjectName then 		
-				-- UnitName 
-				ObjectName = ObjectName:lower()
-				local UnitNameKey = TMW.db.profile.ActionDB[6][Env.PlayerSpec][M]["UnitName"][GameLocale][ObjectName]
-				if UnitNameKey and UnitNameKey.Enabled and ((UnitNameKey.Button == "LEFT" and UseLeft) or (UnitNameKey.Button == "RIGHT" and UseRight)) and (not UnitNameKey.isTotem or Env.Unit("mouseover"):IsTotem() and not Env.Unit("target"):IsTotem()) and RunLua(UnitNameKey.LUA, "mouseover") then 
-					Action.GameTooltipClick = UnitNameKey.Button
-					return
-				end 
-			else			
-				-- GameTooltip 
-				local focus = GetMouseFocus() 
-				if focus and not focus:IsForbidden() and focus:GetName() == "WorldFrame" then
-					local GameTooltipTable = TMW.db.profile.ActionDB[6][Env.PlayerSpec][M]["GameToolTip"][GameLocale]
-					if next(GameTooltipTable) then 						
-						local Regions = { GameTooltip:GetRegions() }
-						for i = 1, #Regions do 					
-							local region = Regions[i]							
-							if region and region:GetObjectType() == "FontString" then 
-								local text = region:GetText() 								
-								if text then 
-									text = text:lower()
-									local GameTooltipKey = GameTooltipTable[text]
-									if GameTooltipKey and GameTooltipKey.Enabled and ((GameTooltipKey.Button == "LEFT" and UseLeft) or (GameTooltipKey.Button == "RIGHT" and UseRight)) and RunLua(GameTooltipKey.LUA, "mouseover") then 								
-										Action.GameTooltipClick = GameTooltipKey.Button
-										return 									
-									end 
-								end 
-							end 
-						end 
-					end 
-				end 
-			end
-		end 
-		Action.GameTooltipClick = nil 
-	end 	
-end 
-
-function Action.CursorInit()
-	if not Action.IsGameTooltipInitializated then
-		GameTooltip:RegisterEvent("CURSOR_UPDATE")
-		GameTooltip:HookScript("OnEvent", function(self, event) 
-			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Env.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") then
-				self:Hide()				
-			end
-		end)
-		GameTooltip:HookScript("OnShow", UpdateGameTooltip)	
-		GameTooltip:HookScript("OnHide", function() Action.GameTooltipClick = nil end)
-		Action.IsGameTooltipInitializated = true 
-	end 
-end 
-
---- [[ MSG ]]
---- Moved above
-
---------------------------------------
--- DISPLAY FUNCTIONAL
---------------------------------------
-function Action.TMWAPL(icon, ...)
-    local attributesString, param = ...
-    
-    if attributesString == "state" then 
-        -- Color if not colored (Alpha will show it)
-        if type(param) == "table" and param["Color"] then 
-            if icon.attributes.calculatedState.Color ~= param["Color"] then 
-                icon:SetInfo(attributesString, {Color = param["Color"], Alpha = param["Alpha"], Texture = param["Texture"]})
-            end
-            return 
-        end 
-        
-        -- Hide if not hidden
-        if type(param) == "number" and (param == 0 or param == TMW.CONST.STATE.DEFAULT_HIDE) then
-            if icon.attributes.realAlpha ~= 0 then 
-                icon:SetInfo(attributesString, param)
-            end 
-            return 
-        end 
-    end 
-    
-    if attributesString == "texture" and type(param) == "number" then         
-        if (icon.attributes.calculatedState.Color ~= "ffffffff" or icon.attributes.realAlpha == 0) then 
-            -- Show + Texture if hidden
-            icon:SetInfo("state; " .. attributesString, TMW.CONST.STATE.DEFAULT_SHOW, param)
-        elseif icon.attributes.texture ~= param then 
-            -- Texture if not applied        
-            icon:SetInfo(attributesString, param)
-        end 
-        return         
-    end 
-    
-    icon:SetInfo(...)
-end
-  
-function Action.Hide(icon)
-	if icon.attributes.state ~= TMW.CONST.STATE.DEFAULT_HIDE then 
-		icon:SetInfo("state; texture", TMW.CONST.STATE.DEFAULT_HIDE, "")
-	end 
-end 
-
-function Action.SlotTrinketShow(slot, icon)
-	local textureID = ((slot == 13 or slot == 1) and ACTION_CONST_TRINKET1) or ACTION_CONST_TRINKET2
-	Action.TMWAPL(icon, "texture", textureID)
-	return true 
-end 
-
-function Action:Show(icon)     
-    Action.TMWAPL(icon, self:Texture())
-	return true 
-end 
-
-function Action.FrameHasSpell(frame, spell)
-	if frame and frame.Enabled and frame:IsVisible() and frame.attributes and type(frame.attributes.texture) == "number" then 
-		local texture = frame.attributes.texture
-		if type(spell) == "table" then 
-			for i = 1, #spell do 
-				if texture == GetSpellTexture(spell[i]) then 
-					return true 
-				end 
-			end 
-		else 
-			return texture == GetSpellTexture(spell) 
-		end 	
-	end 
-	return false 
-end 
---------------------------------------
--- UTILS 
---------------------------------------
--- Note: /run Action.TimerSet("Print", 4, function() Action.Print("Hello") end)
-function Action.TimerSet(name, timer, callback)
-	if not Action.Data.T[name] then 
-		Action.Data.T[name] = { 
-			obj = C_Timer.NewTimer(timer, function() 
-				if callback and type(callback) == "function" then 
-					callback()
-				end 
-				Action.TimerDestroy(name)
-			end), 
-			start = TMW.time,
-		}
-	end 
-end 
-
-function Action.TimerSetRefreshAble(name, timer, callback)
-	Action.TimerDestroy(name)
-	Action.Data.T[name] = { 
-		obj = C_Timer.NewTimer(timer, function() 
-			if callback and type(callback) == "function" then 
-				callback()
-			end 
-			Action.TimerDestroy(name)
-		end), 
-		start = TMW.time,
-	}
-end 
-
-function Action.TimerGetTime(name)
-	return Action.Data.T[name] and TMW.time - Action.Data.T[name].start or 0
-end 
-
-function Action.TimerDestroy(name)
-	if Action.Data.T[name] then 
-		Action.Data.T[name].obj:Cancel()
-		Action.Data.T[name] = nil 
-	end 
-end 
-
-local Cache = { 
-	bufer = {},
-	newVal = function(self, interval, keyArg, func, ...)
-		local obj = {
-		  t = TMW.time + (interval or 0.01) + 0.001,  -- Add small delay to make sure what it's not previous corroute                
-		  v = { func(...) },     
-		}      
-		if keyArg then 
-			self.bufer[func][keyArg] = obj
-		else 
-			self.bufer[func] = obj
-		end 
-		return unpack(obj.v)
-	end,	
-	-- Static without arguments or with cycling arguments in func
-	WrapStatic = function(t, func, interval)
-		if not t.bufer[func] then 
-			t.bufer[func] = setmetatable({}, { __mode == "kv" })
-		end 	
-		return function(...)  
-			if TMW.time > (t.bufer[func].t or 0) then			
-				return t:newVal(interval, nil, func)
-			else
-				return unpack(t.bufer[func].v)
-			end      
-		end
-	end,	
-	-- Dynamic with unlimited arguments in func 
-	WrapDynamic = function(t, func, interval)
-		if not t.bufer[func] then 
-			t.bufer[func] = setmetatable({}, { __mode == "kv" })
-		end 	
-		return function(...) 
-			local arg = {...} 
-            local keyArg = ""
-            for i = 1, #arg do
-                keyArg = keyArg .. tostring(arg[i])            
-            end 			
-			if TMW.time > (t.bufer[func][keyArg] and t.bufer[func][keyArg].t or 0) then			
-				return t:newVal(interval, keyArg, func, ...)
-			else
-				return unpack(t.bufer[func][keyArg].v)
-			end      
-		end
-	end,		
-}
-
-function Action.MakeFunctionCachedStatic(func, interval)
-	return Cache:WrapStatic(func, interval)
-end 
-
-function Action.MakeFunctionCachedDynamic(func, interval)
-	return Cache:WrapDynamic(func, interval)
-end 
-
-local PauseChecks = Cache:WrapStatic(function()  	
-	-- ACTIVE_CHAT_EDIT_BOX, BindPad, TellMeWhen
-	if ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible()) or not TMW.Locked then 
-		return "texture", 397907 -- @return Levelupicon-lfd same with GetSpellTexture(236254)
-	end 
-	
-    if Action.GetToggle(1, "CheckVehicle") and UnitInVehicle("Player") then
-        return "texture", 397907 -- @return Levelupicon-lfd which is 397907
-    end	
-	
-	if Action.GetToggle(1, "CheckDeadOrGhost") and Env.UNITDead("player") then 
-		return "texture", 236399
-	end 
-		
-	if Action.GetToggle(1, "CheckDeadOrGhostTarget") and Env.UNITDead("target") and (not Env.InPvP() or select(2, UnitClass("target")) ~= "HUNTER") then -- exception in PvP Hunter
-		return "texture", 236399
-	end 	
-	
-	if Action.GetToggle(1, "CheckMount") and IsMounted() and (pclass ~= "PALADIN" or Env.Unit("player"):HasBuffs(190784, true) == 0) then -- exception Divine Steed
-		return "texture", 975744
-	end 
-
-	if Action.GetToggle(1, "CheckCombat") and CombatTime("player") == 0 and CombatTime("target") == 0 and not Env.global_invisible() and Action.BossMods_Pulling() == 0 then -- exception Stealthed and DBM pulling event 
-		return "texture", 134376
-	end 	
-	
-	if Action.GetToggle(1, "CheckSpellIsTargeting") and SpellIsTargeting() then
-		return "texture", 236353
-	end	
-	
-	if Action.GetToggle(1, "CheckLootFrame") and _G.LootFrame:IsShown() then
-		return "texture", 975746
-	end	
-	
-	if Action.GetToggle(1, "CheckEatingOrDrinking") and CombatTime("player") == 0 and Env.Unit("player"):HasBuffs({
-		43180, 	-- Food 
-		27089, 	-- Drink
-		257427, -- FoodDrink
-	}, true) > 0 then
-		return "texture", 134062
-	end	
-end)
-
--- This is custom function for users if they wish check Pauses on own lua 
-function Action.PauseChecks()
-	-- @return nil or value which is not nil (string + number) but it can be used as boolean 'true'
-	if Action.IsInitialized then 
-		return PauseChecks()
-	end 
-end 
-
--- INTERRUPT 
-SmartInterrupt = Action.MakeFunctionCachedStatic(SmartInterrupt)
-
--- MOUSE 
-MouseHasFrame = Cache:WrapStatic(function()
-    local focus = UnitExists("mouseover") and GetMouseFocus()
-    if focus then
-        local frame = not focus:IsForbidden() and focus:GetName()
-        return not frame or (frame and frame ~= "WorldFrame")
-    end
-    return false
-end)
-
---------------------------------------
--- ROTATION
---------------------------------------
-function Action.IsUnitFriendly(thisunit)
-	if thisunit == "mouseover" then 
-		return 	Action.GetToggle(2, "mouseover") and 
-				MouseHasFrame() and
-				not Env.Unit("mouseover"):IsEnemy() 
-	else
-		return 	(
-					not Action.GetToggle(2, "mouseover") or 
-					not UnitExists("mouseover") or 
-					Env.Unit("mouseover"):IsEnemy()
-				) and 
-				not Env.Unit(thisunit):IsEnemy() and
-				UnitExists(thisunit)
-	end 
-end 
-Action.IsUnitFriendly = Action.MakeFunctionCachedDynamic(Action.IsUnitFriendly)
-
-function Action.IsUnitEnemy(thisunit)
-	if thisunit == "mouseover" then 
-		return  Action.GetToggle(2, "mouseover") and 
-				Env.Unit("mouseover"):IsEnemy() 
-	elseif thisunit == "targettarget" then
-		return 	Action.GetToggle(2, "targettarget") and 
-				(
-					not Action.GetToggle(2, "mouseover") or 
-					(not MouseHasFrame() and not Env.Unit("mouseover"):IsEnemy())
-				) and 
-				-- Exception to don't pull by mistake mob
-				CombatTime("targettarget") > 0 and
-				not Env.Unit("target"):IsEnemy() and
-				Env.Unit("targettarget"):IsEnemy() and 
-				-- LOS checking 
-				not Action.UnitInLOS("targettarget")						
-	else
-		return 	(
-					not Action.GetToggle(2, "mouseover") or 
-					not MouseHasFrame()
-				) and 
-				Env.Unit(thisunit):IsEnemy() 
-	end
-end 
-Action.IsUnitEnemy = Action.MakeFunctionCachedDynamic(Action.IsUnitEnemy)
-
-function Action:AbsentImun(thisunit, imunBuffs, skipKarma)
-	if not thisunit or not Env.InPvP() or not UnitIsPlayer(thisunit) then 
-		return true 
-	else 
-		-- Super trick for Queue system, it will save in cache imunBuffs when firstly will be called from APL and Queue will be allowed to handle cache for compare Imun 
-		if type(self) == "table" and not self.AbsentImunQueueCache and imunBuffs then 
-			self.AbsentImunQueueCache = imunBuffs
-		end 	
-		
-		local MinDur = type(self) ~= "table" and 0 or self.Type ~= "Spell" and 0 or (select(4, self:Info()) or 0) / 1000 
-		if MinDur > 0 then 
-			MinDur = MinDur + Env.CurrentTimeGCD()
-		end
-		
-		if Env.Unit(thisunit):DeBuffCyclone() > MinDur then 
-			return false 
-		end 
-		
-		if imunBuffs then 
-			if type(imunBuffs) == "table" then 
-				for i = 1, #imunBuffs do 
-					if Env.Unit(thisunit):HasBuffs(imunBuffs[i]) > MinDur then 
-						return false 
-					end 
-				end 
-			elseif Env.Unit(thisunit):HasBuffs(imunBuffs) > MinDur then
-				return false 
-			end 
-		end 
-		
-		if not skipKarma and Env.Unit(thisunit):IsEnemy() and not Env.Unit(thisunit):WithOutKarmed() then 
-			return false 
-		end 
-
-		return true
-	end 
-end 
-
-function Action.BossMods_Pulling()
-	return Action.GetToggle(1, "DBM") and DBM and Env.DBM_PullTimer() or -1
-end 
-
-function Action.BurstIsON(thisunit)
-	local Current = Action.GetToggle(1, "Burst")
-	if Current == "Auto" then  
-		local unit = thisunit and thisunit or "target"
-		return UnitIsPlayer(unit) or Env.Unit(unit):IsBoss()
-	elseif Current == "Everything" then 
-		return true 
-	end 		
-	return false 			
-end 
-Action.BurstIsON = Action.MakeFunctionCachedDynamic(Action.BurstIsON)
-
-function Action.ShouldStop()
-	return Env.ShouldStop()
-end 
-Action.ShouldStop = Action.MakeFunctionCachedStatic(Action.ShouldStop, 0)
-
--- RACIAL 
--- [[ MANAGMENT ]] 
-function Action:IsRacialON()
-	return Action.GetToggle(1, "Racial") and Env.SpellExists(self:Info())
-end 
-
-local GetRaceBySpellName = {
-	-- Darkflight
-	[Spell:CreateFromSpellID(68992):GetSpellName()] = "Worgen",
-	-- SpatialRift
-	[Spell:CreateFromSpellID(256948):GetSpellName()] = "VoidElf",
-	-- Shadowmeld
-	[Spell:CreateFromSpellID(58984):GetSpellName()] = "NightElf",
-	-- LightsJudgment
-	[Spell:CreateFromSpellID(255647):GetSpellName()] = "LightforgedDraenei",
-	-- Haymaker
-	[Spell:CreateFromSpellID(287712):GetSpellName()] = "KulTiran",
-	-- EveryManforHimself
-	[Spell:CreateFromSpellID(59752):GetSpellName()] = "Human", -- ThinHuman (? wut)
-	-- EscapeArtist
-	[Spell:CreateFromSpellID(20589):GetSpellName()] = "Gnome",
-	-- Stoneform
-	[Spell:CreateFromSpellID(20594):GetSpellName()] = "Dwarf",
-	-- GiftoftheNaaru
-	[Spell:CreateFromSpellID(121093):GetSpellName()] = "Draenei",
-	-- Fireblood
-	[Spell:CreateFromSpellID(265221):GetSpellName()] = "DarkIronDwarf", 
-	-- QuakingPalm
-	[Spell:CreateFromSpellID(107079):GetSpellName()] = "Pandaren",
-	-- Regeneratin
-	[Spell:CreateFromSpellID(291944):GetSpellName()] = "ZandalariTroll",
-	-- WilloftheForsaken
-	[Spell:CreateFromSpellID(7744):GetSpellName()] = "Scourge", -- (this is confirmed) Undead 
-	-- Berserking
-	[Spell:CreateFromSpellID(26297):GetSpellName()] = "Troll",
-	-- WarStomp
-	[Spell:CreateFromSpellID(20549):GetSpellName()] = "Tauren",
-	-- BloodFury
-	[Spell:CreateFromSpellID(33697):GetSpellName()] = "Orc",
-	-- ArcanePulse
-	[Spell:CreateFromSpellID(260364):GetSpellName()] = "Nightborne",
-	-- AncestralCall
-	[Spell:CreateFromSpellID(274738):GetSpellName()] = "MagharOrc",
-	-- BullRush
-	[Spell:CreateFromSpellID(255654):GetSpellName()] = "HighmountainTauren",
-	-- ArcaneTorrent
-	[Spell:CreateFromSpellID(28730):GetSpellName()] = "BloodElf",	
-	-- RocketJump
-	[Spell:CreateFromSpellID(69070):GetSpellName()] = "Goblin",	-- Should we add RocketBarrage (?) or it's crap damaged spell
-}
-local GetKeyByRace = {
-	-- I use this to check if we have created for spec needed spell 
-	Worgen = "Darkflight",
-	VoidElf = "SpatialRift",
-	NightElf = "Shadowmeld",
-	LightforgedDraenei = "LightsJudgment",
-	KulTiran = "Haymaker",
-	Human = "EveryManforHimself",
-	Gnome = "EscapeArtist",
-	Dwarf = "Stoneform",
-	Draenei = "GiftoftheNaaru",
-	DarkIronDwarf = "Fireblood",
-	Pandaren = "QuakingPalm",
-	ZandalariTroll = "Regeneratin",
-	Scourge = "WilloftheForsaken",
-	Troll = "Berserking",
-	Tauren = "WarStomp",
-	Orc = "BloodFury",
-	Nightborne = "ArcanePulse",
-	MagharOrc = "AncestralCall",
-	HighmountainTauren = "BullRush",
-	BloodElf = "ArcaneTorrent",
-	Goblin = "RocketJump",
-}
-function Action:AutoRacial(unit, isReadyCheck)
-	-- @return boolean 
-	-- Note: This is lazy template for all racials to easy manage them in one place. Their managment category can be found below this function, otherwise use :IsRacialON + :IsReady to configure custom 
-	-- Args are optional. isReadyCheck must be true for Single / AoE / Passive 
-	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
-		--[[ 
-			 This is how correctly that must be checked instead of UnitRace, even if game API will output another race we still know truly race
-			 Sometimes game change player race to another but UnitRace will still old that caused tons of problems but since Env.SpellExists
-			 checking spells exactly which has player we know which spells we have and can compare them with race
-			 
-			 Since ID is different and depend even on specialization we must compare localized name
-		]]
-		Action.PlayerRace = GetRaceBySpellName[self:Info()]
-		
-		local ShouldStop = false
-		if isReadyCheck then
-			ShouldStop = Action.ShouldStop()
-		end 		
-		
-		-- [NO LOGIC - ALWAYS TRUE] 
-		if 	-- Sprint
-			Action.PlayerRace == "Worgen" or 
-			Action.PlayerRace == "Goblin" or 
-			-- Misc (uncategoried) 
-			Action.PlayerRace == "VoidElf" or 
-			-- Bursting 
-			Action.PlayerRace == "DarkIronDwarf" or 
-			Action.PlayerRace == "Troll" or 
-			Action.PlayerRace == "Orc" or 
-			Action.PlayerRace == "MagharOrc"
-		then 
-			return true 
-		end 
-		
-		-- Damaging  
-		-- GCD 1.5 sec 
-		if 	Action.PlayerRace == "LightforgedDraenei" and 
-			not ShouldStop and 
-			LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
-			Action.LossOfControlIsMissed("SILENCE") and 
-			(
-				(
-					unit and 	
-					Env.Unit(unit):IsEnemy() and 
-					Env.Unit(unit):GetRange() <= 5  and 
-					self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"}) and  					
-					(
-						not Env.InPvP() or 
-						not Env.EnemyTeam("HEALER"):IsBreakAble(5)						
-					)
-				) or 
-				(
-					(
-						not unit or 
-						not Env.Unit(unit):IsEnemy() 
-					) and 
-					AoE(1, 5) 
-				)
-			) and 
-			(
-				not Env.InPvP() or 
-				not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-			)	
-		then 
-			return true 
-		end 
-		
-		-- GCD 1 sec 
-		if 	Action.PlayerRace == "Nightborne" and
-			not ShouldStop and 
-			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
-			Action.LossOfControlIsMissed("SILENCE") and		
-			(
-				(
-					unit and 	
-					Env.Unit(unit):IsEnemy() and 
-					Env.Unit(unit):GetRange() <= 5 and 
-					Env.UNITCurrentSpeed(thisunit) >= 100 and 
-					self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"})
-				) or  
-				AoE(3, 5)				
-			) and 
-			(
-				not Env.InPvP() or 
-				not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-			)
-		then 
-			return true 
-		end 		
-		
-		-- Purge 
-		-- GCD 1-1.5 sec 
-		if 	Action.PlayerRace == "BloodElf" and 
-			not ShouldStop and 
-			LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
-			Action.LossOfControlIsMissed("SILENCE") and
-			(	
-				(
-					Env.InPvP() and 
-					Env.FriendlyTeam():ArcaneTorrentMindControl()
-				) or 				 
-				(
-					unit and 
-					(not Env.Unit(unit):IsEnemy() or UnitInParty(unit) or UnitInRaid(unit)) and 
-					Env.Unit(unit):GetRange() <= 8 and 
-					Action.AuraIsValid(unit, "UsePurge", "PurgeFriendly")					
-				) or 
-				(
-					unit and 
-					Env.Unit(unit):IsEnemy() and 
-					Env.Unit(unit):GetRange() <= 8 and 
-					Action.AuraIsValid(unit, "UsePurge", "PurgeHigh")
-				)
-			)
-		then 
-			return true 
-		end 
-		
-		-- Healing 
-		if	Action.PlayerRace == "Draenei"  then 
-			if not unit or Env.Unit(unit):IsEnemy() then 
-				unit = "player" 
-			end 
-			
-			if 	LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and Action.LossOfControlIsMissed("SILENCE") and 
-				(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit))) and 
-				UnitHealthMax(unit) - UnitHealth(unit) >= UnitHealthMax("player") * 0.2 + (getHEAL(unit) * 5) + UnitGetIncomingHeals(unit) - (incdmg(unit) * 5) 
-			then 
-				return true 
-			end 
-		end 
-		
-		-- GCD 1.5 sec 
-		if 	Action.PlayerRace == "ZandalariTroll" and 
-			not ShouldStop and 
-			LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
-			Action.LossOfControlIsMissed("SILENCE") and 
-			Env.UNITStaying("player") > 1 and 
-			(				
-				incdmg("player") == 0 or 
-				(
-					pclass == "PALADIN" and 
-					Env.Unit("player"):HasBuffs(642, true) >= (100 - Env.UNITHP("player")) * 6 / 100
-				) or 
-				(
-					pclass == "HUNTER" and 
-					Env.Unit("player"):HasBuffs(186265, true) >= (100 - Env.UNITHP("player")) * 6 / 100
-				)
-			)
-		then 
-			return true 
-		end 
-				
-		-- Iterrupts 
-		-- GCD 1 sec 
-		if 	Action.PlayerRace == "Pandaren" and unit and 
-			not ShouldStop and 
-			Env.SpellInRange(unit, self.ID) and 
-			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.1 and 
-			Env.Unit(unit):IsControlAble("incapacitate", 0) and 
-			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
-		then
-			return true 			  
-		end 
-		
-		-- GCD 1.5 sec 
-		if 	Action.PlayerRace == "KulTiran" and unit and 	
-			not ShouldStop and 
-			Env.SpellInRange(unit, self.ID) and 
-			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 1.1 and 
-			Env.Unit(unit):IsControlAble("stun", 0) and 
-			self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
-		then
-			return true			  
-		end 	
-
-		-- Custom GCD
-		if 	Action.PlayerRace == "Tauren" and 
-			not ShouldStop and 
-			(
-				(
-					unit and 	
-					Env.Unit(unit):IsEnemy() and 
-					Env.Unit(unit):GetRange() <= 8 and 					
-					select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.7 and 
-					Env.Unit(unit):IsControlAble("stun", 0) and 
-					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
-				) or 
-				(
-					(
-						not unit or 
-						not Env.Unit(unit):IsEnemy() 
-					) and 
-					CastingUnits(1, 8)
-				)
-			)
-		then
-			return true				  
-		end 		
-
-		-- Custom GCD
-		if 	Action.PlayerRace == "HighmountainTauren" and unit and 
-			not ShouldStop and 
-			Env.Unit(unit):GetRange() <= 6 and 
-			select(2, Env.CastTime(nil, unit)) > Env.CurrentTimeGCD() + 0.3 and
-			Env.Unit(unit):IsControlAble("knockback") and 
-			self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)			
-		then
-			return true				  
-		end 	
-	
-		-- Control Avoid 
-		if 	Action.PlayerRace == "NightElf" then 
-			-- Check Freezing Trap 
-			if 	UnitCooldown:GetCooldown("arena", 3355) > UnitCooldown:GetMaxDuration("arena", 3355) - 2 and 
-				UnitCooldown:IsSpellInFly("arena", 3355) and 
-				getDR("player", "incapacitate") > 0 
-			then 
-				local Caster = UnitCooldown:GetUnitID("arena", 3355)
-				if Caster and not IsStealthed() and Env.Unit(Caster):GetRange() <= 40 and (getDMG("player") == 0 or not Env.Unit("player"):IsFocused("DAMAGER")) then 
-					return true 
-				end 
-			end 
-				
-			-- Check Storm Bolt 
-			if 	UnitCooldown:GetCooldown("arena", 222897) > UnitCooldown:GetMaxDuration("arena", 222897) - 2 and 
-				UnitCooldown:IsSpellInFly("arena", 222897) and 
-				getDR("player", "stun") > 25 -- don't waste on short durations by diminishing
-			then 
-				local Caster = UnitCooldown:GetUnitID("arena", 222897)
-				if Caster and not IsStealthed() and Env.Unit(Caster):GetRange() <= 20 then 
-					return true 
-				end 
-			end 
-		end 
-	
-		-- Trinkets 
-		if	Action.LOC[Action.PlayerRace] and 
-			Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied)
-		then 
-			return true 
-		end 		
-	end 
-	return false 	
-end 
-
-function Action:AutoRacialP(unit, isReadyCheck)
-	-- @return boolean 
-	-- Note: For other purposes, means custom. Just validance condition check what we can use by School, Loss of Control, Range and etc Imun
-	if self:IsRacialON() and (not isReadyCheck and Env.SpellCD(self.ID) <= Env.CurrentTimeGCD() or isReadyCheck and self:IsReady(unit, true)) then 
-		Action.PlayerRace = GetRaceBySpellName[self:Info()]
-		
-		local ShouldStop = false
-		if isReadyCheck then
-			ShouldStop = Action.ShouldStop()
-		end 
-		
-		-- Damaging  
-		if 	Action.PlayerRace == "LightforgedDraenei" then 
-			return 	not ShouldStop and 
-					LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
-					Action.LossOfControlIsMissed("SILENCE") and 
-					(
-						(
-							unit and 	
-							Env.Unit(unit):IsEnemy() and 
-							Env.Unit(unit):GetRange() <= 5  and 
-							self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"}) 
-						) or 						
-						AoE(1, 5) 						
-					) and 
-					(
-						not Env.InPvP() or 
-						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-					)	
-		elseif 	Action.PlayerRace == "Nightborne" then
-			return	not ShouldStop and 
-					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
-					Action.LossOfControlIsMissed("SILENCE") and		
-					(
-						(
-							unit and 	
-							Env.Unit(unit):IsEnemy() and 
-							Env.Unit(unit):GetRange() <= 5 and 
-							self:AbsentImun(unit, {"TotalImun", "DamageMagicImun"})
-						) or 
-						(
-							(
-								not unit or 
-								not Env.Unit(unit):IsEnemy() 
-							) and 
-							AoE(3, 5)
-						)
-					) and 
-					(
-						not Env.InPvP() or 
-						not Env.EnemyTeam("HEALER"):IsBreakAble(5)
-					)	 				
-		-- Purge 
-		elseif 	Action.PlayerRace == "BloodElf" then 
-			return 	not ShouldStop and 
-					LossOfControlGet("SCHOOL_INTERRUPT", "ARCANE") == 0 and 
-					Action.LossOfControlIsMissed("SILENCE") and
-					(	
-						(
-							unit and 
-							Env.Unit(unit):IsEnemy() and 
-							Env.Unit(unit):GetRange() <= 8 
-						) or 
-						(
-							unit and 
-							not Env.Unit(unit):IsEnemy() and 
-							Env.Unit(unit):GetRange() <= 8 				
-						) or 				
-						AoE(1, 8)
-					)		 		
-		-- Healing 
-		elseif	Action.PlayerRace == "Draenei" then 
-			if not unit or Env.Unit(unit):IsEnemy() then 
-				unit = "player" 
-			end 
-			return 	not ShouldStop and 
-					LossOfControlGet("SCHOOL_INTERRUPT", "HOLY") == 0 and 
-					Action.LossOfControlIsMissed("SILENCE") and 
-					(unit == "player" or (Env.SpellInRange(unit, self.ID) and self:AbsentImun(unit)))
-		elseif 	Action.PlayerRace == "ZandalariTroll" then 
-			return 	not ShouldStop and 
-					LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0 and 
-					Action.LossOfControlIsMissed("SILENCE") and 
-					Env.UNITStaying("player") > 0 and 
-					(				
-						incdmg("player") == 0 or 
-						(
-							pclass == "PALADIN" and 
-							Env.Unit("player"):HasBuffs(642, true) >= (100 - Env.UNITHP("player")) * 6 / 100
-						) or 
-						(
-							pclass == "HUNTER" and 
-							Env.Unit("player"):HasBuffs(186265, true) >= (100 - Env.UNITHP("player")) * 6 / 100
-						)
-					)				
-		-- Iterrupts 
-		elseif 	Action.PlayerRace == "Pandaren" then 
-			return 	unit and 
-					Env.SpellInRange(unit, self.ID) and 		
-					Env.Unit(unit):IsControlAble("incapacitate", 0) and 
-					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true) 			  				
-		elseif 	Action.PlayerRace == "KulTiran" then 
-			return 	unit and 
-					Env.SpellInRange(unit, self.ID) and 
-					Env.Unit(unit):IsControlAble("stun", 0) and 
-					self:AbsentImun(unit, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)		  		 
-		elseif 	Action.PlayerRace == "Tauren" then 
-			return 	(
-						(
-							unit and 	
-							Env.Unit(unit):IsEnemy() and 
-							Env.Unit(unit):GetRange() <= 8 and 					
-							Env.Unit(unit):IsControlAble("stun", 0) and 
-							self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
-						) or 
-						(
-							(
-								not unit or 
-								not Env.Unit(unit):IsEnemy() 
-							) and 
-							AoE(1, 8)
-						)
-					)			  
-		elseif 	Action.PlayerRace == "HighmountainTauren" then 
-			return	unit and 
-					Env.Unit(unit):GetRange() <= 6 and 
-					self:AbsentImun(unit, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)	
-		-- [NO LOGIC - ALWAYS TRUE] 
-		else 
-			return true 
-		end 	
-	end 
-	return false 
-end 
-
--- LOSS OF CONTROL 
--- [[ Trinkets (Racial and (H)G.Medallion) ]]
-Action.LOC = {
-	["GladiatorMedallion"] = {
-		Applied = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT", "SNARE", "STUN"},	
-		SpellID = 208683,
-		isValid = function()
-			return Env.InPvP() and 
-			(
-				(
-					Env.PvPTalentLearn(208683) and -- Gladiator
-					Env.SpellCD(208683) <= 0.02
-				) or 
-				(
-					not Env.PvPTalentLearn(208683) and
-					Env.SpellExists(195710) and -- Honor
-					Env.SpellCD(195710) <= 0.02
-				)
-			)		
-		end,
-	},
-	["Human"] = { 
-		Applied = {"STUN"},
-		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "SHACKLE_UNDEAD", "FEAR", "HORROR", "CHARM", "ROOT"},
-		SpellID = 59752,
-	},
-	["Dwarf"] = {
-		Applied = {"POLYMORPH", "SLEEP", "SHACKLE_UNDEAD"},
-		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "STUN", "FEAR", "HORROR", "CHARM", "ROOT"},
-		SpellID = 20594,
-	},
-	["Scourge"] = {
-		Applied = {"FEAR", "HORROR", "SLEEP", "CHARM"},
-		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "STUN", "SHACKLE_UNDEAD", "ROOT"},
-		SpellID = 7744,
-	},
-	["Gnome"] = {
-		Applied = {"ROOT", "SNARE"}, 
-		Missed = {"DISARM", "INCAPACITATE", "DISORIENT", "FREEZE", "SILENCE", "POSSESS", "SAP", "CYCLONE", "BANISH", "PACIFYSILENCE", "POLYMORPH", "SLEEP", "STUN", "SHACKLE_UNDEAD", "FEAR", "HORROR"},
-		SpellID = 20589,
-	},		
-}
-function Action.LossOfControlIsValid(MustBeApplied, MustBeMissed, Exception)
-	local isApplied = false 
-	local result = isApplied
-	
-	for i = 1, #MustBeApplied do 
-		if LossOfControlGet(MustBeApplied[i]) > 0 then 
-			isApplied = true 
-			result = isApplied
-			break 
-		end 
-	end 
-	
-	-- Exception 
-	if Exception and not isApplied then 
-		-- Dwarf in DeBuffs
-		if Action.PlayerRace == "Dwarf" then 
-			isApplied = Env.Unit("player"):HasDeBuffs("Poison") > 0 or Env.Unit("player"):HasDeBuffs("Curse") > 0 or Env.Unit("player"):HasDeBuffs("Magic") > 0
-		end
-		-- Gnome in current speed 
-		if Action.PlayerRace == "Gnome" then 
-			local cSpeed = Env.UNITCurrentSpeed("player")
-			isApplied = cSpeed > 0 and cSpeed < 100
-		end 
-	end 
-	
-	if isApplied and MustBeMissed then 
-		for i = 1, #MustBeMissed do 
-			if LossOfControlGet(MustBeMissed[i]) > 0 then 
-				result = false 
-				break 
-			end
-		end
-	end 
-	
-	return result, isApplied
-end 
-
-function Action.LossOfControlIsMissed(MustBeMissed)
-	local result = true
-	if type(MustBeMissed) == "table" then 
-		for i = 1, #MustBeMissed do 
-			if LossOfControlGet(MustBeMissed[i]) > 0 then 
-				result = false  
-				break 
-			end
-		end
-	else
-		result = LossOfControlGet(MustBeMissed) == 0
-	end 
-	return result 
-end 
-
--- Healthstone
--- [[ Item variable ]]
-local HS 
-
-function Action.Rotation(icon)
-	if not Action.IsInitialized or not Action[Env.PlayerSpec] then 
-		return Action.Hide(icon)		
-	end 	
-	
-	local meta = icon.ID
-	
-	-- [1] CC / [2] Kick 
-	if meta <= 2 then 
-		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
-			return true
-		end 
-		return Action.Hide(icon)
-	end 
-	
-	-- [5] Trinket 
-	if meta == 5 then 
-		-- Use racial available trinkets if we don't have additional LOS 
-		-- Note: Additional LOS is the main reason why I avoid here :AutoRacial (see below 'if isApplied then ')
-		if Action.GetToggle(1, "Racial") and Action.LOC[Action.PlayerRace] and Env.SpellCD(Action.LOC[Action.PlayerRace].SpellID) <= 0.01 and Env.SpellExists(Action.GetSpellInfo(Action.LOC[Action.PlayerRace].SpellID)) and (not Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]] or not Action[Env.PlayerSpec][GetKeyByRace[Action.PlayerRace]]:IsBlocked()) then 
-			local result, isApplied = Action.LossOfControlIsValid(Action.LOC[Action.PlayerRace].Applied, Action.LOC[Action.PlayerRace].Missed, Action.PlayerRace == "Dwarf" or Action.PlayerRace == "Gnome")
-			if result then 
-				Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
-				return true
-			end 
-		end 		
-		
-		-- Use specialization spell trinkets
-		if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then  
-			return true 			
-		end 	
-
-		-- Use (H)G.Medallion
-		if Action.LOC["GladiatorMedallion"].isValid() and Action.LossOfControlIsValid(Action.LOC["GladiatorMedallion"].Applied) then 
-			Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC["GladiatorMedallion"].SpellID))
-			return true 
-		end 		
-		
-		-- Use racial if nothing is not available 
-		if isApplied then 
-			Action.TMWAPL(icon, "texture", GetSpellTexture(Action.LOC[Action.PlayerRace].SpellID))
-			return true 
-		end 
-			
-		return Action.Hide(icon)		 
-	end 
-	
-	if PauseChecks() then
-		if meta == 3 then 
-			Action.TMWAPL(icon, PauseChecks())
-			return true
-		end  
-		return Action.Hide(icon)		
-	end 		
-	
-	-- [6] Passive: @player, @raid1, @arena1 
-	if meta == 6 then 
-		-- Shadowmeld
-		if Action[Env.PlayerSpec].Shadowmeld and Action[Env.PlayerSpec].Shadowmeld:AutoRacial("player", true) then 
-			return Action[Env.PlayerSpec].Shadowmeld:Show(icon)
-		end 
-		
-		-- Stopcasting 
-		if 	UnitCooldown:GetCooldown("arena", 147362) > UnitCooldown:GetMaxDuration("arena", 147362) - 1 and 
-			UnitCooldown:IsSpellInFly("arena", 147362) 
-		then 
-			local Caster = UnitCooldown:GetUnitID("arena", 147362)
-			if Caster then 
-				local castName, _, _, notInterruptable = Env.Unit("player"):IsCasting()
-				if castName and not notInterruptable and Env.Unit(Caster):GetRange() <= 40 and Env.Unit("player"):HasBuffs("TotalImun") == 0 and Env.Unit("player"):HasBuffs("KickImun") == 0 then 
-					Action.TMWAPL(icon, "texture", ACTION_CONST_STOPCAST)			 
-					return true 
-				end 
-			end 
-		end 
-		
-		-- Cursor 
-		if Action.GameTooltipClick and not IsMouseButtonDown("LeftButton") and not IsMouseButtonDown("RightButton") then 			
-			if Action.GameTooltipClick == "LEFT" then 
-				Action.TMWAPL(icon, "texture", ACTION_CONST_LEFT)			 
-				return true
-			elseif Action.GameTooltipClick == "RIGHT" then 
-				Action.TMWAPL(icon, "texture", ACTION_CONST_RIGHT) 				 
-				return true
-			end 
-		end 
-		
-		-- ReTarget ReFocus 
-		if Env.InPvP() then 
-			if Action.GetToggle(1, "ReTarget") and Action.LastTarget and not UnitExists("target") then 
-				Action.TMWAPL(icon, "texture", Re["Target"][Action.LastTarget]) 				 
-				return true
-			end 
-			
-			if Action.GetToggle(1, "ReFocus") and Action.LastFocus and not UnitExists("focus") then 
-				Action.TMWAPL(icon, "texture", Re["Focus"][Action.LastFocus]) 				 
-				return true
-			end 
-		end 
-		
-		-- Healthstone 
-		local Healthstone = Action.GetToggle(1, "HealthStone") 
-		if Healthstone >= 0 then 
-			if not HS then 
-				HS = TMW.Classes.ItemByID:New(5512)
-			end 
-			
-			if HS:GetCount() > 0 and HS:GetCooldownDuration() == 0 and not Env.global_invisible() then 			
-				if Healthstone >= 100 then -- AUTO 
-					if TimeToDie("player") <= 9 and Env.UNITHP("player") <= 40 then 
-						Action.TMWAPL(icon, "texture", ACTION_CONST_HEALTHSTONE)					 
-						return true
-					end 
-				elseif Env.UNITHP("player") <= Healthstone then 
-					Action.TMWAPL(icon, "texture", ACTION_CONST_HEALTHSTONE)				 
-					return true
-				end 
-			end 
-		end 
-		
-		-- AutoTarget 
-		if Action.GetToggle(1, "AutoTarget") and not Env.IamHealer and CombatTime("player") > 0 
-			-- No existed or switch in PvE if we accidentally selected out of combat unit  
-			and (not UnitExists("target") or (Env.Zone ~= "none" and not Env.InPvP() and CombatTime("target") == 0)) 
-			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
-			and ((not Env.InPvP() and CombatUnits(1)) or Env.Zone == "pvp")
-		then 
-			Action.TMWAPL(icon, "texture", ACTION_CONST_ATARGET)			 
-			return true
-		end 
-	end 
-	
-	if Action.IsQueueReady(meta) then                                              	-- queue system must have highest priority 
-		return Action.ShowQueue(icon)                                          		-- if everything success then set frame 				 
-    end 
-	
-	-- [3] Single / [4] AoE / [6-8] Passive: @player-party1-2, @raid1-3, @arena1-3
-	if Action[Env.PlayerSpec][meta] and Action[Env.PlayerSpec][meta](icon) then 
-		return true 
-	end 
-	
-	-- [3] Set Class Portrait
-	if meta == 3 then 
-		Action.TMWAPL(icon, "texture", ClassPortaits[pclass])
-		return true
-	end 
-	
-	Action.Hide(icon)			
-end 
-

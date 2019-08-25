@@ -21,19 +21,20 @@ local Action = Action
 
 -- Create actions (spells, items, potions, auras, azerites, talents and etc)
 -- Structure:
-Action[PLAYERSPEC] = {			-- PLAYERSPEC is Constance (example: ACTION_CONST_MONK_BM) which we created in ProfileUI
+Action[PLAYERSPEC] = {			-- PLAYERSPEC is Constance (example: ACTION_CONST_MONK_BREWMASTER) which we created in ProfileUI
 	Key = Action.Create({ 		-- Key is name of the action which will be used in APL (Action Priority List)
 	--[[@usage: attributes (table)
 		Required: 
-			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|HeartOfAzeroth
+			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth (TrinketBySlot is only in CORE!)
 			ID (@number) 	- spellID | itemID
-			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in Action.Data.C[Color] or here can be own hex 
-		Optional: 
+			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in A.Data.C[Color] or here can be own hex 
+	 	Optional: 
 			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
 			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
 			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
+			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth
 	]]
 	}),
 }
@@ -64,7 +65,7 @@ local RacialKeys = {
 }
 
 -- To create essences use next code:
-Action:CreateEssencesFor(PLAYERSPEC)		-- where PLAYERSPEC is Constance (example: ACTION_CONST_MONK_BM)
+Action:CreateEssencesFor(PLAYERSPEC)		-- where PLAYERSPEC is Constance (example: ACTION_CONST_MONK_BREWMASTER)
 -- It will push to Action[PLAYERSPEC] already preconfigured keys from HeartOfAzeroth.lua in the next format sorted by specialization role:
 -- Note: Does nothing if game hasn't 8.2 API for essences
 local AzeriteEssences = {
@@ -95,7 +96,7 @@ local AzeriteEssences = {
 local A = setmetatable(Action[PLAYERSPEC], { __index = Action })
 
 -- Example:
-Action[ACTION_CONST_MONK_BM] = {
+Action[ACTION_CONST_MONK_BREWMASTER] = {
 	POWS 									= Action.Create({ Type = "Spell", ID = 17}),
 	PetKick 								= Action.Create({ Type = "Spell", ID = 47482, Color = "RED", Desc = "RED" }),  
 	POWS_Rank2 								= Action.Create({ Type = "SpellSingleColor", ID = 17, Color = "BLUE", Desc = "Rank2" }), 
@@ -133,8 +134,8 @@ Action[ACTION_CONST_MONK_BM] = {
 	EscapeArtist						  	= Action.Create({ Type = "Spell", ID = 20589	}), 
 	EveryManforHimself				  		= Action.Create({ Type = "Spell", ID = 59752	}), 
 }
-Action:CreateEssencesFor(ACTION_CONST_MONK_BM)
-local A = setmetatable(Action[ACTION_CONST_MONK_BM], { __index = Action })
+Action:CreateEssencesFor(ACTION_CONST_MONK_BREWMASTER)
+local A = setmetatable(Action[ACTION_CONST_MONK_BREWMASTER], { __index = Action })
 
 -------------------------------------------------------------------------------
 -- №3: Create rotations
