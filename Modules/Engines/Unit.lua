@@ -2432,6 +2432,24 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, member 				= 0, "none"
 		
+		if TeamCache.Friendly.Size == 0 then 
+			if spells then 
+				local g = A.Unit(member):HasDeBuffs(spells) 
+				if g ~= 0 then 
+					return g, "player"
+				else 
+					return value, member 
+				end 
+			else 
+				local d = A.Unit("player"):InCC()
+				if d ~= 0 then 
+					return d, "player"
+				else 
+					return value, member
+				end 
+			end 
+		end 			
+		
 		if ROLE then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if spells then 
@@ -2464,7 +2482,12 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, member 				= 0, "none"
 		if TeamCache.Friendly.Size == 0 then 
-			return A.Unit("player"):HasBuffs(spells, iSource) == 0, "player"
+			local d = A.Unit("player"):HasBuffs(spells, iSource)
+			if d ~= 0 then 
+				return d, "player"
+			else 
+				return value, member
+			end 
 		end 		
 		
 		if ROLE then 
@@ -2603,7 +2626,7 @@ A.FriendlyTeam = PseudoClass({
 		if TeamCache.Friendly.Size == 0 then 
 			local d = A.Unit("player"):HasBuffs(spells, iSource) 
 			if d == 0 then 
-				return d, "player"
+				return true, "player"
 			else 
 				return value, member
 			end 
