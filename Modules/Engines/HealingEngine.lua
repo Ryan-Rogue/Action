@@ -27,7 +27,7 @@ local UnitGUID, UnitIsUnit =
 	  UnitGUID, UnitIsUnit
 
 A.HealingEngine 					= {}
-Frame 				= CreateFrame("Frame", "TargetColor", UIParent)
+local Frame 						= CreateFrame("Frame", "TargetColor", UIParent)
 Frame:SetBackdrop(nil)
 Frame:SetFrameStrata("TOOLTIP")
 Frame:SetToplevel(true)
