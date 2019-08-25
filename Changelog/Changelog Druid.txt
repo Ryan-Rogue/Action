@@ -1,3 +1,6 @@
+[Druid v20]
+Update to make it work able on latest API 
+
 [Druid v19]
 Restor 		- Changed Prowl priority
 
