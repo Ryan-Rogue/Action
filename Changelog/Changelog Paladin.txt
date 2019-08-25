@@ -1,3 +1,8 @@
+[Paladin v17]
+Ret Prot Holy		- Lay on Hands is now fixed for rated instances 
+Holy				- Fixed Divine Shield usage on yourself, will be triggered by critical state to be killed 
+Ret 				- Hammer of Reckoning some use fixies 
+
 [Paladin v16]
 Holy 	- Tweaked HPS by changed Holy Shock logic
 
