@@ -1,3 +1,14 @@
+[Monk v5]
+BM MW WW	- Rewritten for latest API 
+BM MW WW	- Interrupts by Paralysis will now skip check enemies karma
+MW			- Fixed LUA error due LOS system when @targettarget was checked by wrong function
+MW			- Fixed issue which channeling interrupts
+MW			- Added Smoothing Mist stop cast supporting 
+WW			- Updated to the last simcraft "rskless update"
+WW			- Fixed issues due target picker for StormEarthandFire 
+WW			- TigereyeBrew fixed querying through name (id works properly)
+BM			- Fixed miss type for IsReady in [1] CC rotation
+
 [Monk v4]
 WW 		- Focused Azerite Beam now works without AoE toggles since profit to use better as Single 
 WW 		- Fortifying Brew will not be triggered in PvE mode 
