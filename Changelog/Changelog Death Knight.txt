@@ -1,3 +1,8 @@
+[Death Knight v13] 
+Blood Frost Unholy  - Asphyxy now checks classification and diminishing 
+Frost 	 			- Chill Streak added in PvE rotation mode for Single and AoE 
+Unholy 				- Fixed Defile stopping rotation 
+
 [Death Knight v12]
 Unholy PvP			- Fixed issue with Outbreak use in AMS
 Frost PvP 			- Fixed issue with Chill Streak use in AMS
