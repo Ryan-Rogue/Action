@@ -255,7 +255,7 @@ if DogTag then
     })
 	DogTag:AddTag("TMW", "ActionModeAoE", {
         code = function()            
-			if A.IsInitialized and A.GetToggle(1, "AoE") then
+			if A.IsInitialized and A.GetToggle(2, "AoE") then
 			    return "|cff00ff00AoE|r"
 			else 
 				return "|cFFFF0000AoE|r"
