@@ -241,7 +241,7 @@ if DogTag then
 	-- Taste's 
     DogTag:AddTag("TMW", "ActionModeCD", {
         code = function()            
-			if A.UseCDs == true then
+			if A.IsInitialized and A.GetToggle(1, "Burst") ~= "Off" then
 			    return "|cff00ff00CD|r"
 			else 
 				return "|cFFFF0000CD|r"
@@ -255,7 +255,7 @@ if DogTag then
     })
 	DogTag:AddTag("TMW", "ActionModeAoE", {
         code = function()            
-			if A.UseAoE == true then
+			if A.IsInitialized and A.GetToggle(1, "AoE") then
 			    return "|cff00ff00AoE|r"
 			else 
 				return "|cFFFF0000AoE|r"
