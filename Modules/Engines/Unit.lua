@@ -1578,8 +1578,8 @@ A.Unit = PseudoClass({
 	CastTime								= Cache:Pass(function(self, argSpellID)
 		-- @return:
 		-- [1] Total Casting Time (@number)
-		-- [2] Currect Casting Left Time (seconds) (@number)
-		-- [3] Current Casting Left Time (percent) (@number)
+		-- [2] Currect Casting Left (X -> 0) Time (seconds) (@number)
+		-- [3] Current Casting Done (0 -> 100) Time (percent) (@number)
 		-- [4] spellID (@number)
 		-- [5] spellName (@string)
 		-- [6] notInterruptable (@boolean, false is able to be interrupted)
@@ -1945,7 +1945,7 @@ A.Unit = PseudoClass({
 				end 
 			end 
 			
-			local castPercent = (TMW.time - castStartTime) * 100 / (castEndTime - castStartTime)
+			local castPercent = ((TMW.time * 1000) - castStartTime) * 100 / (castEndTime - castStartTime)
 			return castPercent >= Info.CacheInterrupt[GUID].Timer 
 		end 	
 	end, "UnitID"),

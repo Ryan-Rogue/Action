@@ -37,7 +37,7 @@ local GetNumEvents 								= cLossOfControl.GetNumEvents
 -- Locals: CombatTracker
 -------------------------------------------------------------------------------
 local CombatTracker 							= {
-	Data			 						= setmetatable({}, { __mode == "kv" }),
+	Data			 						= {}, -- setmetatable({}, { __mode == "kv" })
 	Doubles 								= {
 		[3]  								= "Holy + Physical",
 		[5]  								= "Fire + Physical",
