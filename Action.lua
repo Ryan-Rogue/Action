@@ -3933,7 +3933,6 @@ function Action.ToggleMode()
 end 
 
 -- [1] Burst 
-local tempBurst = {1, "Burst", L["TAB"][1]["BURST"] .. ": "}
 function Action.ToggleBurst(fixed, between)
 	local Current = Action.GetToggle(1, "Burst")
 	
@@ -3956,7 +3955,7 @@ function Action.ToggleBurst(fixed, between)
 		Current = Action.Data.TG.Burst
 	end 			
 	
-	Action.SetToggle(tempBurst, set or fixed or Current)	
+	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)	
 end 
 
 function Action.BurstIsON(unitID)	
@@ -3982,7 +3981,6 @@ function Action.RacialIsON(self)
 end 
 
 -- [1] HealingEngine 
-local tempHealingEngine = {1, "HE_Toggle", "HealingEngine" .. ": "}
 function Action.ToggleHE(fixed)
 	local Current = Action.GetToggle(1, "HE_Toggle")
 	if Current == "ALL" then 		
@@ -3996,7 +3994,7 @@ function Action.ToggleHE(fixed)
 	else 
 		Current = "ALL"
 	end 		
-	Action.SetToggle(tempHealingEngine, fixed or Current)	
+	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
 end 
 
 -- [1] ReTarget // ReFocus
@@ -4194,7 +4192,6 @@ end
 -- [3] SpellLevel (skipping unknown spells by character level)
 local SpellLevel = { 
 	Blocked 		= {},
-	tempToggle 		= {3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "},
 	Wipe			= function(self)
 		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_LEVEL_UP")
 		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_SPECIALIZATION_CHANGED")
@@ -4205,7 +4202,7 @@ local SpellLevel = {
 	end,
 	Reset 			= function(self)	
 		if Action.GetToggle(3, "CheckSpellLevel") then 
-			Action.SetToggle(self.tempToggle, false)
+			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
 		end 
 		self:Wipe()
 	end,
@@ -4248,7 +4245,7 @@ local SpellLevel = {
 			if isLaunch then 
 				TMW.db.profile.ActionDB[3].CheckSpellLevel = true 
 			else 
-				Action.SetToggle(self.tempToggle)
+				Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "})
 			end 
 			
 			local toggle = Action.GetToggle(3, "CheckSpellLevel") 
@@ -4874,10 +4871,9 @@ local function UpdateChat(...)
     end  
 end 
 
-local tempMSG = {7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "}
 function Action.ToggleMSG(isLaunch)
 	if not isLaunch and Action.IsInitialized then 
-		Action.SetToggle(tempMSG)
+		Action.SetToggle({7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "})
 	end
 	
 	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
@@ -5115,11 +5111,10 @@ function Action.GetToggle(n, toggle)
 	return bool	
 end 	
 
-local tempMinimap = {1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "}
 function Action.ToggleMinimap()
 	if Action.Minimap then 
 		if Action.IsInitialized then 
-			Action.SetToggle(tempMinimap)
+			Action.SetToggle({1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "})
 		end
 		if Action.GetToggle(1, "DisableMinimap") then 
 			LibDBIcon:Hide("ActionUI")

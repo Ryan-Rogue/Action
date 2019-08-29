@@ -20,15 +20,15 @@ ACTION_CONST_PAUSECHECKS_SPELL_IS_TARGETING 					= 236353
 ACTION_CONST_PAUSECHECKS_LOOTFRAME 								= 975746
 ACTION_CONST_PAUSECHECKS_IS_EAT_OR_DRINK 						= 134062
 
-ACTION_CONST_TRINKET1 											= 1030902 		-- GetSpellTexture(179071)
-ACTION_CONST_TRINKET2 											= 1030910 		-- GetSpellTexture(224540)
-ACTION_CONST_POTION 											= 967532		-- GetSpellTexture(176108)
-ACTION_CONST_HEARTOFAZEROTH 									= 1869493 		-- GetSpellTexture(280431)
+ACTION_CONST_TRINKET1 											= 1030902 		-- garrison_blueweapon GetSpellTexture(179071)
+ACTION_CONST_TRINKET2 											= 1030910 		-- garrison_greenweapon
+ACTION_CONST_POTION 											= 967532		-- Trade_alchemy_dpotion_a28
+ACTION_CONST_HEARTOFAZEROTH 									= 1869493 		-- Inv_heartofazeroth
 
-ACTION_CONST_LEFT 												= 237586 		-- GetSpellTexture(98008)
-ACTION_CONST_RIGHT 												= 132487 		-- GetSpellTexture(34976)
-ACTION_CONST_STOPCAST 											= 249170		-- GetSpellTexture(147362)
-ACTION_CONST_AUTOTARGET 										= 133015 		-- GetSpellTexture(153911)
+ACTION_CONST_LEFT 												= 237586 		-- spell_shaman_spiritlink
+ACTION_CONST_RIGHT 												= 132487 		-- Inv_bannerpvp_03
+ACTION_CONST_STOPCAST 											= 249170		-- Inv_ammo_arrow_03
+ACTION_CONST_AUTOTARGET 										= 133015 		-- Inv_gizmo_goblingtonkcontroller
 
 -- SpellID
 ACTION_CONST_SPELLID_GLADIATORS_MEDALLION						= 208683
