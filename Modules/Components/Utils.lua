@@ -435,7 +435,7 @@ local function UpdateCVAR()
 	end
 	
 	local nameplatesMaxDistance = GetCVar("nameplatesMaxDistance")
-    if nameplatesMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
+    if nameplatesMaxDistance and nameplatesMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
 		SetCVar("nameplatesMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
 		if isCheckedOnce then 
 			A.Print("nameplatesMaxDistance " .. nameplatesMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
