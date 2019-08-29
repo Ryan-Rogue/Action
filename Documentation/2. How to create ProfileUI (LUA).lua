@@ -85,143 +85,141 @@ A.Data.ProfileUI = {
 	[2] = {
 		[PLAYERSPEC] = {
 			{
-				{
-					E = "Label",
-					L = {			
-						-- Fixed LANGUAGE is short game language, like ["enUS"] , more info https://wowwiki.fandom.com/wiki/API_GetLocale . ["enUS"] key must be existed ALWAYS!! because if user hasn't localization it will use ["enUS"] key 
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced LANGUAGE, ANY is valid for any game language (usefully with GetSpellInfo)
-						ANY = '@string',
-					},
-					S = '@string', 			-- font (text) size					
+				E = "Label",
+				L = {			
+					-- Fixed LANGUAGE is short game language, like ["enUS"] , more info https://wowwiki.fandom.com/wiki/API_GetLocale . ["enUS"] key must be existed ALWAYS!! because if user hasn't localization it will use ["enUS"] key 
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced LANGUAGE, ANY is valid for any game language (usefully with GetSpellInfo)
+					ANY = '@string',
 				},
-				{
-					E = "Header",
-					L = {			
-						-- Fixed
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced
-						ANY = '@string',
-					},
-					S = '@string', 			-- font (text) size					
+				S = '@string', 			-- font (text) size					
+			},
+			{
+				E = "Header",
+				L = {			
+					-- Fixed
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced
+					ANY = '@string',
 				},
-				{
-					E = "Button",
-					L = {			
-						-- Fixed 
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced
-						ANY = '@string',
-					},
-					OnClick = function(self, button, down) 	-- 'self' is own frame button, 'button' is left or right mouse click event, 'down' state of that 
-						-- your code here 
-					end, 
+				S = '@string', 			-- font (text) size					
+			},
+			{
+				E = "Button",
+				L = {			
+					-- Fixed 
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced
+					ANY = '@string',
+				},
+				OnClick = function(self, button, down) 	-- 'self' is own frame button, 'button' is left or right mouse click event, 'down' state of that 
+					-- your code here 
+				end, 
+				-- Optional:
+				TT = {									-- tooltip		
+					-- Fixed 
+					[LANGUAGE] = '@string', 
+					-- OR Forced
+					ANY = '@string',
+				},
+				M = '@any' or nil, 						-- non-nill will display tooltip if it's empty about "Right Click to create macro"
+				isDisabled = true or nil,
+			},
+			{
+				E = "Checkbox",
+				L = {			
+					-- Fixed 
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced
+					ANY = '@string',
+				},
+				DB = value,				-- name of key for SavedVariables in DataBase
+				DBV = value,			-- default value if key wasn't existed before, it's also used for 'Reset Settings', supports @boolean @string @number
+				-- Optional:
+				TT = {					-- tooltip		
+					-- Fixed 
+					[LANGUAGE] = '@string', 
+					-- OR Forced
+					ANY = '@string',
+				},
+				M = { 					-- macros, if table exists (even without keys) it will unlock macro creation by right click on this element 
 					-- Optional:
-					TT = {									-- tooltip		
-						-- Fixed 
-						[LANGUAGE] = '@string', 
-						-- OR Forced
-						ANY = '@string',
-					},
-					M = '@any' or nil, 						-- non-nill will display tooltip if it's empty about "Right Click to create macro"
-					isDisabled = true or nil,
+					Custom = "/run Action.ToggleTest()", -- using custom macro text to create by right click, all below is not valid if Custom key noted
+					-- Otherwise it will structure like 
+					-- /run Action.SetToggle({[tab.name], Action.Data.ProfileUI[tab.name][spec].DB, Action.Data.ProfileUI[tab.name][spec].L[CL] .. ": "}, Action.Data.ProfileUI[tab.name][spec].M.Value or nil)
+					-- It does call func CraftMacro(L[CL], macro above, 1) -- 1 means perCharacter tab in MacroUI, if nil then will be used allCharacters tab in MacroUI
+					Value = value or nil, 
+					-- Very Very Optional, no idea why it will be need however.. 
+					TabN = '@number' or nil,								
+					Print = '@string' or nil,								
 				},
-				{
-					E = "Checkbox",
-					L = {			
-						-- Fixed 
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced
-						ANY = '@string',
-					},
-					DB = value,				-- name of key for SavedVariables in DataBase
-					DBV = value,			-- default value if key wasn't existed before, it's also used for 'Reset Settings', supports @boolean @string @number
-					-- Optional:
-					TT = {					-- tooltip		
-						-- Fixed 
-						[LANGUAGE] = '@string', 
-						-- OR Forced
-						ANY = '@string',
-					},
-					M = { 					-- macros, if table exists (even without keys) it will unlock macro creation by right click on this element 
-						-- Optional:
-						Custom = "/run Action.ToggleTest()", -- using custom macro text to create by right click, all below is not valid if Custom key noted
-						-- Otherwise it will structure like 
-						-- /run Action.SetToggle({[tab.name], Action.Data.ProfileUI[tab.name][spec].DB, Action.Data.ProfileUI[tab.name][spec].L[CL] .. ": "}, Action.Data.ProfileUI[tab.name][spec].M.Value or nil)
-						-- It does call func CraftMacro(L[CL], macro above, 1) -- 1 means perCharacter tab in MacroUI, if nil then will be used allCharacters tab in MacroUI
-						Value = value or nil, 
-						-- Very Very Optional, no idea why it will be need however.. 
-						TabN = '@number' or nil,								
-						Print = '@string' or nil,								
-					},
-					isDisabled = true or nil,
+				isDisabled = true or nil,
+			},
+			{
+				E = "Dropdown",
+				L = {			
+					-- Fixed 
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced
+					ANY = '@string',
 				},
-				{
-					E = "Dropdown",
-					L = {			
-						-- Fixed 
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced
-						ANY = '@string',
-					},
-					DB = value,				-- name of key for SavedVariables in DataBase
-					DBV = value,			-- default value from OT key if key wasn't existed before, it's also used for 'Reset Settings', supports @string
-					-- Optional:
-					TT = {					-- tooltip		
-						-- Fixed 
-						[LANGUAGE] = '@string', 
-						-- OR Forced
-						ANY = '@string',
-					},
-					M = {},					-- macros (same as on Checkbox)
-					isDisabled = true or nil,					
-					H = '@number',			-- height of element (default 20)
-					OT = {					-- option table of menu
-						{ text = '@string', value = 1 },	-- value must be @number if you use key MULT as true, otherwise it supports @string @number @boolean
-						{ text = '@string', value = 2 },	
-					},
-					MULT = true or nil,		-- makes dropdown as multiselector
-					isNotEqualVal = value, 	-- only if MULT is false or omitted, custom value of Dropdown which shouldn't be recorded into Cache, otherwise it's ~= "Off", ~= "OFF" and ~= 0
-					SetPlaceholder = { 		-- only if MULT is true, default displayed value if nothing is not selected from menu 
-						-- Only Fixed
-						[LANGUAGE1] = '@string', 
-					}, 
+				DB = value,				-- name of key for SavedVariables in DataBase
+				DBV = value,			-- default value from OT key if key wasn't existed before, it's also used for 'Reset Settings', supports @string
+				-- Optional:
+				TT = {					-- tooltip		
+					-- Fixed 
+					[LANGUAGE] = '@string', 
+					-- OR Forced
+					ANY = '@string',
 				},
-				{
-					E = "Slider",
-					L = {			
-						-- Fixed 
-						[LANGUAGE1] = '@string', 
-						[LANGUAGE2] = '@string',
-						-- OR Forced
-						ANY = '@string',
-					},
-					DB = value,				-- name of key for SavedVariables in DataBase
-					DBV = '@number',		-- default value from OT key if key wasn't existed before, it's also used for 'Reset Settings', supports @number
-					-- Optional:
-					TT = {					-- tooltip		
-						-- Fixed 
-						[LANGUAGE] = '@string', 
-						-- OR Forced
-						ANY = '@string',
-					},
-					M = {},					-- macros (same as on Checkbox)				
-					H = '@number',			-- height of element   (default 20)
-					MIN = '@number',		-- min value on slider (default -1)
-					MAX = '@number',		-- max value on slider (default 100)
-					Precision = '@number', 	-- accuracy of slider move (default 2)
-					-- One of the next keys:
-					-- If one of them is noted then will makes Slider display OFF / AUTO text if it will reach as value to MIN / MAX 
-					ONOFF = true,			-- makes to display OFF if value == MIN and AUTO if value == MAX 
-					ONLYON = true,			-- makes to display only AUTO if value == MAX 
-					ONLYOFF = true,			-- makes to display only OFF if value == MIN 
-					-- Otherwise it will display just number
+				M = {},					-- macros (same as on Checkbox)
+				isDisabled = true or nil,					
+				H = '@number',			-- height of element (default 20)
+				OT = {					-- option table of menu
+					{ text = '@string', value = 1 },	-- value must be @number if you use key MULT as true, otherwise it supports @string @number @boolean
+					{ text = '@string', value = 2 },	
 				},
+				MULT = true or nil,		-- makes dropdown as multiselector
+				isNotEqualVal = value, 	-- only if MULT is false or omitted, custom value of Dropdown which shouldn't be recorded into Cache, otherwise it's ~= "Off", ~= "OFF" and ~= 0
+				SetPlaceholder = { 		-- only if MULT is true, default displayed value if nothing is not selected from menu 
+					-- Only Fixed
+					[LANGUAGE1] = '@string', 
+				}, 
+			},
+			{
+				E = "Slider",
+				L = {			
+					-- Fixed 
+					[LANGUAGE1] = '@string', 
+					[LANGUAGE2] = '@string',
+					-- OR Forced
+					ANY = '@string',
+				},
+				DB = value,				-- name of key for SavedVariables in DataBase
+				DBV = '@number',		-- default value from OT key if key wasn't existed before, it's also used for 'Reset Settings', supports @number
+				-- Optional:
+				TT = {					-- tooltip		
+					-- Fixed 
+					[LANGUAGE] = '@string', 
+					-- OR Forced
+					ANY = '@string',
+				},
+				M = {},					-- macros (same as on Checkbox)				
+				H = '@number',			-- height of element   (default 20)
+				MIN = '@number',		-- min value on slider (default -1)
+				MAX = '@number',		-- max value on slider (default 100)
+				Precision = '@number', 	-- accuracy of slider move (default 2)
+				-- One of the next keys:
+				-- If one of them is noted then will makes Slider display OFF / AUTO text if it will reach as value to MIN / MAX 
+				ONOFF = true,			-- makes to display OFF if value == MIN and AUTO if value == MAX 
+				ONLYON = true,			-- makes to display only AUTO if value == MAX 
+				ONLYOFF = true,			-- makes to display only OFF if value == MIN 
+				-- Otherwise it will display just number
 			},
 		},
 	},

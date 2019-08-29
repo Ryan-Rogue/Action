@@ -434,6 +434,14 @@ local function UpdateCVAR()
 		SetCVar("doNotFlashLowHealthWarning", 1) 
 	end
 	
+	local nameplatesMaxDistance = GetCVar("nameplatesMaxDistance")
+    if nameplatesMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
+		SetCVar("nameplatesMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
+		if isCheckedOnce then 
+			A.Print("nameplatesMaxDistance " .. nameplatesMaxDistance .. " => " ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+		end 
+	end		
+	
     -- WM removal
     if GetCVar("screenshotQuality") ~= "10" then 
 		SetCVar("screenshotQuality", 10)  

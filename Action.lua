@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "28.08.2019"
+local DateTime 						= "29.08.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -13,13 +13,14 @@ local LSM 							= LibStub("LibSharedMedia-3.0")
 local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe = 
 	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe
 
-local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale = 
-	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale
+local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick = 
+	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick
 	  
 local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower = 
 	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower	  
 	    
 local GameLocale 					= GetLocale()	
+local C_UI							= _G.C_UI
 local Spell							= _G.Spell 	  								-- ObjectAPI/Spell.lua
 local FindSpellBookSlotBySpellID 	= _G.FindSpellBookSlotBySpellID	   
 local AzeriteEssence 				= _G.C_AzeriteEssence
@@ -3932,6 +3933,7 @@ function Action.ToggleMode()
 end 
 
 -- [1] Burst 
+local tempBurst = {1, "Burst", L["TAB"][1]["BURST"] .. ": "}
 function Action.ToggleBurst(fixed, between)
 	local Current = Action.GetToggle(1, "Burst")
 	
@@ -3954,7 +3956,7 @@ function Action.ToggleBurst(fixed, between)
 		Current = Action.Data.TG.Burst
 	end 			
 	
-	Action.SetToggle({1, "Burst", L["TAB"][1]["BURST"] .. ": "}, set or fixed or Current)	
+	Action.SetToggle(tempBurst, set or fixed or Current)	
 end 
 
 function Action.BurstIsON(unitID)	
@@ -3980,6 +3982,7 @@ function Action.RacialIsON(self)
 end 
 
 -- [1] HealingEngine 
+local tempHealingEngine = {1, "HE_Toggle", "HealingEngine" .. ": "}
 function Action.ToggleHE(fixed)
 	local Current = Action.GetToggle(1, "HE_Toggle")
 	if Current == "ALL" then 		
@@ -3993,7 +3996,7 @@ function Action.ToggleHE(fixed)
 	else 
 		Current = "ALL"
 	end 		
-	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
+	Action.SetToggle(tempHealingEngine, fixed or Current)	
 end 
 
 -- [1] ReTarget // ReFocus
@@ -4183,13 +4186,15 @@ function GetLOS(unitID)
 end 
 
 -- [2] AoE toggle through Ctrl+Left Click on main picture 
+local tempAoE = {2, "AoE"}
 function Action.ToggleAoE()
-	Action.SetToggle({2, "AoE"})
+	Action.SetToggle(tempAoE)
 end 
 
 -- [3] SpellLevel (skipping unknown spells by character level)
 local SpellLevel = { 
 	Blocked 		= {},
+	tempToggle 		= {3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "},
 	Wipe			= function(self)
 		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_LEVEL_UP")
 		Action.Listener:Remove("ACTION_EVENT_SPELLLEVEL", 	"PLAYER_SPECIALIZATION_CHANGED")
@@ -4200,7 +4205,7 @@ local SpellLevel = {
 	end,
 	Reset 			= function(self)	
 		if Action.GetToggle(3, "CheckSpellLevel") then 
-			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
+			Action.SetToggle(self.tempToggle, false)
 		end 
 		self:Wipe()
 	end,
@@ -4243,7 +4248,7 @@ local SpellLevel = {
 			if isLaunch then 
 				TMW.db.profile.ActionDB[3].CheckSpellLevel = true 
 			else 
-				Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "})
+				Action.SetToggle(self.tempToggle)
 			end 
 			
 			local toggle = Action.GetToggle(3, "CheckSpellLevel") 
@@ -4869,9 +4874,10 @@ local function UpdateChat(...)
     end  
 end 
 
+local tempMSG = {7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "}
 function Action.ToggleMSG(isLaunch)
 	if not isLaunch and Action.IsInitialized then 
-		Action.SetToggle({7, "MSG_Toggle", L["TAB"][7]["MSG"] .. " : "})
+		Action.SetToggle(tempMSG)
 	end
 	
 	Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
@@ -5109,10 +5115,11 @@ function Action.GetToggle(n, toggle)
 	return bool	
 end 	
 
+local tempMinimap = {1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "}
 function Action.ToggleMinimap()
 	if Action.Minimap then 
 		if Action.IsInitialized then 
-			Action.SetToggle({1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "})
+			Action.SetToggle(tempMinimap)
 		end
 		if Action.GetToggle(1, "DisableMinimap") then 
 			LibDBIcon:Hide("ActionUI")

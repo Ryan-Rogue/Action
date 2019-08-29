@@ -169,7 +169,7 @@ end
 
 -- Example:
 local function IsSchoolFree()
-	return A.LossOfControlIsMissed("SILENCE") and LossOfControlGet("SCHOOL_INTERRUPT", "NATURE") == 0
+	return A.LossOfControlIsMissed("SILENCE") and A.LossOfControl:Get("SCHOOL_INTERRUPT", "NATURE") == 0
 end 
 
 local function SelfDefensives()
