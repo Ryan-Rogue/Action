@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "31.08.2019"
+local DateTime 						= "01.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -9022,7 +9022,6 @@ function Action:OnInitialize()
 			Action.Print(L["SLASH"]["INTERFACEGUIDANCE"])
 			Action.Print(L["SLASH"]["INTERFACEGUIDANCEEACHSPEC"])
 			Action.Print(L["SLASH"]["INTERFACEGUIDANCEALLSPECS"])
-			Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
 			Action.Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
 			Action.Print(L["SLASH"]["ATTENTION"])
 		else 
