@@ -1147,7 +1147,7 @@ A.UnitCooldown 									= {
 				end 				
 			end 
 		else 
-			local GUID = UnitTracker.CacheGUID[unit] or UnitGUID(unit)
+			local GUID = UnitGUID(unit)
 			if GUID and UnitTracker.Data[GUID] then 
 				if UnitTracker.Data[GUID].Shrimmer then 
 					charges = 2
@@ -1185,7 +1185,7 @@ A.UnitCooldown 									= {
 				end 				
 			end 
 		else 
-			local GUID = UnitTracker.CacheGUID[unit] or UnitGUID(unit)
+			local GUID = UnitGUID(unit)
 			if GUID and UnitTracker.Data[GUID] and UnitTracker.Data[GUID][spellID] then 
 				return UnitTracker.Data[GUID][spellID].isFlying
 			end 
