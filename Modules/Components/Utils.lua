@@ -13,8 +13,8 @@ local toNum 				= A.toNum
 local assert, select, type, next, ipairs, wipe, hooksecurefunc, message	= 
 	  assert, select, type, next, ipairs, wipe, hooksecurefunc, message
 	  
-local GetCVar, SetCVar 		=
-	  GetCVar, SetCVar
+local CreateFrame, GetCVar, SetCVar =
+	  CreateFrame, GetCVar, SetCVar
 
 local GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale =
 	  GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale
@@ -461,6 +461,11 @@ local function UpdateCVAR()
 	isCheckedOnce = true
 end
 
+local function ConsoleUpdate()
+	UpdateCVAR()
+    UpdateFrames()      
+end 
+
 local function TrueScaleInit()
     TMW:RegisterCallback("TMW_GROUP_SETUP_POST", function(_, frame)
             local str_group = toStr[frame]
@@ -468,19 +473,14 @@ local function TrueScaleInit()
                 UpdateFrames()  
             end
     end)
-    UpdateFrames()
+    ConsoleUpdate()
     TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETUP_COMPLETE")
 end
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETUP_COMPLETE")    
 
-local function ConsoleUpdate()
-	UpdateCVAR()
-    UpdateFrames()      
-end 
-
 A.Listener:Add("ACTION_EVENT_UTILS", "DISPLAY_SIZE_CHANGED", 	ConsoleUpdate	)
 A.Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 		ConsoleUpdate	)
-A.Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", 	ConsoleUpdate	)
+--A.Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", 	ConsoleUpdate	)
 --A.Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",			UpdateCVAR		)
 VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
 InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)

@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "29.08.2019"
+local DateTime 						= "31.08.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -5485,16 +5485,18 @@ function Action.ToggleMainUI()
 				for i = 1, #tabFrame.tabs do
 					local tab = tabFrame.tabs[i]
 					if tab and tab.childs[spec] then -- don't touch tab.childs[spec]
-						if i == 3 then 					
-							local ScrollTable = tab.childs[spec].ScrollTable -- don't touch tab.childs[spec]
-							for index = 1, #ScrollTable.data do 								
-								if ScrollTable.data[index]:IsBlocked() then 
-									ScrollTable.data[index].Enabled = "False"
-								else 
-									ScrollTable.data[index].Enabled = "True"
-								end								
-							end
-							ScrollTable:ClearSelection()							
+						if i == 3 then 		
+							if tab.childs[spec] and tab.childs[spec].ScrollTable then -- in case if profile is Basic without created actions 
+								local ScrollTable = tab.childs[spec].ScrollTable -- don't touch tab.childs[spec]
+								for index = 1, #ScrollTable.data do 								
+									if ScrollTable.data[index]:IsBlocked() then 
+										ScrollTable.data[index].Enabled = "False"
+									else 
+										ScrollTable.data[index].Enabled = "True"
+									end								
+								end
+								ScrollTable:ClearSelection()	
+							end 
 						else 
 							-- Redraw statement by Identify if that langue frame is already drawed							
 							local kids = GetKids(tab, spec)
@@ -5524,7 +5526,8 @@ function Action.ToggleMainUI()
 											child:SetText(child:FindValueText(SetVal))
 										else 
 											child.value = Action.GetToggle(i, child.Identify.Toggle)
-											child:SetText(child.value)
+											--child.text:SetText(child.value)
+											child.text:SetText(child:FindValueText(child.value))
 										end 
 									elseif child.Identify.Type == "Slider" then							
 										child:SetValue(Action.GetToggle(i, child.Identify.Toggle)) 
@@ -8552,7 +8555,7 @@ end
 -- Debug  
 -------------------------------------------------------------------------------
 function Action.Print(text, bool, ignore)
-	if not ignore and TMW.db and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1].DisablePrint then 
+	if not ignore and TMW.db and TMW.db.profile.ActionDB and TMW.db.profile.ActionDB[1] and TMW.db.profile.ActionDB[1].DisablePrint then 
 		return 
 	end 
     local hex = "00ccff"
@@ -8644,8 +8647,8 @@ local function OnInitialize()
 	local profile = TMW.db:GetCurrentProfile()
 	
 	Action.IsInitialized = nil	
-	Action.IsGGLprofile = profile:match("GGL") or false  	-- Don't remove it because this is validance for HealingEngine   
-	TMW:Fire("TMW_ACTION_DEPRECATED")						-- TODO: Remove 
+	Action.IsGGLprofile = profile:match("GGL") and true or false  	-- Don't remove it because this is validance for HealingEngine   
+	TMW:Fire("TMW_ACTION_DEPRECATED")								-- TODO: Remove 
 	
 	----------------------------------
 	-- TMW CORE SNIPPETS FIX
