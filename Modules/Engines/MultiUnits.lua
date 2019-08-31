@@ -22,6 +22,7 @@ local UnitCanAttack, UnitGUID  					    = UnitCanAttack, UnitGUID -- no need cac
 -------------------------------------------------------------------------------	  
 local MultiUnits 								= {
 	activeUnitPlates 							= {},
+	--activeUnitPlatesGUID 						= {},
 	activeUnitCLEU 								= {},
 	tempEnemies									= {},
 	LastCallInitCLEU							= 0,
@@ -32,15 +33,24 @@ local MultiUnits 								= {
 MultiUnits.AddNameplate							= function(unitID)
 	if UnitCanAttack("player", unitID) then 
 		MultiUnits.activeUnitPlates[unitID] = unitID
+		--local GUID 							= UnitGUID(unitID)
+		--if GUID then 
+			--MultiUnits.activeUnitPlatesGUID[GUID] = unitID
+		--end 
 	end
 end
 
 MultiUnits.RemoveNameplate						= function(unitID)
     MultiUnits.activeUnitPlates[unitID] = nil 
+	--local GUID 							= UnitGUID(unitID)
+	--if GUID then 
+		--MultiUnits.activeUnitPlatesGUID[GUID] = nil
+	--end 
 end
 
 MultiUnits.OnResetNameplates					= function()
 	wipe(MultiUnits.activeUnitPlates)
+	--wipe(MultiUnits.activeUnitPlatesGUID)
 end 
 
 -- CLEU 
@@ -125,6 +135,14 @@ function A.MultiUnits.GetActiveUnitPlates(self)
 	-- @usage A.MultiUnits:GetActiveUnitPlates()
 	return MultiUnits.activeUnitPlates
 end 
+
+--[[
+function A.MultiUnits.GetActiveUnitPlatesGUID(self)
+	-- @return table (enemy nameplates GUID) or nil
+	-- @usage A.MultiUnits:GetActiveUnitPlates()
+	return MultiUnits.activeUnitPlatesGUID
+end 
+]]
 
 function A.MultiUnits.GetBySpell(self, spell, count)
 	-- @return number
