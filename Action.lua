@@ -6281,7 +6281,7 @@ function Action.ToggleMainUI()
 							
 							local isShown = true 
 							-- AutoHidden unavailable 
-							if ToggleAutoHidden then 								
+							if ToggleAutoHidden and v.ID ~= ACTION_CONST_PICKPOCKET then 								
 								if v.Type == "Spell" then 															
 									if not v:IsExists() then 
 										isShown = false 
