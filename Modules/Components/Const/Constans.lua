@@ -27,7 +27,7 @@ ACTION_CONST_HEARTOFAZEROTH 									= 1869493 		-- Inv_heartofazeroth
 
 ACTION_CONST_LEFT 												= 237586 		-- spell_shaman_spiritlink
 ACTION_CONST_RIGHT 												= 132487 		-- Inv_bannerpvp_03
-ACTION_CONST_STOPCAST 											= 249170		-- Inv_ammo_arrow_03
+ACTION_CONST_STOPCAST 											= 125145		-- spell_magic_polymorphrabbit
 ACTION_CONST_AUTOTARGET 										= 133015 		-- Inv_gizmo_goblingtonkcontroller
 
 -- SpellID

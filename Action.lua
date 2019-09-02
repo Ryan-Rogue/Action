@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "01.09.2019"
+local DateTime 						= "02.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -1820,6 +1820,7 @@ Action.Data = {
 		["DRUID"] 			= "[GGL] Druid",
 		["DEATHKNIGHT"] 	= "[GGL] Death Knight",
 		["DEMONHUNTER"] 	= "[GGL] Demon Hunter",
+		["BASIC"]			= "[GGL] Basic",
 	},
 	-- UI template config  
 	theme = {
@@ -8688,18 +8689,24 @@ local function OnInitialize()
 	-- Load default profile if current profile is generated as default
 	local defaultprofile = UnitName("player") .. " - " .. GetRealmName()
 	if profile == defaultprofile then 
-		local AllProfiles = TMW.db:GetProfiles()
-		if AllProfiles then 			
-			for i = 1, #AllProfiles do 
-				if AllProfiles[i] == Action.Data.DefaultProfile[Action.PlayerClass] then 
-					if TMW.Locked then 
-						TMW:LockToggle()
-					end 
-					TMW.db:SetProfile(Action.Data.DefaultProfile[Action.PlayerClass])
-					return
-				end
-			end 
-		end
+		local AllProfiles = TMW.db.profiles
+		if AllProfiles then 
+			if Action.Data.DefaultProfile[Action.PlayerClass] and AllProfiles[Action.Data.DefaultProfile[Action.PlayerClass]] then 
+				if TMW.Locked then 
+					TMW:LockToggle()
+				end 
+				TMW.db:SetProfile(Action.Data.DefaultProfile[Action.PlayerClass])
+				return
+			end		
+		
+			if AllProfiles[Action.Data.DefaultProfile["BASIC"]] then 
+				if TMW.Locked then 
+					TMW:LockToggle()
+				end 
+				TMW.db:SetProfile(Action.Data.DefaultProfile["BASIC"])
+				return 
+			end 	
+		end 
 	end 		
 		
 	-- Check if profile support Action
@@ -8821,7 +8828,7 @@ local function OnInitialize()
 	if not Action.Minimap and LibDBIcon then 
 		local ldbObject = {
 			type = "launcher",
-			icon = "133015", 
+			icon = ACTION_CONST_AUTOTARGET, 
 			label = "ActionUI",
 			OnClick = function(self, button)
 				Action.ToggleMainUI()
