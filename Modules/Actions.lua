@@ -427,6 +427,11 @@ local Racial = {
 		-- RocketBarrage
 		-- NO API
 	},
+	Temp													= {
+		TotalAndMagic 										= {"TotalImun", "DamageMagicImun"},
+		TotalAndPhysAndCC									= {"TotalImun", "DamagePhysImun", "CCTotalImun"},
+		TotalAndPhysAndCCAndStun							= {"TotalImun", "DamagePhysImun", "CCTotalImun", "StunImun"},
+	},
 	-- Functions	
 	CanUse 													= function(this, self, unitID)
 		-- @return boolean 
@@ -441,7 +446,7 @@ local Racial = {
 							unitID and 	
 							Unit(unitID):IsEnemy() and 
 							Unit(unitID):GetRange() <= 5  and 
-							self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) 
+							self:AbsentImun(unitID, this.Temp.TotalAndMagic) 
 						) or 						
 						MultiUnits:GetByRange(5, 1) >= 1						
 					) and 
@@ -459,7 +464,7 @@ local Racial = {
 							unitID and 	
 							Unit(unitID):IsEnemy() and 
 							Unit(unitID):GetRange() <= 5 and 
-							self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"})
+							self:AbsentImun(unitID, this.Temp.TotalAndMagic)
 						) or 
 						(
 							(
@@ -502,13 +507,13 @@ local Racial = {
 		if A.PlayerRace == "Pandaren" then 
 			return 	unitID and 		
 					Unit(unitID):IsControlAble("incapacitate") and 
-					self:AbsentImun(unitID, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
+					self:AbsentImun(unitID, this.Temp.TotalAndPhysAndCC, true)
 		end 
 		
 		if A.PlayerRace == "KulTiran" then 
 			return 	unitID and 
 					Unit(unitID):IsControlAble("stun") and 
-					self:AbsentImun(unitID, {"TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
+					self:AbsentImun(unitID, this.Temp.TotalAndPhysAndCC, true)
 		end 
 		
 		if A.PlayerRace == "Tauren" then 
@@ -518,7 +523,7 @@ local Racial = {
 							Unit(unitID):IsEnemy() and 
 							Unit(unitID):GetRange() <= 8 and 					
 							Unit(unitID):IsControlAble("stun") and 
-							self:AbsentImun(unitID, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
+							self:AbsentImun(unitID, this.Temp.TotalAndPhysAndCCAndStun, true)
 						) or 
 						(
 							(
@@ -533,7 +538,7 @@ local Racial = {
 		if A.PlayerRace == "HighmountainTauren" then 
 			return	unitID and 
 					Unit(unitID):GetRange() <= 6 and 
-					self:AbsentImun(unitID, {"StunImun", "TotalImun", "DamagePhysImun", "CCTotalImun"}, true)
+					self:AbsentImun(unitID, this.Temp.TotalAndPhysAndCCAndStun, true)
 		end 
 		
 		-- [NO LOGIC - ALWAYS TRUE] 
