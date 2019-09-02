@@ -19,8 +19,8 @@ local CreateFrame, GetCVar, SetCVar =
 local GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale =
 	  GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale
 	  
-local GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, 	 GetSpellTexture =
-	  GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, TMW.GetSpellTexture
+local GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, 	 GetSpellTexture, GetSpellInfo, CombatLogGetCurrentEventInfo =
+	  GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, TMW.GetSpellTexture, GetSpellInfo, CombatLogGetCurrentEventInfo
 
 local UnitName, UnitGUID 	=
 	  UnitName, UnitGUID
@@ -167,7 +167,7 @@ do
         module:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED",
             function(_, unit, _, spellID)
                 if unit == "player" and ussSpells[spellID] and not blacklist[spellID] then
-					local spellName			= A.GetSpellInfo(spellID)
+					local spellName			= A.GetSpellInfo and A.GetSpellInfo(spellID) or GetSpellInfo(spellID)
                     Env.LastPlayerCastName 	= strlowerCache[spellName]
                     Env.LastPlayerCastID 	= spellID
 					A.LastPlayerCastName	= spellName
