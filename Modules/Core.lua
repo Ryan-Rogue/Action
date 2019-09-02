@@ -13,18 +13,18 @@ local SpellIsTargeting		= SpellIsTargeting
 local IsMouseButtonDown		= IsMouseButtonDown
 
 local ClassPortaits = {
-	["WARRIOR"] 			= 626008,
-	["PALADIN"] 			= 626003,
-	["HUNTER"] 				= 626000,
-	["ROGUE"] 				= 626005,
-	["PRIEST"] 				= 626004,
-	["DEATHKNIGHT"] 		= 135771,
-	["SHAMAN"]	 			= 454482, -- Custom because it making conflict with Bloodlust
-	["MAGE"] 				= 626001,
-	["WARLOCK"] 			= 626007,
-	["MONK"] 				= 626002,
-	["DRUID"] 				= 625999,
-	["DEMONHUNTER"] 		= 236415,
+	["WARRIOR"] 			= ACTION_CONST_PORTRAIT_WARRIOR,
+	["PALADIN"] 			= ACTION_CONST_PORTRAIT_PALADIN,
+	["HUNTER"] 				= ACTION_CONST_PORTRAIT_HUNTER,
+	["ROGUE"] 				= ACTION_CONST_PORTRAIT_ROGUE,
+	["PRIEST"] 				= ACTION_CONST_PORTRAIT_PRIEST,
+	["DEATHKNIGHT"] 		= ACTION_CONST_PORTRAIT_DEATHKNIGHT,
+	["SHAMAN"]	 			= ACTION_CONST_PORTRAIT_SHAMAN, -- Custom because it making conflict with Bloodlust
+	["MAGE"] 				= ACTION_CONST_PORTRAIT_MAGE,
+	["WARLOCK"] 			= ACTION_CONST_PORTRAIT_WARLOCK,
+	["MONK"] 				= ACTION_CONST_PORTRAIT_MONK,
+	["DRUID"] 				= ACTION_CONST_PORTRAIT_DRUID,
+	["DEMONHUNTER"] 		= ACTION_CONST_PORTRAIT_DEMONHUNTER,
 }
 
 local GetKeyByRace = {
