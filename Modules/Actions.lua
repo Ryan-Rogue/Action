@@ -599,17 +599,17 @@ local Racial = {
 				
 		-- Iterrupts 
 		if A.PlayerRace == "Pandaren" then 
-			return Unit(unitID):CastInfo() > A.GetCurrentGCD() + 0.1		  
+			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.1		  
 		end 
 
 		if A.PlayerRace == "KulTiran" then  	
-			return Unit(unitID):CastInfo() > A.GetCurrentGCD() + 1.1			  
+			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 1.1			  
 		end 	
 		
 		if A.PlayerRace == "Tauren" then 
 			return  (
 						unitID and 					
-						Unit(unitID):CastInfo() > A.GetCurrentGCD() + 0.7
+						Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.7
 					) or 
 					(
 						(
@@ -622,7 +622,7 @@ local Racial = {
 
 		-- Custom GCD
 		if A.PlayerRace == "HighmountainTauren" then 
-			return Unit(unitID):CastInfo() > A.GetCurrentGCD() + 0.3			  
+			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.3			  
 		end 	
 	
 		-- Control Avoid 
