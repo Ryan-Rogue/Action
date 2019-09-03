@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "02.09.2019"
+local DateTime 						= "03.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -4701,7 +4701,7 @@ function Action.CursorInit()
 	if not Action.IsGameTooltipInitializated then
 		GameTooltip:RegisterEvent("CURSOR_UPDATE")
 		GameTooltip:HookScript("OnEvent", function(self, event) 
-			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Action.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") then
+			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Action.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") and next(TMW.db.profile.ActionDB[6][Action.PlayerSpec][Action.IsInPvP and "PvP" or "PvE"]["GameToolTip"][GameLocale]) then
 				self:Hide()				
 			end
 		end)
