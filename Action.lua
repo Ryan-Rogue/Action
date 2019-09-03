@@ -6283,7 +6283,7 @@ function Action.ToggleMainUI()
 							-- AutoHidden unavailable 
 							if ToggleAutoHidden and v.ID ~= ACTION_CONST_PICKPOCKET then 								
 								if v.Type == "Spell" then 															
-									if not v:IsExists() then 
+									if not v:IsExists() or v:IsBlockedBySpellLevel() then 
 										isShown = false 
 									end 
 								else 
@@ -6513,6 +6513,8 @@ function Action.ToggleMainUI()
 				if not self.isDisabled then 
 					if button == "LeftButton" then 	
 						SpellLevel:Initialize()
+						tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())	
+						tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)	
 					end 
 				end 
 			end)
