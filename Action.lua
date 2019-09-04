@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "03.09.2019"
+local DateTime 						= "04.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -3605,6 +3605,7 @@ end
 local function GlobalsRemap()
 	Action.PlayerSpec, Action.PlayerSpecName = GetSpecializationInfo(GetSpecialization())
 	TMW:Fire("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED")	-- For MultiUnits to initialize CLEU and other purposes to be sure what variables was updated properly 
+	TMW:Fire("TMW_ACTION_DEPRECATED")						-- TODO: Remove 
 	if Action.PlayerSpec and TMW and TMW.db and TMW.db.profile.ActionDB then 
 		_G.HE_Toggle = TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Toggle ~= "ALL" and TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Toggle or nil
 		_G.HE_Pets = TMW.db.profile.ActionDB[1][Action.PlayerSpec].HE_Pets	

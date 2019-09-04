@@ -1391,8 +1391,8 @@ local UnitAuras = {
     },
 }
 function Env.PvEDispel(unit)
-	if not A.IsInPvP and UnitAuras[Env.PlayerSpec] then 
-        for k, v in pairs(UnitAuras[Env.PlayerSpec]) do 
+	if not A.IsInPvP and UnitAuras[A.PlayerSpec] then 
+        for k, v in pairs(UnitAuras[A.PlayerSpec]) do 
             for _, Spell in pairs(v) do 
                 duration = (Spell.dur == 0 and Env.GCD() + Env.CurrentTimeGCD()) or Spell.dur
                 -- Exception 
