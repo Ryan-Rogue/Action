@@ -434,11 +434,11 @@ local function UpdateCVAR()
 		SetCVar("doNotFlashLowHealthWarning", 1) 
 	end
 	
-	local nameplatesMaxDistance = GetCVar("nameplatesMaxDistance")
-    if nameplatesMaxDistance and nameplatesMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
-		SetCVar("nameplatesMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
+	local nameplateMaxDistance = GetCVar("nameplateMaxDistance")
+    if nameplateMaxDistance and nameplateMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
+		SetCVar("nameplateMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
 		if isCheckedOnce then 
-			A.Print("nameplatesMaxDistance " .. nameplatesMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+			A.Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
 		end 
 	end		
 	
@@ -480,7 +480,7 @@ TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETU
 
 A.Listener:Add("ACTION_EVENT_UTILS", "DISPLAY_SIZE_CHANGED", 	ConsoleUpdate	)
 A.Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 		ConsoleUpdate	)
---A.Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", 	ConsoleUpdate	)
+--A.Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", ConsoleUpdate	)
 --A.Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",			UpdateCVAR		)
 VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
 InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)
