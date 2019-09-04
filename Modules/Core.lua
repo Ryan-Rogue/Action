@@ -71,7 +71,7 @@ function A.PauseChecks()
         return ACTION_CONST_PAUSECHECKS_DISABLED
     end	
 	
-	if (A.GetToggle(1, "CheckDeadOrGhost") and Unit("player"):IsDead()) or (A.GetToggle(1, "CheckDeadOrGhostTarget") and Unit("target"):IsDead() and (not A.IsInPvP or Unit("target"):Class() ~= "HUNTER")) then 						-- exception in PvP Hunter 
+	if (A.GetToggle(1, "CheckDeadOrGhost") and Unit("player"):IsDead()) or (A.GetToggle(1, "CheckDeadOrGhostTarget") and (Unit("target"):IsDead() or Unit("mouseover"):IsDead()) and (not A.IsInPvP or Unit("target"):Class() ~= "HUNTER")) then 						-- exception in PvP Hunter 
 		return ACTION_CONST_PAUSECHECKS_DEAD_OR_GHOST
 	end 	
 	
