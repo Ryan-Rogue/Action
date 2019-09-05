@@ -6333,6 +6333,11 @@ function Action.ToggleMainUI()
 					
 					Key:SetText(rowData.TableKeyName)
 					Key:ClearFocus()
+					
+					if columnData.index == "Enabled" then
+						rowData:SetBlocker()
+						tab.childs[spec].ScrollTable:ClearSelection()
+					end 
 				end 				
 			end 
 						
