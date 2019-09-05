@@ -560,7 +560,7 @@ function Env.SpellRace(key)
 		
 		if key == "TRINKET" then 
 			local Medallion = Env.PvPTalentLearn(208683) and 208683 or 195710	
-			if A.PlayerRace == "Human" and LoC:Get("STUN") > 0 and (not A.IsInPvP or Env.SpellCD(Medallion) > 0 or (
+			if A.PlayerRace == "Human" and LoC:Get("STUN") > 0 and (not Env.InPvP() or Env.SpellCD(Medallion) > 0 or (
 				LoC:Get("DISARM") == 0 and 
 				LoC:Get("INCAPACITATE") == 0 and
 				LoC:Get("DISORIENT") == 0 and
@@ -588,7 +588,7 @@ function Env.SpellRace(key)
 				Env.Unit("player"):HasDeBuffs("Poison") > 0 or 
 				Env.Unit("player"):HasDeBuffs("Curse") > 0 or 
 				Env.Unit("player"):HasDeBuffs("Magic") > 0
-			) and (not A.IsInPvP or Env.SpellCD(Medallion) > 0 or (
+			) and (not Env.InPvP() or Env.SpellCD(Medallion) > 0 or (
 				LoC:Get("DISARM") == 0 and 
 				LoC:Get("INCAPACITATE") == 0 and
 				LoC:Get("DISORIENT") == 0 and
@@ -613,7 +613,7 @@ function Env.SpellRace(key)
 				LoC:Get("HORROR") > 0 or 
 				LoC:Get("SLEEP") > 0 or 
 				LoC:Get("CHARM") > 0
-			) and (not A.IsInPvP or Env.SpellCD(Medallion) > 0 or (
+			) and (not Env.InPvP() or Env.SpellCD(Medallion) > 0 or (
 				LoC:Get("DISARM") == 0 and 
 				LoC:Get("INCAPACITATE") == 0 and
 				LoC:Get("DISORIENT") == 0 and
@@ -632,7 +632,7 @@ function Env.SpellRace(key)
 				return id
 			end 
 			
-			if A.PlayerRace == "Gnome" and (LoC:Get("ROOT") > 0 or LoC:Get("SNARE") > 0) and (not A.IsInPvP or Env.SpellCD(Medallion) > 0 or (
+			if A.PlayerRace == "Gnome" and (LoC:Get("ROOT") > 0 or LoC:Get("SNARE") > 0) and (not Env.InPvP() or Env.SpellCD(Medallion) > 0 or (
 				LoC:Get("DISARM") == 0 and 
 				LoC:Get("INCAPACITATE") == 0 and
 				LoC:Get("DISORIENT") == 0 and
@@ -665,7 +665,7 @@ end
 
 function Env.GladiatorMedallion()
 	return 
-	A.IsInPvP and 
+	Env.InPvP() and 
 	(
 		(
 			Env.PvPTalentLearn(208683) and -- Gladiator
@@ -1391,7 +1391,7 @@ local UnitAuras = {
     },
 }
 function Env.PvEDispel(unit)
-	if not A.IsInPvP and UnitAuras[A.PlayerSpec] then 
+	if not Env.InPvP() and UnitAuras[A.PlayerSpec] then 
         for k, v in pairs(UnitAuras[A.PlayerSpec]) do 
             for _, Spell in pairs(v) do 
                 duration = (Spell.dur == 0 and Env.GCD() + Env.CurrentTimeGCD()) or Spell.dur
