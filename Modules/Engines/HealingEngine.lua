@@ -960,7 +960,7 @@ local function HealingEngineInit()
 				self.elapsed = 0
 			end			
 		end)
-	elseif #A.HealingEngine.Members.ALL > 0 then
+	else
 		A.HealingEngine.Members:Wipe()
 		A.HealingEngine.Frequency:Wipe()
 		A.Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_TARGET_CHANGED")
