@@ -967,6 +967,7 @@ local function HealingEngineInit()
 		A.Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_ENABLED")
 		A.Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_DISABLED")
 		Frame:SetScript("OnUpdate", nil)
+		Frame.texture:SetColorTexture(0, 0, 0, 1.0) 
 	end 
 end 
 A.Listener:Add("ACTION_EVENT_HEALINGENGINE", "PLAYER_ENTERING_WORLD", 			HealingEngineInit)
