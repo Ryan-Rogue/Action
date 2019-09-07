@@ -176,6 +176,7 @@ local Localization = {
 				KEY = "[Key: ",
 				KEYTOTAL = "[Queued Total: ",
 				KEYTOOLTIP = "Use this key in MSG tab",
+				ISFORBIDDENFORBLOCK = "is forbidden for blocker!",
 				ISFORBIDDENFORQUEUE = "is forbidden for queue!",
 				ISQUEUEDALREADY = "is already existing in queue!",
 				QUEUED = "|cff00ff00Queued: |r",
@@ -467,6 +468,7 @@ local Localization = {
 				KEY = "[Ключ: ",
 				KEYTOTAL = "[Суммарно Очереди: ",
 				KEYTOOLTIP = "Используйте этот ключ во вкладке MSG",
+				ISFORBIDDENFORBLOCK = "запрещен для установки в блокировку!",
 				ISFORBIDDENFORQUEUE = "запрещен для установки в очередь!",
 				ISQUEUEDALREADY = "уже в состоит в очереди!",
 				QUEUED = "|cff00ff00Установлен в очередь: |r",
@@ -758,6 +760,7 @@ local Localization = {
 				KEY = "[Schlüssel: ",
 				KEYTOTAL = "[Warteschlangensumme: ",
 				KEYTOOLTIP = "Benutze den Schlüssel im MSG Fenster", 
+				ISFORBIDDENFORBLOCK = "Verboten für die Blocker!",
 				ISFORBIDDENFORQUEUE = "Verboten für die Warteschleife!",
 				ISQUEUEDALREADY = "Schon in der Warteschleife drin!",
 				QUEUED = "|cff00ff00Eingereiht: |r",
@@ -1049,6 +1052,7 @@ local Localization = {
 				KEY = "[Key: ",
 				KEYTOTAL = "[Total de la file d'attente: ",
 				KEYTOOLTIP = "Utiliser ce mot clef dans l'onglet MSG",
+				ISFORBIDDENFORBLOCK = "est indertit pour la file bloquer!",
 				ISFORBIDDENFORQUEUE = "est indertit pour la file d'attente!",
 				ISQUEUEDALREADY = "est déjà dans la file d'attente!",
 				QUEUED = "|cff00ff00Mise en attente: |r",
@@ -1340,6 +1344,7 @@ local Localization = {
 				KEY = "[Chiave: ",
 				KEYTOTAL = "[Totale coda: ",
 				KEYTOOLTIP = "Usa questa chiave nel tab MSG",
+				ISFORBIDDENFORBLOCK = "non può esser messo in blocco!",
 				ISFORBIDDENFORQUEUE = "non può esser messo in coda!",
 				ISQUEUEDALREADY = "esiste giá nella coda!",
 				QUEUED = "|cff00ff00Nella Coda: |r",
@@ -1631,6 +1636,7 @@ local Localization = {
 				KEY = "[Tecla: ",
 				KEYTOTAL = "[Cola Total: ",
 				KEYTOOLTIP = "Usa esta tecla en la pestaña MSG",
+				ISFORBIDDENFORBLOCK = "está prohibido ponerlo en bloquear!",
 				ISFORBIDDENFORQUEUE = "está prohibido ponerlo en cola!",
 				ISQUEUEDALREADY = "ya existe en la cola!",
 				QUEUED = "|cff00ff00Cola: |r",
@@ -4286,6 +4292,11 @@ end
 function Action:SetBlocker()
 	-- Sets block on action
 	-- Note: /run Action[Action.PlayerSpec].WordofGlory:SetBlocker()
+	if self.BlockForbidden then 
+		Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORBLOCK"])
+        return 		
+	end 
+	
 	local Notification 
 	local Identify = GetTableKeyIdentify(self)
 	if self:IsBlocked() then 

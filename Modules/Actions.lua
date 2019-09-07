@@ -1015,6 +1015,7 @@ function A.Create(attributes)
 	 	Optional: 
 			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
 			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
+			BlockForbidden (@boolean) uses to preset for action fixed block valid 
 			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
@@ -1027,6 +1028,7 @@ function A.Create(attributes)
 		ID = attributes.ID,
 		SubType = attributes.Type,
 		Desc = attributes.Desc or "",
+		BlockForbidden = attributes.BlockForbidden, 
 		QueueForbidden = attributes.QueueForbidden, 
 		MetaSlot = attributes.MetaSlot,
 		Hidden = attributes.Hidden,
