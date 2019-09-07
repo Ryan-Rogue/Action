@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "05.09.2019"
+local DateTime 						= "07.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -4324,6 +4324,10 @@ end
 
 -- [3] SetQueue (Queue System)
 local Queue = {
+	Temp 						= {
+		SilenceON				= { Silence = true },
+		SilenceOFF				= { Silence = false },
+	},
 	Reset 						= function(self)
 		Action.Listener:Remove("ACTION_EVENT_QUEUE", "UNIT_SPELLCAST_SUCCEEDED")
 		Action.Listener:Remove("ACTION_EVENT_QUEUE", "BAG_UPDATE_COOLDOWN")
@@ -4346,19 +4350,19 @@ local Queue = {
 	UNIT_SPELLCAST_SUCCEEDED 	= function(self, ...)
 		local source, _, spellID = ...
 		if (source == "player" or source == "pet") and Action.Data.Q[1] and Action.Data.Q[1].Type == "Spell" and Action.GetSpellInfo(spellID) == Action.Data.Q[1]:Info() then 			
-			getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+			getmetatable(Action.Data.Q[1]).__index:SetQueue(self.Temp.SilenceON)
 		end 	
 	end,
 	BAG_UPDATE_COOLDOWN			= function(self)
 		if Action.Data.Q[1] and Action.Data.Q[1].Type ~= "Spell" then 
 			local start, duration, enable = Action.Data.Q[1].Item:GetCooldown()
 			if duration and math.abs(TMW.time - start) <= 2 then 
-				getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+				getmetatable(Action.Data.Q[1]).__index:SetQueue(self.Temp.SilenceON)
 				return 
 			end 
 			-- For things like a potion that was used in combat and the cooldown hasn't yet started counting down
 			if enable == 0 and Action.Data.Q[1].Type ~= "Trinket" then 
-				getmetatable(Action.Data.Q[1]).__index:SetQueue({ Silence = true })
+				getmetatable(Action.Data.Q[1]).__index:SetQueue(self.Temp.SilenceON)
 			end 
 		end 	
 	end, 
@@ -4366,7 +4370,7 @@ local Queue = {
 		if #Action.Data.Q > 0 then 
 			for i = 1, #Action.Data.Q do 
 				if Action.Data.Q[i].Queued then 
-					getmetatable(Action.Data.Q[i]).__index:SetQueue({ Silence = false })
+					getmetatable(Action.Data.Q[i]).__index:SetQueue(self.Temp.SilenceOFF)
 				end 
 			end 		
 		end 
