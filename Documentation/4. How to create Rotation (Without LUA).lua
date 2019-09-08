@@ -40,7 +40,7 @@ If you finished with №1 and you see at the left upper corner group with name "
 TellMeWhen interface of edit is very easy and allows make very solid functional without know lua with intuite understand able menu
 
 1. You have to create any icon in group of PvE or PvP for example
-2. Select type Icon, like 'Cooldown', and write below ID of 'What to track' with settings like 'Range Check'
+2. Right click on any box of PvE or PvP group > select type Icon, like 'Cooldown', and write below ID of 'What to track' with settings like 'Range Check'
 3. Select enabled 'Hide Always'
 4. For more logic you have to use 'Conditions' tab of this icon where you can click '+' and use any suggested conditions which you want
 5. After conditions are done drag abd move this icon to "Meta Icon" of the "Shown Group" and select from opened menu "Add to this meta"
@@ -51,7 +51,7 @@ Mostly for begin is enough #3 which is Single rotation, you can look 1. Introduc
 Priority:
 Rotation is based on priority: 1. Spell > 2. Spell > 3. Spell > and etc.. 
 To change it and edit whenver you need, you have to right click on "Meta Icon" which you used for adding created icons and there are you will see some kind of list which exactly does priority from top to down
-You can moe any elements where as you need 
+You can move any elements there as you need 
 
 Make sure what each "Meta Icon" in "Shown Main" and "Shown Cast Bars" has UNCHECKED "Hide always"
 
