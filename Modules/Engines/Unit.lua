@@ -2450,7 +2450,7 @@ A.FriendlyTeam = PseudoClass({
 			end 
 		end 			
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if spells then 
 					value = A.Unit(member):HasDeBuffs(spells) 
@@ -2490,7 +2490,7 @@ A.FriendlyTeam = PseudoClass({
 			end 
 		end 		
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if A.Unit(member):InRange() and (not range or A.Unit(member):GetRange() <= range) then
 					value = A.Unit(member):HasBuffs(Buffs, iSource)       
@@ -2527,7 +2527,7 @@ A.FriendlyTeam = PseudoClass({
 			end 
 		end 		
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if A.Unit(member):InRange() and (not range or A.Unit(member):GetRange() <= range) then
 					value = A.Unit(member):HasDeBuffs(DeBuffs)       
@@ -2563,7 +2563,7 @@ A.FriendlyTeam = PseudoClass({
 			end 
 		end 		
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if A.Unit(member):InRange() and (not range or A.Unit(member):GetRange() <= range) and A.Unit(member):TimeToDie() <= seconds then
 					counter = counter + 1        
@@ -2596,7 +2596,7 @@ A.FriendlyTeam = PseudoClass({
 			return A.Unit("player"):TimeToDie(), 1
 		end 
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if A.Unit(member):InRange() then 
 					value = value + A.Unit(member):TimeToDie()
@@ -2632,7 +2632,7 @@ A.FriendlyTeam = PseudoClass({
 			end 
 		end 
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly[ROLE]) do
 				if A.Unit(member):InRange() and not A.Unit(member):IsDead() and A.Unit(member):HasBuffs(spells, iSource) == 0 then
 					return true, member 
@@ -2667,7 +2667,7 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, member 				= false, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Friendly[ROLE] then 
 			for member in pairs(TeamCache.Friendly.HEALER) do
 				if A.Unit(member):HasBuffs(605) > 0 and A.Unit(member):GetRange() <= 8 then
 					return true, member 
@@ -2714,7 +2714,7 @@ A.EnemyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, arena 					= 0, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Enemy[ROLE] then 
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if spells then 
 					value = A.Unit(arena):HasDeBuffs(spells) 
@@ -2746,7 +2746,7 @@ A.EnemyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, arena 					= 0, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Enemy[ROLE] then 
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if not range or A.Unit(arena):GetRange() <= range then
 					value = A.Unit(arena):HasBuffs(Buffs, iSource)       
@@ -2774,7 +2774,7 @@ A.EnemyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, arena 					= 0, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Enemy[ROLE] then 
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if not range or A.Unit(arena):GetRange() <= range then
 					value = A.Unit(arena):HasDeBuffs(DeBuffs)                     				 
@@ -2802,7 +2802,7 @@ A.EnemyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, arena 					= false, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Enemy[ROLE] then 
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if not UnitIsUnit(arena, "target") and (not range or A.Unit(arena):GetRange() <= range) and A.Unit(arena):HasDeBuffs("BreakAble") ~= 0 then
 					value = true 
@@ -2828,7 +2828,7 @@ A.EnemyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, count, arena 			= false, 0, "none"
 		
-		if ROLE then 
+		if ROLE and TeamCache.Enemy[ROLE] then 
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if not range or A.Unit(arena):GetRange() <= range then
 					count = count + 1 	
