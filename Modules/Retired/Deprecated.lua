@@ -1233,6 +1233,8 @@ local types = {
 		{ id = 285878, dur = 0, stack = 0 },
 		-- Lady Jaina - Grasp of Frost
 		{ id = 287626, dur = 0, stack = 0 },
+		-- Whispers of Power
+		{ id = 267034, dur = 0, stack = 4 },
 		-- Lady Jaina - Hand of Frost
 		{ id = 288412, dur = 0, stack = 0 },
         -- Molten Gold

@@ -2246,6 +2246,8 @@ local GlobalFactory = {
 				[287626] = { byID = true },
 				-- Lady Jaina - Hand of Frost
 				[288412] = { byID = true },
+				-- Whispers of Power
+				[267034] = { stack = 4 },
 				-- Molten Gold
 				[255582] = {},
 				-- Terrifying Screech
