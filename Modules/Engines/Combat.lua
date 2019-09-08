@@ -133,7 +133,7 @@ CombatTracker.logDamage 						= function(...)
 		Data[DestGUID].RealDMG.dmgTaken_M = Data[DestGUID].RealDMG.dmgTaken_M + Amount
 		Data[SourceGUID].DMG.dmgDone_P = Data[SourceGUID].DMG.dmgDone_P + Amount
 		Data[SourceGUID].DMG.dmgDone_M = Data[SourceGUID].DMG.dmgDone_M + Amount        
-	elseif school == 1  then
+	elseif school == 1 then
 		-- Pysichal
 		-- Taken 
 		Data[DestGUID].DMG.dmgTaken_P = Data[DestGUID].DMG.dmgTaken_P + Amount
@@ -201,7 +201,7 @@ end
 
 --[[ This Logs the swings (damage) for every unit ]]
 CombatTracker.logSwing 							= function(...) 
-	local Data 							= CombatTracker.Data
+	local Data = CombatTracker.Data
 	local _,_,_, SourceGUID, _,_,_, DestGUID, _, destFlags,_, Amount = CombatLogGetCurrentEventInfo()
 	-- Update last  hit time
 	Data[DestGUID].DMG.lastHit_taken = TMW.time
@@ -669,7 +669,7 @@ A.CombatTracker									= {
 		-- @return number, GUID 
 		local GUID = UnitGUID(unitID or "player")
 		if CombatTracker.Data[GUID] and InCombatLockdown() then     
-			return TMW.time - CombatTracker.Data[GUID].combat_time               
+			return TMW.time - CombatTracker.Data[GUID].combat_time, GUID             
 		end		
 		return 0, GUID		
 	end, 
