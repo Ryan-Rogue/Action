@@ -2181,7 +2181,7 @@ local GlobalFactory = {
 				-- Widowmaker Toxin
 				[269298] = { stack = 2 }, 
 				-- Stinging Venom
-				[275836] = { stack = 5 },        
+				[275836] = { stack = 5 },       
 			},
 			Disease = {
 				-- 8.2 Mechagon - Consuming Slime
@@ -2248,6 +2248,10 @@ local GlobalFactory = {
 				[288412] = { byID = true },
 				-- Whispers of Power
 				[267034] = { stack = 4 },
+				-- Righteous Flames
+				[258917] = { byID = true },
+				-- Suppression Fire
+				[258864] = { byID = true },
 				-- Molten Gold
 				[255582] = {},
 				-- Terrifying Screech
