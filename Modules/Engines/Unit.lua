@@ -1483,8 +1483,8 @@ A.Unit = PseudoClass({
 				Info.CacheMoveIn[GUID].Result = true 
 				return true 
 			else
-				if Info.CacheMoveOut[GUID].Snapshot < 0 then 
-					Info.CacheMoveOut[GUID].Snapshot = 0 
+				if Info.CacheMoveIn[GUID].Snapshot < 0 then 
+					Info.CacheMoveIn[GUID].Snapshot = 0 
 				end 			
 				Info.CacheMoveIn[GUID].Result = false
 				return false 
