@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "13.09.2019"
+local DateTime 						= "14.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2248,6 +2248,8 @@ local GlobalFactory = {
 				[288412] = { byID = true },
 				-- Whispers of Power
 				[267034] = { stack = 4 },
+				-- Whispers of Power
+				[267037] = { stack = 4 },
 				-- Righteous Flames
 				[258917] = { byID = true },
 				-- Suppression Fire

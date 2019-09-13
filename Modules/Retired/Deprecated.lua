@@ -1235,6 +1235,8 @@ local types = {
 		{ id = 287626, dur = 0, stack = 0 },
 		-- Whispers of Power
 		{ id = 267034, dur = 0, stack = 4 },
+		-- Whispers of Power
+		{ id = 267037, dur = 0, stack = 4 },
 		-- Righteous Flames
 		{ id = 258917, dur = 0, stack = 0 },
 		-- Suppression Fire
