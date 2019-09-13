@@ -1640,9 +1640,9 @@ A.Unit = PseudoClass({
 		]]	
 		local unitID 						= self.UnitID 
 		if not A.IsInPvP then 
-			return not A.Unit(unitID):IsBoss() and Info.ControlAbleClassification[A.Unit(unitID):Classification()] and A.Unit(unitID):GetDR(drCat) > (drDiminishing or 25)
+			return not A.Unit(unitID):IsBoss() and Info.ControlAbleClassification[A.Unit(unitID):Classification()] and (not drCat or A.Unit(unitID):GetDR(drCat) > (drDiminishing or 25))
 		else 
-			return A.Unit(unitID):GetDR(drCat) > (drDiminishing or 25)
+			return not drCat or A.Unit(unitID):GetDR(drCat) > (drDiminishing or 25)
 		end 
 	end, "UnitID"),
 	IsUndead								= Cache:Pass(function(self)
