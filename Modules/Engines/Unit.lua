@@ -2496,7 +2496,7 @@ A.FriendlyTeam = PseudoClass({
 		-- @return number, unitID 
 		local ROLE 							= self.ROLE
 		local value, member 				= 0, "none"
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			local d = A.Unit("player"):HasBuffs(spells, iSource)
 			if d ~= 0 then 
 				return d, "player"
@@ -2533,7 +2533,7 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, member 				= 0, "none"
 		
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			local d = A.Unit("player"):HasDeBuffs(DeBuffs)
 			if d ~= 0 then 
 				return d, "player"
@@ -2570,7 +2570,7 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, counter, member 		= false, 0, "none"
 		
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			if A.Unit("player"):TimeToDie() <= seconds then
 				return true, 1, "player"
 			else 
@@ -2607,7 +2607,7 @@ A.FriendlyTeam = PseudoClass({
 		-- @return number, number 
 		local ROLE 							= self.ROLE
 		local value, members 				= 0, 0
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			return A.Unit("player"):TimeToDie(), 1
 		end 
 		
@@ -2638,7 +2638,7 @@ A.FriendlyTeam = PseudoClass({
 		-- @return boolean, unitID 
 		local ROLE 							= self.ROLE
 		local value, member 				= false, "none"
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			local d = A.Unit("player"):HasBuffs(spells, iSource) 
 			if d == 0 then 
 				return true, "player"
