@@ -1145,9 +1145,10 @@ function A.HealingEngine.GetTimeToFullDie()
         for i = 1, #m do
 			total = total + A.Unit(m[i].Unit):TimeToDie()
         end
-		total = total / #m
+		return total / #m
+	else 
+		return huge 
     end 
-    return total 
 end 
 
 function A.HealingEngine.GetTimeToDieUnits(timer)
