@@ -2447,7 +2447,7 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 		local value, member 				= 0, "none"
 		
-		if TeamCache.Friendly.Size == 0 then 
+		if TeamCache.Friendly.Size <= 1 then 
 			if spells then 
 				local g = A.Unit("player"):HasDeBuffs(spells) 
 				if g ~= 0 then 
