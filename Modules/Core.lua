@@ -204,19 +204,21 @@ function A.Rotation(icon)
 			end 
 		end 
 		
-		-- Healthstone 
-		local Healthstone = A.GetToggle(1, "HealthStone") 
-		if Healthstone >= 0 then 
-			if A.HS:GetCount() > 0 and A.HS:GetCooldown() == 0 and not Player:IsStealthed() then 			
-				if Healthstone >= 100 then -- AUTO 
-					if Unit("player"):TimeToDie() <= 9 and Unit("player"):HealthPercent() <= 40 then 
-						return A.HS:Show(icon)	
+		if not Player:IsStealthed() then 
+			-- Healthstone 
+			local Healthstone = A.GetToggle(1, "HealthStone") 
+			if Healthstone >= 0 then 
+				if A.HS:GetCount() > 0 and A.HS:GetCooldown() == 0 then 			
+					if Healthstone >= 100 then -- AUTO 
+						if Unit("player"):TimeToDie() <= 9 and Unit("player"):HealthPercent() <= 40 then 
+							return A.HS:Show(icon)	
+						end 
+					elseif Unit("player"):HealthPercent() <= Healthstone then 
+						return A.HS:Show(icon)								 
 					end 
-				elseif Unit("player"):HealthPercent() <= 40 then 
-					return A.HS:Show(icon)								 
 				end 
 			end 
-		end 
+		end
 		
 		-- AutoTarget 
 		if A.GetToggle(1, "AutoTarget") and not A.IamHealer and Unit("player"):CombatTime() > 0 
