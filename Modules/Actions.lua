@@ -373,6 +373,12 @@ function A:IsSpellLearned()
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
 end
 
+function A:CanSafetyCastHeal(unitID, offset)
+	-- @return boolean 
+	local castTime = self:GetSpellCastTime()
+	return castTime and (castTime == 0 or castTime > Unit(unitID):TimeToDie() + A.GetCurrentGCD() + (offset or A.GetGCD())) or false 
+end 
+
 -------------------------------------------------------------------------------
 -- Azerite 
 -------------------------------------------------------------------------------
