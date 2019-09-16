@@ -1136,6 +1136,20 @@ function A.HealingEngine.GetIncomingHPSAVG()
     return avg 
 end 
 
+function A.HealingEngine.GetTimeToFullDie()
+	-- @return number 
+	-- Returns AVG time to die all group members 
+	local total = 0
+	local m = A.HealingEngine.GetMembersAll()
+    if #m > 0 then 
+        for i = 1, #m do
+			total = total + A.Unit(m[i].Unit):TimeToDie()
+        end
+		total = total / #m
+    end 
+    return total 
+end 
+
 function A.HealingEngine.GetTimeToDieUnits(timer)
 	-- @return number 
 	local total = 0
