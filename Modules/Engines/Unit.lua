@@ -25,10 +25,10 @@ local _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostring
 	  
 local CombatLogGetCurrentEventInfo	= _G.CombatLogGetCurrentEventInfo	  
 local GetUnitSpeed					= _G.GetUnitSpeed
-local UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID =
-	  UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID
+local UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible =
+	  UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible
 
 -------------------------------------------------------------------------------
 -- Cache
@@ -1362,6 +1362,16 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return UnitIsPlayer(unitID)
 	end, "UnitID"),
+	IsPet									= Cache:Pass(function(self)  
+		-- @return boolean
+		local unitID 						= self.UnitID
+		return UnitPlayerControlled(unitID)
+	end, "UnitID"),
+	IsVisible								= Cache:Pass(function(self)  
+		-- @return boolean
+		local unitID 						= self.UnitID
+		return UnitIsVisible(unitID)
+	end, "UnitID"),
 	IsExists 								= Cache:Pass(function(self)  
 		-- @return boolean
 		local unitID 						= self.UnitID
@@ -1884,6 +1894,11 @@ A.Unit = PseudoClass({
 		return CombatTracker:TimeToDieMagic(unitID)
 	end, "UnitID"),
 	-- Combat: End
+	GetIncomingResurrection					= Cache:Pass(function(self)  
+		-- @return boolean
+		local unitID 						= self.UnitID
+		return UnitHasIncomingResurrection(unitID)
+	end, "UnitID"),
 	GetIncomingHeals						= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
@@ -2646,6 +2661,28 @@ A.FriendlyTeam = PseudoClass({
 				end                        
 			end  
 		end 		
+		
+		return value, member 
+	end, "ROLE"),
+	PlayersInCombat 						= Cache:Wrap(function(self, range, combatTime)
+		-- @return boolean, unitID 
+		local ROLE 							= self.ROLE
+		local value, member 				= false, "none"
+		
+		if ROLE and TeamCache.Friendly[ROLE] then  
+			for member in pairs(TeamCache.Friendly[ROLE]) do
+				if ((not range and A.Unit(member):InRange()) or (range and A.Unit(member):GetRange() <= range)) and A.Unit(member):CombatTime() > 0 and (not combatTime or A.Unit(member):CombatTime() <= combatTime) then
+					return true, member 
+				end 
+			end 
+		else 		
+			for i = 1, TeamCache.Friendly.Size do
+				member = TeamCache.Friendly.Type .. i
+				if ((not range and A.Unit(member):InRange()) or (range and A.Unit(member):GetRange() <= range)) and A.Unit(member):CombatTime() > 0 and (not combatTime or A.Unit(member):CombatTime() <= combatTime) then
+					return true, member
+				end 
+			end 	
+		end 
 		
 		return value, member 
 	end, "ROLE"),
