@@ -654,7 +654,12 @@ A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				funct
 	local LastTimeCasted = A.CombatTracker:GetSpellLastCast("player", A.LastPlayerCastID) 
 	if (LastTimeCasted == 0 or LastTimeCasted > 0.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel then 
 		wipe(UnitTracker.Data)   	
-		wipe(CombatTracker.Data)		
+		wipe(CombatTracker.Data)
+	else 
+		local GUID = UnitGUID("player")
+		if CombatTracker.Data[GUID] then 
+			CombatTracker.Data[GUID].combat_time = TMW.time 
+		end 		
 	end 
 end)
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_UPDATE", 			LossOfControl.OnEvent		)
