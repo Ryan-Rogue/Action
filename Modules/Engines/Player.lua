@@ -41,8 +41,8 @@ local UnitPower, UnitPowerMax, UnitStagger =
 local GetPowerRegen, GetRuneCooldown, GetShapeshiftForm, GetCritChance, GetHaste, GetMasteryEffect, GetVersatilityBonus, GetCombatRatingBonus =
 	  GetPowerRegen, GetRuneCooldown, GetShapeshiftForm, GetCritChance, GetHaste, GetMasteryEffect, GetVersatilityBonus, GetCombatRatingBonus
 	  
-local IsEquippedItem, IsStealthed, IsMounted, IsFalling = 	  
-	  IsEquippedItem, IsStealthed, IsMounted, IsFalling 
+local IsEquippedItem, IsStealthed, IsMounted, IsFalling, IsSwimming, IsSubmerged = 	  
+	  IsEquippedItem, IsStealthed, IsMounted, IsFalling, IsSwimming, IsSubmerged 
 
 -------------------------------------------------------------------------------
 -- Locals 
@@ -90,6 +90,9 @@ local Data = {
 		},
 		["DEMONHUNTER"] = 131347,	-- Demon Hunter Glide
 	},
+	-- Behind
+	PlayerBehind = 0,
+	PetBehind = 0,	
 	-- Items 
 	CheckItems 	= {},	
 	CountItems 	= {},		
@@ -111,6 +114,17 @@ function Data.UpdateStance()
 	Data.Stance = GetShapeshiftForm()
 end 
 
+function Data.logBehind(...)
+	local message = ...
+	if message == SPELL_FAILED_NOT_BEHIND then 
+		Data.PlayerBehind = TMW.time + 2.5
+	end 
+	
+	if message == ERR_PET_SPELL_NOT_BEHIND then 
+		Data.PetBehind = TMW.time + 2.5
+	end 
+end 
+
 A.Listener:Add("ACTION_EVENT_PLAYER", "PLAYER_STARTED_MOVING", function()
 	if Data.TimeStampMoving ~= TMW.time then 
 		Data.TimeStampMoving = TMW.time 
@@ -124,6 +138,8 @@ A.Listener:Add("ACTION_EVENT_PLAYER", "PLAYER_STOPPED_MOVING", function()
 		Data.TimeStampStaying = TMW.time 
 	end 
 end)
+
+A.Listener:Add("ACTION_EVENT_PLAYER_ATTACK", "UI_ERROR_MESSAGE", 	Data.logBehind)
 
 A.Listener:Add("ACTION_EVENT_PLAYER", "UPDATE_SHAPESHIFT_FORMS", 	Data.UpdateStance)
 A.Listener:Add("ACTION_EVENT_PLAYER", "UPDATE_SHAPESHIFT_FORM", 	Data.UpdateStance)
@@ -209,9 +225,24 @@ function A.Player:IsStayingTime()
 	return Data.TimeStampStaying == 0 and 0 or TMW.time - Data.TimeStampStaying
 end 
 
+function A.Player:IsBehind()
+	-- @return boolean 
+	return TMW.time > Data.PlayerBehind
+end 
+
+function A.Player:IsPetBehind()
+	-- @return boolean 
+	return TMW.time > Data.PetBehind
+end 
+
 function A.Player:IsMounted()
 	-- @return boolean
 	return IsMounted() and (not Data.AuraOnCombatMounted[A.PlayerClass] or A.Unit(self.UnitID):HasBuffs(Data.AuraOnCombatMounted[A.PlayerClass], true, true) == 0)
+end 
+
+function A.Player:IsSwimming()
+	-- @return boolean 
+	return IsSwimming() or IsSubmerged()
 end 
 
 function A.Player:IsStealthed()
