@@ -2755,6 +2755,9 @@ A.EnemyTeam = PseudoClass({
 			for arena in pairs(TeamCache.Enemy[ROLE]) do
 				if spells then 
 					value = A.Unit(arena):HasDeBuffs(spells) 
+					if value ~= 0 then 
+						break 
+					end 
 				elseif ROLE ~= "HEALER" or not UnitIsUnit(arena, "target") then 
 					value = A.Unit(arena):InCC()
 					if value ~= 0 then 
@@ -2767,6 +2770,9 @@ A.EnemyTeam = PseudoClass({
 				arena = TeamCache.Enemy.Type .. i
 				if spells then 
 					value = A.Unit(arena):HasDeBuffs(spells) 
+					if value ~= 0 then 
+						break 
+					end 
 				elseif ROLE ~= "HEALER" or not UnitIsUnit(arena, "target") then 
 					value = A.Unit(arena):InCC()
 					if value ~= 0 then 
