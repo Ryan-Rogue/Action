@@ -76,6 +76,10 @@ local isSpellRangeException = {
 	[69041]		= true,
 	-- RocketJump
 	[69070]		= true,
+	-- Metamorphosis 
+	[191427]	= true,
+	[162264]	= true,
+	[187827]	= true,
 }
 local ItemHasRange 			= ItemHasRange
 local isItemRangeException 	= {}
