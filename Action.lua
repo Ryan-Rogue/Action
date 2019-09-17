@@ -8313,7 +8313,7 @@ function Action.ToggleMainUI()
 							table.insert(data, setmetatable({
 								Enabled = v.Enabled,
 								Key = v.Key,
-								Source = v.Source,
+								Source = v.Source or "",
 								LUA = v.LUA,
 								Name = k, 								
 								Icon = Action[specID][v.Key]:Icon(),
