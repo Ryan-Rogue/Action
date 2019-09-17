@@ -1,3 +1,8 @@
+[Monk v6]
+BM MW WW	- Memory optimization 
+BM WW 		- Fixed miss typo in MSG LUA code for kick phase
+MW			- Fixed possible error by miss typo in CanHeal AoE functions  
+
 [Monk v5]
 BM MW WW	- Rewritten for latest API 
 BM MW WW	- Interrupts by Paralysis will now skip check enemies karma
