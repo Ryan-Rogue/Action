@@ -435,9 +435,11 @@ local function UpdateCVAR()
 	end
 	
 	local nameplateMaxDistance = GetCVar("nameplateMaxDistance")
-    if nameplateMaxDistance and nameplateMaxDistance ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
+    if nameplateMaxDistance and toNum[nameplateMaxDistance] ~= toStr[ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE] then 
 		SetCVar("nameplateMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
-		A.Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+		if isCheckedOnce then 
+			A.Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+		end 
 	end		
 	
     -- WM removal
