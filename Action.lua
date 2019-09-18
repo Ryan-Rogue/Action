@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "17.09.2019"
+local DateTime 						= "19.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -3697,6 +3697,10 @@ local function GetKids(tab, spec)
 end 
 local function CreateResizer(parent)
 	if not TMW or parent.resizer then return end 
+	-- Pre Loading options if case if first time it failed 
+	if TMW.Classes.Resizer_Generic == nil then 
+		TMW:LoadOptions()
+	end 	
 	local frame = {}
 	frame.resizer = TMW.Classes.Resizer_Generic:New(parent)
 	frame.resizer:Show()
@@ -4913,7 +4917,7 @@ function Action.ToggleMSG(isLaunch)
 		Action.Listener:Add("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER", 	UpdateChat)
 	end 	
 	
-	if Action.MainUI and Action.Data.ProfileUI and Action.Data.ProfileUI[7] and next(Action.Data.ProfileUI[7][Action.PlayerSpec]) then 
+	if Action.MainUI and Action.Data.ProfileUI and Action.Data.ProfileUI[7] and Action.Data.ProfileUI[7][Action.PlayerSpec] and next(Action.Data.ProfileUI[7][Action.PlayerSpec]) then 
 		local spec = Action.PlayerSpec .. CL
 		local tab = tabFrame.tabs[7]
 		if tab and tab.childs[spec] then 
