@@ -1151,6 +1151,7 @@ function Env.AoEFlourish(pHP)
     return false
 end
 -- PVE Dispels
+-- NOTE: RETIRED VERSION HAS > INSTEAD OF ACTUAL >=
 local types = {
     Poison = {
         -- Venomfang Strike
@@ -1158,11 +1159,11 @@ local types = {
         -- Hidden Blade
         { id = 270865, dur = 0, stack = 0},
         -- Embalming Fluid 
-        { id = 271563, dur = 0, stack = 3},
+        { id = 271563, dur = 0, stack = 2},
         -- Poison Barrage 
         { id = 270507, dur = 0, stack = 0},
         -- Stinging Venom Coating
-        { id = 275835, dur = 0, stack = 4},
+        { id = 275835, dur = 0, stack = 3},
         -- Neurotoxin 
         { id = 273563, dur = 1.49, stack = 0},
         -- Cytotoxin 
@@ -1172,7 +1173,7 @@ local types = {
         -- Widowmaker Toxin
         { id = 269298, dur = 0, stack = 2}, 
         -- Stinging Venom
-        { id = 275836, dur = 0, stack = 5},        
+        { id = 275836, dur = 0, stack = 3},        
     },
     Disease = {
 		-- 8.2 Mechagon - Consuming Slime
@@ -1226,7 +1227,7 @@ local types = {
 		-- 8.2 Radiance of Azshara - Arcane Bomb
 		-- { id = 296746, dur = 0, stack = 0 }, -- need predict unit position to dispel only when they are out of raid 
 		-- The Restless Cabal - Promises of Power 
-		{ id = 282562, dur = 0, stack = 3 },
+		{ id = 282562, dur = 0, stack = 2 },
 		-- Jadefire Masters - Searing Embers
 		{ id = 286988, dur = 0, stack = 0 },
 		-- Conclave of the Chosen - Mind Wipe
@@ -1284,13 +1285,13 @@ local types = {
         -- Death Bolt 
         { id = 272180, dur = 0, stack = 0},
         -- Putrid Blood
-        { id = 269301, dur = 0, stack = 2},
+        { id = 269301, dur = 0, stack = 1},
         -- Grasping Thorns
         { id = 263891, dur = 0, stack = 0},
         -- Fragment Soul
         { id = 264378, dur = 0, stack = 0},
         -- Reap Soul
-        { id = 288388, dur = 0, stack = 20},
+        { id = 288388, dur = 0, stack = 19},
         -- Putrid Waters
         { id = 275014, dur = 0, stack = 0},
     }, 

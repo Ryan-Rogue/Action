@@ -2181,7 +2181,7 @@ local GlobalFactory = {
 				-- Widowmaker Toxin
 				[269298] = { stack = 2 }, 
 				-- Stinging Venom
-				[275836] = { stack = 5 },       
+				[275836] = { stack = 4 },       
 			},
 			Disease = {
 				-- 8.2 Mechagon - Consuming Slime
@@ -2291,7 +2291,7 @@ local GlobalFactory = {
 				-- Debilitating Shout
 				[258128] = {},
 				-- Torch Strike 
-				[265889] = { stack = 1 },
+				[265889] = { stack = 2 },
 				-- Fuselighter 
 				[257028] = {},
 				-- Death Bolt 
