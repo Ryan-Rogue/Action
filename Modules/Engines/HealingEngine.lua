@@ -157,7 +157,7 @@ local function HealingEngine(MODE, useActualHP)
 			if A.IsGGLprofile then 
 				-- Holy Paladin 
 				if A.Unit("player"):HasSpec(ACTION_CONST_PALADIN_HOLY) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
+					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
 						-- DISPEL PRIORITY
 						isQueuedDispel = true 
 						-- if we will have lower unit than 50% then don't dispel it
@@ -196,7 +196,7 @@ local function HealingEngine(MODE, useActualHP)
 				
 				-- Restor Druid 
 				if A.Unit("player"):HasSpec(ACTION_CONST_DRUID_RESTORATION) then 					
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and not UnitIsUnit("player", member) and Env.Dispel(member) then 
+					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
 						-- DISPEL PRIORITY
 						isQueuedDispel = true 
 						memberhp = 50 
@@ -262,7 +262,7 @@ local function HealingEngine(MODE, useActualHP)
 				
 				-- Discipline Priest
 				if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_DISCIPLINE) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
 						-- DISPEL PRIORITY
 						isQueuedDispel = true 
 						memberhp = 50 
@@ -302,7 +302,7 @@ local function HealingEngine(MODE, useActualHP)
 				
 				-- Holy Priest
 				if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_HOLY) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and not UnitIsUnit("player", member) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
 						-- DISPEL PRIORITY
 						isQueuedDispel = true 
 						memberhp = 50 
@@ -328,7 +328,7 @@ local function HealingEngine(MODE, useActualHP)
 			   
 				-- Mistweaver Monk 
 				if A.IsInitialized and A.Unit("player"):HasSpec(ACTION_CONST_MONK_MISTWEAVER) then 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and not UnitIsUnit("player", member) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
+					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not A.IsInPvP or not UnitIsUnit("player", member)) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
 						-- DISPEL PRIORITY
 						isQueuedDispel = true 
 						memberhp = 50 
