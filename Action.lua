@@ -4762,7 +4762,7 @@ function Action.CursorInit()
 										if text then 
 											text = text:lower()
 											local GameTooltipKey = GameTooltipTable[text]
-											if GameTooltipKey and GameTooltipKey.Enabled and ((GameTooltipKey.Button == "LEFT" and UseLeft) or (GameTooltipKey.Button == "RIGHT" and UseRight)) and RunLua(GameTooltipKey.LUA, "mouseover") then 								
+											if GameTooltipKey and GameTooltipKey.Enabled and ((GameTooltipKey.Button == "LEFT" and UseLeft) or (GameTooltipKey.Button == "RIGHT" and UseRight)) and (not GameTooltipKey.isTotem or Action.Unit("mouseover"):IsTotem() and not Action.Unit("target"):IsTotem()) and RunLua(GameTooltipKey.LUA, "mouseover") then 								
 												Action.GameTooltipClick = GameTooltipKey.Button
 												return 									
 											end 
@@ -7904,13 +7904,8 @@ function Action.ToggleMainUI()
 			ScrollTable:EnableSelection(true)
 			
 			local function ScrollTableData()
-				local CategoryValue = Category:GetValue()
-				if CategoryValue == "UnitName" then 					
-					isTotem:Disable()
-					isTotem:SetChecked(false)
-				else 
-					isTotem:Enable()
-				end 
+				isTotem:SetChecked(false)
+				local CategoryValue = Category:GetValue()								
 				local ModeValue = Mode:GetValue()
 				local data = {}
 				for k, v in pairs(TMW.db.profile.ActionDB[tab.name][specID][ModeValue][CategoryValue][GameLocale]) do 
@@ -7998,7 +7993,7 @@ function Action.ToggleMainUI()
 			end)			
 			
 			StdUi:FrameTooltip(isTotem, L["TAB"][tab.name]["ISTOTEMTOOLTIP"], nil, "BOTTOMLEFT", true)	
-			isTotem:HookScript("OnClick", function()
+			isTotem:HookScript("OnClick", function(self)
 				if not self.isDisabled then 
 					InputBox:ClearFocus()
 				end 
