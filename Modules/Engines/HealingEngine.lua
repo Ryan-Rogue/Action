@@ -37,6 +37,7 @@ Frame:SetPoint("TOPLEFT", 442, 0)
 Frame.texture = Frame:CreateTexture(nil, "TOOLTIP")
 Frame.texture:SetAllPoints(true)
 Frame.texture:SetColorTexture(0, 0, 0, 1.0)
+local healingTarget, healingTargetGUID, healingTargetDelay = "None", "None", 0
 
 A.HealingEngine.Members = {
 	ALL = {},
@@ -110,18 +111,219 @@ local function CanHeal(unitID, unitGUID)
 		and ( InstanceInfo.ID ~= 2164 or A.Unit(unitID):HasDeBuffs(292127) == 0 )
 end
 
-local healingTarget, healingTargetGUID, healingTargetDelay = "None", "None", 0
+local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDispel)
+	-- Enable specific instructions by profile 
+	if A.IsGGLprofile then 
+		-- Holy Paladin 
+		if A.Unit("player"):HasSpec(ACTION_CONST_PALADIN_HOLY) then                 
+			if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
+				-- DISPEL PRIORITY
+				isQueuedDispel = true 
+				-- if we will have lower unit than 50% then don't dispel it
+				memberhp = 50
+				if A.Unit(member):IsHealer() then 
+					memberhp = 25
+				end
+			elseif Azerite:GetRank(287268) > 0 and Env.SpellCD(20473) <= A.GetCurrentGCD() and A.Unit(member, 0.5):HasBuffs(287280, true) <= A.GetGCD() then 
+				-- Glimmer of Light 
+				-- Generally, prioritize players that might die in the next few seconds > non-Beaconed tank (without Glimmer buff) > Beaconed tank (without Glimmer buff) > players without the Glimmer buff
+				if Env.PredictHeal("HolyShock", member) then 
+					if A.Unit(member):IsTank() then 
+						if A.Unit(member):HasBuffs({156910, 53563}, true) == 0 then 
+							memberhp = 35
+						else 
+							memberhp = 45
+						end 
+					else 
+						memberhp = memberhp - 35
+					end 
+				else
+					memberhp = memberhp - 10
+				end 
+			elseif memberhp < 100 then      
+				-- Beacon HPS SYSTEM + hot current ticking and total duration
+				local BestowFaith1, BestowFaith2 = A.Unit(member):HasBuffs(223306, true)
+				if BestowFaith1 > 0 then 
+					memberhp = memberhp + ( 100 * A.GetSpellDescription(223306)[1] / membermhp )
+				end 
+				-- Checking if Member has Beacons on them            
+				if A.Unit(member):HasBuffs({53563, 156910}, true) > 0 then
+					memberhp = memberhp + ( 100 * (A.Unit("player"):GetHPS() * 0.4) / membermhp ) - ( 100 * DMG / membermhp )
+				end  
+			end 
+		end 
+		
+		-- Restor Druid 
+		if A.Unit("player"):HasSpec(ACTION_CONST_DRUID_RESTORATION) then 					
+			if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
+				-- DISPEL PRIORITY
+				isQueuedDispel = true 
+				memberhp = 50 
+				-- if we will have lower unit than 50% then don't dispel it
+				if A.Unit(member):IsHealer() then 
+					memberhp = 25
+				end						
+			elseif memberhp < 100 then   
+				-- HOT SYSTEM: current ticking and total duration
+				local Rejuvenation1, Rejuvenation2 	= A.Unit(member):HasBuffs(774, true)
+				local Regrowth1, Regrowth2 			= A.Unit(member):HasBuffs(8936, true)
+				local WildGrowth1, WildGrowth2		= A.Unit(member):HasBuffs(48438, true)
+				local Lifebloom1, Lifebloom2 		= A.Unit(member):HasBuffs(33763, true)                
+				local Germination1, Germination2 	= A.Unit(member):HasBuffs(155777, true) -- Rejuvenation Talent 
+				local summup, summdmg = 0, {}
+				if Rejuvenation1 > 0 then 
+					summup = summup + (A.GetSpellDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
+					table.insert(summdmg, Rejuvenation1)
+				else
+					-- If current target is Tank then to prevent staying on that target we will cycle rest units 
+					if healingTarget and healingTarget ~= "None" and A.Unit(healingTarget):IsTank() then 
+						memberhp = memberhp - 15
+					else 
+						summup = summup - (A.GetSpellDescription(774)[1] * 3)
+					end 
+				end
+				
+				if Regrowth1 > 0 then 
+					summup = summup + (A.GetSpellDescription(8936)[2] / Regrowth2 * Regrowth1)
+					table.insert(summdmg, Regrowth1)
+				end
+				
+				if WildGrowth1 > 0 then 
+					summup = summup + (A.GetSpellDescription(48438)[1] / WildGrowth2 * WildGrowth1)
+					table.insert(summdmg, WildGrowth1)                    
+				end
+				
+				if Lifebloom1 > 0 then 
+					summup = summup + (A.GetSpellDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
+					table.insert(summdmg, Lifebloom1)    
+				end
+				
+				if Germination1 > 0 then -- same with Rejuvenation
+					summup = summup + (A.GetSpellDescription(774)[1] / Germination2 * Germination1)
+					table.insert(summdmg, Germination1)    
+				end
+				
+				-- Get longer hot duration and predict incoming damage by that 
+				table.sort(summdmg, function (x, y)
+						return x > y
+				end)
+				
+				-- Now we convert it to persistent (from value to % as HP)
+				if summup > 0 then 
+					-- current HP % with pre casting heal + predict hot heal - predict incoming dmg 
+					local memberhpHotSystem = memberhp + ( 100 * summup / membermhp ) - ( 100 * (DMG * summdmg[1]) / membermhp )
+					if memberhpHotSystem < 100 then
+						memberhp = memberhpHotSystem
+					end
+				end                    
+			end
+		end
+		
+		-- Discipline Priest
+		if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_DISCIPLINE) then                 
+			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+				-- DISPEL PRIORITY
+				isQueuedDispel = true 
+				memberhp = 50 
+				-- if we will have lower unit than 50% then don't dispel it
+				if A.Unit(member):IsHealer() then 
+					memberhp = 25
+				end 
+			elseif AtonementRenew_Toggle and A.Unit(member):HasBuffs(81749, true) <= A.GetCurrentGCD() then 				
+				-- Toggle "Group Atonement/Renew﻿"
+				memberhp = 50
+			elseif memberhp < 100 then                    
+				-- Atonement priority 
+				if A.Unit(member):HasBuffs(81749, true) > 0 and Env.oPR and Env.oPR["AtonementHPS"] then 
+					memberhp = memberhp + ( 100 * Env.oPR["AtonementHPS"] / membermhp )
+				end 
+				
+				-- Absorb system 
+				-- Pre pare 
+				if A.Unit("player"):CombatTime() <= 5 and 
+				(
+					A.Unit("player"):CombatTime() > 0 or 
+					(
+						-- Pre shield before battle will start
+						( A.Zone == "arena" or A.Zone == "pvp" ) and
+						A:GetTimeSinceJoinInstance() < 120                             
+					)
+				) and A.Unit(member):GetAbsorb(17) == 0 then 
+					memberhp = memberhp - 10
+				end                     
+				
+				-- Toggle or PrePare combat or while Rapture always
+				if HE_Absorb or A.Unit("player"):CombatTime() <= 5 or A.Unit("player"):HasBuffs(47536, true) > A.GetCurrentGCD() then 
+					memberhp = memberhp + ( 100 * A.Unit(member):GetAbsorb(17) / membermhp )
+				end 
+			end 
+		end 
+		
+		-- Holy Priest
+		if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_HOLY) then                 
+			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+				-- DISPEL PRIORITY
+				isQueuedDispel = true 
+				memberhp = 50 
+				-- if we will have lower unit than 50% then don't dispel it
+				if A.Unit(member):IsHealer() then 
+					memberhp = 25
+				end  
+			elseif AtonementRenew_Toggle and A.Unit(member):HasBuffs(139, true) <= A.GetCurrentGCD() then 				
+				-- Toggle "Group Atonement/Renew﻿"
+				memberhp = 50
+			elseif memberhp < 100 then 
+				if Env.UnitIsTrailOfLight(member) then 
+					-- Single Rotation 
+					local ST = Env.IsIconDisplay("TMW:icon:1RhherQmOw_V") or 0
+					if ST == 2061 then 
+						memberhp = memberhp + ( 100 * (A.GetSpellDescription(2061)[1] * 0.35) / membermhp )
+					elseif ST == 2060 then 
+						memberhp = memberhp + ( 100 * (A.GetSpellDescription(2060)[1] * 0.35) / membermhp )
+					end 
+				end 
+			end 
+		end 
+	   
+		-- Mistweaver Monk 
+		if A.IsInitialized and A.Unit("player"):HasSpec(ACTION_CONST_MONK_MISTWEAVER) then 
+			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not A.IsInPvP or not UnitIsUnit("player", member)) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
+				-- DISPEL PRIORITY
+				isQueuedDispel = true 
+				memberhp = 50 
+				-- If we will have lower unit than 50% then don't dispel it
+				if A.Unit(member):IsHealer() then 
+					memberhp = 25
+				end 
+			elseif memberhp < 100 and A.GetToggle(2, "HealingEngineAutoHot") and A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist:IsReady() then 
+				-- Keep Renewing Mist hots as much as it possible on cooldown
+				local RenewingMist = A.Unit(member):HasBuffs(A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist.ID, true)
+				if RenewingMist == 0 and A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist:PredictHeal("RenewingMist", member) then 
+					memberhp = memberhp - 40
+					if memberhp < 55 then 
+						memberhp = 55 
+					end 
+				end 
+			end 
+		end 
+	end 
+	
+	return memberhp, isQueuedDispel
+end
+
 local function HealingEngine(MODE, useActualHP)   
-	local mode = MODE or "ALL"
-    local ActualHP = useActualHP or false
+	local mode 				= MODE or "ALL"
+    local ActualHP 			= useActualHP or false
+	local isQueuedDispel 	= false 
 	A.HealingEngine.Members:Wipe()
 	
     if TeamCache.Friendly.Type ~= "raid" then 
-		local pHP, aHP, _, mHP = CalculateHP("player")
-        table.insert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = A.Unit("player"):GetRealTimeDMG() })
+		local pHP, aHP, _, mHP 	= CalculateHP("player")
+		local DMG 				= A.Unit("player"):GetRealTimeDMG() 
+		pHP, isQueuedDispel 	= PerformByProfileHP("player", pHP, mHP, DMG, isQueuedDispel)
+        table.insert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = DMG })
     end 
-    
-    local isQueuedDispel = false 
+        
     local group = TeamCache.Friendly.Type
 	if not group then 
 		return 
@@ -153,202 +355,8 @@ local function HealingEngine(MODE, useActualHP)
                 memberhp = memberhp - threat
             end            
             
-			-- Enable specific instructions by profile 
-			if A.IsGGLprofile then 
-				-- Holy Paladin 
-				if A.Unit("player"):HasSpec(ACTION_CONST_PALADIN_HOLY) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
-						-- DISPEL PRIORITY
-						isQueuedDispel = true 
-						-- if we will have lower unit than 50% then don't dispel it
-						memberhp = 50
-						if A.Unit(member):IsHealer() then 
-							memberhp = 25
-						end
-					elseif Azerite:GetRank(287268) > 0 and Env.SpellCD(20473) <= A.GetCurrentGCD() and A.Unit(member, 0.5):HasBuffs(287280, true) <= A.GetGCD() then 
-						-- Glimmer of Light 
-						-- Generally, prioritize players that might die in the next few seconds > non-Beaconed tank (without Glimmer buff) > Beaconed tank (without Glimmer buff) > players without the Glimmer buff
-						if Env.PredictHeal("HolyShock", member) then 
-							if A.Unit(member):IsTank() then 
-								if A.Unit(member):HasBuffs({156910, 53563}, true) == 0 then 
-									memberhp = 35
-								else 
-									memberhp = 45
-								end 
-							else 
-								memberhp = memberhp - 35
-							end 
-						else
-							memberhp = memberhp - 10
-						end 
-					elseif memberhp < 100 then      
-						-- Beacon HPS SYSTEM + hot current ticking and total duration
-						local BestowFaith1, BestowFaith2 = A.Unit(member):HasBuffs(223306, true)
-						if BestowFaith1 > 0 then 
-							memberhp = memberhp + ( 100 * A.GetSpellDescription(223306)[1] / membermhp )
-						end 
-						-- Checking if Member has Beacons on them            
-						if A.Unit(member):HasBuffs({53563, 156910}, true) > 0 then
-							memberhp = memberhp + ( 100 * (A.Unit("player"):GetHPS() * 0.4) / membermhp ) - ( 100 * DMG / membermhp )
-						end  
-					end 
-				end 
-				
-				-- Restor Druid 
-				if A.Unit("player"):HasSpec(ACTION_CONST_DRUID_RESTORATION) then 					
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
-						-- DISPEL PRIORITY
-						isQueuedDispel = true 
-						memberhp = 50 
-						-- if we will have lower unit than 50% then don't dispel it
-						if A.Unit(member):IsHealer() then 
-							memberhp = 25
-						end						
-					elseif memberhp < 100 then   
-						-- HOT SYSTEM: current ticking and total duration
-						local Rejuvenation1, Rejuvenation2 	= A.Unit(member):HasBuffs(774, true)
-						local Regrowth1, Regrowth2 			= A.Unit(member):HasBuffs(8936, true)
-						local WildGrowth1, WildGrowth2		= A.Unit(member):HasBuffs(48438, true)
-						local Lifebloom1, Lifebloom2 		= A.Unit(member):HasBuffs(33763, true)                
-						local Germination1, Germination2 	= A.Unit(member):HasBuffs(155777, true) -- Rejuvenation Talent 
-						local summup, summdmg = 0, {}
-						if Rejuvenation1 > 0 then 
-							summup = summup + (A.GetSpellDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
-							table.insert(summdmg, Rejuvenation1)
-						else
-							-- If current target is Tank then to prevent staying on that target we will cycle rest units 
-							if healingTarget and healingTarget ~= "None" and A.Unit(healingTarget):IsTank() then 
-								memberhp = memberhp - 15
-							else 
-								summup = summup - (A.GetSpellDescription(774)[1] * 3)
-							end 
-						end
-						
-						if Regrowth1 > 0 then 
-							summup = summup + (A.GetSpellDescription(8936)[2] / Regrowth2 * Regrowth1)
-							table.insert(summdmg, Regrowth1)
-						end
-						
-						if WildGrowth1 > 0 then 
-							summup = summup + (A.GetSpellDescription(48438)[1] / WildGrowth2 * WildGrowth1)
-							table.insert(summdmg, WildGrowth1)                    
-						end
-						
-						if Lifebloom1 > 0 then 
-							summup = summup + (A.GetSpellDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
-							table.insert(summdmg, Lifebloom1)    
-						end
-						
-						if Germination1 > 0 then -- same with Rejuvenation
-							summup = summup + (A.GetSpellDescription(774)[1] / Germination2 * Germination1)
-							table.insert(summdmg, Germination1)    
-						end
-						
-						-- Get longer hot duration and predict incoming damage by that 
-						table.sort(summdmg, function (x, y)
-								return x > y
-						end)
-						
-						-- Now we convert it to persistent (from value to % as HP)
-						if summup > 0 then 
-							-- current HP % with pre casting heal + predict hot heal - predict incoming dmg 
-							memberhpHotSystem = memberhp + ( 100 * summup / membermhp ) - ( 100 * (DMG * summdmg[1]) / membermhp )
-							if memberhpHotSystem < 100 then
-								memberhp = memberhpHotSystem
-							end
-						end                    
-					end
-				end
-				
-				-- Discipline Priest
-				if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_DISCIPLINE) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
-						-- DISPEL PRIORITY
-						isQueuedDispel = true 
-						memberhp = 50 
-						-- if we will have lower unit than 50% then don't dispel it
-						if A.Unit(member):IsHealer() then 
-							memberhp = 25
-						end 
-					elseif AtonementRenew_Toggle and A.Unit(member):HasBuffs(81749, true) <= A.GetCurrentGCD() then 				
-						-- Toggle "Group Atonement/Renew﻿"
-						memberhp = 50
-					elseif memberhp < 100 then                    
-						-- Atonement priority 
-						if A.Unit(member):HasBuffs(81749, true) > 0 and Env.oPR and Env.oPR["AtonementHPS"] then 
-							memberhp = memberhp + ( 100 * Env.oPR["AtonementHPS"] / membermhp )
-						end 
-						
-						-- Absorb system 
-						-- Pre pare 
-						if A.Unit("player"):CombatTime() <= 5 and 
-						(
-							A.Unit("player"):CombatTime() > 0 or 
-							(
-								-- Pre shield before battle will start
-								( A.Zone == "arena" or A.Zone == "pvp" ) and
-								A:GetTimeSinceJoinInstance() < 120                             
-							)
-						) and A.Unit(member):GetAbsorb(17) == 0 then 
-							memberhp = memberhp - 10
-						end                     
-						
-						-- Toggle or PrePare combat or while Rapture always
-						if HE_Absorb or A.Unit("player"):CombatTime() <= 5 or A.Unit("player"):HasBuffs(47536, true) > A.GetCurrentGCD() then 
-							memberhp = memberhp + ( 100 * A.Unit(member):GetAbsorb(17) / membermhp )
-						end 
-					end 
-				end 
-				
-				-- Holy Priest
-				if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_HOLY) then                 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
-						-- DISPEL PRIORITY
-						isQueuedDispel = true 
-						memberhp = 50 
-						-- if we will have lower unit than 50% then don't dispel it
-						if A.Unit(member):IsHealer() then 
-							memberhp = 25
-						end  
-					elseif AtonementRenew_Toggle and A.Unit(member):HasBuffs(139, true) <= A.GetCurrentGCD() then 				
-						-- Toggle "Group Atonement/Renew﻿"
-						memberhp = 50
-					elseif memberhp < 100 then 
-						if Env.UnitIsTrailOfLight(member) then 
-							-- Single Rotation 
-							local ST = Env.IsIconDisplay("TMW:icon:1RhherQmOw_V") or 0
-							if ST == 2061 then 
-								memberhp = memberhp + ( 100 * (A.GetSpellDescription(2061)[1] * 0.35) / membermhp )
-							elseif ST == 2060 then 
-								memberhp = memberhp + ( 100 * (A.GetSpellDescription(2060)[1] * 0.35) / membermhp )
-							end 
-						end 
-					end 
-				end 
-			   
-				-- Mistweaver Monk 
-				if A.IsInitialized and A.Unit("player"):HasSpec(ACTION_CONST_MONK_MISTWEAVER) then 
-					if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not A.IsInPvP or not UnitIsUnit("player", member)) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
-						-- DISPEL PRIORITY
-						isQueuedDispel = true 
-						memberhp = 50 
-						-- If we will have lower unit than 50% then don't dispel it
-						if A.Unit(member):IsHealer() then 
-							memberhp = 25
-						end 
-					elseif memberhp < 100 and A.GetToggle(2, "HealingEngineAutoHot") and A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist:IsReady() then 
-						-- Keep Renewing Mist hots as much as it possible on cooldown
-						local RenewingMist = A.Unit(member):HasBuffs(A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist.ID, true)
-						if RenewingMist == 0 and A[ACTION_CONST_MONK_MISTWEAVER].RenewingMist:PredictHeal("RenewingMist", member) then 
-							memberhp = memberhp - 40
-							if memberhp < 55 then 
-								memberhp = 55 
-							end 
-						end 
-					end 
-				end 
-			end 
-			
+			memberhp, isQueuedDispel = PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDispel)
+
             -- Misc: Sort by Roles 			
             if A.Unit(member):IsTank() then
                 memberhp = memberhp - 2
