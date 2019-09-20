@@ -111,6 +111,10 @@ local function CanHeal(unitID, unitGUID)
 		and ( InstanceInfo.ID ~= 2164 or A.Unit(unitID):HasDeBuffs(292127) == 0 )
 end
 
+local Temp = {
+	Beacons = {156910, 53563},
+	SumDMG	= {},
+}
 local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDispel)
 	-- Enable specific instructions by profile 
 	if A.IsGGLprofile then 
@@ -129,7 +133,7 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 				-- Generally, prioritize players that might die in the next few seconds > non-Beaconed tank (without Glimmer buff) > Beaconed tank (without Glimmer buff) > players without the Glimmer buff
 				if Env.PredictHeal("HolyShock", member) then 
 					if A.Unit(member):IsTank() then 
-						if A.Unit(member):HasBuffs({156910, 53563}, true) == 0 then 
+						if A.Unit(member):HasBuffs(Temp.Beacons, true) == 0 then 
 							memberhp = 35
 						else 
 							memberhp = 45
@@ -147,7 +151,7 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 					memberhp = memberhp + ( 100 * A.GetSpellDescription(223306)[1] / membermhp )
 				end 
 				-- Checking if Member has Beacons on them            
-				if A.Unit(member):HasBuffs({53563, 156910}, true) > 0 then
+				if A.Unit(member):HasBuffs(Temp.Beacons, true) > 0 then
 					memberhp = memberhp + ( 100 * (A.Unit("player"):GetHPS() * 0.4) / membermhp ) - ( 100 * DMG / membermhp )
 				end  
 			end 
@@ -170,10 +174,11 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 				local WildGrowth1, WildGrowth2		= A.Unit(member):HasBuffs(48438, true)
 				local Lifebloom1, Lifebloom2 		= A.Unit(member):HasBuffs(33763, true)                
 				local Germination1, Germination2 	= A.Unit(member):HasBuffs(155777, true) -- Rejuvenation Talent 
-				local summup, summdmg = 0, {}
+				local summup = 0
+				wipe(Temp.SumDMG)
 				if Rejuvenation1 > 0 then 
 					summup = summup + (A.GetSpellDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
-					table.insert(summdmg, Rejuvenation1)
+					table.insert(Temp.SumDMG, Rejuvenation1)
 				else
 					-- If current target is Tank then to prevent staying on that target we will cycle rest units 
 					if healingTarget and healingTarget ~= "None" and A.Unit(healingTarget):IsTank() then 
@@ -185,33 +190,33 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 				
 				if Regrowth1 > 0 then 
 					summup = summup + (A.GetSpellDescription(8936)[2] / Regrowth2 * Regrowth1)
-					table.insert(summdmg, Regrowth1)
+					table.insert(Temp.SumDMG, Regrowth1)
 				end
 				
 				if WildGrowth1 > 0 then 
 					summup = summup + (A.GetSpellDescription(48438)[1] / WildGrowth2 * WildGrowth1)
-					table.insert(summdmg, WildGrowth1)                    
+					table.insert(Temp.SumDMG, WildGrowth1)                    
 				end
 				
 				if Lifebloom1 > 0 then 
 					summup = summup + (A.GetSpellDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
-					table.insert(summdmg, Lifebloom1)    
+					table.insert(Temp.SumDMG, Lifebloom1)    
 				end
 				
 				if Germination1 > 0 then -- same with Rejuvenation
 					summup = summup + (A.GetSpellDescription(774)[1] / Germination2 * Germination1)
-					table.insert(summdmg, Germination1)    
+					table.insert(Temp.SumDMG, Germination1)    
 				end
 				
 				-- Get longer hot duration and predict incoming damage by that 
-				table.sort(summdmg, function (x, y)
+				table.sort(Temp.SumDMG, function (x, y)
 						return x > y
 				end)
 				
 				-- Now we convert it to persistent (from value to % as HP)
 				if summup > 0 then 
 					-- current HP % with pre casting heal + predict hot heal - predict incoming dmg 
-					local memberhpHotSystem = memberhp + ( 100 * summup / membermhp ) - ( 100 * (DMG * summdmg[1]) / membermhp )
+					local memberhpHotSystem = memberhp + ( 100 * summup / membermhp ) - ( 100 * (DMG * Temp.SumDMG[1]) / membermhp )
 					if memberhpHotSystem < 100 then
 						memberhp = memberhpHotSystem
 					end
