@@ -1162,8 +1162,6 @@ local types = {
         { id = 271564, dur = 0, stack = 2},
         -- Poison Barrage 
         { id = 270507, dur = 0, stack = 0},
-        -- Stinging Venom Coating
-        { id = 275835, dur = 0, stack = 3},
         -- Neurotoxin 
         { id = 273563, dur = 1.49, stack = 0},
         -- Cytotoxin 
@@ -1173,7 +1171,7 @@ local types = {
         -- Widowmaker Toxin
         { id = 269298, dur = 0, stack = 2}, 
         -- Stinging Venom
-        { id = 275836, dur = 0, stack = 3},        
+        { id = 275836, dur = 0, stack = 4},        
     },
     Disease = {
 		-- 8.2 Mechagon - Consuming Slime

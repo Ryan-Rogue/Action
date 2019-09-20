@@ -2170,8 +2170,6 @@ local GlobalFactory = {
 				[271564] = { stack = 3 },
 				-- Poison Barrage 
 				[270507] = {},
-				-- Stinging Venom Coating
-				[275835] = { stack = 4 },
 				-- Neurotoxin 
 				[273563] = { dur = 1.49 },
 				-- Cytotoxin 
@@ -2181,7 +2179,7 @@ local GlobalFactory = {
 				-- Widowmaker Toxin
 				[269298] = { stack = 2 }, 
 				-- Stinging Venom
-				[275836] = { stack = 4 },       
+				[275836] = { stack = 5 },       
 			},
 			Disease = {
 				-- 8.2 Mechagon - Consuming Slime
