@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "19.09.2019"
+local DateTime 						= "20.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2167,7 +2167,7 @@ local GlobalFactory = {
 				-- Hidden Blade
 				[270865] = {},
 				-- Embalming Fluid 
-				[271563] = { stack = 3 },
+				[271564] = { stack = 3 },
 				-- Poison Barrage 
 				[270507] = {},
 				-- Stinging Venom Coating

@@ -1159,7 +1159,7 @@ local types = {
         -- Hidden Blade
         { id = 270865, dur = 0, stack = 0},
         -- Embalming Fluid 
-        { id = 271563, dur = 0, stack = 2},
+        { id = 271564, dur = 0, stack = 2},
         -- Poison Barrage 
         { id = 270507, dur = 0, stack = 0},
         -- Stinging Venom Coating
