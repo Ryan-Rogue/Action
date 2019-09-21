@@ -236,6 +236,11 @@ function A.Rotation(icon)
 		return A.Data.Q[1]:Show(icon)				 
     end 
 	
+	-- Hide frames which are not used by profile
+	if not A[A.PlayerSpec][meta] then 
+		return A.Hide(icon)
+	end 	
+	
 	-- [3] Single / [4] AoE / [6-8] Passive: @player-party1-2, @raid1-3, @arena1-3
 	if A[A.PlayerSpec][meta] and A[A.PlayerSpec][meta](icon) then 
 		return true 
