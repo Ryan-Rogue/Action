@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "20.09.2019"
+local DateTime 						= "21.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2269,6 +2269,8 @@ local GlobalFactory = {
 				return FriendlyTeam():GetDeBuffs(268391) == 0 ]] },
 				-- Mental Assault 
 				[268391] = {},
+				-- Wicked Assault
+				[266265] = { dur = 1.5 },
 				-- Explosive Void
 				[269104] = {},
 				-- Choking Waters

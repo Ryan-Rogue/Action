@@ -1258,6 +1258,8 @@ local types = {
         { id = 268322, dur = 0, stack = 0},
         -- Mental Assault 
         { id = 268391, dur = 0, stack = 0},
+		-- Wicked Assault
+		{ id = 266265, dur = 1.5, stack = 0},
         -- Explosive Void
         { id = 269104, dur = 0, stack = 0},
         -- Choking Waters
