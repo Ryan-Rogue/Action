@@ -33,6 +33,7 @@ local AzeriteEmpoweredItem 				= _G.C_AzeriteEmpoweredItem
 local AzeriteEssence 					= _G.C_AzeriteEssence
 
 local Data 								= {
+	TimeStamp							= 0,
 	InventorySlots 						= { 1, 2, 3, 5 },
 	Ranks 								= {},
 	Essences 							= {
@@ -271,14 +272,17 @@ end
 -------------------------------------------------------------------------------
 -- OnEvent
 -------------------------------------------------------------------------------
-local AzeriteItems 
 function Data.OnEvent()  	
-	if not AzeriteItems then 
-		for i = 1, #Data.InventorySlots do
-			AzeriteItems[Data.InventorySlots[i]] = Item:CreateFromEquipmentSlot(Data.InventorySlots[i])
-		end
-		A.Listener:Remove("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN")
+	-- Don't call it several times 
+	if Data.TimeStamp == TMW.time then 
+		return 
 	end 
+	Data.TimeStamp = TMW.time	
+	
+	local AzeriteItems = {}      	
+	for i = 1, #Data.InventorySlots do
+		AzeriteItems[Data.InventorySlots[i]] = Item:CreateFromEquipmentSlot(Data.InventorySlots[i])
+	end
 	
 	wipe(Data.Ranks)    
 	
@@ -323,7 +327,7 @@ if AzeriteEssence then
 	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_CHANGED", 			Data.Essences.Update)
 	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_UPDATE", 			Data.Essences.Update) 
 	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATED", 			Data.Essences.Update)
-	--A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATION_FAILED", 	Data.Essences.Update)
+	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATION_FAILED", 	Data.Essences.Update)
 end 
 
 -------------------------------------------------------------------------------
