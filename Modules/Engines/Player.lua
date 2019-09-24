@@ -333,9 +333,9 @@ function A.Player:AddTier(tier, items)
 	if not Data.IierIsInitialized then 
 		Data.IierIsInitialized = true 
 		A.Listener:Add("ACTION_EVENT_EQUIPMENT", "PLAYER_ENTERING_WORLD", 		Data.OnItemsUpdate)
-		A.Listener:Add("ACTION_EVENT_EQUIPMENT", "PLAYER_EQUIPMENT_CHANGED",	Data.OnItemsUpdate)	
-		Data.OnItemsUpdate()
+		A.Listener:Add("ACTION_EVENT_EQUIPMENT", "PLAYER_EQUIPMENT_CHANGED",	Data.OnItemsUpdate)			
 	end 
+	Data.OnItemsUpdate()
 end
 
 function A.Player:GetTier(tier)
