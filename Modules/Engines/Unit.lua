@@ -2034,6 +2034,11 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 	    return UnitPower(unitID)
 	end, "UnitID"),
+	PowerType								= Cache:Pass(function(self)
+		-- @return number 
+		local unitID 						= self.UnitID
+	    return select(2, UnitPowerType(unitID))
+	end, "UnitID"),
 	PowerMax								= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
