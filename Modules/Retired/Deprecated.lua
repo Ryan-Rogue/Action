@@ -1194,6 +1194,8 @@ local types = {
         { id = 259714, dur = 0, stack = 1},
         -- Festering Bite
         { id = 263074, dur = 0, stack = 0},
+		-- Decaying Spores
+		{ id = 273226, dur = 0, stack = 1},
     }, 
     Curse = {
         -- Wracking Pain
@@ -1216,6 +1218,8 @@ local types = {
 		{ id = 294195, dur = 0, stack = 0 },
 		-- 8.2 Mechagon - Discom-BOMB-ulator
 		{ id = 285460, dur = 0, stack = 0 },
+		-- 8.2 Mechagon - Flaming Refuse
+		{ id = 294180, dur = 0, stack = 0 },
 		-- 8.2 Queen Azshara - Arcane Burst
 		{ id = 303657, dur = 10, stack = 0 },
 		-- 8.2 Za'qul - Dread
