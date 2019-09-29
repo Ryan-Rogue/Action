@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "24.09.2019"
+local DateTime 						= "29.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2202,6 +2202,8 @@ local GlobalFactory = {
 				[259714] = {},
 				-- Festering Bite
 				[263074] = {},
+				-- Decaying Spores
+				[273226] = { byID = true, stack = 2 },
 			}, 
 			Curse = {
 				-- Unstable Hex
@@ -2226,6 +2228,8 @@ local GlobalFactory = {
 				[294195] = { byID = true },
 				-- 8.2 Mechagon - Discom-BOMB-ulator
 				[285460] = { byID = true },
+				-- 8.2 Mechagon - Flaming Refuse
+				[294180] = { byID = true },
 				-- 8.2 Queen Azshara - Arcane Burst
 				[303657] = { byID = true, dur = 10 },
 				-- 8.2 Za'qul - Dread
@@ -2235,7 +2239,7 @@ local GlobalFactory = {
 				-- 8.2 Radiance of Azshara - Arcane Bomb
 				-- [296746] = { byID = true }, -- need predict unit position to dispel only when they are out of raid 
 				-- The Restless Cabal - Promises of Power 
-				[282562] = { byID = true, stack = 3 },
+				[282562] = { byID = true, stack = 3 },				
 				-- Jadefire Masters - Searing Embers
 				[286988] = { byID = true },
 				-- Conclave of the Chosen - Mind Wipe
@@ -4428,13 +4432,29 @@ function Action:QueueValidCheck()
 	return false 
 end 
 
+function Action.IsQueueRunning()
+	-- @return boolean 
+	return #Action.Data.Q > 0
+end 
+
+function Action.IsQueueRunningAuto()
+	-- @return boolean 	
+	local index = #Action.Data.Q
+	return index > 0 and (Action.Data.Q[index].Auto or Action.Data.Q[1].Auto)
+end 
+
 function Action.IsQueueReady(meta)
 	-- @return boolean
-    if #Action.Data.Q > 0 and Queue:IsThisMeta(meta) then 
+	local index = #Action.Data.Q
+    if index > 0 and Queue:IsThisMeta(meta) then 		
 		local self = Action.Data.Q[1]
+		if self.Auto and self.Start and TMW.time - self.Start > (Action.Data.QueueAutoResetTimer or 10) then 
+			Queue:OnEventToReset()
+			return false 
+		end 	
         if self.Type == "Spell" or self.Type == "Trinket" or self.Type == "Potion" or self.Type == "Item" then -- Note: Equip, Count, Existance of action already checked in Action:SetQueue 
 			if self.UnitID == "player" or self:QueueValidCheck() then 
-				return self:IsUsable(self.ExtraCD) and (not self.PowerCustom or UnitPower("player", self.PowerType) >= (self.PowerCost or 0)) and self:RunQLua(self.UnitID)    
+				return self:IsUsable(self.ExtraCD) and (not self.PowerCustom or UnitPower("player", self.PowerType) >= (self.PowerCost or 0)) and (self.Auto or self:RunQLua(self.UnitID))   
 			end
         else 
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["ISNOTFOUND"])          
@@ -4472,6 +4492,7 @@ function Action:SetQueue(args)
 			Value (boolean) sets custom fixed statement for queue
 			Priority (number) put in specified priority 
 			MetaSlot (number) usage for MSG system to set queue on fixed position 
+			Auto (boolean) usage to skip RunQLua
 	]]
 	-- Check validance 
 	if not self.Queued and not self:IsExists() then  
@@ -4484,9 +4505,11 @@ function Action:SetQueue(args)
 	
 	local args = args or {}	
 	local Identify = GetTableKeyIdentify(self)
-	if self.QueueForbidden then 
-        Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. printKey)
-        return 	 
+	if self.QueueForbidden or (self.isStance and Action.Player:IsStance(self.isStance)) then 
+		if not args.Silence then 
+			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. printKey)
+		end  
+		return 
 	-- Let for user allow run blocked actions whenever he wants, anyway why not 
 	--elseif self:IsBlocked() and not self.Queued then 
 		--if not args.Silence then 
@@ -4538,7 +4561,7 @@ function Action:SetQueue(args)
 			end 
 		end 
 	end
-    table.insert(Action.Data.Q, priority, setmetatable({ UnitID = args.UnitID, MetaSlot = args.MetaSlot }, { __index = self }))
+    table.insert(Action.Data.Q, priority, setmetatable({ UnitID = args.UnitID, MetaSlot = args.MetaSlot, Auto = args.Auto, Start = TMW.time }, { __index = self }))
 
 	if args.PowerType then 
 		-- Note: we set it as true to use in function Action.IsQueueReady()
@@ -4661,7 +4684,7 @@ end
 --		 Category ("Dispel", "MagicMovement", "PurgeFriendly", "PurgeHigh", "PurgeLow", "Enrage", "BlackList")				
 function Action.AuraIsON(Toggle)
 	-- @return boolean 
-	return TMW.db.profile.ActionDB[5][Action.PlayerSpec][Toggle]
+	return type(Toggle) == "boolean" or TMW.db.profile.ActionDB[5][Action.PlayerSpec][Toggle]
 end 
 
 function Action.AuraGetCategory(Category)
@@ -6451,6 +6474,21 @@ function Action.ToggleMainUI()
 			tab.childs[spec].ScrollTable:SetScript("OnShow", function(self)			
 				self:SetData(ScrollTableActionsData())	
 				self:SortData(self.SORTBY)
+				local index = self:GetSelection()
+				if not index then 
+					Key:SetText("")
+					Key:ClearFocus() 
+				else 
+					local data = self:GetRow(index)
+					if data then 
+						if data.TableKeyName ~= Key:GetText() then 
+							Key:SetText(data.TableKeyName)
+						end 
+					else 
+						Key:SetText("")
+						Key:ClearFocus() 
+					end 
+				end 
 			end)
 			-- AutoHidden update ScrollTable events 
 			local EVENTS = {
@@ -6491,6 +6529,22 @@ function Action.ToggleMainUI()
 					else 		
 						self:SetData(ScrollTableActionsData())	
 						self:SortData(self.SORTBY)
+					end 
+					
+					local index = self:GetSelection()
+					if not index then 
+						Key:SetText("")
+						Key:ClearFocus() 
+					else 
+						local data = self:GetRow(index)
+						if data then 
+							if data.TableKeyName ~= Key:GetText() then 
+								Key:SetText(data.TableKeyName)
+							end 
+						else 
+							Key:SetText("")
+							Key:ClearFocus() 
+						end 
 					end 
 				end 
 			end)
@@ -6533,6 +6587,22 @@ function Action.ToggleMainUI()
 						tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())	
 						tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)	
 						EVENTS_INIT()
+						
+						local index = tab.childs[spec].ScrollTable:GetSelection()
+						if not index then 
+							Key:SetText("")
+							Key:ClearFocus() 
+						else 
+							local data = tab.childs[spec].ScrollTable:GetRow(index)
+							if data then 
+								if data.TableKeyName ~= Key:GetText() then 
+									Key:SetText(data.TableKeyName)
+								end 
+							else 
+								Key:SetText("")
+								Key:ClearFocus() 
+							end 
+						end 
 					end 
 				end 
 			end)
