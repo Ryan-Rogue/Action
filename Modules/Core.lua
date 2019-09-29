@@ -9,6 +9,8 @@ local MultiUnits			= A.MultiUnits
 
 local _G 					= _G
 
+local UnitIsFriend			= UnitIsFriend
+
 local SpellIsTargeting		= SpellIsTargeting
 local IsMouseButtonDown		= IsMouseButtonDown
 
@@ -71,9 +73,17 @@ function A.PauseChecks()
         return ACTION_CONST_PAUSECHECKS_DISABLED
     end	
 	
-	if (A.GetToggle(1, "CheckDeadOrGhost") and Unit("player"):IsDead()) or (A.GetToggle(1, "CheckDeadOrGhostTarget") and (Unit("target"):IsDead() or Unit("mouseover"):IsDead()) and (not A.IsInPvP or Unit("target"):Class() ~= "HUNTER")) then 						-- exception in PvP Hunter 
+	if 	(A.GetToggle(1, "CheckDeadOrGhost") and Unit("player"):IsDead()) or 
+		(
+			A.GetToggle(1, "CheckDeadOrGhostTarget") and 
+			(
+				(Unit("target"):IsDead() and not UnitIsFriend("player", "target") and (not A.IsInPvP or Unit("target"):Class() ~= "HUNTER")) or 
+				(Unit("mouseover"):IsDead() and not UnitIsFriend("player", "mouseover") and (not A.IsInPvP or Unit("mouseover"):Class() ~= "HUNTER"))
+			)
+		) 
+	then 																																																											-- exception in PvP Hunter 
 		return ACTION_CONST_PAUSECHECKS_DEAD_OR_GHOST
-	end 	
+	end 		
 	
 	if A.GetToggle(1, "CheckMount") and Player:IsMounted() then 																																													-- exception Divine Steed and combat mounted auras
 		return ACTION_CONST_PAUSECHECKS_IS_MOUNTED
