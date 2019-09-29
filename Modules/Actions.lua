@@ -109,8 +109,8 @@ local Spell					= _G.Spell
 local IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell =
 	  IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell
 
-local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste = 
-	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste
+local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown = 
+	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown
 
 -- Item 	  
 local IsUsableItem, IsHelpfulItem, IsHarmfulItem =
@@ -383,6 +383,42 @@ function A:CanSafetyCastHeal(unitID, offset)
 end 
 
 -------------------------------------------------------------------------------
+-- Determine
+-------------------------------------------------------------------------------
+function A.DetermineHealObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
+	-- @return object or nil 
+	-- Note: :PredictHeal(unitID) must be only ! Use self.ID or self:Info() inside to determine by that which spell is it 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) and object:PredictHeal(unitID) then 
+			return object
+		end 
+	end 
+end 
+
+function A.DetermineUsableObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
+	-- @return object or nil 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) then 
+			return object
+		end 
+	end 
+end 
+
+function A.DetermineCountGCDs(...)
+	-- @return number, count of required summary GCD times to use all in vararg
+	local count = 0
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)		
+		if (not object.isStance or A.PlayerClass ~= "WARRIOR") and object:IsRequiredGCD() and not object:IsBlocked() and not object:IsBlockedBySpellLevel() and (not object.isTalent or object:IsSpellLearned()) and object:GetCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + A.GetCurrentGCD() then 
+			count = count + 1
+		end 
+	end 	
+	return count
+end 
+
+-------------------------------------------------------------------------------
 -- Azerite 
 -------------------------------------------------------------------------------
 function A:GetAzeriteRank()
@@ -530,7 +566,8 @@ local Racial = {
 		end 
 		
 		if A.PlayerRace == "Tauren" then 
-			return 	(
+			return 	Player:IsStaying() and 
+					(
 						(
 							unitID and 	
 							Unit(unitID):IsEnemy() and 
@@ -793,7 +830,18 @@ end
 function A:GetCooldown()
 	-- @return number
 	if self.Type == "Spell" then 
-		return CooldownDuration(self:Info())
+		if self.isStance then 
+			local start, duration, isActive = GetShapeshiftFormCooldown(self.isStance)
+			if isActive then 
+				return huge 
+			elseif duration then
+				return (duration == 0 and 0) or (duration - (TMW.time - start))
+			end
+			
+			return 0
+		else 
+			return CooldownDuration(self:Info())
+		end 
 	end 
 	
 	return self:GetItemCooldown()
@@ -913,11 +961,33 @@ end
 
 function A:IsReadyM(unitID, skipRange)
 	-- @return boolean
-	-- For MSG System 
+	-- For MSG System or bypass ShouldStop with GCD checks and blocked conditions 
 	if unitID == "" then 
 		unitID = nil 
 	end 
     return 	self:IsCastable(unitID, skipRange, nil, true) and self:RunLua(unitID)
+end 
+
+function A:IsReadyByPassCastGCD(unitID, skipRange, skipLua, skipUsable)
+	-- @return boolean
+	-- For [3-4, 6-8]
+    return 	not self:IsBlocked() and 
+			not self:IsBlockedByQueue() and 
+			self:IsCastable(unitID, skipRange, nil, true, skipUsable) and 
+			( skipLua or self:RunLua(unitID) )
+end 
+
+function A:IsReadyByPassCastGCDP(unitID, skipRange, skipLua, skipUsable)
+	-- @return boolean
+	-- For [1-2, 5]
+    return 	self:IsCastable(unitID, skipRange, nil, true, skipUsable) and (skipLua or self:RunLua(unitID))
+end 
+
+function A:IsReadyToUse(unitID, skipShouldStop, skipUsable)
+	-- @return boolean 
+	return 	not self:IsBlocked() and 
+			not self:IsBlockedByQueue() and 
+			self:IsCastable(nil, true, skipShouldStop, nil, skipUsable)
 end 
 
 -------------------------------------------------------------------------------
@@ -1033,6 +1103,7 @@ function A.Create(attributes)
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
 			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth
+			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
 	]]
 	if not attributes then 
 		local attributes = {}
@@ -1075,6 +1146,8 @@ function A.Create(attributes)
 		s.PowerCost, s.PowerType = s:GetSpellPowerCostCache()
 		-- Talent 
 		s.isTalent = attributes.isTalent
+		-- Stance 
+		s.isStance = attributes.isStance
 	elseif attributes.Type == "SpellSingleColor" then 
 		s = setmetatable(s, {__index = A})	
 		s.Type = "Spell"
@@ -1089,6 +1162,8 @@ function A.Create(attributes)
 		s.PowerCost, s.PowerType = s:GetSpellPowerCostCache()	
 		-- Talent 
 		s.isTalent = attributes.isTalent
+		-- Stance 
+		s.isStance = attributes.isStance
 	elseif attributes.Type == "Trinket" or attributes.Type == "Potion" or attributes.Type == "Item" then 
 		s = setmetatable(s, {
 				__index = function(self, key)
