@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "29.09.2019"
+local DateTime 						= "30.09.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -4393,6 +4393,12 @@ local Queue = {
 			end 
 		end 	
 	end, 
+	OnEventToResetNoCombat 		= function(self)
+		-- ByPass wrong reset events by equip swap during combat
+		if Action.Unit("player"):CombatTime() == 0 then 
+			self.OnEventToReset()
+		end 
+	end, 
 	OnEventToReset 				= function(self)
 		if #Action.Data.Q > 0 then 
 			for i = 1, #Action.Data.Q do 
@@ -4584,7 +4590,7 @@ function Action:SetQueue(args)
     Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_SPECIALIZATION_CHANGED", 	function() 	  Queue:OnEventToReset() 			  	end)
 	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_REGEN_ENABLED", 			function() 	  Queue:OnEventToReset() 			  	end)
 	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_TALENT_UPDATE", 			function() 	  Queue:OnEventToReset() 			  	end)
-	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_EQUIPMENT_CHANGED", 		function() 	  Queue:OnEventToReset() 			  	end)
+	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_EQUIPMENT_CHANGED", 		function() 	  Queue:OnEventToResetNoCombat() 	  	end)
 	Action.Listener:Add("ACTION_EVENT_QUEUE", "PLAYER_ENTERING_WORLD", 			function() 	  Queue:OnEventToReset() 			  	end)
 	TMW:RegisterCallback("TMW_ACTION_MODE_CHANGED", 							function() 	  Queue:OnEventToReset() 				end,  "TMW_ACTION_MODE_CHANGED_QUEUE_RESET")
 end
