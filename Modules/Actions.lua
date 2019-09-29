@@ -201,6 +201,21 @@ A.ShouldStop = A.MakeFunctionCachedStatic(A.ShouldStop, 0)
 -------------------------------------------------------------------------------
 -- Spell
 -------------------------------------------------------------------------------
+local spellbasecache  = setmetatable({}, { __index = function(t, v)
+	local cd = GetSpellBaseCooldown(v)
+	if cd then
+		t[v] = cd / 1000
+		return t[v]
+	end     
+	return 0
+end })
+
+function A:GetSpellBaseCooldown(self)
+	-- @return number (seconds)
+	-- Gives the (unmodified) cooldown
+	return unpack(spellbasecache[self.ID]) 
+end 
+
 local spellpowercache = setmetatable({}, { __index = function(t, v)
 	local pwr = GetSpellPowerCost(A.GetSpellInfo(v))
 	if pwr and pwr[1] then
