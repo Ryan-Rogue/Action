@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "30.09.2019"
+local DateTime 						= "01.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2204,6 +2204,8 @@ local GlobalFactory = {
 				[263074] = {},
 				-- Decaying Spores
 				[273226] = { byID = true, stack = 2 },
+				-- Rotting Wounds
+				[272588] = { byID = true },
 			}, 
 			Curse = {
 				-- Unstable Hex

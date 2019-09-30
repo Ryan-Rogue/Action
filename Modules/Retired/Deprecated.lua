@@ -1196,6 +1196,8 @@ local types = {
         { id = 263074, dur = 0, stack = 0},
 		-- Decaying Spores
 		{ id = 273226, dur = 0, stack = 1},
+		-- Rotting Wounds
+		{ id = 272588, dur = 0, stack = 0 },
     }, 
     Curse = {
         -- Wracking Pain
