@@ -1222,12 +1222,14 @@ local types = {
 		{ id = 285460, dur = 0, stack = 0 },
 		-- 8.2 Mechagon - Flaming Refuse
 		{ id = 294180, dur = 0, stack = 0 },
+		-- 8.2 Mechagon -  Capacitor Discharge
+		{ id = 295168, dur = 0, stack = 0 },
 		-- 8.2 Queen Azshara - Arcane Burst
 		{ id = 303657, dur = 10, stack = 0 },
 		-- 8.2 Za'qul - Dread
 		{ id = 292963, dur = 0, stack = 0 },
 		-- 8.2 Za'qul - Shattered Psyche
-		{ id = 295327, dur = 0, stack = 0 },
+		{ id = 295327, dur = 0, stack = 0 },		
 		-- 8.2 Radiance of Azshara - Arcane Bomb
 		-- { id = 296746, dur = 0, stack = 0 }, -- need predict unit position to dispel only when they are out of raid 
 		-- The Restless Cabal - Promises of Power 

@@ -2232,6 +2232,8 @@ local GlobalFactory = {
 				[285460] = { byID = true },
 				-- 8.2 Mechagon - Flaming Refuse
 				[294180] = { byID = true },
+				-- 8.2 Mechagon -  Capacitor Discharge
+				[295168] = { byID = true },
 				-- 8.2 Queen Azshara - Arcane Burst
 				[303657] = { byID = true, dur = 10 },
 				-- 8.2 Za'qul - Dread
