@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "01.10.2019"
+local DateTime 						= "02.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -3740,6 +3740,7 @@ local function CraftMacro(Name, Macro, perCharacter, QUESTIONMARK, leaveNewLine)
 	Action.Print(L["MACRO"] .. " " .. Name .. " " .. L["CREATED"] .. "!")
 	GameMenuButtonMacros:Click()
 end
+Action.CraftMacro = CraftMacro
 
 -------------------------------------------------------------------------------
 -- UI: LUA - Container
