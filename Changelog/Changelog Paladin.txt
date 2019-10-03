@@ -1,3 +1,6 @@
+[Paladin v18]
+Holy				- Fixed self select to dispel by HealingEngine 
+
 [Paladin v17]
 Ret Prot Holy		- Lay on Hands is now fixed for rated instances 
 Holy				- Fixed Divine Shield usage on yourself, will be triggered by critical state to be killed 
