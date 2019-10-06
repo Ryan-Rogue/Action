@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "05.10.2019"
+local DateTime 						= "06.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -4995,10 +4995,20 @@ function Action.SetToggle(arg, custom)
 	local bool 
 	local n, toggle, text, silence = arg[1], arg[2], arg[3], arg[4]
 	if TMW.db.global.ActionDB[toggle] ~= nil then 
-		TMW.db.global.ActionDB[toggle] = custom ~= nil and custom or not TMW.db.global.ActionDB[toggle]		
+		if custom ~= nil then 
+			TMW.db.global.ActionDB[toggle] = custom
+		else 
+			TMW.db.global.ActionDB[toggle] = not TMW.db.global.ActionDB[toggle]
+		end 
+		
 		bool = TMW.db.global.ActionDB[toggle] 		
 	elseif Factory[n] and Factory[n][toggle] ~= nil then 
-		TMW.db.profile.ActionDB[n][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][toggle]		
+		if custom ~= nil then 
+			TMW.db.profile.ActionDB[n][toggle] = custom 
+		else 
+			TMW.db.profile.ActionDB[n][toggle] = not TMW.db.profile.ActionDB[n][toggle]	
+		end 
+		
 		bool = TMW.db.profile.ActionDB[n][toggle] 
 	elseif TMW.db.profile.ActionDB[n] == nil or TMW.db.profile.ActionDB[n][Action.PlayerSpec] == nil or TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] == nil then
 		if not silence then 
@@ -5030,7 +5040,12 @@ function Action.SetToggle(arg, custom)
 			if anyIsON then 
 				for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
 					if TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] and k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom ~= nil and custom or not v
+						if custom ~= nil then	
+							TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
+						else 
+							TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
+						end 
+						
 						if text then 
 							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end 
@@ -5048,7 +5063,12 @@ function Action.SetToggle(arg, custom)
 			else 
 				for k, v in pairs(TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
 					if k ~= "Cache" then 
-						TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom ~= nil and custom or not v	
+						if custom ~= nil then 
+							TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
+						else 
+							TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
+						end 
+						
 						if text then 
 							Action.Print(text .. " " .. k .. ": ", TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end		
@@ -5056,7 +5076,11 @@ function Action.SetToggle(arg, custom)
 				end 				
 			end 
 		else 
-			TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] = custom ~= nil and custom or not TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]						
+			if custom ~= nil then 
+				TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] = custom 						
+			else 
+				TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] = not TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle]
+			end 			
 		end
 		bool = TMW.db.profile.ActionDB[n][Action.PlayerSpec][toggle] 
 	end 
