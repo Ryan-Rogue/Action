@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "06.10.2019"
+local DateTime 						= "07.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -411,7 +411,7 @@ local Localization = {
 				TANK = "Только Танки",
 				DAMAGER = "Только Дамагеры",
 				HEALER = "Только Хилеры",					
-				HEALINGENGINETOOLTIP = "Эта опция отвечает за выбор участников группы или рейда если вы играете хилером\nВсе: Каждый участник\nРейд: Каждый участник исключая танков\n\nПравая кнопка мышки: Создать макрос\nЕсли вы предпочитаете фиксированное состояние, то\\nиспользуйте аргумент (АРГУМЕНТ): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
+				HEALINGENGINETOOLTIP = "Эта опция отвечает за выбор участников группы или рейда если вы играете хилером\nВсе: Каждый участник\nРейд: Каждый участник исключая танков\n\nПравая кнопка мышки: Создать макрос\nЕсли вы предпочитаете фиксированное состояние, то используйте аргумент (АРГУМЕНТ): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
 				DBM = "DBM Таймеры",
 				DBMTOOLTIP = "Отслеживает пулл таймер и некоторые спец. события такие как 'след.треш'.\nЭта опция доступна не для всех профилей!\n\nПравая кнопка мышки: Создать макрос",
 				FPS = "FPS Оптимизация",
@@ -4023,7 +4023,7 @@ function Action.ToggleHE(fixed)
 	else 
 		Current = "ALL"
 	end 		
-	Action.SetToggle({1, "HE_Toggle", "HealingEngine" .. ": "}, fixed or Current)	
+	Action.SetToggle({1, "HE_Toggle", "HealingEngine: "}, fixed or Current)	
 end 
 
 -- [1] ReTarget // ReFocus
