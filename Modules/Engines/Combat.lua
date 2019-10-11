@@ -20,8 +20,8 @@ local isPlayer									= A.Bit.isPlayer
 --local SpellRange								= LibStub("SpellRange-1.0")
 local DRData 									= LibStub("DRData-1.1")
 
-local _G, type, pairs, table, wipe, bitband  	= 
-	  _G, type, pairs, table, wipe, bit.band
+local _G, type, pairs, table, strsub, wipe, bitband = 
+	  _G, type, pairs, table, strsub, wipe, bit.band
 
 local UnitGUID, UnitGetTotalAbsorbs			 	= 
 	  UnitGUID, UnitGetTotalAbsorbs
@@ -628,8 +628,11 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 	-- Reset isFlying
 	if EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" then 
 		UnitTracker:UNIT_DIED(DestGUID)
-	else 
-		UnitTracker:RESET_IS_FLYING(EVENT, SourceGUID, spellID, spellName)
+	else
+		local firstFive = strsub(EVENT, 1, 5)
+		if firstFive == "SPELL" then 
+			UnitTracker:RESET_IS_FLYING(EVENT, SourceGUID, spellID, spellName)
+		end 
 	end 
 end 
 
