@@ -1,3 +1,6 @@
+[Monk v7]
+WW 			- Fixed in PvP error "WW:1439 Attempt to call field TMWAPL (a nil value)"
+
 [Monk v6]
 BM MW WW	- Memory optimization 
 BM WW 		- Fixed miss typo in MSG LUA code for kick phase
