@@ -182,12 +182,12 @@ end
 -- DogTags
 -------------------------------------------------------------------------------
 local DogTag = LibStub("LibDogTag-3.0", true)
-TMW:RegisterCallback("TMW_ACTION_MODE_CHANGED",  DogTag.FireEvent, DogTag)
-TMW:RegisterCallback("TMW_ACTION_BURST_CHANGED", DogTag.FireEvent, DogTag)
-TMW:RegisterCallback("TMW_ACTION_AOE_CHANGED", 	 DogTag.FireEvent, DogTag)
+TMW:RegisterCallback("TMW_ACTION_MODE_CHANGED",  	DogTag.FireEvent, DogTag)
+TMW:RegisterCallback("TMW_ACTION_BURST_CHANGED", 	DogTag.FireEvent, DogTag)
+TMW:RegisterCallback("TMW_ACTION_AOE_CHANGED", 	 	DogTag.FireEvent, DogTag)
 -- Taste's 
-TMW:RegisterCallback("TMW_ACTION_CD_MODE_CHANGED", DogTag.FireEvent, DogTag)
-TMW:RegisterCallback("TMW_ACTION_AOE_MODE_CHANGED", 	 DogTag.FireEvent, DogTag)
+TMW:RegisterCallback("TMW_ACTION_CD_MODE_CHANGED", 	DogTag.FireEvent, DogTag)
+TMW:RegisterCallback("TMW_ACTION_AOE_MODE_CHANGED", DogTag.FireEvent, DogTag)
 
 local function removeLastChar(text)
 	return text:sub(1, -2)
