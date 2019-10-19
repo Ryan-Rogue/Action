@@ -403,6 +403,10 @@ local UnitTracker 								= {
 	isBlink								= {
 		[1953] = true, 
 	},
+	isBlockedForTracker					= {
+		[212653] = true,
+		[1953] = true,		
+	},
 	-- OnEvent 
 	UNIT_SPELLCAST_SUCCEEDED			= function(self, unitID, spellID)
 		if self.InfoByUnitID[unitID] and self.InfoByUnitID[unitID][spellID] and (not self.InfoByUnitID[unitID][spellID].inPvP or A.IsInPvP) and (not self.InfoByUnitID[unitID][spellID].isFriendly or not A.Unit(unitID):IsEnemy()) then
@@ -480,11 +484,11 @@ local UnitTracker 								= {
 	RESET_IS_FLYING						= function(self, EVENT, SourceGUID, spellID, spellName)
 		-- Makes exception for events with _CREATE _FAILED _START since they are point less to be triggered		
 		if self.Data[SourceGUID] then 
-			if self.Data[SourceGUID][spellID] and self.Data[SourceGUID][spellID].isFlying and (not self.Data[SourceGUID][spellID].blackListCLEU or not self.Data[SourceGUID][spellID].blackListCLEU[EVENT]) and EVENT:match("SPELL") and not EVENT:match("_START") and not EVENT:match("_FAILED") and not EVENT:match("_CREATE") then 
+			if self.Data[SourceGUID][spellID] and self.Data[SourceGUID][spellID].isFlying and (not self.Data[SourceGUID][spellID].blackListCLEU or not self.Data[SourceGUID][spellID].blackListCLEU[EVENT]) and not EVENT:match("_START") and not EVENT:match("_FAILED") and not EVENT:match("_CREATE") then 
 				self.Data[SourceGUID][spellID].isFlying = false 
 			end 
 			
-			if not self.Data[SourceGUID][spellID] and self.Data[SourceGUID][spellName] and self.Data[SourceGUID][spellName].isFlying and (not self.Data[SourceGUID][spellName].blackListCLEU or not self.Data[SourceGUID][spellName].blackListCLEU[EVENT]) and EVENT:match("SPELL") and not EVENT:match("_START") and not EVENT:match("_FAILED") and not EVENT:match("_CREATE") then  
+			if not self.Data[SourceGUID][spellID] and self.Data[SourceGUID][spellName] and self.Data[SourceGUID][spellName].isFlying and (not self.Data[SourceGUID][spellName].blackListCLEU or not self.Data[SourceGUID][spellName].blackListCLEU[EVENT]) and not EVENT:match("_START") and not EVENT:match("_FAILED") and not EVENT:match("_CREATE") then  
 				self.Data[SourceGUID][spellName].isFlying = false 
 			end 
 		end 
@@ -626,11 +630,11 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 	end 
 
 	-- Reset isFlying
-	if EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" then 
+	if EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" or EVENT == "UNIT_DISSIPATES" then 
 		UnitTracker:UNIT_DIED(DestGUID)
 	else
 		local firstFive = strsub(EVENT, 1, 5)
-		if firstFive == "SPELL" then 
+		if firstFive == "SPELL" and not UnitTracker:isBlockedForTracker[spellID] then 
 			UnitTracker:RESET_IS_FLYING(EVENT, SourceGUID, spellID, spellName)
 		end 
 	end 
@@ -638,7 +642,7 @@ end
 
 local UNIT_SPELLCAST_SUCCEEDED					= function(...)
 	local unitID, _, spellID = ...
-	if unitID then  
+	if unitID and not UnitTracker:isBlockedForTracker[spellID] then  
 		UnitTracker:UNIT_SPELLCAST_SUCCEEDED(unitID, spellID)
 		UnitTracker:UNIT_SPELLCAST_SUCCEEDED_PLAYER(unitID, spellID)
 	end 

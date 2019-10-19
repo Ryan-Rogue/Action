@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "18.10.2019"
+local DateTime 						= "19.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -20,6 +20,7 @@ local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura
 	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower	  
 	    
 local GameLocale 					= GetLocale()	
+local UIParent						= UIParent
 local C_UI							= _G.C_UI
 local Spell							= _G.Spell 	  								-- ObjectAPI/Spell.lua
 local FindSpellBookSlotBySpellID 	= _G.FindSpellBookSlotBySpellID	   
