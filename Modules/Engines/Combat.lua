@@ -634,7 +634,7 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 		UnitTracker:UNIT_DIED(DestGUID)
 	else
 		local firstFive = strsub(EVENT, 1, 5)
-		if firstFive == "SPELL" and not UnitTracker:isBlockedForTracker[spellID] then 
+		if firstFive == "SPELL" and not UnitTracker.isBlockedForTracker[spellID] then 
 			UnitTracker:RESET_IS_FLYING(EVENT, SourceGUID, spellID, spellName)
 		end 
 	end 
@@ -642,7 +642,7 @@ end
 
 local UNIT_SPELLCAST_SUCCEEDED					= function(...)
 	local unitID, _, spellID = ...
-	if unitID and not UnitTracker:isBlockedForTracker[spellID] then  
+	if unitID and not UnitTracker.isBlockedForTracker[spellID] then  
 		UnitTracker:UNIT_SPELLCAST_SUCCEEDED(unitID, spellID)
 		UnitTracker:UNIT_SPELLCAST_SUCCEEDED_PLAYER(unitID, spellID)
 	end 
