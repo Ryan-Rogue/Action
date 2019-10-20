@@ -372,6 +372,35 @@ function Utils.CastTargetIf(Object, Range, TargetIfMode, TargetIfCondition, Cond
 	end 
 end
 
+function Utils.PSCDEquipped()
+	local Trinket1, Trinket2 = A.Trinket1.ID or 0, A.Trinket2.ID or 0
+	if Trinket1 == 167555 then 
+		return A.Trinket1
+	elseif Trinket2 == 167555 then 
+		return A.Trinket2
+	end 
+end
+
+function Utils.PSCDEquipReady()
+	local PSCDE = Utils.PSCDEquipped()
+	return PSCDE and PSCDE:IsUsable()
+end
+
+function Utils.CyclotronicBlastReady()
+	if Utils.PSCDEquipReady() then 
+		local PSCDString = ""
+		local Trinket1, Trinket2 = A.Trinket1.ID or 0, A.Trinket2.ID or 0
+		if Trinket1 == 167555 then
+			PSCDString = A.Trinket1:GetItemLink()
+		elseif Trinket2 == 167555 then
+			PSCDString = A.Trinket2:GetItemLink()
+		else
+			return false
+		end
+		return PSCDString:match("167672")
+	end 
+end 
+
 A.Utils 						= Utils
 
 -------------------------------------------------------------------------------

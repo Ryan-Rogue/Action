@@ -92,6 +92,8 @@ local isItemUseException	= {
 	[169344] = true, 
 }
 local itemCategory 			= {
+	[169311] = "DPS",	-- Ashvane's Razor Coral
+	[167555] = "DPS",	-- Pocket-Sized Computation Device
     [165806] = "DPS", 	-- Sinister Gladiator's Maledict
 	[165056] = "DEFF", 	-- Sinister Gladiator's Emblem
 	[161675] = "DEFF", 	-- Dread Gladiator's Emblem
