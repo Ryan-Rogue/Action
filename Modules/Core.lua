@@ -1,16 +1,17 @@
 local TMW 					= TMW 
 
 local A   					= Action	
+local InstanceInfo			= A.InstanceInfo
 local UnitCooldown			= A.UnitCooldown
 local Unit					= A.Unit 
 local Player				= A.Player 
 local LoC 					= A.LossOfControl
 local MultiUnits			= A.MultiUnits
 
-local _G 					= _G
+local _G, pairs				= _G, pairs
 
+local GetCVar				= GetCVar
 local UnitIsFriend			= UnitIsFriend
-
 local SpellIsTargeting		= SpellIsTargeting
 local IsMouseButtonDown		= IsMouseButtonDown
 
@@ -214,8 +215,8 @@ function A.Rotation(icon)
 			end 
 		end 
 		
-		if not Player:IsStealthed() then 
-			-- Healthstone 
+		-- Healthstone
+		if not Player:IsStealthed() then 			 
 			local Healthstone = A.GetToggle(1, "HealthStone") 
 			if Healthstone >= 0 then 
 				if A.HS:GetCount() > 0 and A.HS:GetCooldown() == 0 then 			
@@ -231,13 +232,29 @@ function A.Rotation(icon)
 		end
 		
 		-- AutoTarget 
-		if A.GetToggle(1, "AutoTarget") and not A.IamHealer and Unit("player"):CombatTime() > 0 
-			-- No existed or switch in PvE if we accidentally selected out of combat unit  
-			and (not Unit("target"):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and Unit("target"):CombatTime() == 0)) 
-			-- If there PvE in 40 yards any in combat enemy (exception target) or we're on (R)BG 
-			and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(40, 1) >= 1) or A.Zone == "pvp")
-		then 
-			return A:Show(icon, ACTION_CONST_AUTOTARGET)			 
+		if A.GetToggle(1, "AutoTarget") and not A.IamHealer and Unit("player"):CombatTime() > 0 and not Unit("target"):IsExplosives() then 							
+			if  (not Unit("target"):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and Unit("target"):CombatTime() == 0)) 	-- No existed or switch target in PvE if we accidentally selected out of combat unit  			
+				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(40, 1) >= 1) or A.Zone == "pvp") 							-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
+			then 
+				return A:Show(icon, ACTION_CONST_AUTOTARGET)
+			end 
+			
+			if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then
+				-- CLEU search 
+				if A.IsExplosivesExists() then 
+					return A:Show(icon, ACTION_CONST_AUTOTARGET)
+				end 
+				
+				-- Nameplates seach (only if enemy totems are enabled)
+				local nameplates = MultiUnits:GetActiveUnitPlates()
+				if nameplates and GetCVar("nameplateShowEnemyTotems") then 
+					for nameplateUnitID in pairs(nameplates) do 
+						if Unit(nameplateUnitID):IsExplosives() then 
+							return A:Show(icon, ACTION_CONST_AUTOTARGET)			 
+						end 
+					end 
+				end 				 
+			end 
 		end 
 	end 
 	

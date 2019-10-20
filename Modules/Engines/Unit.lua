@@ -10,7 +10,7 @@ local toStr 						= A.toStr
 local toNum 						= A.toNum
 --local strBuilder					= A.strBuilder
 local strElemBuilder				= A.strElemBuilder
---local InstanceInfo				= A.InstanceInfo
+local InstanceInfo					= A.InstanceInfo
 local Player 						= A.Player
 local TeamCache						= A.TeamCache
 local UnitCooldown					= A.UnitCooldown
@@ -22,6 +22,8 @@ local LibRangeCheck  				= LibStub("LibRangeCheck-2.0")
 
 local _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall =
 	  _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall
+	  
+local GameLocale 					= GetLocale()	  
 	  
 local CombatLogGetCurrentEventInfo	= _G.CombatLogGetCurrentEventInfo	  
 local GetUnitSpeed					= _G.GetUnitSpeed
@@ -948,6 +950,7 @@ local Info = {
 	CacheMoving 				= setmetatable({}, { __mode == "kv" }),
 	CacheStaying				= setmetatable({}, { __mode == "kv" }),
 	CacheInterrupt 				= setmetatable({}, { __mode == "kv" }),
+	CacheExplosives				= setmetatable({}, { __mode == "kv" }),
 	SpecIs 						= {
         ["MELEE"] 				= {251, 252, 577, 103, 255, 269, 70, 259, 260, 261, 263, 71, 72, 250, 581, 104, 268, 66, 73},
         ["RANGE"] 				= {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267},
@@ -1142,6 +1145,21 @@ local Info = {
 		[114832] = true,
 		[131997] = true,
 	},
+	ExplosivesName				= {
+		[GameLocale] 			= "Explosives",
+		ruRU					= "Взрывчатка",
+		enGB					= "Explosives",
+		enUS					= "Explosives",
+		deDE					= "Sprengstoff",
+		esES					= "Explosivos",
+		esMX					= "Explosivos",
+		frFR					= "Explosifs",
+		itIT					= "Esplosivi",
+		ptBR					= "Explosivos",
+		koKR					= "폭발물",
+		zhCN					= "爆炸物",
+		zhTW					= "爆炸物",
+	},
 	IsBoss 						= {
 		-- City (SW, Orgri, ...)
 		[31146] = true, -- Raider's Training Dummy
@@ -1215,6 +1233,11 @@ local Info = {
 		[200166]		= true, 	-- Metamorphosis
 	},
 }
+
+function A.IsExplosivesExists()
+	-- @return boolean
+	return next(Info.CacheExplosives)
+end 
 
 A.Unit = PseudoClass({
 	-- if it's by "UnitGUID" then it will use cache for different unitID with same unitGUID (which is not really best way to waste performance)
@@ -1678,6 +1701,14 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		local _, _, _, _, _, npc_id 		= A.Unit(unitID):InfoGUID()
 		return npc_id and Info.IsDummyPvP[npc_id]
+	end, "UnitID"),
+	IsExplosives							= Cache:Pass(function(self)	
+		-- @return boolean 		
+		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then 
+			local unitID 					= self.UnitID
+			local Name 						= UnitName(unitID)
+			return Name and Info.ExplosivesName[GameLocale] == Name 
+		end 
 	end, "UnitID"),
 	IsBoss 									= Cache:Pass(function(self)       
 	    -- @return boolean 
@@ -3003,13 +3034,20 @@ end
 -- Events
 -------------------------------------------------------------------------------
 A.Listener:Add("ACTION_EVENT_UNIT", "COMBAT_LOG_EVENT_UNFILTERED", 			function(...)
-	local _, EVENT, _, SourceGUID, _, sourceFlags, _, DestGUID, _, destFlags, _, spellID, spellName = CombatLogGetCurrentEventInfo() 
-	if EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" then 
+	local _, EVENT, _, SourceGUID, sourceName, sourceFlags, _, DestGUID, destName, destFlags, _, spellID, spellName = CombatLogGetCurrentEventInfo() 
+	if EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" or EVENT == "UNIT_DISSIPATES" then 
 		Info.CacheMoveIn[DestGUID] 		= nil 
 		Info.CacheMoveOut[DestGUID] 	= nil 
 		Info.CacheMoving[DestGUID]		= nil 
 		Info.CacheStaying[DestGUID]		= nil 
 		Info.CacheInterrupt[DestGUID]	= nil 
+		Info.CacheExplosives[DestGUID]	= nil 
+	elseif InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then 
+		if sourceName and Info.ExplosivesName[GameLocale] == sourceName then 
+			Info.CacheExplosives[SourceGUID] = true 
+		elseif destName and Info.ExplosivesName[GameLocale] == destName then 	
+			Info.CacheExplosives[DestGUID] = true 
+		end 
 	end 
 end)
 
@@ -3020,6 +3058,7 @@ A.Listener:Add("ACTION_EVENT_UNIT", "PLAYER_REGEN_ENABLED", 				function()
 		wipe(Info.CacheMoving)
 		wipe(Info.CacheStaying)
 		wipe(Info.CacheInterrupt)
+		wipe(Info.CacheExplosives)
 	end 
 end)
 
@@ -3032,5 +3071,6 @@ A.Listener:Add("ACTION_EVENT_UNIT", "PLAYER_REGEN_DISABLED", 				function()
 		wipe(Info.CacheMoving)
 		wipe(Info.CacheStaying)	
 		wipe(Info.CacheInterrupt)
+		wipe(Info.CacheExplosives)
 	end 
 end)

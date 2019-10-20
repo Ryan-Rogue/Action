@@ -10,7 +10,7 @@ A.IsInDuel			(@boolean)
 A.IsInWarMode		(@boolean)
 
 Global tables:
-A.InstanceInfo 		(@table: Name, Type, difficultyID, ID, GroupSize, isRated)
+A.InstanceInfo 		(@table: Name, Type, difficultyID, ID, GroupSize, isRated, KeyStone)
 A.TeamCache			(@table) - return cached units + info about friendly and enemy group
 ]]
 -------------------------------------------------------------------------------
@@ -52,6 +52,8 @@ local UnitIsUnit, UnitInBattleground =
 
 local GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers =
 	  GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers
+	  
+local GetActiveKeystoneInfo = C_ChallengeMode.GetActiveKeystoneInfo	  
 
 -------------------------------------------------------------------------------
 -- Instance, Zone, Mode, Duel, TeamCache
@@ -102,6 +104,7 @@ local function OnEvent(event, ...)
 			A.InstanceInfo.ID 			= instanceID
 			A.InstanceInfo.GroupSize	= instanceGroupSize
 			A.InstanceInfo.isRated		= PvP.IsRatedMap()
+			A.InstanceInfo.KeyStone		= GetActiveKeystoneInfo() or 0
 			A.TimeStampZone 			= TMW.time
 		end 
 	end 
