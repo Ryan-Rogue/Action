@@ -528,7 +528,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					A.LossOfControl:Get("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
 					A.Unit(unitID):IsEnemy() and 
 					A.Unit(unitID):GetRange() <= 12 and 
-					self:AbsentImun(unitID, ) and 
+					self:AbsentImun(unitID, TotalAndMagic) and 
 					not A.Unit(unitID):IsTotem() and 
 					(
 						not A.Unit("player"):IsMelee() or 
