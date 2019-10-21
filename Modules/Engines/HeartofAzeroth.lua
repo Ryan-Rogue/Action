@@ -49,6 +49,14 @@ local AzeriteEssences 				= {
 	},
 }
 
+local Temp							= {
+	TotalAndMagic					= {"TotalImun", "DamageMagicImun"},
+	TotalAndFreedom					= {"TotalImun", "Freedom"},
+	TotalAndMagicAndPhys			= {"TotalImun", "DamageMagicImun", "DamagePhysImun"},
+	MemoryofLucidDreamsSpecs		= {66, 70, 263, 265, 266, 267, 62, 63, 64, 102, 258},
+	SilenceAndDisarm				= {"SILENCE", "DISARM"},
+}
+
 -------------------------------------
 -- API
 --------------------------------------
@@ -102,7 +110,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 							) or 
 							(
 								isEnemy and 
-								self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"})
+								self:AbsentImun(unitID, Temp.TotalAndMagic)
 							)
 						)
 					then
@@ -123,7 +131,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					) and 
 					(	
 						not A.Unit(unitID):IsEnemy() or						
-						self:AbsentImun(unitID, {"TotalImun", "DamagePhysImun", "DamageMagicImun"})
+						self:AbsentImun(unitID, Temp.TotalAndMagicAndPhys)
 					)
 				then 
 					return true 					
@@ -164,7 +172,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					(
 						skipAuto or 
 						-- Note: Retribution, Protection, Elemental, Warlock, Mage, Balance, Shadow an exception for power check 
-						A.Unit("player"):HasSpec({66, 70, 263, 265, 266, 267, 62, 63, 64, 102, 258}) or
+						A.Unit("player"):HasSpec(Temp.MemoryofLucidDreamsSpecs) or
 						A.Unit("player"):PowerPercent() <= 50
 					) 
 				then 
@@ -334,7 +342,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 											A.Unit(unitID):IsPlayer() and 
 											A.Unit(unitID):IsEnemy() and 
 											A.Unit(unitID):GetCurrentSpeed() >= 100 and 
-											self:AbsentImun(unitID, {"TotalImun", "Freedom"}, true)
+											self:AbsentImun(unitID, Temp.TotalAndFreedom, true)
 										) or 
 										-- If someone enemy player bursting in 15 range with > 3 duration
 										A.EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", 15) > 3 
@@ -473,7 +481,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
 					A.Unit(unitID):IsEnemy() and
 					A.Unit(unitID):GetRange() <= 10 and 
-					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
 					(
 						not A.IsInPvP or 
 						not A.EnemyTeam("HEALER"):IsBreakAble(10)
@@ -491,7 +499,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
 					A.Unit(unitID):IsEnemy() and 
-					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
 					not A.Unit(unitID):IsTotem() and 
 					(
 						(
@@ -502,7 +510,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							not A.Unit("player"):IsMelee() and 
 							A.Unit(unitID):GetRange() <= 40 and 
-							A.LossOfControl:IsMissed({"SILENCE", "DISARM"})
+							A.LossOfControl:IsMissed(Temp.SilenceAndDisarm)
 						)
 					)  
 				then 
@@ -520,7 +528,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					A.LossOfControl:Get("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
 					A.Unit(unitID):IsEnemy() and 
 					A.Unit(unitID):GetRange() <= 12 and 
-					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					self:AbsentImun(unitID, ) and 
 					not A.Unit(unitID):IsTotem() and 
 					(
 						not A.Unit("player"):IsMelee() or 
@@ -547,7 +555,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
 					A.Unit(unitID):IsEnemy() and 
-					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
 					not A.Unit(unitID):IsTotem()
 				then 
 					local isMelee = A.Unit("player"):IsMelee()
@@ -590,7 +598,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					A.Unit(unitID):IsEnemy() and 
 					A.LossOfControl:IsMissed("SILENCE") and
 					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and
-					self:AbsentImun(unitID, {"TotalImun", "DamageMagicImun"}) and 
+					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
 					not A.Unit(unitID):IsTotem()
 				then 
 					return true 
