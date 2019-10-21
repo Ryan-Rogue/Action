@@ -1,3 +1,7 @@
+[Monk v8]
+WW 			- Added DribblingInkpod, PocketsizedComputationDevice, AshvanesRazorCoral trinkets
+WW 			- Updated APL 
+
 [Monk v7]
 WW 			- Fixed in PvP error "WW:1439 Attempt to call field TMWAPL (a nil value)"
 
