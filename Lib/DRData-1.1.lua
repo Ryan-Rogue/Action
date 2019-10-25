@@ -11474,7 +11474,7 @@ end
 -- Get ApplicationMax
 function Data:GetApplicationMax(category)
 	local durations = Data.diminishedDurations[category or "default"] or Data.diminishedDurations.default
-	return #durations 
+	return durations and #durations or 0
 end 
 
 -- Iterate through the spells of a given category.
