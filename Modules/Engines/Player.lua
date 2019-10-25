@@ -136,11 +136,11 @@ end
 function Data.logBehind(...)
 	local message = ...
 	if message == SPELL_FAILED_NOT_BEHIND then 
-		Data.PlayerBehind = TMW.time + 2.5
+		Data.PlayerBehind = TMW.time
 	end 
 	
 	if message == ERR_PET_SPELL_NOT_BEHIND then 
-		Data.PetBehind = TMW.time + 2.5
+		Data.PetBehind = TMW.time
 	end 
 end 
 
@@ -342,14 +342,16 @@ function A.Player:IsStayingTime()
 	return Data.TimeStampStaying == 0 and 0 or TMW.time - Data.TimeStampStaying
 end 
 
-function A.Player:IsBehind()
+function A.Player:IsBehind(x)
 	-- @return boolean 
-	return TMW.time > Data.PlayerBehind
+	-- Note: Returns true if player is behind the target since x seconds taken from the last ui message 
+	return TMW.time > Data.PlayerBehind + (x or 2.5)
 end 
 
-function A.Player:IsPetBehind()
+function A.Player:IsPetBehind(x)
 	-- @return boolean 
-	return TMW.time > Data.PetBehind
+	-- Note: Returns true if pet is behind the target since x seconds taken from the last ui message 
+	return TMW.time > Data.PetBehind + (x or 2.5)
 end 
 
 function A.Player:IsMounted()
@@ -675,7 +677,7 @@ function A.Player:RegisterWeaponOffHand()
 end 
 
 function A.Player:RegisterWeaponTwoHand()
-	-- Registers to track off hand weapons in bags or equiped 
+	-- Registers to track two hand weapons in bags or equiped 
 	A.Player:AddBag("WEAPON_TWOHAND_1", 										{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_AXE2H, isEquippableItem = true 		})
 	A.Player:AddBag("WEAPON_TWOHAND_2", 										{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_MACE2H, isEquippableItem = true 		})
 	A.Player:AddBag("WEAPON_TWOHAND_3", 										{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_POLEARM, isEquippableItem = true 		})
@@ -686,6 +688,12 @@ function A.Player:RegisterWeaponTwoHand()
 	A.Player:AddInv("WEAPON_TWOHAND_3", ACTION_CONST_INVSLOT_MAINHAND, 			{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_POLEARM								})
 	A.Player:AddInv("WEAPON_TWOHAND_4", ACTION_CONST_INVSLOT_MAINHAND, 			{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_SWORD2H								})
 	A.Player:AddInv("WEAPON_TWOHAND_5", ACTION_CONST_INVSLOT_MAINHAND, 			{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_STAFF									})
+end 
+
+function A.Player:RegisterWeaponMainHandDagger()
+	-- Registers to track dagger in the main one hand weapon in bags or equiped 
+	A.Player:AddBag("WEAPON_MAINHAND_DAGGER", 									{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_DAGGER, isEquippableItem = true		})
+	A.Player:AddInv("WEAPON_MAINHAND_DAGGER", 	ACTION_CONST_INVSLOT_MAINHAND, 	{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_DAGGER								})
 end 
 
 ------------------------------
@@ -771,6 +779,19 @@ function A.Player:HasWeaponTwoHand(isEquiped)
 			end 
 		end 
 	end 	
+end 
+
+function A.Player:HasMainHandDagger(isEquiped)
+	-- @return itemID or nil  
+	-- Bag 
+	if not isEquiped then 
+		local bag_dagger = A.Player:GetBag("WEAPON_MAINHAND_DAGGER")
+		return bag_dagger and bag_dagger.itemID or nil 
+	-- Inventory
+	else
+		local inv_dagger = A.Player:GetInv("WEAPON_MAINHAND_DAGGER")
+		return inv_dagger and inv_dagger.itemID or nil 
+	end 
 end 
 
 --------------------------
