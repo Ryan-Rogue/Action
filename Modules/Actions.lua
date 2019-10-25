@@ -108,15 +108,15 @@ local _G, type, select, unpack, table, setmetatable =
 -- Spell 
 local Spell					= _G.Spell
 
-local IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell =
-	  IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell
+local IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell =
+	  IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell
 
 local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown = 
 	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown
 
 -- Item 	  
-local IsUsableItem, IsHelpfulItem, IsHarmfulItem =
-	  IsUsableItem, IsHelpfulItem, IsHarmfulItem
+local IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem =
+	  IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem
   
 local GetItemInfo, GetItemIcon, GetItemInfoInstant = 
 	  GetItemInfo, GetItemIcon, GetItemInfoInstant	  
@@ -392,6 +392,11 @@ function A:IsSpellLearned()
 	local lowerName = strlowerCache[Name]
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
 end
+
+function A:IsSpellCurrent()
+	-- @return boolean
+	return IsCurrentSpell(self:Info())
+end 
 
 function A:CanSafetyCastHeal(unitID, offset)
 	-- @return boolean 
@@ -766,6 +771,11 @@ function A:GetItemCategory()
 	return itemCategory[self.ID]
 end 
 
+function A:IsItemCurrent()
+	-- @return boolean
+	return IsCurrentItem(self:Info())
+end 
+
 -- Next works by TMW components
 -- A:IsInRange(unitID) (in Shared)
 -- A:GetCount() (in Shared)
@@ -833,6 +843,12 @@ function A:IsInRange(unitID)
 	end 
 	
 	return self.Item:IsInRange(unitID)
+end 
+
+function A:IsCurrent()
+	-- @return boolean
+	-- Note: Only Spell, Item, Trinket 
+	return (self.Type == "Spell" and self:IsSpellCurrent()) or ((self.Type == "Item" or self.Type == "Trinket") and self:IsItemCurrent()) or false 
 end 
 
 function A:HasRange()
