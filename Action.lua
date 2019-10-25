@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "22.10.2019"
+local DateTime 						= "25.10.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -20,6 +20,10 @@ local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura
 	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower	  
 	    
 local GameLocale 					= GetLocale()	
+-- Mexico is used esES
+if GameLocale == "esMX" then 
+	GameLocale = "esES"
+end 
 local UIParent						= UIParent
 local C_UI							= _G.C_UI
 local Spell							= _G.Spell 	  								-- ObjectAPI/Spell.lua
@@ -171,7 +175,7 @@ local Localization = {
 				SETBLOCKER = "Set\nBlocker",
 				SETBLOCKERTOOLTIP = "This will block selected action in rotation\nIt will never use it\n\nRightClick: Create macro",
 				SETQUEUE = "Set\nQueue",
-				SETQUEUETOOLTIP = "This will queue action in rotation\nIt will use it as soon as it possible\n\nRightClick: Create macro",
+				SETQUEUETOOLTIP = "This will queue action in rotation\nIt will use it as soon as it possible\n\nRightClick: Create macro\nYou can pass additional conditions in created macro for queue\nSuch as on which unit to use (UnitID is key), example: { Priority = 1, UnitID = 'player' }\nYou can find acceptable keys with description in the function 'Action:SetQueue' (Action.lua)",
 				BLOCKED = "|cffff0000Blocked: |r",
 				UNBLOCKED = "|cff00ff00Unblocked: |r",
 				KEY = "[Key: ",
@@ -463,7 +467,7 @@ local Localization = {
 				SETBLOCKER = "Установить\nБлокировку",
 				SETBLOCKERTOOLTIP = "Это заблокирует выбранное действие в ротации\nЭто никогда не будет использовано\n\nПравая кнопка мыши: Создать макрос", 
 				SETQUEUE = "Установить\nОчередь",
-				SETQUEUETOOLTIP = "Это поставит действие в очередь ротации\nЭто использует действие по первой доступности\n\nПравая кнопка мыши: Создать макрос", 
+				SETQUEUETOOLTIP = "Это поставит действие в очередь ротации\nЭто использует действие по первой доступности\n\nПравая кнопка мыши: Создать макрос\nВы можете передать дополнительные условия в созданном макросе для очереди\nТакие как на какой цели использовать (UnitID является ключом), например: { Priority = 1, UnitID = 'player' }\nВы можете найти ключи с описанием в функции 'Action:SetQueue' (Action.lua)", 
 				BLOCKED = "|cffff0000Заблокировано: |r",
 				UNBLOCKED = "|cff00ff00Разблокировано: |r",
 				KEY = "[Ключ: ",
@@ -755,7 +759,7 @@ local Localization = {
 				SETBLOCKER = "Set\n Blocker",
 				SETBLOCKERTOOLTIP = "Dadurch wird die ausgewählte Aktion in der Rotation blockiert.\nSie wird niemals verwendet.\n\nRechtsklick: Makro erstellen",
 				SETQUEUE = "Set\n Warteschleife",
-				SETQUEUETOOLTIP = "Der nächste Spell wird in die Warteschleife gessetzt\n Er wird benutzt sobald es möglich ist\n\n Rechtsklick: Makro erstellen",
+				SETQUEUETOOLTIP = "Der nächste Spell wird in die Warteschleife gessetzt\n Er wird benutzt sobald es möglich ist\n\nRechtsklick: Makro erstellen\nWie auf welchem Gerät zu verwenden (UnitID ist Schlüssel), zum beispiel: { Priority = 1, UnitID = 'player' }\nSie können akzeptable Schlüssel mit Beschreibung in der Funktion finden 'Action:SetQueue' (Action.lua)",
 				BLOCKED = "|cffff0000Blockiert: |r",
 				UNBLOCKED = "|cff00ff00Freigestellt: |r",
 				KEY = "[Schlüssel: ",
@@ -1045,9 +1049,9 @@ local Localization = {
 				DESC = "Note",
 				ICON = "Icone",
 				SETBLOCKER = "Activer\nBloquer",
-				SETBLOCKERTOOLTIP = "Cela bloque l'action sélectionné dans la rotation\nElle ne sera jamais utiliser\n\nClique droit : Créer la macro",
+				SETBLOCKERTOOLTIP = "Cela bloque l'action sélectionné dans la rotation\nElle ne sera jamais utiliser\n\nClique droit: Créer la macro",
 				SETQUEUE = "Activer\nQueue(file d'attente)",
-				SETQUEUETOOLTIP = "Cela met l'action en queue dans la rotation\nElle sera utilisé le plus tôt possible\n\nClique droit : Créer la macro",
+				SETQUEUETOOLTIP = "Cela met l'action en queue dans la rotation\nElle sera utilisé le plus tôt possible\n\nClique droit: Créer la macro\nVous pouvez passer des conditions supplémentaires dans la macro créée pour la file d'attente\nComme sur quelle unité utiliser (UnitID est la clé), exemple: { Priority = 1, UnitID = 'player' }\nVous pouvez trouver des clés acceptables avec une description dans la fonction 'Action:SetQueue' (Action.lua)",
 				BLOCKED = "|cffff0000Bloqué: |r",
 				UNBLOCKED = "|cff00ff00Débloqué: |r",
 				KEY = "[Key: ",
@@ -1339,7 +1343,7 @@ local Localization = {
 				SETBLOCKER = "Setta\nBlocco",
 				SETBLOCKERTOOLTIP = "Blocca l'azione selezionata da esser eseguta nella rotazione\nNon verrá usata in nessuna condizione\n\nTastodestro: Crea macro",
 				SETQUEUE = "Set\nCoda",
-				SETQUEUETOOLTIP = "Accoda l'azione selezionata alla rotazione\nUtilizza l'azione appena é possibile\n\nTastodestro: Crea macro",
+				SETQUEUETOOLTIP = "Accoda l'azione selezionata alla rotazione\nUtilizza l'azione appena é possibile\n\nTastodestro: Crea macro\nPuoi passare ulteriori condizioni nella macro creata per la coda\nCome ad esempio quale unit utilizzare (UnitID è chiave), esempio: { Priority = 1, UnitID = 'player' }\nÈ possibile trovare chiavi accettabili con descrizione nella funzione 'Action:SetQueue' (Action.lua)",
 				BLOCKED = "|cffff0000Bloccato: |r",
 				UNBLOCKED = "|cff00ff00Sbloccato: |r",
 				KEY = "[Chiave: ",
@@ -1631,7 +1635,7 @@ local Localization = {
 				SETBLOCKER = "Establecer\nBloquear",
 				SETBLOCKERTOOLTIP = "Esto bloqueará la acción seleccionada en la rotación\nNunca la usará\n\nClickDerecho: Crear macro",
 				SETQUEUE = "Establecer\nCola",
-				SETQUEUETOOLTIP = "Pondrá la acción en la cola de rotación\nLo usará lo antes posible\n\nClickDerecho: Crear macro",
+				SETQUEUETOOLTIP = "Pondrá la acción en la cola de rotación\nLo usará lo antes posible\n\nClickDerecho: Crear macro\nPuede pasar condiciones adicionales en la macro creada para la cola\nComo en qué unit usar (UnitID es la clave), ejemplo: { Priority = 1, UnitID = 'player' }\nPuede encontrar claves aceptables con descripción en la función 'Action:SetQueue' (Action.lua)",
 				BLOCKED = "|cffff0000Bloqueado: |r",
 				UNBLOCKED = "|cff00ff00Desbloqueado: |r",
 				KEY = "[Tecla: ",
@@ -4513,15 +4517,15 @@ function Action:SetQueue(args)
 	-- QueueAuto: Action:SetQueue({ Silence = true, Priority = 1 }) just sometimes simcraft use it in some place
 	--[[@usage: args (table)
 	 	Optional: 
-			PowerType (number) custom offset 													(passing conditions to func QueueValidCheck)
-			PowerCost (number) custom offset 													(passing conditions to func QueueValidCheck)
-			ExtraCD (number) custom offset														(passing conditions to func QueueValidCheck)
+			PowerType (number) custom offset 														(passing conditions to func IsQueueReady)
+			PowerCost (number) custom offset 														(passing conditions to func IsQueueReady)
+			ExtraCD (number) custom offset															(passing conditions to func IsQueueReady)
 			Silence (boolean) if true don't display print 
-			UnitID (string) specified for spells usually to check their for range on certain unit (passing conditions to func QueueValidCheck)
+			UnitID (string) specified for spells usually to check their for range on certain unit 	(passing conditions to func QueueValidCheck)
 			Value (boolean) sets custom fixed statement for queue
 			Priority (number) put in specified priority 
 			MetaSlot (number) usage for MSG system to set queue on fixed position 
-			Auto (boolean) usage to skip RunQLua
+			Auto (boolean) usage to skip RunQLua 
 	]]
 	-- Check validance 
 	if not self.Queued and not self:IsExists() then  
