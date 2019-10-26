@@ -428,6 +428,16 @@ function A.DetermineUsableObject(unitID, skipRange, skipLua, skipShouldStop, ski
 	end 
 end 
 
+function A.DetermineIsCurrentObject(...)
+	-- @return object or nil 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsCurrent() then 
+			return object
+		end 
+	end 
+end 
+
 function A.DetermineCountGCDs(...)
 	-- @return number, count of required summary GCD times to use all in vararg
 	local count = 0
