@@ -833,7 +833,7 @@ local Cache = {
 	end,
 	Wrap = function(this, func, name)
 		if not this.bufer[func] then 
-			this.bufer[func] = setmetatable({}, { __mode == "kv" })
+			this.bufer[func] = setmetatable({}, { __mode = "kv" })
 		end 	
    		return function(...)     
 	        local arg = {...} 

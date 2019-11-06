@@ -20,13 +20,14 @@ local MultiUnits					= A.MultiUnits
 --local Pet							= LibStub("PetLibrary")
 local LibRangeCheck  				= LibStub("LibRangeCheck-2.0")
 
-local _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall =
-	  _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall
+local _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall, math_floor =
+	  _G, setmetatable, table, unpack, select, next, type, pairs, wipe, tostringall, math.floor
 	  
 local GameLocale 					= GetLocale()	  
 	  
 local CombatLogGetCurrentEventInfo	= _G.CombatLogGetCurrentEventInfo	  
 local GetUnitSpeed					= _G.GetUnitSpeed
+local GetSpellInfo					= _G.GetSpellInfo
 local UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
 	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible =
 	  UnitIsUnit, UnitInRaid, UnitInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
@@ -62,7 +63,7 @@ local Cache = {
 		end 
 		
 		if not this.bufer[func] then 
-			this.bufer[func] = setmetatable({}, { __mode == "kv" })
+			this.bufer[func] = setmetatable({}, { __mode = "k" })
 		end
 		
    		return function(...)   
@@ -945,12 +946,12 @@ A.IsUnitEnemy = A.MakeFunctionCachedDynamic(A.IsUnitEnemy)
 -- API: Unit 
 -------------------------------------------------------------------------------
 local Info = {
-	CacheMoveIn					= setmetatable({}, { __mode == "kv" }),
-	CacheMoveOut				= setmetatable({}, { __mode == "kv" }),
-	CacheMoving 				= setmetatable({}, { __mode == "kv" }),
-	CacheStaying				= setmetatable({}, { __mode == "kv" }),
-	CacheInterrupt 				= setmetatable({}, { __mode == "kv" }),
-	CacheExplosives				= setmetatable({}, { __mode == "kv" }),
+	CacheMoveIn					= setmetatable({}, { __mode = "kv" }),
+	CacheMoveOut				= setmetatable({}, { __mode = "kv" }),
+	CacheMoving 				= setmetatable({}, { __mode = "kv" }),
+	CacheStaying				= setmetatable({}, { __mode = "kv" }),
+	CacheInterrupt 				= setmetatable({}, { __mode = "kv" }),
+	CacheExplosives				= setmetatable({}, { __mode = "kv" }),
 	SpecIs 						= {
         ["MELEE"] 				= {251, 252, 577, 103, 255, 269, 70, 259, 260, 261, 263, 71, 72, 250, 581, 104, 268, 66, 73},
         ["RANGE"] 				= {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267},
@@ -982,6 +983,9 @@ local Info = {
         ["Non Morto"]			= true, 
         ["Renegado"]			= true, 
         ["Нежить"]				= true,  
+		["언데드"]					= true,
+		["亡灵"]				= true,
+		["不死族"]				= true,
 		[""]					= false,		
 	},
 	IsTotem 					= {
@@ -1306,12 +1310,12 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return UnitInVehicle(unitID)
 	end, "UnitID"),	
-	InCC 									= Cache:Pass(function(self)
+	InCC 									= Cache:Pass(function(self, index)
 		-- @return number (time in seconds of remain crownd control)
 		local unitID 						= self.UnitID
 		local value 						= A.Unit(unitID):DeBuffCyclone()
 		if value == 0 then 			
-			for i = 1, #Info.AllCC do 
+			for i = (index or 1), #Info.AllCC do 
 				value = A.Unit(unitID):HasDeBuffs(Info.AllCC[i])
 				if value ~= 0 then 
 					break
@@ -1622,7 +1626,7 @@ A.Unit = PseudoClass({
 
 		local TotalCastTime, CurrentCastTimeSeconds, CurrentCastTimeLeftPercent = 0, 0, 0
 		if unitID == "player" then 
-			TotalCastTime = (select(4, A.GetSpellInfo(argSpellID or spellID)) or 0) / 1000
+			TotalCastTime = (select(4, GetSpellInfo(argSpellID or spellID)) or 0) / 1000
 			CurrentCastTimeSeconds = TotalCastTime
 		end 
 		
@@ -1761,7 +1765,7 @@ A.Unit = PseudoClass({
 		-- @return number (current), number (max)
 		local unitID 						= self.UnitID
 		local current_speed, max_speed 		= GetUnitSpeed(unitID)
-		return math.floor(current_speed / 7 * 100), math.floor(max_speed / 7 * 100)
+		return math_floor(current_speed / 7 * 100), math_floor(max_speed / 7 * 100)
 	end, "UnitGUID"),
 	GetMaxSpeed								= Cache:Pass(function(self) 
 		-- @return number 
@@ -2338,6 +2342,7 @@ A.Unit = PseudoClass({
 			if next(TeamCache.Friendly.DAMAGER) then     
 				for member in pairs(TeamCache.Friendly.DAMAGER) do 
 					if UnitIsUnit(member .. "target", unitID) 
+					and not UnitIsUnit(member, "player")
 					and (not specs or 		(specs == "MELEE" and A.Unit(member):IsMelee()))
 					and (not burst or 		A.Unit(member):HasBuffs("DamageBuffs") > 2) 
 					and (not deffensive or 	A.Unit(unitID):HasBuffs("DeffBuffs") < 2)
