@@ -1,3 +1,6 @@
+[Mage v25]
+Fire 		- PvE very light rotation changes suggested by @stylli
+
 [Mage v24]
 Fire 		- Fixed replaced texture issue of Ice Lance on Fire Mage with Fire Blast
 Arcane 		- Fixed Arcane Barrage wrong usage 
