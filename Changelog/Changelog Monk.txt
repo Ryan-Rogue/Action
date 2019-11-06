@@ -1,3 +1,6 @@
+[Monk v9]
+MW			- Fixed :51 attempt to perform arithmetic on local 'RenewingMist' (a nil value)
+
 [Monk v8]
 WW 			- Added DribblingInkpod, PocketsizedComputationDevice, AshvanesRazorCoral trinkets
 WW 			- Updated APL 
