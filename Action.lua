@@ -1,20 +1,22 @@
 --- 
-local DateTime 						= "26.10.2019"
+local DateTime 						= "06.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
 local huge	 						= math.huge
+local math_abs						= math.abs
+local math_floor					= math.floor
 
 local StdUi 						= LibStub("StdUi")
 local LibDBIcon	 					= LibStub("LibDBIcon-1.0")
 local LSM 							= LibStub("LibSharedMedia-3.0")
 	  LSM:Register(LSM.MediaType.STATUSBAR, "Flat", [[Interface\Addons\TheAction\Media\Flat]])
 
-local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe = 
-	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe
+local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe, 	   safecall, 	debugprofilestop = 
+	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, hooksecurefunc, wipe, TMW.safecall, _G.debugprofilestop_SAFE
 
-local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick = 
-	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick
+local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick, GetItemSpell = 
+	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick, GetItemSpell
 	  
 local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower = 
 	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitAura, UnitPower	  
@@ -31,6 +33,7 @@ local FindSpellBookSlotBySpellID 	= _G.FindSpellBookSlotBySpellID
 local AzeriteEssence 				= _G.C_AzeriteEssence
 local CreateFrame 					= _G.CreateFrame	
 local PlaySound						= _G.PlaySound	  
+local InCombatLockdown				= _G.InCombatLockdown
 
 Action 								= LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0")  
 Action.PlayerRace 					= select(2, UnitRace("player"))
@@ -2583,7 +2586,9 @@ local function tCompare(default, new, upkey, skip)
 							result[k] = v  
 						else 
 							result[k] = new[k]
-						end 
+						end 					 	
+					elseif new[k] ~= nil then 
+						result[k] = v
 					end 
 				else
 					result[k] = v 
@@ -3660,8 +3665,11 @@ local function ConvertSpellNameToID(spellName)
 end 
 ConvertSpellNameToID = TMW:MakeSingleArgFunctionCached(ConvertSpellNameToID)
 local function GetTableKeyIdentify(action)
-	-- Using to link key in TMW.db.profile.ActionDB[Action.PlayerSpec].disabledActions
-	return strElemBuilder(nil, action.SubType, action.ID, action.Desc, action.Color)
+	-- Using to link key in DB
+	if not action.TableKeyIdentify then 
+		action.TableKeyIdentify = strElemBuilder(nil, action.SubType, action.ID, action.Desc, action.Color)
+	end 
+	return action.TableKeyIdentify
 end
 local function ShowTooltip(parent, show, ID, Type)
 	if show then
@@ -3746,6 +3754,15 @@ local function CraftMacro(Name, Macro, perCharacter, QUESTIONMARK, leaveNewLine)
 	GameMenuButtonMacros:Click()
 end
 Action.CraftMacro = CraftMacro
+local function GetActionTableByKey(key)
+	-- @return table or nil 
+	-- Note: Returns table object which can be used to pass methods by specified key 
+	if Action[Action.PlayerSpec] and Action[Action.PlayerSpec][key] then 
+		return Action[Action.PlayerSpec][key]
+	elseif Action[key] and type(Action[key]) == "table" and Action[key].Type and Action[key].ID and Action[key].Desc then 
+		return Action[key]
+	end 
+end 
 
 -------------------------------------------------------------------------------
 -- UI: LUA - Container
@@ -4114,7 +4131,7 @@ local Re = {
 
 -- [1] LOS System (Line of Sight)
 local LineOfSight = {
-	Cache 			= setmetatable({}, { __mode == "kv" }),
+	Cache 			= setmetatable({}, { __mode = "kv" }),
 	Timer			= 5,	
 	-- Functions
 	UnitInLOS 		= function(self, unitID, unitGUID)		
@@ -4318,7 +4335,7 @@ end
 function Action:SetBlocker()
 	-- Sets block on action
 	-- Note: /run Action[Action.PlayerSpec].WordofGlory:SetBlocker()
-	if self.BlockForbidden then 
+	if self.BlockForbidden and not self:IsBlocked() then 
 		Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORBLOCK"])
         return 		
 	end 
@@ -4327,10 +4344,10 @@ function Action:SetBlocker()
 	local Identify = GetTableKeyIdentify(self)
 	if self:IsBlocked() then 
 		TMW.db.profile.ActionDB[3][Action.PlayerSpec].disabledActions[Identify] = nil 
-		Notification = L["TAB"][3]["UNBLOCKED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify .. "]"		
+		Notification = L["TAB"][3]["UNBLOCKED"] .. self:Link() .. " " .. L["TAB"][3]["KEY"] .. Identify:gsub("nil", "") .. "]"		
 	else 
 		TMW.db.profile.ActionDB[3][Action.PlayerSpec].disabledActions[Identify] = true
-		Notification = L["TAB"][3]["BLOCKED"] .. self:Link() .. " " ..  L["TAB"][3]["KEY"] .. Identify .. "]"
+		Notification = L["TAB"][3]["BLOCKED"] .. self:Link() .. " " ..  L["TAB"][3]["KEY"] .. Identify:gsub("nil", "") .. "]"
 	end 
     Action.Print(Notification)
 	
@@ -4352,11 +4369,12 @@ end
 
 function Action.MacroBlocker(key)
 	-- Sets block on action with avoid lua errors for non exist key
-	if not Action[Action.PlayerSpec] or not Action[Action.PlayerSpec][key] then 
+	local object = GetActionTableByKey(key)
+	if not object then 
 		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
 		return 	 
 	end 
-	Action[Action.PlayerSpec][key]:SetBlocker()
+	object:SetBlocker()
 end
 
 -- [3] SetQueue (Queue System)
@@ -4393,7 +4411,7 @@ local Queue = {
 	BAG_UPDATE_COOLDOWN			= function(self)
 		if Action.Data.Q[1] and Action.Data.Q[1].Type ~= "Spell" then 
 			local start, duration, enable = Action.Data.Q[1].Item:GetCooldown()
-			if duration and math.abs(TMW.time - start) <= 2 then 
+			if duration and math_abs(TMW.time - start) <= 2 then 
 				getmetatable(Action.Data.Q[1]).__index:SetQueue(self.Temp.SilenceON)
 				return 
 			end 
@@ -4538,7 +4556,7 @@ function Action:SetQueue(args)
 	
 	local args = args or {}	
 	local Identify = GetTableKeyIdentify(self)
-	if self.QueueForbidden or (self.isStance and Action.Player:IsStance(self.isStance)) then 
+	if self.QueueForbidden or (self.isStance and Action.Player:IsStance(self.isStance)) or ((self.Type == "Trinket" or self.Type == "Item") and not GetItemSpell(self.ID)) then 
 		if not args.Silence then 
 			Action.Print(L["DEBUG"] .. self:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. printKey)
 		end  
@@ -4622,11 +4640,12 @@ end
 
 function Action.MacroQueue(key, args)
 	-- Sets queue on action with avoid lua errors for non exist key
-	if not Action[Action.PlayerSpec] or not Action[Action.PlayerSpec][key] then 
+	local object = GetActionTableByKey(key)
+	if not object then 
 		Action.Print(L["DEBUG"] .. (key or "") .. " " .. L["ISNOTFOUND"])
 		return 	 
 	end 
-	Action[Action.PlayerSpec][key]:SetQueue(args)
+	object:SetQueue(args)
 end
 
 -- [4] Interrupts
@@ -4637,7 +4656,7 @@ function Action.InterruptIsON(list)
 end 
 
 function Action.InterruptIsBlackListed(unitID, spellName)
-	-- @return boolean 
+	-- @return boolean (Kick, CC, Racial)
 	local blackListed = TMW.db.profile.ActionDB[4].BlackList[GameLocale][spellName]
 	if blackListed and blackListed.Enabled then 
 		local luaCode = blackListed.LUA or nil
@@ -4674,7 +4693,8 @@ function Action.InterruptIsValid(unitID, list, ignoreToggle)
 	
 	if ignoreToggle or Action.InterruptIsON(list) then 	
 		local spellName = Action.Unit(unitID):IsCasting()
-		if spellName and not Action.InterruptIsBlackListed(unitID, spellName) then 
+		if spellName then 
+			local bl_useKick, bl_useCC, bl_useRacial = Action.InterruptIsBlackListed(unitID, spellName)
 			if list == "TargetMouseover" then 
 				list = ConcatenationStr[Action.IsInPvP]
 			end 	
@@ -4685,25 +4705,25 @@ function Action.InterruptIsValid(unitID, list, ignoreToggle)
 			if list:match("TargetMouseover") then
 				if (not Action.GetToggle(4, "TargetMouseoverList") and (not Action.IsInPvP or (Action.Unit(unitID):IsHealer() and TimeToDie(unitID) < 6))) or (Action.InterruptEnabled(list, spellName) and RunLua(luaCode, unitID)) then 
 					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+						return bl_useKick or Interrupt.useKick, bl_useCC or Interrupt.useCC, bl_useRacial or Interrupt.useRacial
 					else
-						return true, true, true 
+						return bl_useKick or true, bl_useCC or true, bl_useRacial or true 
 					end 
 				end 
 			elseif list == "Heal" then 
 				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickHealOnlyHealers") or Action.Unit(unitID):IsHealer()) and RunLua(luaCode, unitID) then 
 					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+						return bl_useKick or Interrupt.useKick, bl_useCC or Interrupt.useCC, bl_useRacial or Interrupt.useRacial
 					else
-						return true, true, true
+						return bl_useKick or true, bl_useCC or true, bl_useRacial or true
 					end 
 				end 
 			elseif list == "PvP" then 
 				if Action.InterruptEnabled(list, spellName) and (not Action.GetToggle(4, "KickPvPOnlySmart") or SmartInterrupt()) and RunLua(luaCode, unitID) then 
 					if Interrupt then 
-						return Interrupt.useKick, Interrupt.useCC, Interrupt.useRacial
+						return bl_useKick or Interrupt.useKick, bl_useCC or Interrupt.useCC, bl_useRacial or Interrupt.useRacial
 					else
-						return true, true, true 
+						return bl_useKick or true, bl_useCC or true, bl_useRacial or true 
 					end 
 				end 
 			end
@@ -4792,13 +4812,7 @@ end
 -- [6] Cursor 
 function Action.CursorInit()
 	if not Action.IsGameTooltipInitializated then
-		GameTooltip:RegisterEvent("CURSOR_UPDATE")
-		GameTooltip:HookScript("OnEvent", function(self, event) 
-			if event == "CURSOR_UPDATE" and Action.IsInitialized and Action[Action.PlayerSpec] and self:IsShown() and Action.GetToggle(6, "UseRight") and next(TMW.db.profile.ActionDB[6][Action.PlayerSpec][Action.IsInPvP and "PvP" or "PvE"]["GameToolTip"][GameLocale]) then
-				self:Hide()				
-			end
-		end)
-		GameTooltip:HookScript("OnShow", function()
+		local function OnEvent(self)
 			if Action.IsInitialized and Action[Action.PlayerSpec] then 
 				local UseLeft = Action.GetToggle(6, "UseLeft")
 				local UseRight = Action.GetToggle(6, "UseRight")
@@ -4813,13 +4827,13 @@ function Action.CursorInit()
 							Action.GameTooltipClick = UnitNameKey.Button
 							return
 						end 
-					else			
+					elseif self:IsShown() and self:GetEffectiveAlpha() >= 1 then 			
 						-- GameTooltip 
 						local focus = GetMouseFocus() 
 						if focus and not focus:IsForbidden() and focus:GetName() == "WorldFrame" then
 							local GameTooltipTable = TMW.db.profile.ActionDB[6][Action.PlayerSpec][M]["GameToolTip"][GameLocale]
 							if next(GameTooltipTable) then 						
-								local Regions = { GameTooltip:GetRegions() }
+								local Regions = { self:GetRegions() }
 								for i = 1, #Regions do 					
 									local region = Regions[i]							
 									if region and region:GetObjectType() == "FontString" then 
@@ -4838,10 +4852,29 @@ function Action.CursorInit()
 						end 
 					end
 				end 
+				Action.GameTooltipClick = nil 	
+			end 				
+		end
+		
+		-- PRE
+		GameTooltip:HookScript("OnShow", OnEvent)
+		-- POST
+		GameTooltip:RegisterEvent("CURSOR_UPDATE")
+		GameTooltip:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+		GameTooltip:HookScript("OnEvent", function(self, event) 
+			if Action.GameTooltipClick and (event == "CURSOR_UPDATE" or (event == "UPDATE_MOUSEOVER_UNIT" and not UnitExists("mouseover"))) and self:IsShown() and self:GetEffectiveAlpha() >= 1 then  			
+				Action.GameTooltipClick = nil	
+				self:Hide()
+			end 
+		end)		
+		GameTooltip:HookScript("OnTooltipCleared", function(self)
+			if self:IsShown() then 
+				OnEvent(self)
+			else 
 				Action.GameTooltipClick = nil 
-			end 	
-		end)	
-		GameTooltip:HookScript("OnHide", function() Action.GameTooltipClick = nil end)
+			end 
+		end)		
+		
 		Action.IsGameTooltipInitializated = true 
 	end 
 end 
@@ -4864,7 +4897,7 @@ local function UpdateChat(...)
 	end 
 	
 	local msgList = Action.GetToggle(7, "msgList")
-	if next(msgList) == nil then 
+	if not msgList or next(msgList) == nil then 
 		return 
 	end 
 	
@@ -6385,49 +6418,60 @@ function Action.ToggleMainUI()
 			local LuaEditor = CreateLuaEditor(tab.childs[spec], L["TAB"]["LUAWINDOW"], Action.MainUI.default_w, Action.MainUI.default_h, L["TAB"]["LUATOOLTIP"])
 			local Key = StdUi:SimpleEditBox(tab.childs[spec], 150, Action.Data.theme.dd.height, "")							
 			
-			local function ScrollTableActionsData()
-				local data = {}
-				if Action[specID] then 
-					local ToggleAutoHidden = Action.GetToggle(tab.name, "AutoHidden")
-					for k, v in pairs(Action[specID]) do 
-						if type(v) == "table" and not v.Hidden then 
-							local Enabled = "True"
-							if v:IsBlocked() then 
-								Enabled = "False"
+			local hasdata = {}
+			local function OnPairs(k, v, ToggleAutoHidden)
+				if type(v) == "table" and not v.Hidden and v.Type and v.ID and v.Desc then  
+					local Enabled = "True"
+					if v:IsBlocked() then 
+						Enabled = "False"
+					end 
+					
+					local isShown = true 
+					-- AutoHidden unavailable 
+					if ToggleAutoHidden and v.ID ~= ACTION_CONST_PICKPOCKET then 								
+						if v.Type == "SwapEquip" then 
+							if not v:IsExists() then 
+								isShown = false 
 							end 
-							
-							local isShown = true 
-							-- AutoHidden unavailable 
-							if ToggleAutoHidden and v.ID ~= ACTION_CONST_PICKPOCKET then 								
-								if v.Type == "Spell" then 															
-									if not v:IsExists() or v:IsBlockedBySpellLevel() then 
-										isShown = false 
-									end 
-								else 
-									if v.Type == "Trinket" then 
-										if not v:GetEquipped() then 
-											isShown = false 
-										end 
-									else 
-										if v:GetCount() <= 0 and not v:GetEquipped() then 
-											isShown = false 
-										end 
-									end								
+						elseif v.Type == "Spell" then 															
+							if not v:IsExists() or v:IsBlockedBySpellLevel() then 
+								isShown = false 
+							end 
+						else 
+							if v.Type == "Trinket" then 
+								if not v:GetEquipped() then 
+									isShown = false 
 								end 
-							end 
-							
-							if isShown then 
-								table.insert(data, setmetatable({ 
-									Enabled = Enabled, 				
-									Name = v:Info(),
-									Icon = v:Icon(),
-									TableKeyName = k,
-								}, {__index = Action[specID][k]}))
-							end 
-						end
+							else 
+								if v:GetCount() <= 0 or not v:GetEquipped() then 
+									isShown = false 
+								end 
+							end								
+						end 
+					end 
+					
+					if isShown then 
+						table.insert(hasdata, setmetatable({ 
+							Enabled = Enabled, 				
+							Name = v:Info(),
+							Icon = v:Icon(),
+							TableKeyName = k,
+						}, { __index = Action[Action.PlayerSpec][k] or Action }))
+					end 
+				end
+			end 
+			local function ScrollTableActionsData()
+				wipe(hasdata)
+				local ToggleAutoHidden = Action.GetToggle(tab.name, "AutoHidden")
+				if Action[Action.PlayerSpec] then 					
+					for k, v in pairs(Action[Action.PlayerSpec]) do 
+						OnPairs(k, v, ToggleAutoHidden)
 					end
 				end 
-				return data
+				for k, v in pairs(Action) do 
+					OnPairs(k, v, ToggleAutoHidden)
+				end
+				return hasdata
 			end
 			local function OnClickCell(table, cellFrame, rowFrame, rowData, columnData, rowIndex, button)				
 				if button == "LeftButton" then		
@@ -6618,7 +6662,7 @@ function Action.ToggleMainUI()
 			if Action.MainUI.RememberTab == tab.name then
 				tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())
 				tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)				
-				tab.childs[spec].ScrollTable:SetScript("OnShow", nil)
+				--tab.childs[spec].ScrollTable:SetScript("OnShow", nil)
 			end 
 					
 			Key:SetJustifyH("CENTER")
@@ -6649,17 +6693,18 @@ function Action.ToggleMainUI()
 			AutoHidden:SetScript("OnClick", function(self, button, down)
 				if not self.isDisabled then 
 					if button == "LeftButton" then 
+						local fixedspec = Action.PlayerSpec .. CL
 						Action.SetToggle({tab.name, "AutoHidden", L["TAB"][tab.name]["AUTOHIDDEN"] .. ": "})
-						tab.childs[spec].ScrollTable:SetData(ScrollTableActionsData())	
-						tab.childs[spec].ScrollTable:SortData(tab.childs[spec].ScrollTable.SORTBY)	
+						tab.childs[fixedspec].ScrollTable:SetData(ScrollTableActionsData())	
+						tab.childs[fixedspec].ScrollTable:SortData(tab.childs[fixedspec].ScrollTable.SORTBY)	
 						EVENTS_INIT()
 						
-						local index = tab.childs[spec].ScrollTable:GetSelection()
+						local index = tab.childs[fixedspec].ScrollTable:GetSelection()
 						if not index then 
 							Key:SetText("")
 							Key:ClearFocus() 
 						else 
-							local data = tab.childs[spec].ScrollTable:GetRow(index)
+							local data = tab.childs[fixedspec].ScrollTable:GetRow(index)
 							if data then 
 								if data.TableKeyName ~= Key:GetText() then 
 									Key:SetText(data.TableKeyName)
@@ -6727,7 +6772,7 @@ function Action.ToggleMainUI()
 					Action.Print(L["TAB"][tab.name]["SELECTIONERROR"]) 
 				else 
 					local data = tab.childs[spec].ScrollTable:GetRow(index)
-					if data.QueueForbidden then 
+					if data.QueueForbidden or ((data.Type == "Trinket" or data.Type == "Item") and not GetItemSpell(data.ID)) then 
 						Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"])
 					-- I decided unlocked Queue for blocked actions
 					--elseif data:IsBlocked() and not data.Queued then 
@@ -6811,8 +6856,13 @@ function Action.ToggleMainUI()
 					local index = tab.childs[spec].ScrollTable:GetSelection()				
 					if not index then 
 						Action.Print(L["TAB"][tab.name]["SELECTIONERROR"]) 
-					else 				
-						QLuaEditor:Show()
+					else 		
+						local data = tab.childs[spec].ScrollTable:GetRow(index)
+						if not data:GetQLUA() and (data.QueueForbidden or ((data.Type == "Trinket" or data.Type == "Item") and not GetItemSpell(data.ID))) then 
+							Action.Print(L["DEBUG"] .. data:Link() .. " " .. L["TAB"][3]["ISFORBIDDENFORQUEUE"] .. " " .. L["TAB"][3]["KEY"] .. data.TableKeyName .. "]")
+						else 
+							QLuaEditor:Show()
+						end 
 					end 
 				else 
 					QLuaEditor.closeBtn:Click()
@@ -9091,7 +9141,7 @@ local function OnInitialize()
 						if shouldSafeUpdate then
 							for i = 1, #TMW.IconsToUpdate do
 								local icon = TMW.IconsToUpdate[i]
-								TMW.safecall(icon.Update, icon)
+								safecall(icon.Update, icon)
 								if inCombatLockdown then checkYield() end
 							end
 						else
