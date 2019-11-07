@@ -296,56 +296,48 @@ end
 
 local function UpdateChesderGroups()   
     local current = TMW.db:GetCurrentProfile()
-    local profile = strmatch(current, "Chesder")     
+    local profile = strmatch(current, "Chesder")  
+	local isOldProfile = ProfileToggle[current] and TellMeWhen_Group3 and true 
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
     Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" 
     
     if profile ~= "Chesder" then         
         -- Chesder Groups
-        if TellMeWhen_GlobalGroup1 and TellMeWhen_GlobalGroup1.Enabled then
+        if TellMeWhen_GlobalGroup1 then
             for i = 1, 5 do
                 DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global " .. i)
                 ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
             end   
         end 
-        -- PvP / PvE Toggle
-        if TellMeWhen_GlobalGroup8 then
-            if not TellMeWhen_GlobalGroup8.Enabled then
-                DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8")
-                ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-            end
-            if TellMeWhen_GlobalGroup8_Icon7 and not TellMeWhen_GlobalGroup8_Icon7.Enabled then
-                DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8 7")
-                ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-            end
-        end
-        -- Healer's Taunt Pet Group
-        if TellMeWhen_GlobalGroup10 and not TellMeWhen_GlobalGroup10.Enabled then
-            DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 10")
-            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-        end        
-    elseif TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled then   
+		
+		if isOldProfile then 
+			for i = 6, 10 do
+				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global " .. i)
+				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+			end   
+			if TellMeWhen_GlobalGroup8_Icon7 and not TellMeWhen_GlobalGroup8_Icon7.Enabled then
+				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8 7")
+				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+			end
+		else 
+			for i = 6, 10 do
+				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global " .. i)
+				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+			end   
+		end        
+    elseif TellMeWhen_GlobalGroup1 then   
         -- Chesder Groups
-        if TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled then
+        if TellMeWhen_GlobalGroup1 then
             for i = 1, 5 do
                 DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global " .. i)
                 ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
             end 
-        end        
-        -- PvP / PvE Toggle
-        if TellMeWhen_GlobalGroup8 then
-            if not TellMeWhen_GlobalGroup8.Enabled then
-                DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8")
-                ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-            end
-            DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global 8 7")
-            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-        end
-        if TellMeWhen_GlobalGroup10 and TellMeWhen_GlobalGroup10.Enabled then
-            -- Healer's Taunt Pet Group
-            DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global 10")
-            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-        end        
+        end  
+		
+        for i = 6, 10 do
+			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global " .. i)
+			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+		end      
     end
     
     -- Clear history of slash commands
