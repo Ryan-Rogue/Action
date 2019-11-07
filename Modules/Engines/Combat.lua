@@ -37,7 +37,7 @@ local GetNumEvents 								= cLossOfControl.GetNumEvents
 -- Locals: CombatTracker
 -------------------------------------------------------------------------------
 local CombatTracker 							= {
-	Data			 						= {}, -- setmetatable({}, { __mode = "kv" })
+	Data			 						= {}, -- setmetatable({}, { __mode == "kv" })
 	Doubles 								= {
 		[3]  								= "Holy + Physical",
 		[5]  								= "Fire + Physical",
@@ -392,7 +392,7 @@ CombatTracker.OnEventDR							= {
 -- Locals: UnitTracker
 -------------------------------------------------------------------------------
 local UnitTracker 								= {
-	Data 								= setmetatable({}, { __mode = "kv" }),
+	Data 								= setmetatable({}, { __mode == "kv" }),
 	InfoByUnitID 						= {
 		-- Defaults
 		["player"] 						= {},
@@ -651,7 +651,7 @@ end
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "COMBAT_LOG_EVENT_UNFILTERED", 		COMBAT_LOG_EVENT_UNFILTERED	) 
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "UNIT_SPELLCAST_SUCCEEDED", 			UNIT_SPELLCAST_SUCCEEDED	)
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_ENABLED", 				function()
-	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A.Player:IsStealthed() then 
+	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel then 
 		wipe(UnitTracker.Data)
 		wipe(CombatTracker.Data)
 	end 
@@ -659,7 +659,7 @@ end)
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				function()
 	-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
 	local LastTimeCasted = A.CombatTracker:GetSpellLastCast("player", A.LastPlayerCastID) 
-	if (LastTimeCasted == 0 or LastTimeCasted > 1.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A.Player:IsStealthed() then 
+	if (LastTimeCasted == 0 or LastTimeCasted > 0.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel then 
 		wipe(UnitTracker.Data)   	
 		wipe(CombatTracker.Data)
 	else 
@@ -1290,10 +1290,10 @@ A.LossOfControl									= {
 			isValid = function()
 				return A.IsInPvP and 
 				(
-					A.GladiatorMedallion:IsReady("player", true) or 
+					A.GladiatorMedallion:IsReadyP("player", true) or 
 					(
 						A.HonorMedallion:IsExists() and 
-						A.HonorMedallion:IsReady("player", true)
+						A.HonorMedallion:IsReadyP("player", true)
 					)
 				)		
 			end,
