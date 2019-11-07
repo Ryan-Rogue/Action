@@ -296,8 +296,7 @@ end
 
 local function UpdateChesderGroups()   
     local current = TMW.db:GetCurrentProfile()
-    local profile = strmatch(current, "Chesder")  
-	local isOldProfile = ProfileToggle[current] and TellMeWhen_Group3 and true 
+    local profile = strmatch(current, "Chesder")     
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
     Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" 
     
@@ -311,35 +310,19 @@ local function UpdateChesderGroups()
         end 
         -- PvP / PvE Toggle
         if TellMeWhen_GlobalGroup8 then
-			if isOldProfile then 
-				if not TellMeWhen_GlobalGroup8.Enabled then
-					DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8")
-					ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-				end
-				if TellMeWhen_GlobalGroup8_Icon7 and not TellMeWhen_GlobalGroup8_Icon7.Enabled then
-					DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8 7")
-					ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-				end
-			else 
-				if TellMeWhen_GlobalGroup8.Enabled then
-					DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global 8")
-					ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-				end
-				if TellMeWhen_GlobalGroup8_Icon7 and TellMeWhen_GlobalGroup8_Icon7.Enabled then
-					DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global 8 7")
-					ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-				end
-			end 
+            if not TellMeWhen_GlobalGroup8.Enabled then
+                DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8")
+                ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+            end
+            if TellMeWhen_GlobalGroup8_Icon7 and not TellMeWhen_GlobalGroup8_Icon7.Enabled then
+                DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8 7")
+                ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+            end
         end
         -- Healer's Taunt Pet Group
-        if TellMeWhen_GlobalGroup10 then 
-			if isOldProfile and not TellMeWhen_GlobalGroup10.Enabled then
-				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 10")
-				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-			elseif not isOldProfile and TellMeWhen_GlobalGroup10.Enabled then
-				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global 10")
-				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
-			end 
+        if TellMeWhen_GlobalGroup10 and not TellMeWhen_GlobalGroup10.Enabled then
+            DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 10")
+            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
         end        
     elseif TellMeWhen_GlobalGroup1 and not TellMeWhen_GlobalGroup1.Enabled then   
         -- Chesder Groups
