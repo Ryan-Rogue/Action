@@ -16,8 +16,8 @@ local InstanceInfo				= A.InstanceInfo
 --local LibRangeCheck  			= LibStub("LibRangeCheck-2.0")
 --local SpellRange				= LibStub("SpellRange-1.0")
 
-local _G, error, type, pairs, table, next, select, wipe, 	  huge, math_max, math_floor =
-	  _G, error, type, pairs, table, next, select, wipe, math.huge, math.max, math.floor 
+local _G, error, type, pairs, table, next, wipe, math_max =
+	  _G, error, type, pairs, table, next, wipe, math.max 
 
 local Enum 						= _G.Enum 
 local PowerType 				= Enum.PowerType
@@ -38,17 +38,14 @@ local FuryPowerType 			= PowerType.Fury
 local PainPowerType				= PowerType.Pain
 local WarlockPowerBar_UnitPower = _G.WarlockPowerBar_UnitPower
 
-local UnitLevel, UnitPower, UnitPowerMax, UnitStagger, UnitAttackSpeed, UnitDamage, UnitAura =
-	  UnitLevel, UnitPower, UnitPowerMax, UnitStagger, UnitAttackSpeed, UnitDamage, UnitAura
+local UnitLevel, UnitPower, UnitPowerMax, UnitStagger =
+	  UnitLevel, UnitPower, UnitPowerMax, UnitStagger
 
 local GetPowerRegen, GetRuneCooldown, GetShapeshiftForm, GetCritChance, GetHaste, GetMasteryEffect, GetVersatilityBonus, GetCombatRatingBonus =
 	  GetPowerRegen, GetRuneCooldown, GetShapeshiftForm, GetCritChance, GetHaste, GetMasteryEffect, GetVersatilityBonus, GetCombatRatingBonus
 	  
 local IsEquippedItem, IsStealthed, IsMounted, IsFalling, IsSwimming, IsSubmerged = 	  
 	  IsEquippedItem, IsStealthed, IsMounted, IsFalling, IsSwimming, IsSubmerged 
-	  
-local CancelUnitBuff, CancelSpellByName =
-	  CancelUnitBuff, CancelSpellByName	  
 	  
 -- Bags / Inventory
 local GetContainerNumSlots, GetContainerItemID, GetInventoryItemID, GetItemInfoInstant, GetItemCount, IsEquippableItem =	  
@@ -395,23 +392,6 @@ function A.Player:CastCost()
 	return castName and A.GetSpellPowerCost(spellID) or 0
 end 
 
-function A.Player:CancelBuff(buffName)
-	-- @return nil 
-	for i = 1, huge do			
-		local Name = UnitAura("player", i, "HELPFUL PLAYER")
-		if Name then	
-			if Name == buffName then 
-				CancelUnitBuff("player", i, "HELPFUL PLAYER")
-				if A.Unit("player"):CombatTime() == 0 then 
-					CancelSpellByName(buffName)
-				end 
-			end 
-		else 
-			break 
-		end 
-	end 
-end 
-
 -- crit_chance
 function A.Player:CritChancePct()
 	return GetCritChance()
@@ -552,34 +532,6 @@ function A.Player:ReplaceSwingDuration(inv, dur)
 	if SwingTimers[inv] then 
 		SwingTimers[inv].duration = dur
 	end 
-end 
-
-function A.Player:GetWeaponMeleeDamage(inv, mod)
-	-- @return number (full average damage), number (average damage per second)
-	-- Note: This is only for white hits, usually to calculate damage taken from spell's tooltip
-	-- Note: inv can be constance or 1 (main hand / dual hand), 2 (off hand), nil (both)
-	-- mod is custom modifier which will be applied to UnitAttackSpeed
-	local speed, offhandSpeed = UnitAttackSpeed(self.UnitID)
-	local minDamage, maxDamage, minOffHandDamage, maxOffHandDamage, physicalBonusPos, physicalBonusNeg, percent = UnitDamage(self.UnitID)
-	
-	local main_baseDamage, main_fullDamage, main_damagePerSecond
-	if speed and (not inv or inv == 1 or inv == ACTION_CONST_INVSLOT_MAINHAND) then 
-		main_baseDamage 		= (minDamage + maxDamage) * 0.5
-		main_fullDamage 		= (main_baseDamage + physicalBonusPos + physicalBonusNeg) * percent		
-		main_damagePerSecond	= math_max(main_fullDamage, 1) / (speed * (mod or 1))
-	end
-	
-	local offhandBaseDamage, offhandFullDamage, offhandDamagePerSecond
-	if offhandSpeed and (not inv or inv == 1 or inv == ACTION_CONST_INVSLOT_OFFHAND) then 
-		offhandBaseDamage 		= (minOffHandDamage + maxOffHandDamage) * 0.5
-		offhandFullDamage 		= (offhandBaseDamage + physicalBonusPos + physicalBonusNeg) * percent
-		offhandDamagePerSecond 	= math_max(offhandFullDamage, 1) / (offhandSpeed * (mod or 1))
-	end 
-	
-	local full_damage 	 = (main_fullDamage or 0) + (offhandFullDamage or 0)
-	local per_sec_damage = (main_damagePerSecond or 0) + (offhandDamagePerSecond or 0)
-
-	return full_damage, per_sec_damage
 end 
 
 -- Swap 
@@ -738,22 +690,10 @@ function A.Player:RegisterWeaponTwoHand()
 	A.Player:AddInv("WEAPON_TWOHAND_5", ACTION_CONST_INVSLOT_MAINHAND, 			{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_STAFF									})
 end 
 
-function A.Player:RegisterWeaponMainOneHandDagger()
-	-- Registers to track dagger in the main one hand (not two hand) weapon in bags or equiped 
+function A.Player:RegisterWeaponMainHandDagger()
+	-- Registers to track dagger in the main one hand weapon in bags or equiped 
 	A.Player:AddBag("WEAPON_MAINHAND_DAGGER", 									{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_DAGGER, isEquippableItem = true		})
 	A.Player:AddInv("WEAPON_MAINHAND_DAGGER", 	ACTION_CONST_INVSLOT_MAINHAND, 	{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_DAGGER								})
-end 
-
-function A.Player:RegisterWeaponMainOneHandSword()
-	-- Registers to track sword in the main one hand (not two hand) weapon in bags or equiped 
-	A.Player:AddBag("WEAPON_MAIN_ONE_HAND_SWORD", 									{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_SWORD1H, isEquippableItem = true 	})
-	A.Player:AddInv("WEAPON_MAIN_ONE_HAND_SWORD", ACTION_CONST_INVSLOT_MAINHAND, 	{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_SWORD1H							})
-end 
-
-function A.Player:RegisterWeaponOffOneHandSword()
-	-- Registers to track sword in the off one hand weapon in bags or equiped 
-	A.Player:AddBag("WEAPON_OFF_ONE_HAND_SWORD", 									{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_SWORD1H, isEquippableItem = true 	})
-	A.Player:AddInv("WEAPON_OFF_ONE_HAND_SWORD", 	ACTION_CONST_INVSLOT_OFFHAND, 	{ itemClassID = LE_ITEM_CLASS_WEAPON, itemSubClassID = LE_ITEM_WEAPON_SWORD1H							})
 end 
 
 ------------------------------
@@ -841,7 +781,7 @@ function A.Player:HasWeaponTwoHand(isEquiped)
 	end 	
 end 
 
-function A.Player:HasWeaponMainOneHandDagger(isEquiped)
+function A.Player:HasMainHandDagger(isEquiped)
 	-- @return itemID or nil  
 	-- Bag 
 	if not isEquiped then 
@@ -852,32 +792,6 @@ function A.Player:HasWeaponMainOneHandDagger(isEquiped)
 		local inv_dagger = A.Player:GetInv("WEAPON_MAINHAND_DAGGER")
 		return inv_dagger and inv_dagger.itemID or nil 
 	end 
-end 
-
-function A.Player:HasWeaponMainOneHandSword(isEquiped)
-	-- @return itemID or nil 
-	-- Bag 
-	if not isEquiped then 
-		local bag_mainhand = A.Player:GetBag("WEAPON_MAIN_ONE_HAND_SWORD")
-		return bag_mainhand and bag_mainhand.itemID or nil 
-	-- Inventory
-	else		
-		local inv_mainhand = A.Player:GetInv("WEAPON_MAIN_ONE_HAND_SWORD")
-		return inv_mainhand and inv_mainhand.itemID or nil
-	end 	
-end 
-
-function A.Player:HasWeaponOffOneHandSword(isEquiped)
-	-- @return itemID or nil 
-	-- Bag 
-	if not isEquiped then 
-		local bag_offhand = A.Player:GetBag("WEAPON_OFF_ONE_HAND_SWORD")
-		return bag_offhand and bag_offhand.itemID or nil 
-	-- Inventory
-	else		
-		local inv_offhand = A.Player:GetInv("WEAPON_OFF_ONE_HAND_SWORD")
-		return inv_offhand and inv_offhand.itemID or nil
-	end 	
 end 
 
 --------------------------
@@ -910,7 +824,7 @@ end
 
 -- mana.regen
 function A.Player:ManaRegen()
-	return math_floor(GetPowerRegen(self.UnitID))
+	return GetPowerRegen(self.UnitID)
 end
 
 -- Mana regen in a cast
@@ -1005,7 +919,7 @@ end
 
 -- focus.regen
 function A.Player:FocusRegen()
-	return math_floor(GetPowerRegen(self.UnitID))
+	return GetPowerRegen(self.UnitID)
 end
 
 -- focus.pct
@@ -1107,7 +1021,7 @@ end
 
 -- energy.regen
 function A.Player:EnergyRegen()
-	return math_floor(GetPowerRegen(self.UnitID))
+	return GetPowerRegen(self.UnitID)
 end
 
 -- energy.pct

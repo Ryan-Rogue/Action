@@ -15,7 +15,8 @@ local MultiUnits			= A.MultiUnits
 local EnemyTeam				= A.EnemyTeam
 local FriendlyTeam			= A.FriendlyTeam
 local TriggerGCD			= A.Enum.TriggerGCD
-	  
+
+local huge 					= math.huge  	  
 local Azerite 				= LibStub("AzeriteTraits")
 local Pet					= LibStub("PetLibrary")
 --local LibRangeCheck  		= LibStub("LibRangeCheck-2.0")
@@ -103,8 +104,6 @@ local GetNetStats 			= GetNetStats
 
 local _G, type, select, unpack, table, setmetatable = 	
 	  _G, type, select, unpack, table, setmetatable
-	  
-local huge 					= math.huge  	  
 
 -- Spell 
 local Spell					= _G.Spell
@@ -119,18 +118,15 @@ local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSp
 local IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem =
 	  IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem
   
-local GetItemInfo, GetItemIcon, GetItemInfoInstant, GetItemSpell = 
-	  GetItemInfo, GetItemIcon, GetItemInfoInstant, GetItemSpell	  
+local GetItemInfo, GetItemIcon, GetItemInfoInstant = 
+	  GetItemInfo, GetItemIcon, GetItemInfoInstant	  
 
 -- Talent	  
-local     TalentMap,     PvpTalentMap 	=
+local     TalentMap,     PvpTalentMap =
 	  Env.TalentMap, Env.PvpTalentMap
 
 -- Unit 	  
-local UnitIsUnit, UnitIsPlayer		   	= UnitIsUnit, UnitIsPlayer
-
--- Empty 
-local empty1, empty2 		= { 0, -1 }, { 0, 0, 0, 0, 0, 0, 0, 0 } 
+local UnitIsUnit 			= UnitIsUnit  	  	 
 
 -- Player 
 local GCD_OneSecond 		= {
@@ -228,7 +224,7 @@ local spellpowercache = setmetatable({}, { __index = function(t, v)
 		t[v] = { pwr[1].cost, pwr[1].type }
 		return t[v]
 	end     
-	return empty1
+	return { 0, -1 }
 end })
 
 function A:GetSpellPowerCostCache()
@@ -252,6 +248,7 @@ function A.GetSpellPowerCost(self)
 	else 
 		name = A.GetSpellInfo(self)
 	end 
+	print(self)
 	
 	local pwr = GetSpellPowerCost(name)
 	if pwr and pwr[1] then
@@ -283,17 +280,11 @@ function A.GetSpellDescription(self)
 		return numbers
 	end
 	
-	return empty2 
+	return { 0, 0, 0, 0, 0, 0, 0, 0 } 
 end
 A.GetSpellDescription = A.MakeFunctionCachedDynamic(A.GetSpellDescription)
 
 function A:GetSpellCastTime()
-	-- @return number 
-	local _,_,_, castTime = GetSpellInfo(self.ID)
-	return (castTime or 0) / 1000 
-end 
-
-function A:GetSpellCastTimeCache()
 	-- @return number 
 	return (select(4, self:Info()) or 0) / 1000 
 end 
@@ -359,8 +350,8 @@ function A:GetSpellAbsorb(unitID)
 	return CombatTracker:GetAbsorb(unitID or "player", self:Info())
 end 
 
-function A:IsSpellLastGCD(byID)
-	return (byID and self.ID == A.LastPlayerCastID) or (not byID and self:Info() == A.LastPlayerCastName)
+function A:IsSpellLastGCD()
+	return self:Info() == A.LastPlayerCastName
 end 
 
 function A:IsSpellInFlight()
@@ -387,20 +378,6 @@ function A:IsSpellInCasting()
 	return Unit("player"):IsCasting() == self:Info()
 end 
 
-function A:IsSpellCurrent()
-	-- @return boolean
-	return IsCurrentSpell(self:Info())
-end 
-
-function A:CanSafetyCastHeal(unitID, offset)
-	-- @return boolean 
-	local castTime = self:GetSpellCastTime()
-	return castTime and (castTime == 0 or castTime > Unit(unitID):TimeToDie() + A.GetCurrentGCD() + (offset or A.GetGCD())) or false 
-end 
-
--------------------------------------------------------------------------------
--- Talent 
--------------------------------------------------------------------------------
 function A:IsSpellLearned()
 	-- @usage A:IsSpellLearned() or A.IsSpellLearned(spellID)
 	-- @return boolean about selected or not (talent or pvptalent)	
@@ -415,6 +392,17 @@ function A:IsSpellLearned()
 	local lowerName = strlowerCache[Name]
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
 end
+
+function A:IsSpellCurrent()
+	-- @return boolean
+	return IsCurrentSpell(self:Info())
+end 
+
+function A:CanSafetyCastHeal(unitID, offset)
+	-- @return boolean 
+	local castTime = self:GetSpellCastTime()
+	return castTime and (castTime == 0 or castTime > Unit(unitID):TimeToDie() + A.GetCurrentGCD() + (offset or A.GetGCD())) or false 
+end 
 
 -------------------------------------------------------------------------------
 -- Determine
@@ -460,47 +448,6 @@ function A.DetermineCountGCDs(...)
 		end 
 	end 	
 	return count
-end 
-
-function A.DeterminePowerCost(...)
-	-- @return number (required power to use all varargs actions)
-	local total = 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object and object:IsReadyToUse(nil, true, true) then 
-			total = total + object:GetSpellPowerCostCache()
-		end 
-	end 
-	return total
-end 
-
-function A.DetermineCooldown(...)
-	-- @return number (required summary cooldown time to use all varargs actions)
-	local total = 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object then 
-			total = total + object:GetCooldown()
-		end 
-	end 
-	return total
-end 
-
-function A.DetermineCooldownAVG(...)
-	-- @return number (required AVG cooldown to use all varargs actions)
-	local total, count = 0, 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object then 
-			total = total + object:GetCooldown()
-			count = count + 1
-		end 
-	end 
-	if count > 0 then 
-		return total / count
-	else 
-		return 0 
-	end 
 end 
 
 -------------------------------------------------------------------------------
@@ -822,19 +769,6 @@ end
 -------------------------------------------------------------------------------
 -- Item (provided by TMW)
 -------------------------------------------------------------------------------	  
-function A.GetItemDescription(self)
-	-- @usage A:GetItemDescription() or A.GetItemDescription(18)
-	-- @return table 
-	-- Note: It returns correct value only if item holds spell 
-	local _, spellID = GetItemSpell(type(self) == "table" and self.ID or self)
-	if spellID then 
-		return A.GetSpellDescription(spellID)
-	end 
-	
-	return empty2
-end
-A.GetItemDescription = A.MakeFunctionCachedDynamic(A.GetItemDescription)
-
 function A:GetItemCooldown()
 	-- @return number
 	local start, duration, enable = self.Item:GetCooldown()
@@ -877,16 +811,15 @@ function A:IsExists()
 	return self:GetEquipped() or self:GetCount() > 0	
 end
 
-function A:IsUsable(extraCD, skipUsable)
+function A:IsUsable(extraCD)
 	-- @return boolean 
-	-- skipUsable can be number to check specified power
 	
 	if self.Type == "Spell" then 
 		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self:Info())) and self:GetCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
+		return IsUsableSpell(self:Info()) and self:GetCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
 	end 
 	
-	return not isItemUseException[self.ID] and (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem(self:Info())) and self:GetItemCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
+	return not isItemUseException[self.ID] and IsUsableItem(self:Info()) and self:GetItemCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
 end
 
 function A:IsHarmful()
@@ -1004,7 +937,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 	end 
 end 
 
-function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
+function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg)
 	-- @return boolean
 	-- Checks toggle, cooldown and range 
 	
@@ -1012,7 +945,7 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 		if 	self.Type == "Spell" and 
 			not self:IsBlockedBySpellLevel() and 	
 			( not self.isTalent or self:IsSpellLearned() ) and 
-			self:IsUsable(nil, skipUsable) and 
+			self:IsUsable() and 
 			( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) ) and 
 			-- 8.2 Queen Court - Repeat Performance (DeBuff) // 2164 is The Eternal Palace   
 			( A.InstanceInfo.ID ~= 2164 or Unit("player"):HasDeBuffs(301244) == 0 or (A.LastPlayerCastName ~= self:Info() and Player:CastRemains(self.ID) == 0) )
@@ -1024,7 +957,7 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 			-- This also checks equipment (in idea because slot return ID which we compare)
 			self.ID ~= nil and 
 			( A.Trinket1.ID == self.ID and A.GetToggle(1, "Trinkets")[1] or A.Trinket2.ID == self.ID and A.GetToggle(1, "Trinkets")[2] ) and 
-			self:IsUsable(nil, skipUsable) and 
+			self:IsUsable() and 
 			( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) )
 		then
 			return true 
@@ -1041,7 +974,7 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 		end 
 		
 		if  self.Type == "Item" and 
-			( self:GetCount() > 0 or self:GetEquipped() ) and 
+			self:GetCount() > 0 and 
 			self:GetItemCooldown() == 0 and 
 			( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) )
 		then
@@ -1052,28 +985,28 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 	return false 
 end
 
-function A:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable)
+function A:IsReady(unitID, skipRange, skipLua, skipShouldStop)
 	-- @return boolean
 	-- For [3-4, 6-8]
     return 	not self:IsBlocked() and 
 			not self:IsBlockedByQueue() and 
-			self:IsCastable(unitID, skipRange, skipShouldStop, nil, skipUsable) and 
+			self:IsCastable(unitID, skipRange, skipShouldStop) and 
 			( skipLua or self:RunLua(unitID) )
 end 
 
-function A:IsReadyP(unitID, skipRange, skipLua, skipShouldStop, skipUsable)
+function A:IsReadyP(unitID, skipRange, skipLua, skipShouldStop)
 	-- @return boolean
 	-- For [1-2, 5]
-    return 	self:IsCastable(unitID, skipRange, skipShouldStop, nil, skipUsable) and (skipLua or self:RunLua(unitID))
+    return 	self:IsCastable(unitID, skipRange, skipShouldStop) and (skipLua or self:RunLua(unitID))
 end 
 
-function A:IsReadyM(unitID, skipRange, skipUsable)
+function A:IsReadyM(unitID, skipRange)
 	-- @return boolean
 	-- For MSG System or bypass ShouldStop with GCD checks and blocked conditions 
 	if unitID == "" then 
 		unitID = nil 
 	end 
-    return 	self:IsCastable(unitID, skipRange, nil, true, skipUsable) and self:RunLua(unitID)
+    return 	self:IsCastable(unitID, skipRange, nil, true) and self:RunLua(unitID)
 end 
 
 function A:IsReadyByPassCastGCD(unitID, skipRange, skipLua, skipUsable)
@@ -1093,7 +1026,6 @@ end
 
 function A:IsReadyToUse(unitID, skipShouldStop, skipUsable)
 	-- @return boolean 
-	-- Note: unitID is nil here always 
 	return 	not self:IsBlocked() and 
 			not self:IsBlockedByQueue() and 
 			self:IsCastable(nil, true, skipShouldStop, nil, skipUsable)
@@ -1116,10 +1048,7 @@ function A:GetSpellInfo()
 	if type(self) == "table" then 
 		ID = self.ID 
 	end
-	
-	if ID then 
-		return unpack(spellinfocache[ID])
-	end 
+	return unpack(spellinfocache[ID])
 end
 
 function A:GetSpellLink()
@@ -1127,7 +1056,7 @@ function A:GetSpellLink()
 	if type(self) == "table" then 
 		ID = self.ID 
 	end
-    return GetSpellLink(ID) or ""
+    return GetSpellLink(ID) 
 end 
 
 function A:GetSpellIcon()
@@ -1165,14 +1094,11 @@ function A:GetItemInfo()
 	if type(self) == "table" then 
 		ID = self.ID 
 	end
-	
-	if ID then 
-		return unpack(iteminfocache[ID])
-	end 
+	return unpack(iteminfocache[ID])
 end
 
 function A:GetItemLink()
-    return select(2, self:GetItemInfo()) or ""
+    return select(2, self:GetItemInfo()) 
 end 
 
 function A:GetItemIcon()
