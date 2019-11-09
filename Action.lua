@@ -5941,12 +5941,14 @@ function Action.ToggleMainUI()
 			StopAtBreakAble:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)
 			StopAtBreakAble:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 			StopAtBreakAble:SetScript("OnClick", function(self, button, down)	
-				if button == "LeftButton" then 
-					TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble = not TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble
-					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
-					Action.Print(L["TAB"][tab.name]["STOPATBREAKABLE"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
-				elseif button == "RightButton" then 
-					CraftMacro(L["TAB"][tab.name]["STOPATBREAKABLE"], [[/run Action.SetToggle({]] .. tab.name .. [[, "StopAtBreakAble", "]] .. L["TAB"][tab.name]["STOPATBREAKABLE"] .. [[: "})]])	
+				if not self.isDisabled then 
+					if button == "LeftButton" then 
+						TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble = not TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble
+						self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
+						Action.Print(L["TAB"][tab.name]["STOPATBREAKABLE"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
+					elseif button == "RightButton" then 
+						CraftMacro(L["TAB"][tab.name]["STOPATBREAKABLE"], [[/run Action.SetToggle({]] .. tab.name .. [[, "StopAtBreakAble", "]] .. L["TAB"][tab.name]["STOPATBREAKABLE"] .. [[: "})]])	
+					end 
 				end 
 			end)
 			StopAtBreakAble.Identify = { Type = "Checkbox", Toggle = "StopAtBreakAble" }
