@@ -577,6 +577,7 @@ local AuraList = {
         216113, -- Way of the Crane (Monk TT PvP)
     },
     TotalImun = {
+		710, -- Banish 
         642, -- Divine Shield
         45438, -- Ice Block
         186265, -- Aspect of Turtle     
@@ -589,7 +590,6 @@ local AuraList = {
     },    
     DamageMagicImun = {    -- When we can't totally damage    
         31224, -- Cloak of Shadows
-        -- 710, -- Banish (can skip not often usable)
         204018, -- Blessing of Spellwarding    
         196555, -- Netherwalk
     }, 

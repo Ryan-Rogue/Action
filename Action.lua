@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "07.11.2019"
+local DateTime 						= "09.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -122,12 +122,14 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ATTENTION: This option causes delay of 0.3s + current spinning gcd\nif unit being checked it is located in a lose (for example, behind a box at arena)\nYou must also enable the same setting in Advanced Settings\nThis option blacklists unit which in a lose and\nstops providing actions to it for N seconds\n\nRightClick: Create macro",
 				HEALINGENGINEPETS = "HealingEngine pets",
 				HEALINGENGINEPETSTOOLTIP = "Include in target select player's pets and calculate for heal them\n\nRightClick: Create macro",
+				STOPATBREAKABLE = "Stop Damage On BreakAble",
+				STOPATBREAKABLETOOLTIP = "Will stop harmful damage on enemies\nIf they have CC such as Polymorph\nIt doesn't cancel auto attack!\n\nRightClick: Create macro",
 				ALL = "All",
 				RAID = "Raid",
 				TANK = "Only Tanks",
 				DAMAGER = "Only Damage Dealers",
 				HEALER = "Only Healers",
-				HEALINGENGINETOOLTIP = "This option relative for unit selection on healers\nAll: Everyone member\nRaid: Everyone member without tanks\n\nRightClick: Create macro\nIf you would like set fix toggle state use argument in (ARG): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
+				HEALINGENGINETOOLTIP = "This option relative for unit selection on healers\nAll: Everyone member\nRaid: Everyone member without tanks\n\nRightClick: Create macro\nIf you would like set fix toggle state use argument in (ARG): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",				
 				DBM = "DBM Timers",
 				DBMTOOLTIP = "Tracking pull timers and some specific events such as trash incoming.\nThis feature is not availble for all the profiles!\n\nRightClick: Create macro",
 				FPS = "FPS Optimization",
@@ -414,12 +416,14 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ВНИМАНИЕ: Эта опция вызывает задержку 0.3сек + тек. крутящийся гкд\nесли проверяемый юнит находится в лосе (например за столбом на арене)\nВы также должны включить такую же настройку в Advanced Settings\nДанная опция заносит в черный список проверяемого юнита\nи перестает на N секунд предоставлять к нему действия если юнит в лосе\n\nПравая кнопка мышки: Создать макрос",
 				HEALINGENGINEPETS = "HealingEngine питомцы",
 				HEALINGENGINEPETSTOOLTIP = "Включить в выбор цели питомцев игроков и калькулировать исцеление на них\n\nПравая кнопка мышки: Создать макрос",
+				STOPATBREAKABLE = "Стоп урон на ломающемся контроле",
+				STOPATBREAKABLETOOLTIP = "Остановит вредоносный урон по врагам\nЕсли у них есть CC, например, Превращение\nЭто не отменяет автоатаку!\n\nПравая кнопка мышки: Создать макрос",
 				ALL = "Все",
 				RAID = "Рейд",
 				TANK = "Только Танки",
 				DAMAGER = "Только Дамагеры",
 				HEALER = "Только Хилеры",					
-				HEALINGENGINETOOLTIP = "Эта опция отвечает за выбор участников группы или рейда если вы играете хилером\nВсе: Каждый участник\nРейд: Каждый участник исключая танков\n\nПравая кнопка мышки: Создать макрос\nЕсли вы предпочитаете фиксированное состояние, то используйте аргумент (АРГУМЕНТ): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",
+				HEALINGENGINETOOLTIP = "Эта опция отвечает за выбор участников группы или рейда если вы играете хилером\nВсе: Каждый участник\nРейд: Каждый участник исключая танков\n\nПравая кнопка мышки: Создать макрос\nЕсли вы предпочитаете фиксированное состояние, то используйте аргумент (АРГУМЕНТ): 'ALL', 'RAID', 'TANK', 'HEALER', 'DAMAGER'",				
 				DBM = "DBM Таймеры",
 				DBMTOOLTIP = "Отслеживает пулл таймер и некоторые спец. события такие как 'след.треш'.\nЭта опция доступна не для всех профилей!\n\nПравая кнопка мышки: Создать макрос",
 				FPS = "FPS Оптимизация",
@@ -706,6 +710,8 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ACHTUNG: Diese Option führt zu einer Verzögerung von 0,3 s + der aktuellen Spinning-GCD.\nwenn überprüft wird, ob sich die Einheit in Sichtweite befindet (z. B. hinter einer Box in der Arena).\nDiese Option muss auch in den erweiterten Einstellungen aktiviert werden a lose und\nunterbricht die Bereitstellung von Aktionen für N Sekunden\n\nRechtsklick: Makro erstellen",
 				HEALINGENGINEPETS = "Heileinstellung für Begleiter",
 				HEALINGENGINEPETSTOOLTIP = "Füge die Begleiter des ausgewählten Spielers zum Ziel hinzu und berechne sie, um sie zu heilen.\n\nRechtsklick: Makro erstellen",
+				STOPATBREAKABLE = "Stoppt den Schaden bei Zerbrechlichkeit",
+				STOPATBREAKABLETOOLTIP = "Verhindert schädlichen Schaden bei Feinden\nWenn sie CC wie Polymorph haben\nDer automatische Angriff wird nicht abgebrochen!\n\nRechtsklick: Makro erstellen",
 				ALL = "Alle",
 				RAID = "Raid",
 				TANK = "Nur Tanks",
@@ -998,6 +1004,8 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ATTENTION: Cette option cause un delai de 0.3s + votre gcd en cours\nSi la cible verifié n'est pas dans la ligne de vue (par exemple, derrière une boite en arène) \nVous devez aussi activer ce paramètre dans les paramètres avancés\nCette option blacklistes l'unité qui n'est pas à vue et\narrête d'effectuer des actions sur elle pendant N secondes\n\nClique droit : Créer la macro",
 				HEALINGENGINEPETS = "HealingEngine familiers",
 				HEALINGENGINEPETSTOOLTIP = "Inclut les familier des joueurs et calcule les soins pour eux\n\nClique droit : Créer la macro",
+				STOPATBREAKABLE = "Stop Damage On BreakAble",
+				STOPATBREAKABLETOOLTIP = "Arrêtera les dégâts sur les ennemis\nSi ils ont un CC tel que Polymorph\nIl n'annule pas l'attaque automatique!\n\nClique droit : Créer la macro",
 				ALL = "Tout",
 				RAID = "Raid",
 				TANK = "Tanks seulement",
@@ -1290,6 +1298,8 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ATTENZIONE: Questa opzione causa un ritardo di 0.3s + piu tempo del sistema di recupero globale [srg]\nse il bersaglio é in los (per esempio dietro una cassa in arena)\nDevi anche abilitare lo stesso settaggio in Settaggi Avanzati\nQuesta opzione mette in blacklists bersagli fuori los e\nferma le azioni verso il bersaglio per N secondio\n\nTastodestro: Crea macro",
 				HEALINGENGINEPETS = "Logica di cure per pet",
 				HEALINGENGINEPETSTOOLTIP = "include nella selezione dei bersagli  i pets dei giocatori e considera la loro cura \n\nTastodestro: Crea macro",
+				STOPATBREAKABLE = "Stop Damage On BreakAble",
+				STOPATBREAKABLETOOLTIP = "Fermerà i danni dannosi ai nemici\nSe hanno CC come Polymorph\nNon annulla l'attacco automatico!\n\nTastodestro: Crea macro",
 				ALL = "Tutti",
 				RAID = "Raid",
 				TANK = "Solo Tank",
@@ -1582,6 +1592,8 @@ local Localization = {
 				LOSSYSTEMTOOLTIP = "ATENCIÓN: Esta opción causa un delay de 0.3s + un giro actual de gcd\nsi la unidad está siendo comprobada esta se localizará como pérdida (por ejemplo, detrás de una caja en la arena)\nDebes también habilitar las mismas opciones en Opciones Avanzadas\nEsta opción pone en una lista negra la unidad con perdida y\n deja de producir acciones a esta durante N segundos\n\nClickDerecho: Crear macro",
 				HEALINGENGINEPETS = "Motor de Curación para Pets",
 				HEALINGENGINEPETSTOOLTIP = "Incluída en el target de las pets del jugador y calcula para curarles\n\nClickDerecho: Crear macro",
+				STOPATBREAKABLE = "Detener el daño en el descanso",
+				STOPATBREAKABLETOOLTIP = "Detendrá el daño dañino en los enemigos\nSi tienen CC como Polymorph\nNo cancela el ataque automático!\n\nClickDerecho: Crear macro",
 				ALL = "Todo",
 				RAID = "Raid",
 				TANK = "Solo Tanques",
@@ -1920,7 +1932,8 @@ local Factory = {
 			DBM = true,
 			["LOSCheck"] = _G.LOSCheck ~= nil and _G.LOSCheck or false, 
 			["HE_Toggle"] = _G.HE_Toggle ~= nil and _G.HE_Toggle or "ALL",
-			["HE_Pets"] = _G.HE_Pets ~= nil and _G.HE_Pets or true,			
+			["HE_Pets"] = _G.HE_Pets ~= nil and _G.HE_Pets or true,	
+			StopAtBreakAble = false,			
 			FPS = -0.01, 	
 			Trinkets = {
 				[1] = true, 
@@ -5922,7 +5935,22 @@ function Action.ToggleMainUI()
 			StdUi:FrameTooltip(HE_ToggleFrame, L["TAB"][tab.name]["HEALINGENGINETOOLTIP"], nil, "TOPLEFT", true)
 			HE_ToggleFrame.FontStringTitle = StdUi:FontString(HE_ToggleFrame, "HealingEngine")
 			StdUi:GlueAbove(HE_ToggleFrame.FontStringTitle, HE_ToggleFrame)	
-			HE_ToggleFrame.text:SetJustifyH("CENTER")			
+			HE_ToggleFrame.text:SetJustifyH("CENTER")	
+
+			local StopAtBreakAble = StdUi:Checkbox(anchor, L["TAB"][tab.name]["STOPATBREAKABLE"])			
+			StopAtBreakAble:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)
+			StopAtBreakAble:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+			StopAtBreakAble:SetScript("OnClick", function(self, button, down)	
+				if button == "LeftButton" then 
+					TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble = not TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble
+					self:SetChecked(TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
+					Action.Print(L["TAB"][tab.name]["STOPATBREAKABLE"] .. ": ", TMW.db.profile.ActionDB[tab.name][specID].StopAtBreakAble)	
+				elseif button == "RightButton" then 
+					CraftMacro(L["TAB"][tab.name]["STOPATBREAKABLE"], [[/run Action.SetToggle({]] .. tab.name .. [[, "StopAtBreakAble", "]] .. L["TAB"][tab.name]["STOPATBREAKABLE"] .. [[: "})]])	
+				end 
+			end)
+			StopAtBreakAble.Identify = { Type = "Checkbox", Toggle = "StopAtBreakAble" }
+			StdUi:FrameTooltip(StopAtBreakAble, L["TAB"]["STOPATBREAKABLETOOLTIP"], nil, "TOPLEFT", true)	
 			
 			local FPS = StdUi:Slider(anchor, GetWidthByColumn(anchor, 5.8), Action.Data.theme.dd.height, TMW.db.profile.ActionDB[tab.name][specID].FPS, false, -0.01, 1.5)
 			FPS:SetPrecision(2)
@@ -6171,7 +6199,7 @@ function Action.ToggleMainUI()
 			anchor:AddRow({ margin = { top = -5 } }):AddElements(Potion, DBMFrame, { column = "even" })			
 			anchor:AddRow({ margin = { top = -5 } }):AddElements(HeartOfAzeroth, HE_PetsFrame, { column = "even" })
 			anchor:AddRow():AddElements(Racial, HE_ToggleFrame, { column = "even" })	
-			anchor:AddRow():AddElements(StopCast, LayoutSpace(anchor), { column = "even" })	
+			anchor:AddRow():AddElements(StopCast, StopAtBreakAble, { column = "even" })	
 			anchor:AddRow():AddElement(PauseChecksPanel)		
 			PauseChecksPanel:AddRow({ margin = { top = 10 } }):AddElements(CheckSpellIsTargeting, CheckLootFrame, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckVehicle, CheckDeadOrGhost, { column = "even" })	
