@@ -79,6 +79,8 @@ local isSpellRangeException = {
 	[191427]	= true,
 	[162264]	= true,
 	[187827]	= true,
+	-- Typhoon
+	[132469]	= true,
 }
 local ItemHasRange 			= ItemHasRange
 local isItemRangeException 	= {}
