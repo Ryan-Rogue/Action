@@ -249,7 +249,7 @@ end
 
 function Env.PvPTalentLearn(id)
 	local Name = GetSpellInfo(id)
-    return Env.PvpTalentMap[strlowerCache[Name]] or Azerite:IsLearnedByConflictandStrife(Name) or false
+    return (Env.InPvP_Status and Env.PvpTalentMap[strlowerCache[Name]]) or Azerite:IsLearnedByConflictandStrife(Name) or false
 end
 
 function Env.GetPowerCost(spellID)
