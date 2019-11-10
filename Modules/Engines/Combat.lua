@@ -651,7 +651,7 @@ end
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "COMBAT_LOG_EVENT_UNFILTERED", 		COMBAT_LOG_EVENT_UNFILTERED	) 
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "UNIT_SPELLCAST_SUCCEEDED", 			UNIT_SPELLCAST_SUCCEEDED	)
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_ENABLED", 				function()
-	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A.Player:IsStealthed() then 
+	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and (not A.Player or not A.Player:IsStealthed()) then 
 		wipe(UnitTracker.Data)
 		wipe(CombatTracker.Data)
 	end 
@@ -659,7 +659,7 @@ end)
 A.Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				function()
 	-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
 	local LastTimeCasted = A.CombatTracker:GetSpellLastCast("player", A.LastPlayerCastID) 
-	if (LastTimeCasted == 0 or LastTimeCasted > 1.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A.Player:IsStealthed() then 
+	if (LastTimeCasted == 0 or LastTimeCasted > 1.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and (not A.Player or not A.Player:IsStealthed()) then 
 		wipe(UnitTracker.Data)   	
 		wipe(CombatTracker.Data)
 	else 
