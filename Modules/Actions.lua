@@ -156,7 +156,6 @@ do
 			IsBreakAbleDeBuff[GetSpellInfo(tempTable[j])] = true 
 		end 
 	end 
-	tempTable, tempTableInSkipID = nil, nil 
 end 
 
 -- Player 
