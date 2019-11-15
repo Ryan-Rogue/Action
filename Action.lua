@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "15.11.2019"
+local DateTime 						= "16.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -2701,7 +2701,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvE.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvE.Curse,					
+					Action.Data.Auras.PvE.Curse,	
+					Action.Data.Auras.PvE.Poison,		
 				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
@@ -2712,7 +2713,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvP.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvP.Curse,					
+					Action.Data.Auras.PvP.Curse,		
+					Action.Data.Auras.PvP.Poison,		
 				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
@@ -2726,7 +2728,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvE.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvE.Curse,					
+					Action.Data.Auras.PvE.Curse,
+					Action.Data.Auras.PvE.Poison,	
 				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
@@ -2737,7 +2740,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvP.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvP.Curse,					
+					Action.Data.Auras.PvP.Curse,
+					Action.Data.Auras.PvP.Poison,						
 				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
@@ -2751,7 +2755,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvE.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvE.Curse,					
+					Action.Data.Auras.PvE.Curse,	
+					Action.Data.Auras.PvE.Poison,		
 				},
 				Enrage = {
 					Action.Data.Auras.PvE.Enrage,
@@ -2762,7 +2767,8 @@ local function DispelPurgeEnrageRemap()
 					Action.Data.Auras.PvP.BlackList,
 				},
 				Dispel = {					
-					Action.Data.Auras.PvP.Curse,					
+					Action.Data.Auras.PvP.Curse,
+					Action.Data.Auras.PvP.Poison,		
 				},
 				Enrage = {
 					Action.Data.Auras.PvP.Enrage,
