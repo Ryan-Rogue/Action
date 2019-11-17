@@ -1026,12 +1026,12 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 		if A.IsInPvP and imunBuffs and UnitIsPlayer(unitID) then  
 			if type(imunBuffs) == "table" then 
 				for i = 1, #imunBuffs do 
-					if Unit(unitID):HasBuffs(imunBuffs[i]) > MinDur then 
+					if (imunBuffs[i] == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY)) or Unit(unitID):HasBuffs(imunBuffs[i]) > MinDur then 
 						return false 
 					end 
 				end 
-			elseif Unit(unitID):HasBuffs(imunBuffs) > MinDur then
-				return false 
+			elseif (imunBuffs == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY)) or Unit(unitID):HasBuffs(imunBuffs) > MinDur then
+				return false  								
 			end 
 		end 
 		
