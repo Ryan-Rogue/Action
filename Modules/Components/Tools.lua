@@ -6,7 +6,8 @@ local A 						= Action
 local _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, hooksecurefunc = 
 	  _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, hooksecurefunc
 
-local bxor						= bit.bxor	 	  
+local bxor						= bit.bxor	 	 
+local insert					= table.insert   
 local concat 					= table.concat	  
 local maxn						= table.maxn
 local math_floor				= math.floor 
@@ -431,6 +432,13 @@ function A.MouseHasFrame()
     return false
 end
 A.MouseHasFrame = A.MakeFunctionCachedStatic(A.MouseHasFrame)
+
+function A.TableInsertMulti(t, ...)
+	for i = 1, select("#", ...) do 
+		insert(t, select(i, ...))
+	end 
+	return t 
+end 
 
 function round(num, numDecimalPlaces)
     return toNum[string.format("%." .. (numDecimalPlaces or 0) .. "f", num)]
