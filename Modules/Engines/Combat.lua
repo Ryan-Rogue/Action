@@ -166,7 +166,7 @@ CombatTracker.logDamage 						= function(...)
 				Data[DestGUID].spell_value[spellID] = {}
 			end 		
 			Data[DestGUID].spell_value[spellID].Amount 	= (Data[DestGUID].spell_value[spellID].Amount or 0) + Amount
-			Data[DestGUID].spell_value[spellID].TMW 	= TMW.time 
+			Data[DestGUID].spell_value[spellID].TIME 	= TMW.time 
 		end 
 		if spellName then 
 			if not Data[DestGUID].spell_value[spellName] then 
@@ -263,7 +263,7 @@ CombatTracker.logHealing			 			= function(...)
 				Data[DestGUID].spell_value[spellID] = {}
 			end 		
 			Data[DestGUID].spell_value[spellID].Amount 	= (Data[DestGUID].spell_value[spellID].Amount or 0) + Amount
-			Data[DestGUID].spell_value[spellID].TMW 	= TMW.time 
+			Data[DestGUID].spell_value[spellID].TIME 	= TMW.time 
 		end 
 		if spellName then 
 			if not Data[DestGUID].spell_value[spellName] then 
