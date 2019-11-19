@@ -76,7 +76,7 @@ function A:CheckInPvP()
     UnitInBattleground("player") or 
     IsActiveBattlefieldArena() or
     PvP.IsWarModeDesired() or
-    ( A.Unit("target"):IsPlayer() and A.Unit("target"):IsEnemy() )
+    ( A.Unit("target"):IsPlayer() and (A.Unit("target"):IsEnemy() or A.Unit("targettarget"):IsEnemy()) )
 end
 
 function A.UI_INFO_MESSAGE_IS_WARMODE(...)
