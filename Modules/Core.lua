@@ -8,9 +8,11 @@ local Player				= A.Player
 local LoC 					= A.LossOfControl
 local MultiUnits			= A.MultiUnits
 
-local _G, pairs				= _G, pairs
+local _G, pairs, math		= _G, pairs, math 
+local huge 					= math.huge
 
 local GetCVar				= GetCVar
+local UnitBuff				= UnitBuff
 local UnitIsFriend			= UnitIsFriend
 local SpellIsTargeting		= SpellIsTargeting
 local IsMouseButtonDown		= IsMouseButtonDown
@@ -65,11 +67,24 @@ local arena 				= "arena"
 -- Conditions
 -------------------------------------------------------------------------------
 local FoodAndDrink = {
-	43180, 	-- Food 
-	27089, 	-- Drink
-	257427, -- FoodDrink
-	167152, -- Mage's eat
+	[43180] = true, 	-- Food 
+	[27089] = true, 	-- Drink
+	[257427] = true, 	-- FoodDrink
+	[167152] = true, 	-- Mage's eat
 }
+local function IsDrinkingOrEating()
+	-- @return boolean 
+	local auraName
+	for i = 1, huge do 
+		auraName = UnitBuff(player, i, "HELPFUL PLAYER")
+		if not auraName then 
+			break 
+		elseif FoodAndDrink[auraName] then 
+			return true 
+		end 
+	end 
+end 
+
 function A.PauseChecks()  	
 	-- Chat, BindPad, TellMeWhen
 	if ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible()) or not TMW.Locked then 
@@ -108,7 +123,7 @@ function A.PauseChecks()
 		return ACTION_CONST_PAUSECHECKS_LOOTFRAME
 	end	
 	
-	if A.GetToggle(1, "CheckEatingOrDrinking") and Unit(player):CombatTime() == 0 and Player:IsStaying() and Unit(player):HasBuffs(FoodAndDrink, true) > 0 then
+	if A.GetToggle(1, "CheckEatingOrDrinking") and Unit(player):CombatTime() == 0 and Player:IsStaying() and IsDrinkingOrEating() then
 		return ACTION_CONST_PAUSECHECKS_IS_EAT_OR_DRINK
 	end	
 end
@@ -240,29 +255,16 @@ function A.Rotation(icon)
 		end
 		
 		-- AutoTarget 
-		if A.GetToggle(1, "AutoTarget") and not A.IamHealer and Unit(player):CombatTime() > 0 and not Unit(target):IsExplosives() then 							
-			if  (not Unit(target):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and Unit(target):CombatTime() == 0)) 	-- No existed or switch target in PvE if we accidentally selected out of combat unit  			
-				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(40, 1) >= 1) or A.Zone == "pvp") 							-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
-			then 
-				return A:Show(icon, ACTION_CONST_AUTOTARGET)
+		if A.GetToggle(1, "AutoTarget") and not A.IamHealer and Unit(player):CombatTime() > 0 and not Unit(target):IsExplosives() then 		
+			if A.IsExplosivesExists() then
+				return A:Show(icon, ACTION_CONST_AUTOTARGET)			  				 
 			end 
 			
-			if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then
-				-- CLEU search 
-				if A.IsExplosivesExists() then 
-					return A:Show(icon, ACTION_CONST_AUTOTARGET)
-				end 
-				
-				-- Nameplates seach (only if enemy totems are enabled)
-				local nameplates = MultiUnits:GetActiveUnitPlates()
-				if nameplates and GetCVar("nameplateShowEnemyTotems") then 
-					for nameplateUnitID in pairs(nameplates) do 
-						if Unit(nameplateUnitID):IsExplosives() then 
-							return A:Show(icon, ACTION_CONST_AUTOTARGET)			 
-						end 
-					end 
-				end 				 
-			end 
+			if  (not Unit(target):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and Unit(target):CombatTime() == 0 and Unit(target):IsEnemy())) 	-- No existed or switch target in PvE if we accidentally selected out of combat unit  			
+				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(nil, 1) >= 1) or A.Zone == "pvp") 												-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
+			then 
+				return A:Show(icon, ACTION_CONST_AUTOTARGET)
+			end 						
 		end 
 	end 
 	
