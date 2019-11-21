@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "19.11.2019"
+local DateTime 						= "22.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -309,6 +309,7 @@ local Localization = {
 				SKYFURYTOTEM = "skyfury totem",					
 				ANCESTRALPROTECTIONTOTEM = "ancestral protection totem",					
 				COUNTERSTRIKETOTEM = "counterstrike totem",
+				EXPLOSIVES = "explosives",
 				-- Optional totems
 				TREMORTOTEM = "tremor totem",
 				GROUNDINGTOTEM = "grounding totem",
@@ -607,6 +608,7 @@ local Localization = {
 				SKYFURYTOTEM = "тотем небесной ярости",					
 				ANCESTRALPROTECTIONTOTEM = "тотем защиты предков",					
 				COUNTERSTRIKETOTEM = "тотем контрудара",
+				EXPLOSIVES = "взрывчатка",
 				-- Optional totems
 				TREMORTOTEM = "тотем трепета",
 				GROUNDINGTOTEM = "тотем заземления",
@@ -905,6 +907,7 @@ local Localization = {
 				SKYFURYTOTEM = "totem des himmelszorns",					
 				ANCESTRALPROTECTIONTOTEM = "totem des schutzes der ahnen",					
 				COUNTERSTRIKETOTEM = "totem des gegenschlags",
+				EXPLOSIVES = "sprengstoff",
 				-- Optional totems
 				TREMORTOTEM = "totem des erdstoßes",
 				GROUNDINGTOTEM = "totem der erdung",
@@ -1203,6 +1206,7 @@ local Localization = {
 				SKYFURYTOTEM = "totem fureur-du-ciel",					
 				ANCESTRALPROTECTIONTOTEM = "totem de protection ancestrale",					
 				COUNTERSTRIKETOTEM = "totem de réplique",
+				EXPLOSIVES = "explosifs",
 				-- Optional totems
 				TREMORTOTEM = "totem de séisme",
 				GROUNDINGTOTEM = "totem de glèbe",
@@ -1501,6 +1505,7 @@ local Localization = {
 				SKYFURYTOTEM = "totem della furia del cielo",					
 				ANCESTRALPROTECTIONTOTEM = "totem del risveglio ancestrale",					
 				COUNTERSTRIKETOTEM = "totem del controassalto",
+				EXPLOSIVES = "esplosivi",
 				-- Optional totems
 				TREMORTOTEM = "totem del tremore",
 				GROUNDINGTOTEM = "totem dell'adescamento magico",
@@ -1799,6 +1804,7 @@ local Localization = {
 				SKYFURYTOTEM = "tótem furia del cielo",					
 				ANCESTRALPROTECTIONTOTEM = "tótem de protección ancestral",					
 				COUNTERSTRIKETOTEM = "tótem de golpe de contraataque",
+				EXPLOSIVES = "explosivos",
 				-- Optional totems
 				TREMORTOTEM = "tótem de tremor",
 				GROUNDINGTOTEM = "grounding totem",
@@ -2080,6 +2086,7 @@ local Factory = {
 				UnitName = {
 					[GameLocale] = {
 						ISCURSOR = true,
+						[Localization[GameLocale]["TAB"][6]["EXPLOSIVES"]] = { isTotem = true, Button = "LEFT", LUA = [[return InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7]] },
 					},
 				},
 				GameToolTip = {
@@ -2593,7 +2600,7 @@ local function tMerge(default, new, special, nonexistremove)
 				result[k] = {}
 				for KeyLocale, Val in pairs(v) do 					
 					if type(Val) == "table" then 				
-						result[k][KeyLocale] = { Enabled = true, Button = Val.Button, isTotem = Val.isTotem } 
+						result[k][KeyLocale] = { Enabled = true, Button = Val.Button, isTotem = Val.isTotem, LUA = Val.LUA } 
 					end 
 				end 
 			elseif new[k] ~= nil then 
