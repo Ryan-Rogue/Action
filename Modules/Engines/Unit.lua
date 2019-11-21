@@ -951,7 +951,6 @@ local Info = {
 	CacheMoving 				= setmetatable({}, { __mode = "kv" }),
 	CacheStaying				= setmetatable({}, { __mode = "kv" }),
 	CacheInterrupt 				= setmetatable({}, { __mode = "kv" }),
-	CacheExplosives				= setmetatable({}, { __mode = "kv" }),
 	SpecIs 						= {
         ["MELEE"] 				= {251, 252, 577, 103, 255, 269, 70, 259, 260, 261, 263, 71, 72, 250, 581, 104, 268, 66, 73},
         ["RANGE"] 				= {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267},
@@ -1237,11 +1236,6 @@ local Info = {
 		[200166]		= true, 	-- Metamorphosis
 	},
 }
-
-function A.IsExplosivesExists()
-	-- @return boolean
-	return next(Info.CacheExplosives)
-end 
 
 A.Unit = PseudoClass({
 	-- if it's by "UnitGUID" then it will use cache for different unitID with same unitGUID (which is not really best way to waste performance)
@@ -3046,13 +3040,6 @@ A.Listener:Add("ACTION_EVENT_UNIT", "COMBAT_LOG_EVENT_UNFILTERED", 			function(.
 		Info.CacheMoving[DestGUID]		= nil 
 		Info.CacheStaying[DestGUID]		= nil 
 		Info.CacheInterrupt[DestGUID]	= nil 
-		Info.CacheExplosives[DestGUID]	= nil 
-	elseif InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then 
-		if sourceName and Info.ExplosivesName[GameLocale] == sourceName then 
-			Info.CacheExplosives[SourceGUID] = true 
-		elseif destName and Info.ExplosivesName[GameLocale] == destName then 	
-			Info.CacheExplosives[DestGUID] = true 
-		end 
 	end 
 end)
 
@@ -3063,7 +3050,6 @@ A.Listener:Add("ACTION_EVENT_UNIT", "PLAYER_REGEN_ENABLED", 				function()
 		wipe(Info.CacheMoving)
 		wipe(Info.CacheStaying)
 		wipe(Info.CacheInterrupt)
-		wipe(Info.CacheExplosives)
 	end 
 end)
 
@@ -3075,7 +3061,6 @@ A.Listener:Add("ACTION_EVENT_UNIT", "PLAYER_REGEN_DISABLED", 				function()
 		wipe(Info.CacheMoveOut)
 		wipe(Info.CacheMoving)
 		wipe(Info.CacheStaying)	
-		wipe(Info.CacheInterrupt)
-		wipe(Info.CacheExplosives)
+		wipe(Info.CacheInterrupt)		
 	end 
 end)

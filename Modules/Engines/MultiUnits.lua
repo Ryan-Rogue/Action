@@ -6,7 +6,7 @@ local isEnemy										= A.Bit.isEnemy
 --local isPlayer									= A.Bit.isPlayer
 --local toStr 										= A.toStr
 --local toNum 										= A.toNum
---local InstanceInfo								= A.InstanceInfo
+local InstanceInfo									= A.InstanceInfo
 --local TeamCache									= A.TeamCache
 --local Azerite 									= LibStub("AzeriteTraits")
 --local Pet											= LibStub("PetLibrary")
@@ -23,6 +23,7 @@ local UnitCanAttack, UnitGUID  					    = UnitCanAttack, UnitGUID -- no need cac
 local MultiUnits 								= {
 	activeUnitPlates 							= {},
 	--activeUnitPlatesGUID 						= {},
+	activeExplosives							= {},
 	activeUnitCLEU 								= {},
 	tempEnemies									= {},
 	LastCallInitCLEU							= 0,
@@ -33,23 +34,32 @@ local MultiUnits 								= {
 MultiUnits.AddNameplate							= function(unitID)
 	if UnitCanAttack("player", unitID) then 
 		MultiUnits.activeUnitPlates[unitID] = unitID
+		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 and A.Unit(unitID):IsExplosives() then 
+			MultiUnits.activeExplosives[unitID] = unitID
+		end 
 		--local GUID 							= UnitGUID(unitID)
 		--if GUID then 
 			--MultiUnits.activeUnitPlatesGUID[GUID] = unitID
-		--end 
+		--end 		
 	end
 end
 
 MultiUnits.RemoveNameplate						= function(unitID)
-    MultiUnits.activeUnitPlates[unitID] = nil 
+    MultiUnits.activeUnitPlates[unitID] = nil
+	MultiUnits.activeExplosives[unitID] = nil 
 	--local GUID 							= UnitGUID(unitID)
 	--if GUID then 
 		--MultiUnits.activeUnitPlatesGUID[GUID] = nil
 	--end 
 end
 
+MultiUnits.OnResetExplosives					= function()
+	wipe(MultiUnits.activeExplosives)
+end 
+
 MultiUnits.OnResetNameplates					= function()
 	wipe(MultiUnits.activeUnitPlates)
+	wipe(MultiUnits.activeExplosives)
 	--wipe(MultiUnits.activeUnitPlatesGUID)
 end 
 
@@ -122,6 +132,7 @@ A.Listener:Add("ACTION_EVENT_MULTI_UNITS_ALL", "PLAYER_ENTERING_WORLD",   			Mul
 A.Listener:Add("ACTION_EVENT_MULTI_UNITS_ALL", "UPDATE_INSTANCE_INFO", 	  			MultiUnits.OnResetAll) 
 A.Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "NAME_PLATE_UNIT_ADDED",	  	MultiUnits.AddNameplate)
 A.Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "NAME_PLATE_UNIT_REMOVED", 	MultiUnits.RemoveNameplate)
+A.Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "PLAYER_REGEN_ENABLED", 		MultiUnits.OnResetExplosives)
 TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", 					MultiUnits.OnInitCLEU)
 
 -------------------------------------------------------------------------------
@@ -453,3 +464,9 @@ function A.MultiUnits.GetActiveEnemies(self, timer, skipClear)
 	return total or 0
 end 
 A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActiveEnemies, ACTION_CONST_CACHE_DEFAULT_TIMER_MULTIUNIT_CLEU)
+
+-- Explosives
+function A.IsExplosivesExists()
+	-- @return boolean
+	return next(MultiUnits.activeExplosives)
+end 
