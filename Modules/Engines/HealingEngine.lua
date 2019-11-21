@@ -2,26 +2,27 @@ local TMW 							= TMW
 local CNDT 							= TMW.CNDT
 local Env 							= CNDT.Env
 
---local strlowerCache  				= TMW.strlowerCache
 local A 							= Action
---local isEnemy						= A.Bit.isEnemy
---local isPlayer					= A.Bit.isPlayer
---local toStr 						= A.toStr
---local toNum 						= A.toNum
 local InstanceInfo					= A.InstanceInfo
 local TeamCache						= A.TeamCache
 local Azerite 						= LibStub("AzeriteTraits")
---local Pet							= LibStub("PetLibrary")
---local LibRangeCheck  				= LibStub("LibRangeCheck-2.0")
---local SpellRange					= LibStub("SpellRange-1.0")
---local DRData 						= LibStub("DRData-1.1")
 
 -- Toggle valid: "TANK", "DAMAGER", "HEALER", "RAID", nil (means "ALL")
 _G.HE_Toggle 						= nil 
 _G.HE_Pets   						= true
 
-local type, pairs, table, wipe, huge = 
-	  type, pairs, table, wipe, math.huge
+local _G, type, pairs, table, math	= 
+	  _G, type, pairs, table, math
+	  
+local tinsert 						= table.insert	
+local tremove						= table.remove 
+local tsort							= table.sort 
+local huge 							= math.huge
+local wipe 							= _G.wipe
+local strconcat						= _G.strconcat
+
+local  CreateFrame,    UIParent		= 
+	_G.CreateFrame, _G.UIParent	  
 	  
 local UnitGUID, UnitIsUnit = 
 	  UnitGUID, UnitIsUnit
@@ -37,7 +38,8 @@ Frame:SetPoint("TOPLEFT", 442, 0)
 Frame.texture = Frame:CreateTexture(nil, "TOOLTIP")
 Frame.texture:SetAllPoints(true)
 Frame.texture:SetColorTexture(0, 0, 0, 1.0)
-local healingTarget, healingTargetGUID, healingTargetDelay = "None", "None", 0
+local None, healingTarget, healingTargetGUID, healingTargetDelay = "None", "None", "None", 0
+local QueueOrder					= {}
 
 A.HealingEngine.Members = {
 	ALL = {},
@@ -115,14 +117,14 @@ local Temp = {
 	Beacons = {156910, 53563},
 	SumDMG	= {},
 }
-local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDispel)
+local function PerformByProfileHP(member, memberhp, membermhp, DMG, order)
 	-- Enable specific instructions by profile 
-	if A.IsGGLprofile then 
+	if A.IsGGLprofile and not A.IsBasicProfile then 
 		-- Holy Paladin 
 		if A.Unit("player"):HasSpec(ACTION_CONST_PALADIN_HOLY) then                 
-			if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
+			if (not order.Dispel or A.Unit(member):IsHealer()) and Env.SpellUsable(4987) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
 				-- DISPEL PRIORITY
-				isQueuedDispel = true 
+				order.Dispel = true 
 				-- if we will have lower unit than 50% then don't dispel it
 				memberhp = 50
 				if A.Unit(member):IsHealer() then 
@@ -159,9 +161,9 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 		
 		-- Restor Druid 
 		if A.Unit("player"):HasSpec(ACTION_CONST_DRUID_RESTORATION) then 					
-			if (not isQueuedDispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
+			if (not order.Dispel or A.Unit(member):IsHealer()) and Env.SpellUsable(88423) and (not Env.InPvP() or not UnitIsUnit("player", member)) and Env.Dispel(member) then 
 				-- DISPEL PRIORITY
-				isQueuedDispel = true 
+				order.Dispel = true 
 				memberhp = 50 
 				-- if we will have lower unit than 50% then don't dispel it
 				if A.Unit(member):IsHealer() then 
@@ -178,7 +180,7 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 				wipe(Temp.SumDMG)
 				if Rejuvenation1 > 0 then 
 					summup = summup + (A.GetSpellDescription(774)[1] / Rejuvenation2 * Rejuvenation1)
-					table.insert(Temp.SumDMG, Rejuvenation1)
+					tinsert(Temp.SumDMG, Rejuvenation1)
 				else
 					-- If current target is Tank then to prevent staying on that target we will cycle rest units 
 					if healingTarget and healingTarget ~= "None" and A.Unit(healingTarget):IsTank() then 
@@ -190,26 +192,26 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 				
 				if Regrowth1 > 0 then 
 					summup = summup + (A.GetSpellDescription(8936)[2] / Regrowth2 * Regrowth1)
-					table.insert(Temp.SumDMG, Regrowth1)
+					tinsert(Temp.SumDMG, Regrowth1)
 				end
 				
 				if WildGrowth1 > 0 then 
 					summup = summup + (A.GetSpellDescription(48438)[1] / WildGrowth2 * WildGrowth1)
-					table.insert(Temp.SumDMG, WildGrowth1)                    
+					tinsert(Temp.SumDMG, WildGrowth1)                    
 				end
 				
 				if Lifebloom1 > 0 then 
 					summup = summup + (A.GetSpellDescription(33763)[1] / Lifebloom2 * Lifebloom1) 
-					table.insert(Temp.SumDMG, Lifebloom1)    
+					tinsert(Temp.SumDMG, Lifebloom1)    
 				end
 				
 				if Germination1 > 0 then -- same with Rejuvenation
 					summup = summup + (A.GetSpellDescription(774)[1] / Germination2 * Germination1)
-					table.insert(Temp.SumDMG, Germination1)    
+					tinsert(Temp.SumDMG, Germination1)    
 				end
 				
 				-- Get longer hot duration and predict incoming damage by that 
-				table.sort(Temp.SumDMG, function (x, y)
+				tsort(Temp.SumDMG, function (x, y)
 						return x > y
 				end)
 				
@@ -226,9 +228,9 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 		
 		-- Discipline Priest
 		if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_DISCIPLINE) then                 
-			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+			if (not order.Dispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
 				-- DISPEL PRIORITY
-				isQueuedDispel = true 
+				order.Dispel = true 
 				memberhp = 50 
 				-- if we will have lower unit than 50% then don't dispel it
 				if A.Unit(member):IsHealer() then 
@@ -266,9 +268,9 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 		
 		-- Holy Priest
 		if A.Unit("player"):HasSpec(ACTION_CONST_PRIEST_HOLY) then                 
-			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
+			if (not order.Dispel or A.Unit(member):IsHealer()) and (not Env.InPvP() or not UnitIsUnit("player", member)) and (Env.Dispel(member) or Env.Purje(member) or Env.MassDispel(member)) then 
 				-- DISPEL PRIORITY
-				isQueuedDispel = true 
+				order.Dispel = true 
 				memberhp = 50 
 				-- if we will have lower unit than 50% then don't dispel it
 				if A.Unit(member):IsHealer() then 
@@ -292,9 +294,9 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 	   
 		-- Mistweaver Monk 
 		if A.IsInitialized and A.Unit("player"):HasSpec(ACTION_CONST_MONK_MISTWEAVER) then 
-			if (not isQueuedDispel or A.Unit(member):IsHealer()) and (not A.IsInPvP or not UnitIsUnit("player", member)) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
+			if (not order.Dispel or A.Unit(member):IsHealer()) and (not A.IsInPvP or not UnitIsUnit("player", member)) and A.AuraIsValid(member, "UseDispel", "Dispel") then 
 				-- DISPEL PRIORITY
-				isQueuedDispel = true 
+				order.Dispel = true 
 				memberhp = 50 
 				-- If we will have lower unit than 50% then don't dispel it
 				if A.Unit(member):IsHealer() then 
@@ -313,29 +315,29 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDisp
 		end 
 	end 
 	
-	return memberhp, isQueuedDispel
+	return memberhp, order
 end
 
 local function HealingEngine(MODE, useActualHP)   
+	local group 			= TeamCache.Friendly.Type
 	local mode 				= MODE or "ALL"
     local ActualHP 			= useActualHP or false
-	local isQueuedDispel 	= false 
+	wipe(QueueOrder)	
 	A.HealingEngine.Members:Wipe()
 	
-    if TeamCache.Friendly.Type ~= "raid" then 
+    if group ~= "raid" then 
 		local pHP, aHP, _, mHP 	= CalculateHP("player")
 		local DMG 				= A.Unit("player"):GetRealTimeDMG() 
-		pHP, isQueuedDispel 	= PerformByProfileHP("player", pHP, mHP, DMG, isQueuedDispel)
-        table.insert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = DMG })
+		pHP, QueueOrder 	= PerformByProfileHP("player", pHP, mHP, DMG, QueueOrder)
+        tinsert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = DMG })
     end 
-        
-    local group = TeamCache.Friendly.Type
+            
 	if not group then 
 		return 
 	end 
 	
     for i = 1, TeamCache.Friendly.Size do
-        local member 							= group .. i        
+        local member 							= strconcat(group, i)        
         local memberhp, memberahp, _, membermhp = CalculateHP(member)
         local memberGUID 						= UnitGUID(member)
 
@@ -360,14 +362,14 @@ local function HealingEngine(MODE, useActualHP)
                 memberhp = memberhp - threat
             end            
             
-			memberhp, isQueuedDispel = PerformByProfileHP(member, memberhp, membermhp, DMG, isQueuedDispel)
+			memberhp, QueueOrder = PerformByProfileHP(member, memberhp, membermhp, DMG, QueueOrder)
 
             -- Misc: Sort by Roles 			
             if A.Unit(member):IsTank() then
                 memberhp = memberhp - 2
 				
 				if mode == "TANK" then 
-					table.insert(A.HealingEngine.Members.TANK, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })      
+					tinsert(A.HealingEngine.Members.TANK, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })      
 				end 
             elseif A.Unit(member):IsHealer() then                
                 if UnitIsUnit("player", member) and memberhp < 95 then 
@@ -381,26 +383,26 @@ local function HealingEngine(MODE, useActualHP)
                 end
 				
 				if mode == "HEALER" then 
-					table.insert(A.HealingEngine.Members.HEALER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+					tinsert(A.HealingEngine.Members.HEALER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
 				elseif mode == "RAID" then 	
-					table.insert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+					tinsert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
 				end 				 
 			else 
 				memberhp = memberhp - 1
 				
 				if mode == "DAMAGER" then 
-					table.insert(A.HealingEngine.Members.DAMAGER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+					tinsert(A.HealingEngine.Members.DAMAGER, 	{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
 				elseif mode == "RAID" then  
-					table.insert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+					tinsert(A.HealingEngine.Members.RAID, 		{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
 				end			 
             end
 
-            table.insert(A.HealingEngine.Members.ALL, 				{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
+            tinsert(A.HealingEngine.Members.ALL, 				{ Unit = member, GUID = memberGUID, HP = memberhp, AHP = memberahp, isPlayer = true, incDMG = Actual_DMG })  
         end        
         
         -- Pets 
         if _G.HE_Pets then
-            local memberpet 									= group .. "pet" .. i
+            local memberpet 									= strconcat(group, "pet", i)
 			local memberpetGUID 								= UnitGUID(memberpet)
 			local memberpethp, memberpetahp, _, memberpetmhp 	= CalculateHP(memberpet) 
 			
@@ -417,14 +419,14 @@ local function HealingEngine(MODE, useActualHP)
 					memberpetahp = memberpetahp * 1.15
 				end
 				
-				table.insert(A.HealingEngine.Members.ALL, 			{ Unit = memberpet, GUID = memberpetGUID, HP = memberpethp, AHP = memberpetahp, isPlayer = false, incDMG = A.Unit(memberpet):GetRealTimeDMG() }) 
+				tinsert(A.HealingEngine.Members.ALL, 			{ Unit = memberpet, GUID = memberpetGUID, HP = memberpethp, AHP = memberpetahp, isPlayer = false, incDMG = A.Unit(memberpet):GetRealTimeDMG() }) 
 			end 
         end
     end
     
     -- Frequency (Summary)
     if A.HealingEngine.Frequency.Temp.MAXHP and A.HealingEngine.Frequency.Temp.MAXHP > 0 then 
-        table.insert(A.HealingEngine.Frequency.Actual, { 	                
+        tinsert(A.HealingEngine.Frequency.Actual, { 	                
                 -- Max Group HP
                 MAXHP	= A.HealingEngine.Frequency.Temp.MAXHP, 
                 -- Current Group Actual HP
@@ -440,7 +442,7 @@ local function HealingEngine(MODE, useActualHP)
         for i = #A.HealingEngine.Frequency.Actual, 1, -1 do             
             -- Remove data longer than 5 seconds 
             if TMW.time - A.HealingEngine.Frequency.Actual[i].TIME > 10 then 
-                table.remove(A.HealingEngine.Frequency.Actual, i)                
+                tremove(A.HealingEngine.Frequency.Actual, i)                
             end 
         end 
     end 
@@ -450,9 +452,9 @@ local function HealingEngine(MODE, useActualHP)
         -- Sort by most damage receive
 		for i = 1, #A.HealingEngine.Members.ALL do 
 			local t = A.HealingEngine.Members.ALL[i]
-			table.insert(A.HealingEngine.Members.MOSTLYINCDMG, 		{ Unit = t.Unit, GUID = t.GUID, incDMG = t.incDMG })
+			tinsert(A.HealingEngine.Members.MOSTLYINCDMG, 		{ Unit = t.Unit, GUID = t.GUID, incDMG = t.incDMG })
 		end 
-        table.sort(A.HealingEngine.Members.MOSTLYINCDMG, function(x, y)
+        tsort(A.HealingEngine.Members.MOSTLYINCDMG, function(x, y)
                 return x.incDMG > y.incDMG
         end)  
         
@@ -460,13 +462,13 @@ local function HealingEngine(MODE, useActualHP)
         if not ActualHP then
 			for k, v in pairs(A.HealingEngine.Members) do 
 				if type(v) == "table" and #v > 1 and v[1].HP then 
-					table.sort(v, function(x, y) return x.HP < y.HP end)
+					tsort(v, function(x, y) return x.HP < y.HP end)
 				end 
 			end 		
         elseif ActualHP then
 			for k, v in pairs(A.HealingEngine.Members) do 
 				if type(v) == "table" and #v > 1 and v[1].AHP then 
-					table.sort(v, function(x, y) return x.AHP > y.AHP end)
+					tsort(v, function(x, y) return x.AHP > y.AHP end)
 				end 
 			end 		
         end
@@ -483,8 +485,8 @@ local function setHealingTarget(MODE, HP)
 		return 
 	end 	 
 
-    healingTarget 	  = "None"
-    healingTargetGUID = "None"
+    healingTarget 	  = None
+    healingTargetGUID = None
 end
 
 local function setColorTarget(isForced)
