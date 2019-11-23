@@ -51,7 +51,7 @@ MultiUnits.RemoveNameplate						= function(unitID)
 	--if GUID then 
 		--MultiUnits.activeUnitPlatesGUID[GUID] = nil
 	--end 
-end
+end 
 
 MultiUnits.OnResetExplosives					= function()
 	wipe(MultiUnits.activeExplosives)
@@ -468,5 +468,13 @@ A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActi
 -- Explosives
 function A.IsExplosivesExists()
 	-- @return boolean
-	return next(MultiUnits.activeExplosives)
+	if not A.IamMelee then 
+		return next(MultiUnits.activeExplosives)
+	elseif next(MultiUnits.activeExplosives) then 
+		for unitID in pairs(MultiUnits.activeExplosives) do 
+			if A.Unit(unitID):GetRange() <= 10 then 
+				return true 
+			end 
+		end 
+	end 
 end 
