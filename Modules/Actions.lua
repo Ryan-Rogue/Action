@@ -103,9 +103,11 @@ local itemCategory 			= {
 
 local GetNetStats 			= GetNetStats	
 
-local _G, type, select, unpack, table, setmetatable = 	
-	  _G, type, select, unpack, table, setmetatable
+local _G, type, select, unpack, table, setmetatable, math = 	
+	  _G, type, select, unpack, table, setmetatable, math
 	  	  
+local tinsert 				= table.insert	
+local tsort 				= table.sort	  
 local huge 					= math.huge  	  
 
 -- Spell 
@@ -297,12 +299,12 @@ function A.GetSpellDescription(self)
 		deleted_space 		= deleted_space:gsub("%d+%%", "")
 
 		for value in deleted_space:gmatch("%d+") do
-			table.insert(numbers, toNum[value])
+			tinsert(numbers, toNum[value])
 		end
 		
 		if #numbers > 1 then
-			table.sort(numbers, function (x, y)
-					return x > y
+			tsort(numbers, function(x, y)
+				return x > y
 			end)
 		end 
 		

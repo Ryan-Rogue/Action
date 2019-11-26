@@ -328,7 +328,7 @@ local function HealingEngine(MODE, useActualHP)
     if group ~= "raid" then 
 		local pHP, aHP, _, mHP 	= CalculateHP("player")
 		local DMG 				= A.Unit("player"):GetRealTimeDMG() 
-		pHP, QueueOrder 	= PerformByProfileHP("player", pHP, mHP, DMG, QueueOrder)
+		pHP, QueueOrder 		= PerformByProfileHP("player", pHP, mHP, DMG, QueueOrder)
         tinsert(A.HealingEngine.Members.ALL, { Unit = "player", GUID = UnitGUID("player"), HP = pHP, AHP = aHP, isPlayer = true, incDMG = DMG })
     end 
             

@@ -3,8 +3,8 @@ local A 						= Action
 
 --local strlowerCache  			= TMW.strlowerCache
 
-local _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, hooksecurefunc = 
-	  _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, hooksecurefunc
+local _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, bit, hooksecurefunc = 
+	  _G, pairs, loadstring, tostringall, tostring, tonumber, type, next, select, unpack, setmetatable, table, wipe, bit, hooksecurefunc
 
 local bxor						= bit.bxor	 	 
 local insert					= table.insert   
@@ -106,7 +106,7 @@ local function strBuilder(s, j)
 	-- String Concatenation
 	local n = maxn(s)
 	if n == 0 or (j and n <= j) then 
-		return 0
+		return toStr[s]
 	else 
 		local t = {}
 		for i = (j or 1), n do
@@ -131,7 +131,7 @@ local bt = {}
 local function strAltBuilder(s, j)
 	local n = maxn(s)
 	if n == 0 or (j and n <= j) then 
-		return 0
+		return toStr[s]
 	else 
 		wipe(bt)
 		
