@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "23.11.2019"
+local DateTime 						= "26.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -6174,7 +6174,7 @@ function Action.ToggleMainUI()
 			end)		
 			HealthStone.Identify = { Type = "Slider", Toggle = "HealthStone" }		
 			HealthStone.OnValueChanged = function(self, value)
-				local value = math.floor(value) 
+				local value = math_floor(value) 
 				TMW.db.profile.ActionDB[tab.name][specID].HealthStone = value
 				self.FontStringTitle:SetText(L["TAB"][tab.name]["HEALTHSTONE"] .. ": |cff00ff00" .. (value < 0 and "|cffff0000OFF|r" or value >= 100 and "|cff00ff00AUTO|r" or value))
 			end
@@ -6413,7 +6413,7 @@ function Action.ToggleMainUI()
 						obj:SetJustifyH("MIDDLE")						
 						obj:SetFontSize(config.S or 14)	
 					elseif config.E == "Button" then 
-						obj = StdUi:Button(anchor, GetWidthByColumn(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.L.ANY or config.L[CL])
+						obj = StdUi:Button(anchor, GetWidthByColumn(anchor, math_floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.L.ANY or config.L[CL])
 						obj:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 						obj:SetScript("OnClick", function(self, button, down)
 							if not self.isDisabled then 
@@ -6451,7 +6451,22 @@ function Action.ToggleMainUI()
 							obj:Disable()
 						end 
 					elseif config.E == "Dropdown" then
-						obj = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, config.OT, nil, config.MULT)
+						-- Get formated by localization in OT
+						local FormatedOT 
+						for p = 1, #config.OT do 
+							if type(config.OT[p].text) == "table" then 
+								FormatedOT = {}
+								for j = 1, #config.OT do 
+									if type(config.OT[j].text) ~= "table" then 
+										tinsert(FormatedOT, config.OT[j])
+									else
+										tinsert(FormatedOT, { text = config.OT[j].text.ANY or config.OT[j].text[CL], value = config.OT[j].value })
+									end 
+								end
+								break 
+							end 
+						end 
+						obj = StdUi:Dropdown(anchor, GetWidthByColumn(anchor, math_floor(12 / #Action.Data.ProfileUI[tab.name][specID][row])), config.H or 20, FormatedOT or config.OT, nil, config.MULT)
 						if config.SetPlaceholder then 
 							obj:SetPlaceholder(config.SetPlaceholder.ANY or config.SetPlaceholder[CL])
 						end 
@@ -6489,6 +6504,7 @@ function Action.ToggleMainUI()
 						end)
 						obj.Identify = { Type = config.E, Toggle = config.DB }
 						obj.FontStringTitle = StdUi:FontString(obj, config.L.ANY or config.L[CL])
+						obj.FontStringTitle:SetJustifyH("CENTER")
 						obj.text:SetJustifyH("CENTER")
 						StdUi:GlueAbove(obj.FontStringTitle, obj)						
 						StdUi:FrameTooltip(obj, (config.TT and (config.TT.ANY or config.TT[CTT])) or config.M and L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "BOTTOM", true)	
@@ -6496,7 +6512,7 @@ function Action.ToggleMainUI()
 							obj:Disable()
 						end 
 					elseif config.E == "Slider" then	
-						obj = StdUi:Slider(anchor, math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), config.H or 20, TMW.db.profile.ActionDB[tab.name][specID][config.DB], false, config.MIN or -1, config.MAX or 100)	
+						obj = StdUi:Slider(anchor, math_floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), config.H or 20, TMW.db.profile.ActionDB[tab.name][specID][config.DB], false, config.MIN or -1, config.MAX or 100)	
 						if config.Precision then 
 							obj:SetPrecision(config.Precision)
 						end
@@ -6520,7 +6536,7 @@ function Action.ToggleMainUI()
 						end 
 						obj.OnValueChanged = function(self, value)
 							if not config.Precision then 
-								value = math.floor(value) 
+								value = math_floor(value) 
 							elseif value < 0 then 
 								value = config.MIN or -1
 							end
@@ -6537,7 +6553,7 @@ function Action.ToggleMainUI()
 					end 
 					
 					local margin = config.ElementOptions and config.ElementOptions.margin or { top = 10 } 					
-					SpecRow:AddElement(obj, { column = math.floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), margin = margin })
+					SpecRow:AddElement(obj, { column = math_floor(12 / #Action.Data.ProfileUI[tab.name][specID][row]), margin = margin })
 				end
 			end
 			
