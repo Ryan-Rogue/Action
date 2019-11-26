@@ -485,6 +485,11 @@ A.Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 		ConsoleUpdate	)
 VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
 InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)
 
+function A.BlackBackgroundIsShown()
+	-- @return boolean 
+	return BlackBackground:IsShown()
+end 
+
 function A.BlackBackgroundSet(bool)
     BlackBackground.IsEnable = bool 
     BlackBackground:SetShown(bool)

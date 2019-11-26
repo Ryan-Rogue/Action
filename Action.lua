@@ -1,5 +1,5 @@
 --- 
-local DateTime 						= "26.11.2019"
+local DateTime 						= "27.11.2019"
 ---
 local TMW 							= TMW
 local strlowerCache  				= TMW.strlowerCache
@@ -171,6 +171,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Hide class portrait",
 				DISABLEROTATIONMODES = "Hide rotation modes",
 				DISABLESOUNDS = "Disable sounds",
+				HIDEONSCREENSHOT = "Hide on screenshot",
+				HIDEONSCREENSHOTTOOLTIP = "During the screenshot hides all TellMeWhen\nand Action frames, and then shows them back",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -470,6 +472,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Скрыть классовый портрет",
 				DISABLEROTATIONMODES = "Скрыть режимы ротации",
 				DISABLESOUNDS = "Отключить звуки",
+				HIDEONSCREENSHOT = "Скрывать на скриншоте",
+				HIDEONSCREENSHOTTOOLTIP = "Во время скриншота прячет все фреймы TellMeWhen\nи Action, а после показывает их обратно",
 			},			
 			[3] = {
 				HEADBUTTON = "Действия",
@@ -769,6 +773,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Klassenporträt ausblenden",
 				DISABLEROTATIONMODES = "Drehmodi ausblenden",
 				DISABLESOUNDS = "Sounds deaktivieren",
+				HIDEONSCREENSHOT = "Auf dem Screenshot verstecken",
+				HIDEONSCREENSHOTTOOLTIP = "Während des Screenshots werden alle TellMeWhen\nund Action frames ausgeblendet und anschließend wieder angezeigt",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -1068,6 +1074,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Masquer le portrait de classe",
 				DISABLEROTATIONMODES = "Masquer les modes de rotation",
 				DISABLESOUNDS = "Désactiver les sons",
+				HIDEONSCREENSHOT = "Masquer sur la capture d'écran",
+				HIDEONSCREENSHOTTOOLTIP = "Pendant la capture d'écran, tous les cadres TellMeWhen\net Action sont masqués, puis rediffusés",
 			},
 			[3] = {
 				HEADBUTTON = "Actions",
@@ -1367,6 +1375,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Nascondi ritratto di classe",
 				DISABLEROTATIONMODES = "Nascondi le modalità di rotazione",
 				DISABLESOUNDS = "Disabilita i suoni",
+				HIDEONSCREENSHOT = "Nascondi sullo screenshot",
+				HIDEONSCREENSHOTTOOLTIP = "Durante lo screenshot nasconde tutti i frame TellMeWhen\ne Action, quindi li mostra di nuovo",
 			},
 			[3] = {
 				HEADBUTTON = "Azioni",
@@ -1666,6 +1676,8 @@ local Localization = {
 				DISABLEPORTRAITS = "Ocultar retrato de clase",
 				DISABLEROTATIONMODES = "Ocultar modos de rotación",
 				DISABLESOUNDS = "Desactivar sonidos",
+				HIDEONSCREENSHOT = "Ocultar en captura de pantalla",
+				HIDEONSCREENSHOTTOOLTIP = "Durante la captura de pantalla, se ocultan todos los cuadros de TellMeWhen\ny Action, y luego se muestran de nuevo",
 			},
 			[3] = {
 				HEADBUTTON = "Acciones",
@@ -1955,6 +1967,7 @@ local Factory = {
 		DisableClassPortraits = false,
 		DisableRotationModes = false,
 		DisableSounds = true,
+		HideOnScreenshot = true,
 		PLAYERSPEC = {
 			AutoTarget = true, 
 			Potion = true, 
@@ -4356,6 +4369,77 @@ function GetLOS(unitID)
 	end 
 end 
 
+-- [1] HideOnScreenshot
+local ScreenshotHider = {
+	HiddenFrames	  = {},
+	-- OnEvent 
+	OnStart			  = function(self)
+		if Action.IsInitialized then 
+			-- TellMeWhen 
+			for i = 1, huge do 
+				local FrameName = strconcat("TellMeWhen_Group", i)
+				if _G[FrameName] then 
+					if _G[FrameName]:IsShown() then 
+						tinsert(self.HiddenFrames, FrameName)
+						_G[FrameName]:Hide()
+					end 
+				else 
+					break 
+				end 
+			end 	
+			
+			-- UI 
+			if Action.MainUI:IsShown() then 
+				tinsert(self.HiddenFrames, "MainUI")
+				Action.ToggleMainUI()
+			end 
+			
+			if Action.MinimapIsShown() then 
+				tinsert(self.HiddenFrames, "Minimap")
+				Action.ToggleMinimap(false)
+			end 
+			
+			if Action.BlackBackgroundIsShown() then 
+				tinsert(self.HiddenFrames, "BlackBackground")
+				Action.BlackBackgroundSet(false)
+			end 
+		end 
+	end,
+	OnStop			  = function(self)
+		if #self.HiddenFrames > 0 then 
+			for i = 1, #self.HiddenFrames do 
+				if self.HiddenFrames[i] == "MainUI" then 
+					Action.ToggleMainUI()
+				elseif self.HiddenFrames[i] == "Minimap" then 
+					Action.ToggleMinimap(true)
+				elseif self.HiddenFrames[i] == "BlackBackground" then 
+					Action.BlackBackgroundSet(true)	
+				elseif _G[self.HiddenFrames[i]] then 
+					_G[self.HiddenFrames[i]]:Show()
+				end 
+			end 
+			
+			wipe(self.HiddenFrames)
+		end 	
+	end,
+	-- UI 
+	Initialize 		 = function(self, toggle)
+		if toggle then 
+			Action.Listener:Add("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_STARTED", 	function() self:OnStart() end)
+			Action.Listener:Add("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_FAILED", 	function() self:OnStop()  end)
+			Action.Listener:Add("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_SUCCEEDED", 	function() self:OnStop()  end)
+		else 
+			Action.Listener:Remove("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_STARTED"		)
+			Action.Listener:Remove("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_FAILED"		)
+			Action.Listener:Remove("ACTION_EVENT_SCREENSHOT", "SCREENSHOT_SUCCEEDED"	)
+			self:OnStop()
+		end 
+	end,
+	Reset			= function(self)
+		self:Initialize()
+	end,
+}
+
 -- [2] AoE toggle through Ctrl+Left Click on main picture 
 local tempAoE = {2, "AoE"}
 function Action.ToggleAoE()
@@ -5409,17 +5493,30 @@ function Action.GetToggle(n, toggle)
 	return bool	
 end 	
 
-function Action.ToggleMinimap()
+function Action.ToggleMinimap(state)
 	if Action.Minimap then 
-		if Action.IsInitialized then 
-			Action.SetToggle({1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "})
-		end
-		if Action.GetToggle(1, "DisableMinimap") then 
-			LibDBIcon:Hide("ActionUI")
-		else 
-			LibDBIcon:Show("ActionUI")
-		end 		
+		if type(state) == "nil" then 
+			if Action.IsInitialized then 
+				Action.SetToggle({1, "DisableMinimap", L["TAB"][1]["DISABLEMINIMAP"] .. " : "})
+			end
+			if Action.GetToggle(1, "DisableMinimap") then 
+				LibDBIcon:Hide("ActionUI")
+			else 
+				LibDBIcon:Show("ActionUI")
+			end 
+		else
+			if state then 
+				LibDBIcon:Show("ActionUI")
+			else 
+				LibDBIcon:Hide("ActionUI")
+			end 
+		end 
 	end 
+end 
+
+function Action.MinimapIsShown()
+	-- @return boolean 
+	return LibDBIcon.objects["ActionUI"] and LibDBIcon.objects["ActionUI"]:IsShown()
 end 
 
 function Action.ToggleMainUI()
@@ -6318,7 +6415,16 @@ function Action.ToggleMainUI()
 				TMW.db.profile.ActionDB[tab.name].DisableSounds = not TMW.db.profile.ActionDB[tab.name].DisableSounds		
 				Action.Print(L["TAB"][tab.name]["DISABLESOUNDS"] .. ": ", TMW.db.profile.ActionDB[tab.name].DisableSounds)
 			end				
-			DisableSounds.Identify = { Type = "Checkbox", Toggle = "DisableSounds" }	
+			DisableSounds.Identify = { Type = "Checkbox", Toggle = "DisableSounds" }
+
+			local HideOnScreenshot = StdUi:Checkbox(anchor, L["TAB"][tab.name]["HIDEONSCREENSHOT"])
+			HideOnScreenshot:SetChecked(TMW.db.profile.ActionDB[tab.name].HideOnScreenshot)
+			function HideOnScreenshot:OnValueChanged(self, state, value)
+				TMW.db.profile.ActionDB[tab.name].HideOnScreenshot = not TMW.db.profile.ActionDB[tab.name].HideOnScreenshot
+				ScreenshotHider:Initialize(TMW.db.profile.ActionDB[tab.name].HideOnScreenshot)
+			end				
+			HideOnScreenshot.Identify = { Type = "Checkbox", Toggle = "HideOnScreenshot" }
+			StdUi:FrameTooltip(HideOnScreenshot, L["TAB"][tab.name]["HIDEONSCREENSHOTTOOLTIP"], nil, "BOTTOMLEFT", true)	
 			
 			local GlobalOverlay = anchor:AddRow()					
 			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5.5 })			
@@ -6345,7 +6451,7 @@ function Action.ToggleMainUI()
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableRotationDisplay, DisableBlackBackground, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisablePrint, DisableMinimap, { column = "even" })			
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableClassPortraits, DisableRotationModes, { column = "even" })		
-			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableSounds, LayoutSpace(anchor), { column = "even" })	
+			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableSounds, HideOnScreenshot, { column = "even" })	
 			PauseChecksPanel:DoLayout()		
 			-- Add empty space for scrollframe after all elements 
 			anchor:AddRow():AddElement(LayoutSpace(anchor), { column = 12 })	
@@ -9212,6 +9318,9 @@ local function OnInitialize()
 	-- Initialization ReTarget ReFocus 
 	Re:Initialize()
 	
+	-- Initialization ScreenshotHider
+	ScreenshotHider:Initialize(Action.GetToggle(1, "HideOnScreenshot"))
+	
 	-- Initialization LOS System
 	LineOfSight:Initialize()
 	
@@ -9457,6 +9566,8 @@ function Action:OnInitialize()
 		SpellLevel:Reset(true)
 		-- ReFocus // ReTarget 
 		Re:Reset()
+		-- ScreenshotHider
+		ScreenshotHider:Reset()
 		-- LOSInit 
 		LineOfSight:Reset()
 		-- ToggleMSG 
