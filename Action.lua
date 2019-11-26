@@ -12,6 +12,7 @@ local LSM 							= LibStub("LibSharedMedia-3.0")
 local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, math, hooksecurefunc, wipe, 	 safecall, 	  debugprofilestop = 
 	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, select, _G, coroutine, table, math, hooksecurefunc, wipe, TMW.safecall, _G.debugprofilestop_SAFE
 	  
+local strconcat						= _G.strconcat 	  
 local tinsert						= table.insert 
 local huge	 						= math.huge
 local math_abs						= math.abs
