@@ -32,7 +32,11 @@ local MultiUnits 								= {
 
 -- Nameplates
 MultiUnits.AddNameplate							= function(unitID)
-	if UnitCanAttack("player", unitID) then 
+	if UnitCanAttack("player", unitID) and 
+		-- Patch 8.2
+		-- 1519 is The Eternal Palace: Precipice of Dreams
+		( A.ZoneID ~= 1519 or not A.Unit(unitID):InGroup() )
+	then 
 		MultiUnits.activeUnitPlates[unitID] = unitID
 		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 and A.Unit(unitID):IsExplosives() then 
 			MultiUnits.activeExplosives[unitID] = unitID

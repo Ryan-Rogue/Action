@@ -3,7 +3,6 @@ local CNDT 							= TMW.CNDT
 local Env 							= CNDT.Env
 
 local A 							= Action
-local InstanceInfo					= A.InstanceInfo
 local TeamCache						= A.TeamCache
 local Azerite 						= LibStub("AzeriteTraits")
 
@@ -108,9 +107,10 @@ local function CanHeal(unitID, unitGUID)
 				)  
 			)
 		) 
-		-- 8.2 Underwater Monstrosity - Darkest Depths (DeBuff)
-		-- 2164 is The Eternal Palace  
-		and ( InstanceInfo.ID ~= 2164 or A.Unit(unitID):HasDeBuffs(292127) == 0 )
+		-- Patch 8.2
+		-- 1514 is The Eternal Palace: Darkest Depths
+		-- 292127 is Darkest Depths (DeBuff)
+		and ( A.ZoneID ~= 1514 or A.Unit(unitID):HasDeBuffs(292127) == 0 )
 end
 
 local Temp = {

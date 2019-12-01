@@ -1,7 +1,6 @@
 local TMW 					= TMW 
 
 local A   					= Action	
-local InstanceInfo			= A.InstanceInfo
 local UnitCooldown			= A.UnitCooldown
 local Unit					= A.Unit 
 local Player				= A.Player 
@@ -264,7 +263,14 @@ function A.Rotation(icon)
 				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(nil, 1) >= 1) or A.Zone == "pvp") 												-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
 			then 
 				return A:Show(icon, ACTION_CONST_AUTOTARGET)
-			end 						
+			end 
+			
+			-- Patch 8.2
+			-- 1519 is The Eternal Palace: Precipice of Dreams
+			-- Switch target if accidentally selected player in group under Delirium Realm (DeBuff)
+			if not A.IsInPvP and A.ZoneID == 1519 and Unit(target):IsEnemy() and Unit(target):IsPlayer() and Unit(target):InGroup() then 
+				return A:Show(icon, ACTION_CONST_AUTOTARGET)
+			end 
 		end 
 	end 
 	
