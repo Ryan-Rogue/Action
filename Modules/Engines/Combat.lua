@@ -20,14 +20,22 @@ local isPlayer									= A.Bit.isPlayer
 --local SpellRange								= LibStub("SpellRange-1.0")
 local DRData 									= LibStub("DRData-1.1")
 
-local _G, type, pairs, table, strsub, wipe, bitband = 
-	  _G, type, pairs, table, strsub, wipe, bit.band
+local _G, type, pairs, setmetatable, table, bit = 
+	  _G, type, pairs, setmetatable, table, bit
+	  
+local tinsert	  								= table.insert
+local tremove	  								= table.remove
+local bitband									= bit.band
+local wipe 										= _G.wipe
+local strsub									= _G.strsub	  
 
 local UnitGUID, UnitGetTotalAbsorbs			 	= 
 	  UnitGUID, UnitGetTotalAbsorbs
 	  
 local InCombatLockdown, CombatLogGetCurrentEventInfo = 
 	  InCombatLockdown, CombatLogGetCurrentEventInfo
+	  
+local GetSpellInfo								= _G.GetSpellInfo	  
 	  
 local cLossOfControl 							= _G.C_LossOfControl
 local GetEventInfo 								= cLossOfControl.GetEventInfo
@@ -187,12 +195,12 @@ CombatTracker.logDamage 						= function(...)
 	Data[SourceGUID].RealDMG.hits_done = Data[SourceGUID].RealDMG.hits_done + 1 
 	if isPlayer(destFlags) then
 		-- DS (Only Taken)
-		table.insert(Data[DestGUID].DS, {TIME = TMW.time, Amount = Amount})
+		tinsert(Data[DestGUID].DS, {TIME = TMW.time, Amount = Amount})
 		-- Garbage 
 		if TMW.time - Data[DestGUID].DS[1].TIME > 10 then 
 			for i = #Data[DestGUID].DS, 1, -1 do 
 				if TMW.time - Data[DestGUID].DS[i].TIME > 10 then 
-					table.remove(Data[DestGUID].DS, i)
+					tremove(Data[DestGUID].DS, i)
 				end 
 			end 
 		end 
@@ -228,12 +236,12 @@ CombatTracker.logSwing 							= function(...)
 	Data[SourceGUID].RealDMG.hits_done = Data[SourceGUID].RealDMG.hits_done + 1 
 	if isPlayer(destFlags) then 
 		-- DS (Only Taken)
-		table.insert(Data[DestGUID].DS, {TIME = TMW.time, Amount = Amount})
+		tinsert(Data[DestGUID].DS, {TIME = TMW.time, Amount = Amount})
 		-- Garbage 
 		if TMW.time - Data[DestGUID].DS[1].TIME > 10 then 
 			for i = #Data[DestGUID].DS, 1, -1 do 
 				if TMW.time - Data[DestGUID].DS[i].TIME > 10 then 
-					table.remove(Data[DestGUID].DS, i)
+					tremove(Data[DestGUID].DS, i)
 				end 
 			end 
 		end 
@@ -402,10 +410,14 @@ local UnitTracker 								= {
 	},
 	isBlink								= {
 		[1953] = true, 
+		[119415] = true,
 	},
 	isBlockedForTracker					= {
 		[212653] = true,
-		[1953] = true,		
+		[119415] = true,
+		[1953] = true,
+		[GetSpellInfo(212653)] = true,
+		[GetSpellInfo(119415)] = true,
 	},
 	-- OnEvent 
 	UNIT_SPELLCAST_SUCCEEDED			= function(self, unitID, spellID)
@@ -462,11 +474,11 @@ local UnitTracker 								= {
 					self.Data[SourceGUID].Shrimmer = {}
 				end 		
 				
-				table.insert(self.Data[SourceGUID].Shrimmer, TMW.time + 20)
+				tinsert(self.Data[SourceGUID].Shrimmer, TMW.time + 20)
 				
 				-- Since it has only 2 charges by default need remove old ones 
 				if #self.Data[SourceGUID].Shrimmer > 2 then 
-					table.remove(self.Data[SourceGUID].Shrimmer, 1)
+					tremove(self.Data[SourceGUID].Shrimmer, 1)
 				end 							 
 			-- Blink
 			elseif self.isBlink[spellID] then 
@@ -634,7 +646,7 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 		UnitTracker:UNIT_DIED(DestGUID)
 	else
 		local firstFive = strsub(EVENT, 1, 5)
-		if firstFive == "SPELL" and not UnitTracker.isBlockedForTracker[spellID] then 
+		if firstFive == "SPELL" and not UnitTracker.isBlockedForTracker[spellName] then 
 			UnitTracker:RESET_IS_FLYING(EVENT, SourceGUID, spellID, spellName)
 		end 
 	end 
