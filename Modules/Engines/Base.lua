@@ -38,8 +38,8 @@ A.TeamCache				= {
 	},
 }
 
-local _G, pairs, type, wipe = 
-	  _G, pairs, type, wipe
+local _G, pairs, type, math, wipe = 
+	  _G, pairs, type, math, wipe
 
 local huge 				= math.huge 
 local PvP 				= _G.C_PvP

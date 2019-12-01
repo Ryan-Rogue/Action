@@ -40,6 +40,24 @@ local GetNetStats, GetInventoryItemCooldown =
 	  GetNetStats, GetInventoryItemCooldown
 	  
 -------------------------------------------------------------------------------
+-- Some place to fix issues with Taste rotations 
+-------------------------------------------------------------------------------	  
+-- Temporary fix while Taste is away
+A.CastTime 			 = A.GetSpellCastTime
+
+local HL         	 = HeroLib
+if HL then 
+	local Unit       = HL.Unit
+	local Player     = Unit.Player
+	
+	if not Player.InRaid then 
+		function Player:InRaid() 
+			return TeamCache.Friendly and TeamCache.Friendly.Type == "raid"
+		end 
+	end 
+end 	  
+	  
+-------------------------------------------------------------------------------
 -- Staff
 -------------------------------------------------------------------------------
 function deepcopy(orig)

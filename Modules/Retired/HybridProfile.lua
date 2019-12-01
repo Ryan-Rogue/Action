@@ -290,6 +290,10 @@ function LocalToggles()
     Env.BasicRotation = current == "[GGL] Basic" or profile == "Chesder"
     Env.IsGGLprofile = strmatch(current, "GGL") == "GGL" 
     if ProfileToggle[current] and TellMeWhen_Group3 then
+		if not TellMeWhen_Group3.Enabled then 
+			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable 3")
+            ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+		end 
         ProfileToggle[current]()
     end
 end
