@@ -1,7 +1,8 @@
 -------------------------------------------------------------------------------
 --[[ 
 Global nil-able variables:
-A.Zone				(@string)
+A.Zone				(@string)		"none", "pvp", "arena", "party", "raid", "scenario"
+A.ZoneID			(@number) 		wow.gamepedia.com/UiMapID
 A.IsInInstance		(@boolean)
 A.TimeStampZone 	(@number)
 A.TimeStampDuel 	(@number)
@@ -22,6 +23,7 @@ A.InstanceInfo			= {}
 A.TeamCache				= { 
 	Friendly 			= {
 		Size			= 1,
+		GUIDs			= {},
 		HEALER			= {},
 		TANK			= {},
 		DAMAGER			= {},
@@ -30,6 +32,7 @@ A.TeamCache				= {
 	},
 	Enemy 				= {
 		Size 			= 0,
+		GUIDs			= {},
 		HEALER			= {},
 		TANK			= {},
 		DAMAGER			= {},
@@ -38,22 +41,31 @@ A.TeamCache				= {
 	},
 }
 
-local _G, pairs, type, math, wipe = 
-	  _G, pairs, type, math, wipe
+local _G, pairs, type, math = 
+	  _G, pairs, type, math
 
 local huge 				= math.huge 
+local wipe				= _G.wipe 
+local strconcat			= _G.strconcat
 local PvP 				= _G.C_PvP
+local C_ChallengeMode	= _G.C_ChallengeMode
+local C_Map				= _G.C_Map
 
 local IsInRaid, IsInGroup, IsInInstance, IsActiveBattlefieldArena, RequestBattlefieldScoreData = 
 	  IsInRaid, IsInGroup, IsInInstance, IsActiveBattlefieldArena, RequestBattlefieldScoreData
 
-local UnitIsUnit, UnitInBattleground = 
-	  UnitIsUnit, UnitInBattleground
+local UnitIsUnit, UnitInBattleground, UnitGUID = 
+	  UnitIsUnit, UnitInBattleground, UnitGUID
 
 local GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers =
 	  GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers
 	  
-local GetActiveKeystoneInfo = C_ChallengeMode.GetActiveKeystoneInfo	  
+local GetActiveKeystoneInfo = C_ChallengeMode.GetActiveKeystoneInfo	
+local GetBestMapForUnit = C_Map.GetBestMapForUnit	
+
+local player 			= "player"
+local target 			= "target"
+local targettarget		= "targettarget"  
 
 -------------------------------------------------------------------------------
 -- Instance, Zone, Mode, Duel, TeamCache
@@ -73,10 +85,12 @@ function A:CheckInPvP()
     return 
     self.Zone == "arena" or 
     self.Zone == "pvp" or 
-    UnitInBattleground("player") or 
+    UnitInBattleground(player) or 
     IsActiveBattlefieldArena() or
     PvP.IsWarModeDesired() or
-    ( A.Unit("target"):IsPlayer() and (A.Unit("target"):IsEnemy() or A.Unit("targettarget"):IsEnemy()) )
+	-- Patch 8.2
+	-- 1519 is The Eternal Palace: Precipice of Dreams
+    ( A.ZoneID ~= 1519 and A.Unit(target):IsPlayer() and (A.Unit(target):IsEnemy() or (A.Unit(targettarget):IsPlayer() and A.Unit(targettarget):IsEnemy())) )
 end
 
 function A.UI_INFO_MESSAGE_IS_WARMODE(...)
@@ -96,6 +110,8 @@ local function OnEvent(event, ...)
 	-- Update IsInInstance, Zone
     A.IsInInstance, A.Zone = IsInInstance()
 	if event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "PLAYER_LOGIN" then 
+		A.ZoneID = GetBestMapForUnit(player) or 0
+		
 		local name, instanceType, difficultyID, _, _, _, _, instanceID, instanceGroupSize = GetInstanceInfo()
 		if name then 
 			A.InstanceInfo.Name 		= name 
@@ -141,6 +157,8 @@ local function OnEvent(event, ...)
 	
 	-- Update Units 
 	if event == "UPDATE_INSTANCE_INFO" or event == "GROUP_ROSTER_UPDATE" or event == "ARENA_OPPONENT_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN" then 
+		local counter = 0
+		
 		-- Wipe Friendly 
 		for _, v in pairs(A.TeamCache.Friendly) do
 			if type(v) == "table" then 
@@ -168,21 +186,32 @@ local function OnEvent(event, ...)
 			A.TeamCache.Enemy.Type = nil 
 		end
 		
-		if A.TeamCache.Enemy.Size > 0 then                
-			for i = 1, A.TeamCache.Enemy.Size do 
-				local arena = "arena" .. i
-				if A.Unit(arena):IsHealer() then 
-					A.TeamCache.Enemy.HEALER[arena] = arena
-				elseif A.Unit(arena):IsTank() then 
-					A.TeamCache.Enemy.TANK[arena] = arena
-				else
-					A.TeamCache.Enemy.DAMAGER[arena] = arena
-					if A.Unit(arena):IsMelee() then 
-						A.TeamCache.Enemy.DAMAGER_MELEE[arena] = arena
-					else 
-						A.TeamCache.Enemy.DAMAGER_RANGE[arena] = arena
-					end                        
+		if A.TeamCache.Enemy.Size > 0 then  
+			counter = 0
+			for i = 1, huge do 
+				local arena = strconcat("arena", i)
+				local guid  = UnitGUID(arena)
+				if guid then 
+					counter = counter + 1
+					
+					A.TeamCache.Enemy.GUIDs[guid] = arena
+					if A.Unit(arena):IsHealer() then 
+						A.TeamCache.Enemy.HEALER[arena] = arena
+					elseif A.Unit(arena):IsTank() then 
+						A.TeamCache.Enemy.TANK[arena] = arena
+					else
+						A.TeamCache.Enemy.DAMAGER[arena] = arena
+						if A.Unit(arena):IsMelee() then 
+							A.TeamCache.Enemy.DAMAGER_MELEE[arena] = arena
+						else 
+							A.TeamCache.Enemy.DAMAGER_RANGE[arena] = arena
+						end                        
+					end
 				end
+
+				if counter >= A.TeamCache.Enemy.Size or counter >= 40 then 
+					break 
+				end 
 			end   
 		end          
 		
@@ -197,27 +226,39 @@ local function OnEvent(event, ...)
 		end    
 		
 		if A.TeamCache.Friendly.Size > 1 and A.TeamCache.Friendly.Type then 
-			for i = 1, A.TeamCache.Friendly.Size do 
-				local member = A.TeamCache.Friendly.Type .. i            
-				if not UnitIsUnit(member, "player") then 
-					if A.Unit(member):IsHealer() then 
-						A.TeamCache.Friendly.HEALER[member] = member
-					elseif A.Unit(member):IsTank() then  
-						A.TeamCache.Friendly.TANK[member] = member
-					else 
-						A.TeamCache.Friendly.DAMAGER[member] = member
-						if A.Unit(member):IsMelee() then 
-							A.TeamCache.Friendly.DAMAGER_MELEE[member] = member
+			counter = 0
+			for i = 1, huge do 
+				local member = strconcat(A.TeamCache.Friendly.Type, i)
+				local guid   = UnitGUID(member)
+				
+				if guid then 
+					counter = counter + 1
+					
+					A.TeamCache.Friendly.GUIDs[guid] = member 
+					if not UnitIsUnit(member, player) then 
+						if A.Unit(member):IsHealer() then 
+							A.TeamCache.Friendly.HEALER[member] = member
+						elseif A.Unit(member):IsTank() then  
+							A.TeamCache.Friendly.TANK[member] = member
 						else 
-							A.TeamCache.Friendly.DAMAGER_RANGE[member] = member
-						end 
+							A.TeamCache.Friendly.DAMAGER[member] = member
+							if A.Unit(member):IsMelee() then 
+								A.TeamCache.Friendly.DAMAGER_MELEE[member] = member
+							else 
+								A.TeamCache.Friendly.DAMAGER_RANGE[member] = member
+							end 
+						end
 					end
-				end
+				end 
+				
+				if counter >= A.TeamCache.Friendly.Size or counter >= 40 then 
+					break 
+				end 
 			end 
 		end		
 	end 
 	
-	TMW:Fire("TMW_ACTION_DEPRECATED")
+	TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove in the future
 end 
 
 A.Listener:Add("ACTION_EVENT_BASE", "DUEL_FINISHED", 					OnEvent)
