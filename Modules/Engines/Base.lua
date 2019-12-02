@@ -209,7 +209,7 @@ local function OnEvent(event, ...)
 					end
 				end
 
-				if counter >= A.TeamCache.Enemy.Size or counter >= 40 then 
+				if counter >= A.TeamCache.Enemy.Size or i >= 40 then 
 					break 
 				end 
 			end   
@@ -251,7 +251,7 @@ local function OnEvent(event, ...)
 					end
 				end 
 				
-				if counter >= A.TeamCache.Friendly.Size or counter >= 40 then 
+				if counter >= A.TeamCache.Friendly.Size or i >= 40 then 
 					break 
 				end 
 			end 
