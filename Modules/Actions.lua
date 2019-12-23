@@ -4,7 +4,7 @@ local Env 					= CNDT.Env
 local strlowerCache  		= TMW.strlowerCache
 
 local A   					= Action	
-local toStr 				= A.toStr
+local Listener				= A.Listener
 local toNum 				= A.toNum
 local UnitCooldown			= A.UnitCooldown
 local CombatTracker			= A.CombatTracker
@@ -15,10 +15,28 @@ local MultiUnits			= A.MultiUnits
 local EnemyTeam				= A.EnemyTeam
 local FriendlyTeam			= A.FriendlyTeam
 local TriggerGCD			= A.Enum.TriggerGCD
+local GetToggle				= A.GetToggle
+local BurstIsON				= A.BurstIsON
+local AuraIsValid			= A.AuraIsValid
+
+-------------------------------------------------------------------------------
+-- Remap
+-------------------------------------------------------------------------------
+local A_GetPing, A_GetCurrentGCD, A_GetSpellInfo, A_GetSpellDescription 
+
+Listener:Add("ACTION_EVENT_ACTIONS", "ADDON_LOADED", function(addonName) 
+	if addonName == ACTION_CONST_ADDON_NAME then 
+		A_GetPing 				= A.GetPing
+		A_GetCurrentGCD			= A.GetCurrentGCD
+		A_GetSpellInfo			= A.GetSpellInfo
+		A_GetSpellDescription	= A.GetSpellDescription
+		Listener:Remove("ACTION_EVENT_ACTIONS", "ADDON_LOADED")	
+	end 	
+end)
+-------------------------------------------------------------------------------
 	  
 local Azerite 				= LibStub("AzeriteTraits")
 local Pet					= LibStub("PetLibrary")
---local LibRangeCheck  		= LibStub("LibRangeCheck-2.0")
 local SpellRange			= LibStub("SpellRange-1.0")
 local IsSpellInRange 		= SpellRange.IsSpellInRange	  
 local SpellHasRange			= SpellRange.SpellHasRange
@@ -101,14 +119,24 @@ local itemCategory 			= {
 	[159618] = "DEFF", 	-- Mchimba's Ritual Bandages (Tank Item)
 }
 
-local GetNetStats 			= GetNetStats	
-
-local _G, type, select, unpack, table, setmetatable, math = 	
-	  _G, type, select, unpack, table, setmetatable, math
+local _G, type, pairs, select, unpack, table, setmetatable, math 	= 	
+	  _G, type, pairs, select, unpack, table, setmetatable, math
+	  
+local ACTION_CONST_CACHE_DEFAULT_TIMER								= _G.ACTION_CONST_CACHE_DEFAULT_TIMER
+local ACTION_CONST_EQUIPMENT_MANAGER								= _G.ACTION_CONST_EQUIPMENT_MANAGER
+local ACTION_CONST_HEARTOFAZEROTH									= _G.ACTION_CONST_HEARTOFAZEROTH
+local ACTION_CONST_POTION											= _G.ACTION_CONST_POTION
+local ACTION_CONST_SPELLID_FREEZING_TRAP							= _G.ACTION_CONST_SPELLID_FREEZING_TRAP
+local ACTION_CONST_SPELLID_STORM_BOLT								= _G.ACTION_CONST_SPELLID_STORM_BOLT
+local ACTION_CONST_TRINKET1											= _G.ACTION_CONST_TRINKET1
+local ACTION_CONST_TRINKET2											= _G.ACTION_CONST_TRINKET2
+local ACTION_CONST_WARRIOR_FURY										= _G.ACTION_CONST_WARRIOR_FURY	  
 	  	  
-local tinsert 				= table.insert	
 local tsort 				= table.sort	  
-local huge 					= math.huge  	  
+local huge 					= math.huge  
+local wipe 					= _G.wipe	
+
+local GetNetStats 			= _G.GetNetStats	  
 
 -- Spell 
 local Spell					= _G.Spell
@@ -116,8 +144,8 @@ local Spell					= _G.Spell
 local IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell =
 	  IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell
 
-local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown = 
-	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown
+local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown = 
+	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown
 
 -- Item 	  
 local IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem  =
@@ -170,6 +198,10 @@ local GCD_OneSecond 		= {
 	[269] = true 			-- Windwalker
 }
 
+local function sortByHighest(x, y)
+	return x > y
+end
+
 -------------------------------------------------------------------------------
 -- Global Cooldown
 -------------------------------------------------------------------------------
@@ -218,11 +250,12 @@ function A.GetPing()
 	-- @return number
 	return select(4, GetNetStats()) / 1000
 end 
+A.GetPing = A.MakeFunctionCachedStatic(A.GetPing, 0)
 
 function A:ShouldStopByGCD()
 	-- @return boolean 
 	-- By Global Cooldown
-	return self:IsRequiredGCD() and A.GetGCD() - A.GetPing() > 0.301 and A.GetCurrentGCD() >= A.GetPing() + 0.65
+	return self:IsRequiredGCD() and self.GetGCD() - self.GetPing() > 0.301 and self.GetCurrentGCD() >= self.GetPing() + 0.65
 end 
 
 function A.ShouldStop()
@@ -278,7 +311,7 @@ function A.GetSpellPowerCost(self)
 	if type(self) == "table" then 
 		name = self:Info()
 	else 
-		name = A.GetSpellInfo(self)
+		name = A_GetSpellInfo(self)
 	end 
 	
 	local pwr = GetSpellPowerCost(name)
@@ -289,25 +322,26 @@ function A.GetSpellPowerCost(self)
 end 
 A.GetSpellPowerCost = A.MakeFunctionCachedDynamic(A.GetSpellPowerCost)
 
+local descriptioncache = setmetatable({}, { __index = function(t, v)
+	t[v] = v:gsub("%s+", ""):gsub(",", ".")
+	return t[v]
+end })
 function A.GetSpellDescription(self)
 	-- @usage A:GetSpellDescription() or A.GetSpellDescription(18)
 	-- @return table 
     local text = GetSpellDescription(type(self) == "table" and self.ID or self) 
     if text then 
-		local numbers 		= {}
-		local deleted_space = text:gsub("%s+", "")
-		deleted_space 		= deleted_space:gsub("%d+%%", "")
-
-		for value in deleted_space:gmatch("%d+") do
-			tinsert(numbers, toNum[value])
+		local numbers = {}
+		-- [1] %f[%d]%d[.%d]*
+		-- [2] %f[%d]%d[.%d]*%f[%D] -- full
+		for value in descriptioncache[text]:gmatch("[%f%d][.%d]*") do 
+			numbers[#numbers + 1] = toNum[value]
 		end
 		
 		if #numbers > 1 then
-			tsort(numbers, function(x, y)
-				return x > y
-			end)
+			tsort(numbers, sortByHighest)
 		end 
-		
+
 		return numbers
 	end
 	
@@ -376,7 +410,7 @@ function A:GetSpellAmount(unitID, X)
 	-- @return number (taken summary amount of the spell - during fight)
 	-- X during which lasts seconds 
 	if X then 
-		return CombatTracker:GetSpellAmountX(unitID or "player", self:Info())
+		return CombatTracker:GetSpellAmountX(unitID or "player", self:Info(), X)
 	else 
 		return CombatTracker:GetSpellAmount(unitID or "player", self:Info())
 	end 
@@ -393,7 +427,7 @@ end
 
 function A:IsSpellInFlight()
 	-- @return boolean
-	return UnitCooldown:IsSpellInFly("player", self:Info())
+	return UnitCooldown:IsSpellInFly("player", self.ID) -- Retail ID
 end 
 
 function A:IsSpellInRange(unitID)
@@ -405,7 +439,7 @@ function A:IsSpellInRange(unitID)
 		Name = self:Info()
 	else 
 		ID = self 
-		Name = A.GetSpellInfo(ID)
+		Name = A_GetSpellInfo(ID)
 	end		
 	return IsSpellInRange(Name, unitID) == 1 or (Pet:IsActive() and Pet:IsInRange(ID, unitID))  
 end 
@@ -423,7 +457,7 @@ end
 function A:CanSafetyCastHeal(unitID, offset)
 	-- @return boolean 
 	local castTime = self:GetSpellCastTime()
-	return castTime and (castTime == 0 or castTime > Unit(unitID):TimeToDie() + A.GetCurrentGCD() + (offset or A.GetGCD())) or false 
+	return castTime and (castTime == 0 or castTime > Unit(unitID):TimeToDie() + self.GetCurrentGCD() + (offset or self.GetGCD())) or false 
 end 
 
 -------------------------------------------------------------------------------
@@ -438,7 +472,7 @@ function A:IsSpellLearned()
 		Name = self:Info()
 	else 
 		ID = self 
-		Name = A.GetSpellInfo(ID)
+		Name = A_GetSpellInfo(ID)
 	end	
 	local lowerName = strlowerCache[Name]
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
@@ -483,7 +517,7 @@ function A.DetermineCountGCDs(...)
 	local count = 0
 	for i = 1, select("#", ...) do 
 		local object = select(i, ...)		
-		if (not object.isStance or A.PlayerClass ~= "WARRIOR") and object:IsRequiredGCD() and not object:IsBlocked() and not object:IsBlockedBySpellLevel() and (not object.isTalent or object:IsSpellLearned()) and object:GetCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + A.GetCurrentGCD() then 
+		if (not object.isStance or A.PlayerClass ~= "WARRIOR") and object:IsRequiredGCD() and not object:IsBlocked() and not object:IsBlockedBySpellLevel() and (not object.isTalent or object:IsSpellLearned()) and object:GetCooldown() <= A_GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + A_GetCurrentGCD() then 
 			count = count + 1
 		end 
 	end 	
@@ -733,19 +767,19 @@ local Racial = {
 						unitID and 
 						(not Unit(unitID):IsEnemy() or Unit(unitID):InGroup()) and 
 						Unit(unitID):GetRange() <= 8 and 
-						A.AuraIsValid(unitID, "UsePurge", "PurgeFriendly")					
+						AuraIsValid(unitID, "UsePurge", "PurgeFriendly")					
 					) or 
 					(
 						unitID and 
 						Unit(unitID):IsEnemy() and 
 						Unit(unitID):GetRange() <= 8 and 
-						A.AuraIsValid(unitID, "UsePurge", "PurgeHigh")
+						AuraIsValid(unitID, "UsePurge", "PurgeHigh")
 					)
 		end 
 		
 		-- Healing 
 		if A.PlayerRace == "Draenei"  then 
-			return A.BurstIsON(unitID) and Unit(unitID):Health() >= Unit("player"):HealthMax() * 0.2 + (Unit(unitID):GetHEAL() * 5) + Unit(unitID):GetIncomingHeals() - (Unit(unitID):GetDMG() * 5) 
+			return BurstIsON(unitID) and Unit(unitID):Health() >= Unit("player"):HealthMax() * 0.2 + (Unit(unitID):GetHEAL() * 5) + Unit(unitID):GetIncomingHeals() - (Unit(unitID):GetDMG() * 5) 
 		end 
 
 		if A.PlayerRace == "ZandalariTroll" then 
@@ -762,17 +796,17 @@ local Racial = {
 				
 		-- Iterrupts 
 		if A.PlayerRace == "Pandaren" then 
-			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.1		  
+			return Unit(unitID):IsCastingRemains() > self.GetCurrentGCD() + 0.1		  
 		end 
 
 		if A.PlayerRace == "KulTiran" then  	
-			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 1.1			  
+			return Unit(unitID):IsCastingRemains() > self.GetCurrentGCD() + 1.1			  
 		end 	
 		
 		if A.PlayerRace == "Tauren" then 
 			return  (
 						unitID and 					
-						Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.7
+						Unit(unitID):IsCastingRemains() > self.GetCurrentGCD() + 0.7
 					) or 
 					(
 						(
@@ -785,7 +819,7 @@ local Racial = {
 
 		-- Custom GCD
 		if A.PlayerRace == "HighmountainTauren" then 
-			return Unit(unitID):IsCastingRemains() > A.GetCurrentGCD() + 0.3			  
+			return Unit(unitID):IsCastingRemains() > self.GetCurrentGCD() + 0.3			  
 		end 	
 	
 		-- Control Avoid 
@@ -820,7 +854,7 @@ local Racial = {
 		
 		-- Bursting 
 		if ( A.PlayerRace == "DarkIronDwarf" or A.PlayerRace == "Troll" or A.PlayerRace == "Orc" or A.PlayerRace == "MagharOrc" ) then 
-			return A.BurstIsON(unitID)
+			return BurstIsON(unitID)
 		end 	
 		
 		-- [NO LOGIC - ALWAYS FALSE] 
@@ -856,7 +890,7 @@ function A.GetItemDescription(self)
 	-- Note: It returns correct value only if item holds spell 
 	local _, spellID = GetItemSpell(type(self) == "table" and self.ID or self)
 	if spellID then 
-		return A.GetSpellDescription(spellID)
+		return A_GetSpellDescription(spellID)
 	end 
 	
 	return empty2
@@ -902,6 +936,10 @@ function A:IsExists()
 		return spellID and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)))
 	end 
 	
+	if self.Type == "SwapEquip" then 
+		return self.Equip1() or self.Equip2()
+	end 
+	
 	return self:GetEquipped() or self:GetCount() > 0	
 end
 
@@ -911,10 +949,10 @@ function A:IsUsable(extraCD, skipUsable)
 	
 	if self.Type == "Spell" then 
 		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self:Info())) and self:GetCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
+		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self:Info())) and self:GetCooldown() <= self.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and self.GetCurrentGCD() or 0) + (extraCD or 0)
 	end 
 	
-	return not isItemUseException[self.ID] and (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem(self:Info())) and self:GetItemCooldown() <= A.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A.GetCurrentGCD() or 0) + (extraCD or 0)
+	return not isItemUseException[self.ID] and (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem(self:Info())) and self:GetItemCooldown() <= self.GetPing() + ACTION_CONST_CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and self.GetCurrentGCD() or 0) + (extraCD or 0)
 end
 
 function A:IsHarmful()
@@ -967,9 +1005,13 @@ end
 
 function A:GetCooldown()
 	-- @return number
+	if self.Type == "SwapEquip" then 
+		return (Player:IsSwapLocked() and huge) or 0
+	end 
+	
 	if self.Type == "Spell" then 
 		if self.isStance then 
-			local start, duration, _ = GetShapeshiftFormCooldown(self.isStance)
+			local start, duration = GetShapeshiftFormCooldown(self.isStance)
 			if start and start ~= 0 then
 				return (duration == 0 and 0) or (duration - (TMW.time - start))
 			end
@@ -1000,7 +1042,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 	else 
 		local isTable = type(self) == "table"
 		local isEnemy = Unit(unitID):IsEnemy()
-		local isStopAtBreakAble = A.GetToggle(1, "StopAtBreakAble")
+		local isStopAtBreakAble = GetToggle(1, "StopAtBreakAble")
 		
 		-- Super trick for Queue System, it will save in cache imunBuffs on first entire call by APL and Queue will be allowed to handle cache to compare Imun 
 		if isTable and not self.AbsentImunQueueCache and imunBuffs then 
@@ -1026,14 +1068,20 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 		end 
 		
 		if A.IsInPvP and imunBuffs and UnitIsPlayer(unitID) then  
-			if type(imunBuffs) == "table" then 
+			-- Light and faster check Fury Warriors
+			if type(imunBuffs) == "table" then 				
 				for i = 1, #imunBuffs do 
-					if (imunBuffs[i] == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY)) or Unit(unitID):HasBuffs(imunBuffs[i]) > MinDur then 
+					if imunBuffs[i] == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY) then 
 						return false 
 					end 
 				end 
-			elseif (imunBuffs == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY)) or Unit(unitID):HasBuffs(imunBuffs) > MinDur then
+			elseif imunBuffs == "Freedom" and Unit(unitID):HasSpec(ACTION_CONST_WARRIOR_FURY) then
 				return false  								
+			end 
+			
+			-- Check remain things
+			 if Unit(unitID):HasBuffs(imunBuffs) > MinDur then 
+				return false 
 			end 
 		end 
 		
@@ -1049,7 +1097,7 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 	-- @return boolean
 	-- Checks toggle, cooldown and range 
 	
-	if isMsg or ((skipShouldStop or not A.ShouldStop()) and not self:ShouldStopByGCD()) then 
+	if isMsg or ((skipShouldStop or not self.ShouldStop()) and not self:ShouldStopByGCD()) then 
 		if 	self.Type == "Spell" and 
 			not self:IsBlockedBySpellLevel() and 	
 			( not self.isTalent or self:IsSpellLearned() ) and 
@@ -1067,7 +1115,7 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 			local ID = self.ID		
 			if 	ID ~= nil and 
 				-- This also checks equipment (in idea because slot return ID which we compare)
-				( A.Trinket1.ID == ID and A.GetToggle(1, "Trinkets")[1] or A.Trinket2.ID == ID and A.GetToggle(1, "Trinkets")[2] ) and 
+				( A.Trinket1.ID == ID and GetToggle(1, "Trinkets")[1] or A.Trinket2.ID == ID and GetToggle(1, "Trinkets")[2] ) and 
 				self:IsUsable(nil, skipUsable) and 
 				( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) )
 			then 
@@ -1077,8 +1125,8 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 		
 		if 	self.Type == "Potion" and 
 			not A.IsInPvP and 
-			A.GetToggle(1, "Potion") and 
-			A.BurstIsON(unitID or A.IamHealer and "targettarget" or "target") and 
+			GetToggle(1, "Potion") and 
+			BurstIsON(unitID or A.IamHealer and "targettarget" or "target") and 
 			self:GetCount() > 0 and 
 			self:GetItemCooldown() == 0 
 		then
@@ -1266,18 +1314,19 @@ end
 function A.Create(attributes)
 	--[[@usage: attributes (table)
 		Required: 
-			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth (TrinketBySlot is only in CORE!)
-			ID (@number) 	- spellID | itemID
-			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in A.Data.C[Color] or here can be own hex 
+			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth|SwapEquip (TrinketBySlot is only in CORE!)
+			ID (@number) 	- spellID | itemID | textureID (textureID only for Type "SwapEquip")
+			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor|SwapEquip, this will set color which stored in A.Data.C[Color] or here can be own hex 
 	 	Optional: 
 			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
 			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
 			BlockForbidden (@boolean) uses to preset for action fixed block valid 
-			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
+			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth|SwapEquip
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
 			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth
 			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
+			Equip1, Equip2 (@function) between which equipments do swap, used in :IsExists method, only if Type is SwapEquip
 	]]
 	if not attributes then 
 		local attributes = {}
@@ -1439,6 +1488,48 @@ function A.Create(attributes)
 		-- Misc 
 		s.Item = TMW.Classes.ItemByID:New(attributes.ID)
 		GetItemInfoInstant(attributes.ID) -- must be here as request limited data from server	
+	elseif attributes.Type == "SwapEquip" then 
+		s = setmetatable(s, {__index = A})	
+		s.Type = attributes.Type
+		-- Methods (metakey:Link())	
+		s.Info = function()
+			return ACTION_CONST_EQUIPMENT_MANAGER
+		end 
+		s.Link = s.Info		
+		s.Icon = function()
+			return attributes.ID 
+		end 
+		if attributes.Color then 
+			s.Color = attributes.Color
+			if attributes.Texture then 
+				s.Texture = function()
+					return A.GetColoredSwapTexture(s, attributes.Texture)
+				end 
+			elseif attributes.FixedTexture then 
+				s.Texture = function()
+					return "texture", attributes.FixedTexture
+				end 				
+			else 
+				s.Texture = A.GetColoredSwapTexture
+			end 		
+		else 		
+			if attributes.Texture then 
+				s.Texture = function()
+					return "texture", attributes.Texture
+				end 
+			elseif attributes.FixedTexture then 
+				s.Texture = function()
+					return "texture", attributes.FixedTexture
+				end 				
+			else 
+				s.Texture = function()
+					return "texture", attributes.ID
+				end 
+			end 
+		end	
+		-- Equip 
+		s.Equip1 = attributes.Equip1
+		s.Equip2 = attributes.Equip2	
 	else 
 		s = setmetatable(s, {__index = A})	
 		s.Hidden = true 

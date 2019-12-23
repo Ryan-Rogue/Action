@@ -12,8 +12,11 @@ local Env 							= CNDT.Env
 local strlowerCache  				= TMW.strlowerCache
 
 local A 							= Action
+local insertMulti					= A.TableInsertMulti
+local strElemBuilder				= A.strElemBuilder
 local toStr 						= A.toStr
 local toNum 						= A.toNum
+local InstanceInfo					= A.InstanceInfo
 local TeamCache						= A.TeamCache
 local HealingEngine					= A.HealingEngine
 local LoC							= A.LossOfControl
@@ -23,35 +26,41 @@ local Unit 							= A.Unit
 local EnemyTeam						= A.EnemyTeam
 local FriendlyTeam					= A.FriendlyTeam
 local GetSpellInfo					= A.GetSpellInfo
-local OriginalGetSpellInfo 			= GetSpellInfo
+local IsSpellInRange				= A.IsSpellInRange
+local GetAuraList					= A.GetAuraList
+local GetPing						= A.GetPing
+local GetGCD						= A.GetGCD
+local GetCurrentGCD					= A.GetCurrentGCD
+
+local HealingEngineMembersALL		= HealingEngine.GetMembersAll()
+local ActiveUnitPlates 				= MultiUnits:GetActiveUnitPlates()
 
 local Azerite						= LibStub("AzeriteTraits")
-local Pet							= LibStub("PetLibrary")
---local LibRangeCheck  				= LibStub("LibRangeCheck-2.0")
---local IsSpellInRange 				= LibStub("SpellRange-1.0").IsSpellInRange	  
+local Pet							= LibStub("PetLibrary")  
 
-local _G, type, pairs, ipairs, tinsert, tremove, sort, select, wipe, rawget, rawset, assert, pcall, error, getmetatable, setmetatable, loadstring, unpack, table, debugstack =
-	  _G, type, pairs, ipairs, tinsert, tremove, sort, select, wipe, rawget, rawset, assert, pcall, error, getmetatable, setmetatable, loadstring, unpack, table, debugstack
+local _G, type, pairs, ipairs, select, wipe, setmetatable, unpack =
+	  _G, type, pairs, ipairs, select, wipe, setmetatable, unpack
 
-local Spell 						= _G.Spell
-local IsPlayerSpell, IsUsableSpell 	= 
-	  IsPlayerSpell, IsUsableSpell
-local GetNetStats, GetInventoryItemCooldown =
-	  GetNetStats, GetInventoryItemCooldown
+local OriginalGetSpellInfo 			= _G.GetSpellInfo
+local GetInventoryItemCooldown 		= _G.GetInventoryItemCooldown
+local GetItemCooldown 				= _G.GetItemCooldown
+local UnitIsUnit 					= _G.UnitIsUnit
+local 	 IsPlayerSpell,    IsUsableSpell 	= 
+	  _G.IsPlayerSpell, _G.IsUsableSpell
 	  
 -------------------------------------------------------------------------------
 -- Some place to fix issues with Taste rotations 
 -------------------------------------------------------------------------------	  
 -- Temporary fix while Taste is away
-A.CastTime 			 = A.GetSpellCastTime
+A.CastTime 			 				= A.GetSpellCastTime
 
-local HL         	 = HeroLib
+local HL         				 	= HeroLib
 if HL then 
-	local Unit       = HL.Unit
-	local Player     = Unit.Player
+	local HL_Unit    				= HL.Unit
+	local HL_Player   				= HL_Unit.Player
 	
-	if not Player.InRaid then 
-		function Player:InRaid() 
+	if not HL_Player.InRaid then 
+		function HL_Player:InRaid() 
 			return TeamCache.Friendly and TeamCache.Friendly.Type == "raid"
 		end 
 	end 
@@ -62,10 +71,10 @@ end
 -------------------------------------------------------------------------------
 function deepcopy(orig)
     local copy
-    if type(orig) == 'table' then
+    if type(orig) == "table" then
         copy = {}
         for i = 1, #orig do
-            table.insert(copy, orig[1])
+            copy[#copy + 1] = orig[1]
         end
     else 
         copy = orig
@@ -91,8 +100,7 @@ function quote(str)
     return "\""..str.."\""
 end
 
-Listener 							= A.Listener
-oLastCall 							= { ["global"] = 0.2 } 
+_G.oLastCall 						= { ["global"] = 0.2 } 
 function fLastCall(obj)
     if not oLastCall[obj] then
         oLastCall[obj] = 0
@@ -104,11 +112,21 @@ end
 -- Reworked
 -------------------------------------------------------------------------------
 -- Exception
-Env.InPvP_Toggle 					= false 
+Env.InPvP_Toggle 								= false 
 
 -- Set as default
-Env.Instance, Env.Zone 				= "none", "none"
-Env.PvPCache						= {}
+Env.Instance, Env.Zone 							= "none", "none"
+Env.PvPCache									= {}
+
+Env.PvPCache["EnemyHealerUnitID"] 				= TeamCache.Enemy.HEALER
+Env.PvPCache["EnemyTankUnitID"] 				= TeamCache.Enemy.TANK
+Env.PvPCache["EnemyDamagerUnitID"] 				= TeamCache.Enemy.DAMAGER 
+Env.PvPCache["EnemyDamagerUnitID_Melee"] 		= TeamCache.Enemy.DAMAGER_MELEE
+Env.PvPCache["EnemyDamagerUnitID_Range"] 		= TeamCache.Enemy.DAMAGER_RANGE
+Env.PvPCache["FriendlyHealerUnitID"] 			= TeamCache.Friendly.HEALER
+Env.PvPCache["FriendlyTankUnitID"] 				= TeamCache.Friendly.TANK 
+Env.PvPCache["FriendlyDamagerUnitID"] 			= TeamCache.Friendly.DAMAGER 
+Env.PvPCache["FriendlyMeleeUnitID"] 			= TeamCache.Friendly.DAMAGER_MELEE
 
 -------------------------------------------------------------------------------
 -- Remap tables and variables 
@@ -122,7 +140,6 @@ local DeprecatedVariables = {
 	Zone							= "Zone",
 	InPvP_Duel						= "IsInDuel",
 	ZoneTimeStampSinceJoined		= "TimeStampZone",
-	InstanceInfo					= "InstanceInfo",
 	IsGGLprofile					= "IsGGLprofile",
 }
 local isCleared 
@@ -134,17 +151,8 @@ TMW:RegisterCallback("TMW_ACTION_DEPRECATED", function()
 			end 
 			-- Update tables 
 			Env.PvPCache["Group_EnemySize"] 			= nil
-			Env.PvPCache["EnemyHealerUnitID"] 			= nil
-			Env.PvPCache["EnemyTankUnitID"] 			= nil
-			Env.PvPCache["EnemyDamagerUnitID"] 			= nil
-			Env.PvPCache["EnemyDamagerUnitID_Melee"] 	= nil
-			Env.PvPCache["EnemyDamagerUnitID_Range"] 	= nil
 			Env.PvPCache["Group_FriendlySize"] 			= nil
 			Env.PvPCache["Group_FriendlyType"]			= nil              
-			Env.PvPCache["FriendlyHealerUnitID"] 		= nil
-			Env.PvPCache["FriendlyTankUnitID"] 			= nil
-			Env.PvPCache["FriendlyDamagerUnitID"] 		= nil
-			Env.PvPCache["FriendlyMeleeUnitID"] 		= nil
 			Env.PvPCache["FriendlyMeleeCounter"] 		= nil			
 			isCleared = true 
 		end 
@@ -160,17 +168,8 @@ TMW:RegisterCallback("TMW_ACTION_DEPRECATED", function()
 		isCleared = nil
 		-- Update tables 
 		Env.PvPCache["Group_EnemySize"] 				= TeamCache.Enemy.Size
-		Env.PvPCache["EnemyHealerUnitID"] 				= TeamCache.Enemy.HEALER
-		Env.PvPCache["EnemyTankUnitID"] 				= TeamCache.Enemy.TANK
-		Env.PvPCache["EnemyDamagerUnitID"] 				= TeamCache.Enemy.DAMAGER 
-		Env.PvPCache["EnemyDamagerUnitID_Melee"] 		= TeamCache.Enemy.DAMAGER_MELEE
-		Env.PvPCache["EnemyDamagerUnitID_Range"] 		= TeamCache.Enemy.DAMAGER_RANGE
 		Env.PvPCache["Group_FriendlySize"] 				= TeamCache.Friendly.Size
 		Env.PvPCache["Group_FriendlyType"]				= TeamCache.Friendly.Type or "none"              
-		Env.PvPCache["FriendlyHealerUnitID"] 			= TeamCache.Friendly.HEALER
-		Env.PvPCache["FriendlyTankUnitID"] 				= TeamCache.Friendly.TANK 
-		Env.PvPCache["FriendlyDamagerUnitID"] 			= TeamCache.Friendly.DAMAGER 
-		Env.PvPCache["FriendlyMeleeUnitID"] 			= TeamCache.Friendly.DAMAGER_MELEE
 		Env.PvPCache["FriendlyMeleeCounter"] 			= 0	
 		for k in pairs(TeamCache.Friendly.DAMAGER_MELEE) do 
 			Env.PvPCache["FriendlyMeleeCounter"] 		= Env.PvPCache["FriendlyMeleeCounter"] + 1
@@ -181,27 +180,44 @@ end)
 -------------------------------------------------------------------------------
 -- Remap functions
 ------------------------------------------------------------------------------- 
-Env.DBM_PullTimer 					= A.DBM_PullTimer
-Env.DBM_GetTimer 					= A.DBM_GetTimer
-Env.DBM_IsEngage 					= A.DBM_IsEngage
+-- Locals 
+local TalentMap, PvpTalentMap		= Env.TalentMap, Env.PvpTalentMap
 
+-- Super Globals
+Listener 							= A.Listener
 UnitCooldown						= A.UnitCooldown
 PMultiplier 						= A.PMultiplier
 Persistent_PMultiplier 				= A.Persistent_PMultiplier
+RegisterPMultiplier  				= A.RegisterPMultiplier
 MouseHasFrame						= A.MouseHasFrame
-Env.GCD								= A.GetGCD
-Env.CurrentTimeGCD					= A.GetCurrentGCD
+
+-- Env
+Env.GCD								= GetGCD
+Env.GetGCD							= GetGCD
+Env.CurrentTimeGCD					= GetCurrentGCD
+Env.GetCurrentGCD					= GetCurrentGCD
+Env.GetAuraList						= GetAuraList
 Env.CacheGetSpellPowerCost 			= A.GetSpellPowerCostCache
+Env.GetPowerCost 					= A.GetSpellPowerCost
 Env.GetDescription 					= A.GetSpellDescription
+Env.InstanceInfo					= InstanceInfo
 
 Env.UI_INFO_MESSAGE_IS_WARMODE 		= A.UI_INFO_MESSAGE_IS_WARMODE
 Env.BlackBackgroundSet 				= A.BlackBackgroundSet
 
-Env.GetAuraList						= A.GetAuraList
 Env.InLOS 							= A.UnitInLOS
 Env.Unit							= Unit  
 Env.EnemyTeam						= EnemyTeam
 Env.FriendlyTeam					= FriendlyTeam
+
+Env.PvP 							= {}
+Env.PvP.Unit						= Unit  
+Env.PvP.EnemyTeam					= EnemyTeam
+Env.PvP.FriendlyTeam				= FriendlyTeam
+
+Env.DBM_PullTimer 					= A.DBM_PullTimer
+Env.DBM_GetTimer 					= A.DBM_GetTimer
+Env.DBM_IsEngage 					= A.DBM_IsEngage
 
 function Env.CheckInPvP()
     return A:CheckInPvP()
@@ -212,7 +228,7 @@ function Env.GetTimeSinceJoinInstance()
 end 
 
 function Env.SpellInRange(unitID, spellID)
-	return A.IsSpellInRange(spellID, unitID)
+	return IsSpellInRange(spellID, unitID)
 end
 
 function Env.UNITMoving(unitID, mode) 
@@ -250,8 +266,7 @@ function AzeriteEssenceHasMinor(spellID)
 end 
 
 function AzeriteEssenceConflictandStrife(spellID)
-	local Name = GetSpellInfo(spellID)
-	return Azerite:IsLearnedByConflictandStrife(Name)
+	return Azerite:IsLearnedByConflictandStrife(GetSpellInfo(spellID))
 end 
 
 -------------------------------------------------------------------------------
@@ -262,17 +277,12 @@ function Env.InPvP()
 end
 
 function Env.TalentLearn(id)
-    return Env.TalentMap[strlowerCache[GetSpellInfo(id)]] or false
+    return TalentMap[strlowerCache[GetSpellInfo(id)]]
 end
 
 function Env.PvPTalentLearn(id)
 	local Name = GetSpellInfo(id)
-    return (Env.InPvP_Status and Env.PvpTalentMap[strlowerCache[Name]]) or Azerite:IsLearnedByConflictandStrife(Name) or false
-end
-
-function Env.GetPowerCost(spellID)
-    local SpellPowerCost = Env.GetSpellPowerCost(GetSpellInfo(spellID)) 
-    return SpellPowerCost and SpellPowerCost[1] and SpellPowerCost[1].cost or 0
+    return (Env.InPvP_Status and PvpTalentMap[strlowerCache[Name]]) or Azerite:IsLearnedByConflictandStrife(Name)
 end
 
 function Env.SpellExists(spell)   
@@ -283,9 +293,9 @@ function Env.SpellExists(spell)
 end
 
 function Env.SpellUsable(spell, offset)
-    local offset = offset or ( select(4, GetNetStats()) / 1000 + 0.05)
+    local offset = offset or (GetPing() + 0.05)
     local spellName = GetSpellInfo(spell)
-    return IsUsableSpell(spellName) and Env.SpellCD(spellName) <= offset -- works for pet spells 01/04/2019
+    return IsUsableSpell(spellName) and Env.CooldownDuration(spellName) <= offset -- works for pet spells 01/04/2019
 end
 
 function Env.SpellCD(spellID)
@@ -293,11 +303,7 @@ function Env.SpellCD(spellID)
 end
 
 function Env.SpellCharges(spellID)
-    local charges = Env.GetSpellCharges(GetSpellInfo(spellID))
-    if not charges then 
-        charges = 0
-    end 
-    return charges
+    return Env.GetSpellCharges(GetSpellInfo(spellID)) or 0
 end
 
 function Env.ChargesFrac(spellID)
@@ -316,7 +322,7 @@ local LastCastException = {
 
 local PassCastToTrue = {
 	[293491] = true,  													-- Cyclotronic Blast
-	[Spell:CreateFromSpellID(293491):GetSpellName()] = true, 			-- Cyclotronic Blast
+	[OriginalGetSpellInfo(293491)] = true, 								-- Cyclotronic Blast
 	[295258] = true,  													-- Focused Azerite Beam Rank1
 	[299336] = true,  													-- Focused Azerite Beam Rank2 
 	[299338] = true,  													-- Focused Azerite Beam Rank3
@@ -340,9 +346,9 @@ local function PlayerCastingPassToTrue()
 end 
 
 function Env.ShouldStop() -- true 
-    local ping = A.GetPing()
-	local cGCD = A.GetCurrentGCD()
-    return (A.GetGCD() - cGCD > 0.3 and cGCD >= ping + 0.5) or PlayerCastingPassToTrue() or (not PlayerCastingException() and PlayerCastingEnd() > ping) or false
+    local ping = GetPing()
+	local cGCD = GetCurrentGCD()
+    return (GetGCD() - cGCD > 0.3 and cGCD >= ping + 0.5) or PlayerCastingPassToTrue() or (not PlayerCastingException() and PlayerCastingEnd() > ping) or false
 end
 
 function Env.chat()
@@ -474,10 +480,9 @@ end
 -- Very OLD 
 function Env.QuakingPalm(unitID)
     local total, cur_castleft, pct_castleft, spellID, spellName, notKickAble = Unit(unitID):CastTime()
-    if spellID and cur_castleft < A.GetGCD() then 
+    if spellID and cur_castleft < GetGCD() then 
         return true 
-    end 
-    return false 
+    end  
 end 
 
 --- ========================== ITEMS ===========================
@@ -561,7 +566,7 @@ function Env.SpellRace(key)
 		end 
 		
 		if key == "SPRINT" then 
-			if LoC:Get("ROOT") <= Env.CurrentTimeGCD() and LoC:Get("SNARE") <= Env.CurrentTimeGCD() then 
+			if LoC:Get("ROOT") <= GetCurrentGCD() and LoC:Get("SNARE") <= GetCurrentGCD() then 
 				return id 
 			end 
 		end
@@ -603,9 +608,9 @@ function Env.SpellRace(key)
 				LoC:Get("POLYMORPH") > 0 or 
 				LoC:Get("SLEEP") > 0 or 
 				LoC:Get("SHACKLE_UNDEAD") > 0 or 
-				Env.Unit("player"):HasDeBuffs("Poison") > 0 or 
-				Env.Unit("player"):HasDeBuffs("Curse") > 0 or 
-				Env.Unit("player"):HasDeBuffs("Magic") > 0
+				Unit("player"):HasDeBuffs("Poison") > 0 or 
+				Unit("player"):HasDeBuffs("Curse") > 0 or 
+				Unit("player"):HasDeBuffs("Magic") > 0
 			) and (not Env.InPvP() or Env.SpellCD(Medallion) > 0 or (
 				LoC:Get("DISARM") == 0 and 
 				LoC:Get("INCAPACITATE") == 0 and
@@ -825,6 +830,7 @@ function Env.MultiCast(unitID, spells, range)
 	return Unit(unitID):MultiCast(spells, range)
 end
 
+Env.PvP.MultiCast = Env.MultiCast
 -------------------------------------------------------------------------------
 -- PvPLib
 -------------------------------------------------------------------------------
@@ -841,30 +847,32 @@ end
 
 local Cache = {
 	bufer = {},
-	newEl = function(self, interval, keyArg, func, ...)
-		local obj = {
-			t = TMW.time + (interval or 0) + 0.001,  -- Add small delay to make sure what it's not previous corroute  
-			v = { func(...) },   
-		}        
-		self.bufer[func][keyArg] = obj
-		return unpack(obj.v)
+	newEl = function(this, inv, keyArg, func, ...)
+		if not this.bufer[func][keyArg] then 
+			this.bufer[func][keyArg] = { v = {} }
+		else 
+			wipe(this.bufer[func][keyArg].v)
+		end 
+		this.bufer[func][keyArg].t = TMW.time + (inv or ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT) + 0.001  -- Add small delay to make sure what it's not previous corroute  
+		insertMulti(this.bufer[func][keyArg].v, func(...))
+		return unpack(this.bufer[func][keyArg].v)
 	end,
 	Wrap = function(this, func, name)
+		if ACTION_CONST_CACHE_DISABLE then 
+			return func 
+		end 
+		
 		if not this.bufer[func] then 
-			this.bufer[func] = setmetatable({}, { __mode = "kv" })
-		end 	
-   		return function(...)     
-	        local arg = {...} 
-			local keyArg = arg[1][name] or ""
-			if name == "UnitID" and arg[1][name] then 
-				keyArg = UnitGUID(arg[1][name])	or ""	
-			end 
-	        for i = 2, #arg do
-	            keyArg = keyArg .. toStr[arg[i]]
-	        end 
-	              
-	        if TMW.time > (this.bufer[func][keyArg] and this.bufer[func][keyArg].t or 0) then
-	            return this:newEl(arg[1].Refresh, keyArg, func, ...)
+			this.bufer[func] = {} 
+		end
+		
+   		return function(...)  
+			-- The reason of all this view look is memory hungry eating, this way use around 0 memory now
+			local self = ...		
+			local keyArg = strElemBuilder(name, ...)		
+			
+			if TMW.time > (this.bufer[func][keyArg] and this.bufer[func][keyArg].t or 0) then
+	            return this:newEl(self.Refresh, keyArg, func, ...)
 	        else
 	            return unpack(this.bufer[func][keyArg].v)
 	        end
@@ -934,14 +942,8 @@ function Env.Potion(itemID)
     end    
     return false 
 end 
-Env.PvP = {
-	Unit = Env.Unit,
-	EnemyTeam = Env.EnemyTeam,
-	FriendlyTeam = Env.FriendlyTeam,
-	MultiCast = Env.MultiCast,
-}
 function Env.PvP.GetAuraList(key)
-    return A.GetAuraList(key)
+    return GetAuraList(key)
 end 
 function Env.PvP.GetItemList(ket)
     return ItemList[key]
@@ -949,107 +951,107 @@ end
 --- ===================== 1.0 REFFERENCE (OLD) ======================
 function Env.PvPKarma(unit) 
     -- True: Is not applied / False: Applied
-    return Env.Unit(unit):WithOutKarmed()
+    return Unit(unit):WithOutKarmed()
 end
 function Env.PvPDeBuffs(unit, spells)    
-    return Env.Unit(unit):HasDeBuffs(spells)
+    return Unit(unit):HasDeBuffs(spells)
 end
 function Env.PvPBuffs(unit, spells) 
-    return Env.Unit(unit):HasBuffs(spells)     
+    return Unit(unit):HasBuffs(spells)     
 end
 -- DamagerBurst
 function Env.PvPUseBurst(unit, Assist, EnemyHealerInCC)
-    return Env.Unit(unit or "target"):UseBurst()              
+    return Unit(unit or "target"):UseBurst()              
 end
 function Env.PvPNeedDeff(unit)
-    return Env.Unit(unit or "player"):UseDeff()
+    return Unit(unit or "player"):UseDeff()
 end
 function Env.PvPTargeting(unit)
-    return Env.Unit(unit):IsFocused()
+    return Unit(unit):IsFocused()
 end
 function Env.PvPTargeting_Melee(unit, burst)   
-    return Env.Unit(unit):IsFocused("MELEE")
+    return Unit(unit):IsFocused("MELEE")
 end
 function Env.PvPTargeting_BySpecs(array, specs, unit, range, burst)
-    return Env.Unit(unit):IsFocused(specs, burst, nil, range)
+    return Unit(unit):IsFocused(specs, burst, nil, range)
 end
 function Env.PvPExecuteRisk(unit)
-    return Env.Unit(unit):IsExecuted()
+    return Unit(unit):IsExecuted()
 end
 -- Helper
 function Env.PvPEnemyUsedBurst(range) 
-    return Env.EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", type(range) == "number" and range or nil)
+    return EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", type(range) == "number" and range or nil)
 end
 function Env.PvPEnemyBurst(unit, checkdeff)
     if unit == "HEALER" then
-        return Env.FriendlyTeam(unit):HealerIsFocused(true, checkdeff)
+        return FriendlyTeam(unit):HealerIsFocused(true, checkdeff)
     else 
-        return Env.Unit(unit):IsFocused(nil, true, checkdeff)
+        return Unit(unit):IsFocused(nil, true, checkdeff)
     end 
 end
 function Env.PvPEnemyHealerID()
-    return Env.EnemyTeam("HEALER"):GetUnitID()
+    return EnemyTeam("HEALER"):GetUnitID()
 end
 function Env.PvPFriendlyHealerID()
-    return Env.FriendlyTeam("HEALER"):GetUnitID()
+    return FriendlyTeam("HEALER"):GetUnitID()
 end
 function Env.PvPEnemyHealerInRange(range)
-    local unit = Env.EnemyTeam("HEALER"):GetUnitID(range)
+    local unit = EnemyTeam("HEALER"):GetUnitID(range)
     return (unit ~= "none" and unit) or false
 end
 function Env.PvPEnemyHealerInCC(duration)
     if not duration then duration = 3 end
-    return Env.EnemyTeam("HEALER"):GetCC() >= duration
+    return EnemyTeam("HEALER"):GetCC() >= duration
 end
 function Env.PvPFriendlyHealerInCC(duration)
     if not duration then duration = 3 end;    
-    return Env.FriendlyTeam("HEALER"):GetCC() >= duration
+    return FriendlyTeam("HEALER"):GetCC() >= duration
 end
 function Env.Get_PvPFriendlyHealerInCC()  
-    return Env.FriendlyTeam("HEALER"):GetCC()
+    return FriendlyTeam("HEALER"):GetCC()
 end
 function Env.Get_PvPFriendlyHealerInCC_DeBuffs(id, range)  
-    local DURATION, UNIT = Env.FriendlyTeam("HEALER"):GetDeBuffs(id, range)
+    local DURATION, UNIT = FriendlyTeam("HEALER"):GetDeBuffs(id, range)
     return DURATION, UNIT
 end
 function Env.PvPUnitIsHealer(unit)
-    return Env.Unit(unit):IsHealer() 
+    return Unit(unit):IsHealer() 
 end
 function Env.PvPEnemyIsHealer(unit)
-    return Env.Unit(unit):IsHealer() 
+    return Unit(unit):IsHealer() 
 end
 function Env.PvPEnemyIsMelee(unit)
-    return Env.Unit(unit):IsMelee() 
+    return Unit(unit):IsMelee() 
 end
 function Env.PvPUnitIsMelee(unit)
-    return Env.Unit(unit):IsMelee() 
+    return Unit(unit):IsMelee() 
 end
 function Env.PvPAssist() 
-    return Env.Unit("target"):IsFocused(nil, true)
+    return Unit("target"):IsFocused(nil, true)
 end 
 -- BreakAble 
 function Env.PvPBreakAble(range) 
-    return Env.EnemyTeam():IsBreakAble(range) 
+    return EnemyTeam():IsBreakAble(range) 
 end
 -- Taunt 
 function Env.PvPTauntPet(id)
-    return Env.EnemyTeam():IsTauntPetAble(id) 
+    return EnemyTeam():IsTauntPetAble(id) 
 end 
 -- Raid/Group
 function Env.CheckRaidDeBuffs(id)
-    return Env.FriendlyTeam():GetDeBuffs(id) > 0   
+    return FriendlyTeam():GetDeBuffs(id) > 0   
 end
 function Env.CheckRaidTTD(count, seconds)
     if not count then count = 1 end
     if not seconds then seconds = 4 end   
-    return Env.FriendlyTeam():GetTTD(count, seconds) 
+    return FriendlyTeam():GetTTD(count, seconds) 
 end
 function Env.ArcaneTorrentMindControl()
-    return Env.FriendlyTeam():GetBuffs(605, 8) > 0 
+    return FriendlyTeam():GetBuffs(605, 8) > 0 
 end
 -- CastBars
 function Env.PvPCatchReshift(offset)
-    return Env.EnemyTeam():IsReshiftAble(offset) 
+    return EnemyTeam():IsReshiftAble(offset) 
 end
 function Env.PvPMultiCast(unit, spells, range)
     local total, tleft, pleft, id, spellname = Env.MultiCast(unit, spells, range)   
@@ -1060,7 +1062,7 @@ end
 -- HealingEngine
 -------------------------------------------------------------------------------
 function GetMembers()
-    return HealingEngine.GetMembersAll()
+    return HealingEngineMembersALL
 end 
 function MostlyIncDMG(unitID)
     return HealingEngine.IsMostlyIncDMG(unitID)
@@ -1092,13 +1094,12 @@ end
 -- Deprecated
 function ValidMembers(IsPlayer)
 	if not IsPlayer or not _G.HE_Pets then 
-		return #HealingEngine.Members.ALL
+		return #HealingEngineMembersALL
 	else 
 		local total = 0 
-		local f = HealingEngine.GetMembersAll()
-		if #f > 0 then 
-			for i = 1, #f do
-				if Unit(f[i].Unit):IsPlayer() then
+		if #HealingEngineMembersALL > 0 then 
+			for i = 1, #HealingEngineMembersALL do
+				if Unit(HealingEngineMembersALL[i].Unit):IsPlayer() then
 					total = total + 1
 				end
 			end 
@@ -1130,12 +1131,11 @@ function AoEMembers(IsPlayer, SubStract, Limit)
 end
 function AoEHPAvg(isPlayer, minCount)
     local total, maxhp, counter = 0, 0, 0
-	local members = HealingEngine.GetMembersAll()
-    if tableexist(members) then 
-        for i = 1, #members do
-            if (not isPlayer or Unit(members[i].Unit):IsPlayer()) then                
-                total = total + UnitHealth(members[i].Unit)
-                maxhp = maxhp + UnitHealthMax(members[i].Unit)
+    if tableexist(HealingEngineMembersALL) then 
+        for i = 1, #HealingEngineMembersALL do
+            if (not isPlayer or Unit(HealingEngineMembersALL[i].Unit):IsPlayer()) then                
+                total = total + UnitHealth(HealingEngineMembersALL[i].Unit)
+                maxhp = maxhp + UnitHealthMax(HealingEngineMembersALL[i].Unit)
                 counter = counter + 1
             end
         end
@@ -1147,26 +1147,22 @@ function AoEHPAvg(isPlayer, minCount)
 end
 -- Restor Druid 
 function Env.AoEFlourish(pHP)   
-	local members = HealingEngine.GetMembersAll()
-    if tableexist(members) then 
-        local total = 0
-        for i = 1, #members do
-            if Env.UNITHP(members[i].Unit) <= pHP and
-            -- Rejuvenation
-            Env.Unit(members[i].Unit):HasBuffs(774) > 0 and 
-            (
-                -- Wild Growth
-                Env.Unit(members[i].Unit):HasBuffs(48438) > 0 or 
-                -- Lifebloom or Regrowth or Germination
-                Env.Unit(members[i].Unit):HasBuffs({33763, 8936, 155777}) > 0 
-            )
-            then
-                total = total + 1
-            end
-        end
-        return total >= #members * 0.3
-    end 
-    return false
+	local total = 0
+	for i = 1, #HealingEngineMembersALL do
+		if HealingEngineMembersALL[i].HP <= pHP and
+		-- Rejuvenation
+		Unit(HealingEngineMembersALL[i].Unit):HasBuffs(774) > 0 and 
+		(
+			-- Wild Growth
+			Unit(HealingEngineMembersALL[i].Unit):HasBuffs(48438) > 0 or 
+			-- Lifebloom or Regrowth or Germination
+			Unit(HealingEngineMembersALL[i].Unit):HasBuffs({33763, 8936, 155777}) > 0 
+		)
+		then
+			total = total + 1
+		end
+	end
+	return total >= #members * 0.3
 end
 -- PVE Dispels
 -- NOTE: RETIRED VERSION HAS > INSTEAD OF ACTUAL >=
@@ -1189,7 +1185,9 @@ local types = {
         -- Widowmaker Toxin
         { id = 269298, dur = 0, stack = 2}, 
         -- Stinging Venom
-        { id = 275836, dur = 0, stack = 4},        
+        { id = 275836, dur = 0, stack = 4},  
+		-- Crippling Shiv
+		{ id = 257777, dur = 0, stack = 0},
     },
     Disease = {
 		-- 8.2 Mechagon - Consuming Slime
@@ -1428,24 +1426,24 @@ local UnitAuras = {
 function Env.PvEDispel(unit)
 	if not Env.InPvP() and UnitAuras[A.PlayerSpec] then 
         for k, v in pairs(UnitAuras[A.PlayerSpec]) do 
-            for _, Spell in pairs(v) do 
-                duration = (Spell.dur == 0 and Env.GCD() + Env.CurrentTimeGCD()) or Spell.dur
+            for _, Spell in ipairs(v) do 
+                duration = (Spell.dur == 0 and GetGCD() + GetCurrentGCD()) or Spell.dur
                 -- Exception 
                 -- Touch of the Drowned (268322, if no party member is afflicted by Mental Assault (268391))
                 -- Flame Shock (268013, if no party member is afflicted by Snake Charm (268008))
                 -- Putrid Waters (275014, don't dispel self)
                 if Spell.stack == 0 then 
-                    if Env.Unit(unit):HasDeBuffs(Spell.id) > duration then 
-                        if (Spell.id ~= 268322 or Env.FriendlyTeam():GetDeBuffs(268391) == 0) and 
-                        (Spell.id ~= 268013 or Env.FriendlyTeam():GetDeBuffs(268008) == 0) and 
+                    if Unit(unit):HasDeBuffs(Spell.id) > duration then 
+                        if (Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
+                        (Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
                         (Spell.id ~= 275014 or not UnitIsUnit("player", unit)) then 
                             return true 
                         end
                     end 
                 else
-                    if Env.Unit(unit):HasDeBuffs(Spell.id) > duration and Env.DeBuffStack(unit, Spell.id, nil, true) > Spell.stack then 
-                        if (Spell.id ~= 268322 or Env.FriendlyTeam():GetDeBuffs(268391) == 0) and 
-                        (Spell.id ~= 268013 or Env.FriendlyTeam():GetDeBuffs(268008) == 0) and 
+                    if Unit(unit):HasDeBuffs(Spell.id) > duration and Unit(unit):HasDeBuffsStacks(Spell.id, nil, true) > Spell.stack then 
+                        if (Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
+                        (Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
                         (Spell.id ~= 275014 or not UnitIsUnit("player", unit)) then 
                             return true 
                         end
@@ -1537,7 +1535,6 @@ end
 function LossOfControlIsMissed(mustBeMissed)
 	return LoC:IsMissed(mustBeMissed)
 end 
-A.LossOfControlIsMissed = LossOfControlIsMissed
 function LossOfControlGet(locType, name)
 	return LoC:Get(locType, name)
 end 
@@ -1547,7 +1544,7 @@ end
 -------------------------------------------------------------------------------	  
 function GetActiveUnitPlates(reaction)
 	-- @return table or nil 
-	return MultiUnits:GetActiveUnitPlates()	
+	return ActiveUnitPlates	
 end 
 
 function CombatUnits(stop, range, upttd)
@@ -1569,19 +1566,16 @@ function PvPMassTaunt(stop, range, outrange)
 	-- @return boolean if stop noted, otherwise number
     local totalmobs = 0
     if not range then range = 40 end
-    if not outrange then outrange = 8 end
-	local nameplates = MultiUnits:GetActiveUnitPlates()
-    if nameplates then        
-        for unitID in pairs(nameplates) do
-            if Unit(unitID):IsPlayer() and Unit(unitID):GetRange() >= outrange and Unit(unitID):CanInterract(range) then 
-                totalmobs = totalmobs + 1            
-                
-                if stop and totalmobs >= stop then                    
-                    break
-                end    
-            end
-        end   
-    end    
+    if not outrange then outrange = 8 end       
+	for unitID in pairs(ActiveUnitPlates) do
+		if Unit(unitID):IsPlayer() and Unit(unitID):GetRange() >= outrange and Unit(unitID):CanInterract(range) then 
+			totalmobs = totalmobs + 1            
+			
+			if stop and totalmobs >= stop then                    
+				break
+			end    
+		end
+	end           
     return (stop and totalmobs >= stop) or (not stop and totalmobs)
 end
 

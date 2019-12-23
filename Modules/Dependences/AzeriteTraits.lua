@@ -4,13 +4,8 @@
 -------------------------------------------------------------------------------------
 local TMW 								= TMW 
 local A 								= Action 
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 3)
-
---local strlowerCache  					= TMW.strlowerCache
---local isEnemy							= A.Bit.isEnemy
---local isPlayer						= A.Bit.isPlayer
---local toStr 							= A.toStr
---local toNum 							= A.toNum
+local Listener							= A.Listener
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 4)
 
 if not Lib or not A or not TMW then 
 	if A then 
@@ -22,8 +17,28 @@ if not Lib or not A or not TMW then
 	return 
 end 
 
-local _G, pairs, ipairs, wipe 			= 
-	  _G, pairs, ipairs, wipe	 
+-------------------------------------------------------------------------------
+-- Remap
+-------------------------------------------------------------------------------
+local A_Unit, A_HealingEngine, A_HealingEngineMembersALL, A_GetSpellDescription, ActiveUnitPlates
+
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "ADDON_LOADED", function(addonName)
+	if addonName == ACTION_CONST_ADDON_NAME then 
+		A_Unit							= A.Unit
+		A_HealingEngine					= A.HealingEngine
+		A_HealingEngineMembersALL		= A_HealingEngine.GetMembersAll()
+		A_GetSpellDescription			= A.GetSpellDescription
+		ActiveUnitPlates				= A.MultiUnits:GetActiveUnitPlates()
+		
+		Listener:Remove("ACTION_EVENT_AZERITE_TRAITS", "ADDON_LOADED")	
+	end 
+end)
+-------------------------------------------------------------------------------
+
+local _G, pairs, ipairs		 			= 
+	  _G, pairs, ipairs	 
+	  
+local wipe								= _G.wipe	  
 
 local Enum								= _G.Enum
 local Item								= _G.Item
@@ -31,6 +46,7 @@ local Spell								= _G.Spell
 local FindSpellOverrideByID 			= _G.FindSpellOverrideByID
 local AzeriteEmpoweredItem 				= _G.C_AzeriteEmpoweredItem
 local AzeriteEssence 					= _G.C_AzeriteEssence
+local GetSpellInfo						= _G.GetSpellInfo
 
 local Data 								= {
 	InventorySlots 						= { 1, 2, 3, 5 },
@@ -43,6 +59,26 @@ local Data 								= {
 		-- MinorTwo = {},
 	},	
 } 
+
+local DataInventorySlots				= Data.InventorySlots
+local DataRanks							= Data.Ranks
+local DataEssences						= Data.Essences
+
+local A_GetSpellInfo
+local function GetInfoSpell(spellID)
+	if not A_GetSpellInfo then 
+		A_GetSpellInfo = A.GetSpellInfo
+		return (A_GetSpellInfo and A_GetSpellInfo(spellID)) or GetSpellInfo(spellID)
+	else
+		return A_GetSpellInfo(spellID)
+	end 
+end 
+
+local AzeriteEmpoweredItemIsHeartOfAzerothEquipped, AzeriteEmpoweredItemIsAzeriteEmpoweredItem, AzeriteEmpoweredItemGetAllTierInfo, AzeriteEmpoweredItemIsPowerSelected, AzeriteEmpoweredItemGetPowerInfo
+if AzeriteEmpoweredItem then 
+	AzeriteEmpoweredItemIsHeartOfAzerothEquipped,  AzeriteEmpoweredItemIsAzeriteEmpoweredItem,  AzeriteEmpoweredItemGetAllTierInfo,  AzeriteEmpoweredItemIsPowerSelected,  AzeriteEmpoweredItemGetPowerInfo = 
+	AzeriteEmpoweredItem.IsHeartOfAzerothEquipped, AzeriteEmpoweredItem.IsAzeriteEmpoweredItem, AzeriteEmpoweredItem.GetAllTierInfo, AzeriteEmpoweredItem.IsPowerSelected, AzeriteEmpoweredItem.GetPowerInfo
+end 
 
 -------------------------------------------------------------------------------
 -- Constances (spellID to assign or create actions, taken lowest ID)
@@ -79,8 +115,11 @@ Lib.CONST = {
 -------------------------------------------------------------------------------
 -- Azerite Essences - Major and Minor
 -------------------------------------------------------------------------------
+local AzeriteEssenceGetMilestoneEssence, AzeriteEssenceGetMilestoneSpell, AzeriteEssenceGetEssenceInfo, AzeriteEssenceGetMilestones, EnumAzeriteEssence
 if AzeriteEssence then 
-	Data.Essences.GetMajorBySpellNameOnENG = {
+	AzeriteEssenceGetMilestoneEssence, 	AzeriteEssenceGetMilestoneSpell,  AzeriteEssenceGetEssenceInfo,  AzeriteEssenceGetMilestones,  EnumAzeriteEssence =
+	AzeriteEssence.GetMilestoneEssence, AzeriteEssence.GetMilestoneSpell, AzeriteEssence.GetEssenceInfo, AzeriteEssence.GetMilestones, Enum.AzeriteEssence
+	DataEssences.GetMajorBySpellNameOnENG = {
 		-- Taken lowest Azerite Essence ID
 		--[[ Essences Used by All Roles - Passive]] 
 		-- Vision of Perfection
@@ -111,14 +150,14 @@ if AzeriteEssence then
 		[Spell:CreateFromSpellID(Lib.CONST.PurifyingBlast):GetSpellName()] 				= "Purifying Blast", 
 		[Spell:CreateFromSpellID(Lib.CONST.TheUnboundForce):GetSpellName()] 			= "The Unbound Force", 
 	}
-	Data.Essences.IsPassive = {
+	DataEssences.IsPassive = {
 		-- Checking by spellID which converts to spellName (it's more stable than ID because ID can be changed by Rank and Spec)
 		-- Vision of Perfection
 		[Spell:CreateFromSpellID(Lib.CONST.VisionofPerfection):GetSpellName()] 			= true, 
 		-- Conflict and Strife
 		[Spell:CreateFromSpellID(Lib.CONST.ConflictandStrife):GetSpellName()]	 		= true, 
 	}
-	Data.Essences.IsTalentPvP = {
+	DataEssences.IsTalentPvP = {
 		-- Death Knight: Unholy Command (Blood)
 		[Spell:CreateFromSpellID(202727):GetSpellName()] 	= true,
 		[202727] 											= true,
@@ -209,17 +248,17 @@ if AzeriteEssence then
 	}
 end 
 
-function Data.Essences.GetInfo(milestone) 
+function DataEssences.GetInfo(milestone) 
 	-- @return table (all info about milestone) or nil
-	local essenceID 	= AzeriteEssence.GetMilestoneEssence(milestone.ID) 	
+	local essenceID 	= AzeriteEssenceGetMilestoneEssence(milestone.ID) 	
 	if essenceID then 
-		local spellInfo = AzeriteEssence.GetMilestoneSpell(milestone.ID)
-		local info 		= AzeriteEssence.GetEssenceInfo(essenceID)
+		local spellInfo = AzeriteEssenceGetMilestoneSpell(milestone.ID)
+		local info 		= AzeriteEssenceGetEssenceInfo(essenceID)
 		if info and spellInfo then 
 			local spellID = FindSpellOverrideByID(spellInfo)    
 			local temp = {
 				spellID = spellID,
-				spellName = A.GetSpellInfo(spellID),
+				spellName = GetInfoSpell(spellID),
 				essenceID = essenceID,							-- same info.ID
 				milestoneID = milestone.ID,
 				requiredLevel = milestone.requiredLevel,
@@ -236,34 +275,38 @@ function Data.Essences.GetInfo(milestone)
 	end 
 end 
 
-function Data.Essences.Update() 
-	-- Updates Major (1) and Minor (2) slots 
-	local self 		= Data.Essences 
-	self.Major 		= nil
-	self.MinorOne 	= nil 
-	self.MinorTwo 	= nil
-	wipe(self.Total)
+function DataEssences.Update() 
+	-- Updates Major (1) and Minor (2) slots  
+	DataEssences.Major 		= nil
+	DataEssences.MinorOne 	= nil 
+	DataEssences.MinorTwo 	= nil
+	wipe(DataEssences.Total)
 	
-	if AzeriteEssence and AzeriteEmpoweredItem.IsHeartOfAzerothEquipped() then
-		local milestones = AzeriteEssence.GetMilestones()
+	if AzeriteEssence and AzeriteEmpoweredItemIsHeartOfAzerothEquipped() then
+		local milestones = AzeriteEssenceGetMilestones()
 		for i, milestone in ipairs(milestones) do
 			-- Enumerates each milestone with output table 'milestone' with keys: ID, requiredLevel, canUnlock, unlocked, slot
-			if milestone.slot == Enum.AzeriteEssence.MainSlot then
-				self.Major = self.GetInfo(milestone)
-				if self.Major then 
-					self.Total[self.Major.spellName] = self.Major 
+			if milestone.slot == EnumAzeriteEssence.MainSlot then
+				DataEssences.Major = DataEssences.GetInfo(milestone)
+				if DataEssences.Major then 
+					DataEssences.Total[DataEssences.Major.spellName] = DataEssences.Major 
 				end 
-			elseif milestone.slot == Enum.AzeriteEssence.PassiveOneSlot then 
-				self.MinorOne = self.GetInfo(milestone)
-				if self.MinorOne then 
-					self.Total[self.MinorOne.spellName] = self.MinorOne 
+			elseif milestone.slot == EnumAzeriteEssence.PassiveOneSlot then 
+				DataEssences.MinorOne = DataEssences.GetInfo(milestone)
+				if DataEssences.MinorOne then 
+					DataEssences.Total[DataEssences.MinorOne.spellName] = DataEssences.MinorOne 
 				end 
-			elseif milestone.slot == Enum.AzeriteEssence.PassiveTwoSlot then 
-				self.MinorTwo = self.GetInfo(milestone)
-				if self.MinorTwo then 
-					self.Total[self.MinorTwo.spellName] = self.MinorTwo 
+			elseif milestone.slot == EnumAzeriteEssence.PassiveTwoSlot then 
+				DataEssences.MinorTwo = DataEssences.GetInfo(milestone)
+				if DataEssences.MinorTwo then 
+					DataEssences.Total[DataEssences.MinorTwo.spellName] = DataEssences.MinorTwo 
 				end
 			end
+			
+			-- Break 
+			if DataEssences.Major and DataEssences.MinorOne and DataEssences.MinorTwo then 
+				break 
+			end 
 		end 
 	end 
 end 
@@ -275,29 +318,29 @@ local AzeriteItems
 function Data.OnEvent()  	
 	if not AzeriteItems then 
 		AzeriteItems = {}
-		for i = 1, #Data.InventorySlots do
-			AzeriteItems[Data.InventorySlots[i]] = Item:CreateFromEquipmentSlot(Data.InventorySlots[i])
+		for i = 1, #DataInventorySlots do
+			AzeriteItems[DataInventorySlots[i]] = Item:CreateFromEquipmentSlot(DataInventorySlots[i])
 		end
-		A.Listener:Remove("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN")
+		Listener:Remove("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN")
 	end 
 	
-	wipe(Data.Ranks)    
+	wipe(DataRanks)    
 	
 	for slot, item in pairs(AzeriteItems) do
 		if not item:IsItemEmpty() then
 			local itemLoc = item:GetItemLocation()
 			
 			-- Azerite Empower
-			if slot ~= 2 and AzeriteEmpoweredItem.IsAzeriteEmpoweredItem(itemLoc) then
-				local tierInfos = AzeriteEmpoweredItem.GetAllTierInfo(itemLoc)
+			if slot ~= 2 and AzeriteEmpoweredItemIsAzeriteEmpoweredItem(itemLoc) then
+				local tierInfos = AzeriteEmpoweredItemGetAllTierInfo(itemLoc)
 				for _, tierInfo in pairs(tierInfos) do
 					for _, powerId in pairs(tierInfo.azeritePowerIDs) do
-						if AzeriteEmpoweredItem.IsPowerSelected(itemLoc, powerId) then
-							local spellName = A.GetSpellInfo(AzeriteEmpoweredItem.GetPowerInfo(powerId).spellID)							
-							if not Data.Ranks[spellName] then
-								Data.Ranks[spellName] = 1
+						if AzeriteEmpoweredItemIsPowerSelected(itemLoc, powerId) then
+							local spellName = GetInfoSpell(AzeriteEmpoweredItemGetPowerInfo(powerId).spellID)							
+							if not DataRanks[spellName] then
+								DataRanks[spellName] = 1
 							else
-								Data.Ranks[spellName] = Data.Ranks[spellName] + 1
+								DataRanks[spellName] = DataRanks[spellName] + 1
 							end                                    
 						end
 					end
@@ -306,25 +349,25 @@ function Data.OnEvent()
 			
 			-- Azerite Essence
 			if slot == 2 then 
-				Data.Essences.Update() 
+				DataEssences.Update() 
 			end 
 		end
 	end       
 end
 
 -- Azerite Empower
-A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_ENTERING_WORLD", 					Data.OnEvent)
-A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_EQUIPMENT_CHANGED", 				Data.OnEvent)
-A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_SPECIALIZATION_CHANGED", 			Data.OnEvent)
-A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "SPELLS_CHANGED", 						Data.OnEvent)
-A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN", 							Data.OnEvent)
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_ENTERING_WORLD", 					Data.OnEvent)
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_EQUIPMENT_CHANGED", 				Data.OnEvent)
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_SPECIALIZATION_CHANGED", 			Data.OnEvent)
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "SPELLS_CHANGED", 							Data.OnEvent)
+Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN", 							Data.OnEvent)
 
 -- Azerite Essence
 if AzeriteEssence then	
-	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_CHANGED", 			Data.Essences.Update)
-	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_UPDATE", 			Data.Essences.Update) 
-	A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATED", 			Data.Essences.Update)
-	--A.Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATION_FAILED", 	Data.Essences.Update)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_CHANGED", 				DataEssences.Update)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_UPDATE", 				DataEssences.Update) 
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATED", 			DataEssences.Update)
+	--Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATION_FAILED", 	DataEssences.Update)
 end 
 
 -------------------------------------------------------------------------------
@@ -333,90 +376,84 @@ end
 function Lib:GetRank(spellID)
 	-- @return number (0 - not existed or not selected)
 	-- Note: Shared for both Azerite Empower and Azerite Essence
-	local spellName = A.GetSpellInfo(spellID)
-    local rank 		= Data.Ranks[spellName] or (Data.Essences.Total[spellName] and Data.Essences.Total[spellName].Rank)
+	local spellName = GetInfoSpell(spellID)
+    local rank 		= DataRanks[spellName] or (DataEssences.Total[spellName] and DataEssences.Total[spellName].Rank)
     return rank and rank or 0
 end 
 
 function Lib:EssenceGet(spellID)
 	-- @return table (with all available information about total essences in use) or nil
-	return Data.Essences.Total[A.GetSpellInfo(spellID)]
+	return DataEssences.Total[GetInfoSpell(spellID)]
 end 
 
 function Lib:EssenceGetMajor()
 	-- @return table (with all available information about Major slot) or nil 
-	return Data.Essences.Major
+	return DataEssences.Major
 end 
 
 function Lib:EssenceGetMajorBySpellNameOnENG(spellName)
 	-- @return string (ENGLISH localization of equal spellName) or nil
-	return Data.Essences.GetMajorBySpellNameOnENG[spellName]
+	return DataEssences.GetMajorBySpellNameOnENG[spellName]
 end 
 
 function Lib:EssenceIsMajorUseable(spellID) 
 	-- @return boolean 
-	if Data.Essences.Major and Data.Essences.Major.spellID then 
-		return not Data.Essences.IsPassive[Data.Essences.Major.spellName] and not Data.Essences.IsPassive[Data.Essences.Major.Name] and (not spellID or self:EssenceHasMajor(spellID))
+	if DataEssences.Major and DataEssences.Major.spellID then 
+		return not DataEssences.IsPassive[DataEssences.Major.spellName] and not DataEssences.IsPassive[DataEssences.Major.Name] and (not spellID or self:EssenceHasMajor(spellID))
 	end 
-	
-	return false 
 end 
 
 function Lib:EssenceHasMajor(spellID)
 	-- @return boolean 
 	-- Note: Search by localized spellName, essenceName or spellID 
-	if Data.Essences.Major then 
-		if Data.Essences.Major.spellID == spellID then 
+	if DataEssences.Major then 
+		if DataEssences.Major.spellID == spellID then 
 			return true 
 		else 
-			local spellName = A.GetSpellInfo(spellID)
-			if Data.Essences.Major.spellName == spellName or Data.Essences.Major.Name == spellName then 
+			local spellName = GetInfoSpell(spellID)
+			if DataEssences.Major.spellName == spellName or DataEssences.Major.Name == spellName then 
 				return true 
 			end 
 		end 
 	end 
-	
-	return false 
 end 
 
 function Lib:EssenceHasMinor(spellID)
 	-- @return boolean 
 	-- Note: Search by localized spellName, essenceName or spellID 
-	if (Data.Essences.MinorOne and Data.Essences.MinorOne.spellID == spellID) or (Data.Essences.MinorTwo and Data.Essences.MinorTwo.spellID == spellID) then 
+	if (DataEssences.MinorOne and DataEssences.MinorOne.spellID == spellID) or (DataEssences.MinorTwo and DataEssences.MinorTwo.spellID == spellID) then 
 		return true 
 	else 
-		local spellName = A.GetSpellInfo(spellID)
-		if (Data.Essences.MinorOne and (Data.Essences.MinorOne.spellName == spellName or Data.Essences.MinorOne.Name == spellName)) or (Data.Essences.MinorTwo and (Data.Essences.MinorTwo.spellName == spellName or Data.Essences.MinorTwo.Name == spellName)) then 
+		local spellName = GetInfoSpell(spellID)
+		if (DataEssences.MinorOne and (DataEssences.MinorOne.spellName == spellName or DataEssences.MinorOne.Name == spellName)) or (DataEssences.MinorTwo and (DataEssences.MinorTwo.spellName == spellName or DataEssences.MinorTwo.Name == spellName)) then 
 			return true 
 		end 
-	end 
-	
-	return false 
+	end  
 end 
 
 function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION)
 	-- @return boolean (if can be used without overheal), number (amount of health restoring, in some cases it's percent @percent / in some clear numeric amount @direct)
 	
 	-- Exception penalty for low level units / friendly boss
-    local UnitLvL = A.Unit(unitID):GetLevel()
-    if (UnitLvL <= 0 or (UnitLvL > 0 and UnitLvL < A.Unit("player"):GetLevel() - 10)) and MajorSpellNameENG ~= "Anima of Death" and MajorSpellNameENG ~= "Vitality Conduit" then
+    local UnitLvL = A_Unit(unitID):GetLevel()
+    if (UnitLvL <= 0 or (UnitLvL > 0 and UnitLvL < A_Unit("player"):GetLevel() - 10)) and MajorSpellNameENG ~= "Anima of Death" and MajorSpellNameENG ~= "Vitality Conduit" then
         return true, 0
     end     
     
     -- Header
     local variation 		= (VARIATION and (VARIATION / 100)) or 1      
     local total 			= 0
-    local DMG 				= A.Unit(unitID):GetDMG()
-	local HPS 				= A.Unit(unitID):GetHEAL()     
+    local DMG 				= A_Unit(unitID):GetDMG()
+	local HPS 				= A_Unit(unitID):GetHEAL()     
     local HealthDeficit 	= -1 
         
     -- Spells
     if MajorSpellNameENG == "Concentrated Flame" then  
 		-- @direct
-		HealthDeficit	 	= A.Unit(unitID):HealthDeficit()		
+		HealthDeficit	 	= A_Unit(unitID):HealthDeficit()		
 		-- Multiplier (resets on 4th stack, each stack +100%)
-		local multiplier 	= A.Unit(unitID):HasBuffsStacks(295378, true) + 1				
-		local amount 		= A.GetSpellDescription(spellID)[1] * multiplier
+		local multiplier 	= A_Unit(unitID):HasBuffsStacks(295378, true) + 1				
+		local amount 		= A_GetSpellDescription(spellID)[1] * multiplier
 		
 		-- Additional +75% over next 6 sec 
 		local additional = 0
@@ -429,12 +466,11 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 	
 	if MajorSpellNameENG == "Anima of Death" then 
 		-- @percent 
-		local HP		= A.Unit(unitID):HealthPercent()
+		local HP		= A_Unit(unitID):HealthPercent()
 		HealthDeficit 	= 100 - HP
-		
-		local enemies 	= A.MultiUnits:GetActiveUnitPlates()		
+			
 		-- Passing (in case if something went wrong with nameplates)
-		if not enemies then 
+		if not ActiveUnitPlates then 
 			if HP > 80 then 
 				return false, 0
 			else
@@ -448,8 +484,8 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 		-- HP limit (on which stop query)
 		local hplimit 	= rank >= 3 and 50 or 25		
 		local totalmobs = 0
-		for _, unit in pairs(enemies) do
-			if A.Unit(unit):GetRange() <= 8 then
+		for _, unit in pairs(ActiveUnitPlates) do
+			if A_Unit(unit):GetRange() <= 8 then
 				totalmobs = totalmobs + 1
 				total = totalmobs * hpperunit * variation 
 				if total >= hplimit then                
@@ -460,16 +496,16 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 	end 
 
 	if MajorSpellNameENG == "Refreshment" then 
-		local maxUnitHP 	= A.Unit(unitID):HealthMax()
+		local maxUnitHP 	= A_Unit(unitID):HealthMax()
 		-- @direct
-		HealthDeficit 		= maxUnitHP - A.Unit(unitID):Health()  
+		HealthDeficit 		= maxUnitHP - A_Unit(unitID):Health()  
 		-- The Well of Existence do search by name, TMW will do rest work 
-		local amount 		= A.Unit("player"):AuraTooltipNumber(296136, "HELPFUL PLAYER") 
+		local amount 		= A_Unit("player"):AuraTooltipNumber(296136, "HELPFUL") 
 		
 		if amount < maxUnitHP * 0.15 then 
 			-- Do nothing if it heal lower than 15% on a unit
 			return false, 0				
-		elseif amount >= maxUnitHP and A.Unit(unitID):HealthPercent() < 70 then 
+		elseif amount >= maxUnitHP and A_Unit(unitID):HealthPercent() < 70 then 
 			-- Or if we reached cap (?) 
 			return true, 0 
 		end 
@@ -479,19 +515,18 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 	
 	if MajorSpellNameENG == "Vitality Conduit" then 
 		-- @AoE 
-		local amount 		= A.GetSpellDescription(spellID)[1]
+		local amount 		= A_GetSpellDescription(spellID)[1]
 		total 				= amount * variation
 		
-		local validMembers 	= A.HealingEngine.GetMinimumUnits(1, 5)
+		local validMembers 	= A_HealingEngine.GetMinimumUnits(1, 5)
 		if validMembers < 2 then 
 			validMembers 	= 2
 		end 
 		
-		local members 		= A.HealingEngine.GetMembersAll()
 		local totalMembers 	= 0 
-		if #members > 0 and validMembers >= 2 then 
-			for i = 1, #members do
-				if members[i].MHP - members[i].AHP >= total then
+		if #A_HealingEngineMembersALL > 0 and validMembers >= 2 then 
+			for i = 1, #A_HealingEngineMembersALL do
+				if A_HealingEngineMembersALL[i].MHP - A_HealingEngineMembersALL[i].AHP >= total then
 					totalMembers = totalMembers + 1
 				end
 				if totalMembers >= validMembers then 
@@ -509,7 +544,7 @@ end
 function Lib:IsLearnedByConflictandStrife(spell)
 	-- @return boolean (if spellName or spellID is learned by Major PvP essence)
 	if self:EssenceHasMajor(self.CONST.ConflictandStrife) then -- Get 'Conflict and Strife' localized name 
-		return Data.Essences.IsTalentPvP[spell]
+		return DataEssences.IsTalentPvP[spell]
 	end 	
 end 
 

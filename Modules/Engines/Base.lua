@@ -16,40 +16,84 @@ A.TeamCache			(@table) - return cached units + info about friendly and enemy gro
 ]]
 -------------------------------------------------------------------------------
 
-local TMW 				= TMW
-local A   				= Action
+local TMW 									= TMW
+local A   									= Action
+local Listener								= A.Listener	
 
-A.InstanceInfo			= {}
-A.TeamCache				= { 
-	Friendly 			= {
-		Size			= 1,
-		GUIDs			= {},
-		HEALER			= {},
-		TANK			= {},
-		DAMAGER			= {},
-		DAMAGER_MELEE	= {},
-		DAMAGER_RANGE	= {},
+-------------------------------------------------------------------------------
+-- Remap
+-------------------------------------------------------------------------------
+local A_Unit 
+
+Listener:Add("ACTION_EVENT_BASE", "ADDON_LOADED", function(event, addonName) -- "ACTION_EVENT_BASE" fires with arg1 event!
+	if addonName == ACTION_CONST_ADDON_NAME then 
+		A_Unit = A.Unit 
+		Listener:Remove("ACTION_EVENT_BASE", "ADDON_LOADED")	
+	end 	
+end)
+-------------------------------------------------------------------------------
+
+local InstanceInfo							= {}
+local TeamCache								= { 
+	Friendly 								= {
+		Size								= 1,
+		MaxSize								= 1,
+		UNITs								= {},
+		GUIDs								= {},
+		IndexToPLAYERs						= {},
+		IndexToPETs							= {},
+		-- [[ Retail only ]]
+		HEALER								= {},
+		TANK								= {},
+		DAMAGER								= {},
+		DAMAGER_MELEE						= {},
+		DAMAGER_RANGE						= {},
 	},
-	Enemy 				= {
-		Size 			= 0,
-		GUIDs			= {},
-		HEALER			= {},
-		TANK			= {},
-		DAMAGER			= {},
-		DAMAGER_MELEE	= {},
-		DAMAGER_RANGE	= {},
+	Enemy 									= {
+		Size 								= 0,
+		MaxSize								= 0,
+		UNITs								= {},
+		GUIDs								= {},
+		IndexToPLAYERs						= {},
+		IndexToPETs							= {},	
+		-- [[ Retail only ]]		
+		HEALER								= {},
+		TANK								= {},
+		DAMAGER								= {},
+		DAMAGER_MELEE						= {},
+		DAMAGER_RANGE						= {},
 	},
 }
 
-local _G, pairs, type, math = 
+local TeamCacheFriendly 					= TeamCache.Friendly
+local TeamCacheFriendlyUNITs				= TeamCacheFriendly.UNITs -- unitID to unitGUID
+local TeamCacheFriendlyGUIDs				= TeamCacheFriendly.GUIDs -- unitGUID to unitID
+local TeamCacheFriendlyIndexToPLAYERs		= TeamCacheFriendly.IndexToPLAYERs
+local TeamCacheFriendlyIndexToPETs			= TeamCacheFriendly.IndexToPETs
+local TeamCacheFriendlyHEALER				= TeamCacheFriendly.HEALER
+local TeamCacheFriendlyTANK					= TeamCacheFriendly.TANK
+local TeamCacheFriendlyDAMAGER				= TeamCacheFriendly.DAMAGER
+local TeamCacheFriendlyDAMAGER_MELEE		= TeamCacheFriendly.DAMAGER_MELEE
+local TeamCacheFriendlyDAMAGER_RANGE		= TeamCacheFriendly.DAMAGER_RANGE
+local TeamCacheEnemy 						= TeamCache.Enemy
+local TeamCacheEnemyUNITs					= TeamCacheEnemy.UNITs -- unitID to unitGUID
+local TeamCacheEnemyGUIDs					= TeamCacheEnemy.GUIDs -- unitGUID to unitID
+local TeamCacheEnemyIndexToPLAYERs			= TeamCacheEnemy.IndexToPLAYERs
+local TeamCacheEnemyIndexToPETs				= TeamCacheEnemy.IndexToPETs
+local TeamCacheEnemyHEALER					= TeamCacheEnemy.HEALER
+local TeamCacheEnemyTANK					= TeamCacheEnemy.TANK
+local TeamCacheEnemyDAMAGER					= TeamCacheEnemy.DAMAGER
+local TeamCacheEnemyDAMAGER_MELEE			= TeamCacheEnemy.DAMAGER_MELEE
+local TeamCacheEnemyDAMAGER_RANGE			= TeamCacheEnemy.DAMAGER_RANGE
+
+local _G, pairs, type, math 				= 
 	  _G, pairs, type, math
 
-local huge 				= math.huge 
-local wipe				= _G.wipe 
-local strconcat			= _G.strconcat
-local PvP 				= _G.C_PvP
-local C_ChallengeMode	= _G.C_ChallengeMode
-local C_Map				= _G.C_Map
+local huge 									= math.huge 
+local wipe									= _G.wipe 
+local C_PvP 								= _G.C_PvP
+local C_ChallengeMode						= _G.C_ChallengeMode
+local C_Map									= _G.C_Map
 
 local IsInRaid, IsInGroup, IsInInstance, IsActiveBattlefieldArena, RequestBattlefieldScoreData = 
 	  IsInRaid, IsInGroup, IsInInstance, IsActiveBattlefieldArena, RequestBattlefieldScoreData
@@ -59,17 +103,23 @@ local UnitIsUnit, UnitInBattleground, UnitGUID =
 
 local GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers =
 	  GetInstanceInfo, GetNumArenaOpponents, GetNumBattlefieldScores, GetNumGroupMembers
-	  
-local GetActiveKeystoneInfo = C_ChallengeMode.GetActiveKeystoneInfo	
-local GetBestMapForUnit = C_Map.GetBestMapForUnit	
 
-local player 			= "player"
-local target 			= "target"
-local targettarget		= "targettarget"  
+local IsWarModeDesired		= C_PvP.IsWarModeDesired
+local IsRatedMap			= C_PvP.IsRatedMap	  
+local GetActiveKeystoneInfo = C_ChallengeMode.GetActiveKeystoneInfo	
+local GetBestMapForUnit 	= C_Map.GetBestMapForUnit	
+
+local player 								= "player"
+local pet									= "pet"
+local target 								= "target"
+local targettarget							= "targettarget"
 
 -------------------------------------------------------------------------------
 -- Instance, Zone, Mode, Duel, TeamCache
 -------------------------------------------------------------------------------	  
+A.TeamCache 	= TeamCache
+A.InstanceInfo 	= InstanceInfo
+
 function A:GetTimeSinceJoinInstance()
 	-- @return number
 	return (self.TimeStampZone and TMW.time - self.TimeStampZone) or huge
@@ -87,22 +137,22 @@ function A:CheckInPvP()
     self.Zone == "pvp" or 
     UnitInBattleground(player) or 
     IsActiveBattlefieldArena() or
-    PvP.IsWarModeDesired() or
+    IsWarModeDesired() or
 	-- Patch 8.2
 	-- 1519 is The Eternal Palace: Precipice of Dreams
-    ( A.ZoneID ~= 1519 and A.Unit(target):IsPlayer() and (A.Unit(target):IsEnemy() or (A.Unit(targettarget):IsPlayer() and A.Unit(targettarget):IsEnemy())) )
+    ( A.ZoneID ~= 1519 and A_Unit(target):IsPlayer() and (A_Unit(target):IsEnemy() or (A_Unit(targettarget):IsPlayer() and A_Unit(targettarget):IsEnemy())) )
 end
 
 function A.UI_INFO_MESSAGE_IS_WARMODE(...)
 	-- @return boolean
-	local ID, MSG = ...		
+	local _, MSG = ...		
     return (type(MSG) == "string" and (MSG == ACTION_CONST_ERR_PVP_WARMODE_TOGGLE_OFF or MSG == ACTION_CONST_ERR_PVP_WARMODE_TOGGLE_ON)) or false
 end 
 
-local LastEvent
+local LastEvent, counter
 local function OnEvent(event, ...)    
     -- Don't call it several times
-    if TMW.time == LastEvent then 
+    if TMW.time == LastEvent and TeamCacheFriendlyUNITs.player then 
         return 
     end 
     LastEvent = TMW.time
@@ -114,13 +164,13 @@ local function OnEvent(event, ...)
 		
 		local name, instanceType, difficultyID, _, _, _, _, instanceID, instanceGroupSize = GetInstanceInfo()
 		if name then 
-			A.InstanceInfo.Name 		= name 
-			A.InstanceInfo.Type 		= instanceType
-			A.InstanceInfo.difficultyID = difficultyID
-			A.InstanceInfo.ID 			= instanceID
-			A.InstanceInfo.GroupSize	= instanceGroupSize
-			A.InstanceInfo.isRated		= PvP.IsRatedMap()
-			A.InstanceInfo.KeyStone		= GetActiveKeystoneInfo() or 0
+			InstanceInfo.Name 			= name 
+			InstanceInfo.Type 			= instanceType
+			InstanceInfo.difficultyID 	= difficultyID
+			InstanceInfo.ID 			= instanceID
+			InstanceInfo.GroupSize		= instanceGroupSize
+			InstanceInfo.isRated		= IsRatedMap()
+			InstanceInfo.KeyStone		= GetActiveKeystoneInfo() or 0
 			A.TimeStampZone 			= TMW.time
 		end 
 	end 
@@ -128,7 +178,7 @@ local function OnEvent(event, ...)
 	-- Update Mode, Duel
     if not A.IsLockedMode then
 		if event == "UI_INFO_MESSAGE" and A.UI_INFO_MESSAGE_IS_WARMODE(...) then     
-			A.IsInPvP = PvP.IsWarModeDesired()
+			A.IsInPvP = IsWarModeDesired()
 			A.IsInWarMode = A.IsInPvP or nil
 			TMW:Fire("TMW_ACTION_MODE_CHANGED") 
 			TMW:Fire("TMW_ACTION_DEPRECATED")			
@@ -157,17 +207,15 @@ local function OnEvent(event, ...)
 	
 	-- Update Units 
 	if event == "UPDATE_INSTANCE_INFO" or event == "GROUP_ROSTER_UPDATE" or event == "ARENA_OPPONENT_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_LOGIN" then 
-		local counter = 0
-		
 		-- Wipe Friendly 
-		for _, v in pairs(A.TeamCache.Friendly) do
+		for _, v in pairs(TeamCacheFriendly) do
 			if type(v) == "table" then 
 				wipe(v)
 			end 
 		end 
 		
 		-- Wipe Enemy
-		for _, v in pairs(A.TeamCache.Enemy) do
+		for _, v in pairs(TeamCacheEnemy) do
 			if type(v) == "table" then 
 				wipe(v)
 			end 
@@ -175,102 +223,144 @@ local function OnEvent(event, ...)
 		
 		-- Enemy  		
 		if A.Zone == "arena" then 
-			A.TeamCache.Enemy.Size = GetNumArenaOpponents() -- GetNumArenaOpponentSpecs()    
-			A.TeamCache.Enemy.Type = "arena"
+			TeamCacheEnemy.Size = GetNumArenaOpponents() -- GetNumArenaOpponentSpecs()    
+			TeamCacheEnemy.Type = "arena"
+			TeamCacheEnemy.MaxSize = 5
 		elseif A.Zone == "pvp" then
 			RequestBattlefieldScoreData()                
-			A.TeamCache.Enemy.Size = GetNumBattlefieldScores()         
-			A.TeamCache.Enemy.Type = "arena"
+			TeamCacheEnemy.Size = GetNumBattlefieldScores()         
+			TeamCacheEnemy.Type = "arena"
+			TeamCacheEnemy.MaxSize = 40
 		else
-			A.TeamCache.Enemy.Size = 0 
-			A.TeamCache.Enemy.Type = nil 
+			TeamCacheEnemy.Size = 0 
+			TeamCacheEnemy.Type = nil 
+			TeamCacheEnemy.MaxSize = 0
 		end
+		TeamCacheEnemy.MaxSize = TeamCacheEnemy.Size	
 		
-		if A.TeamCache.Enemy.Size > 0 then  
+		if TeamCacheEnemy.Size > 0 and TeamCacheEnemy.Type then  
 			counter = 0
 			for i = 1, huge do 
-				local arena = strconcat("arena", i)
+				local arena = TeamCacheEnemy.Type .. i
 				local guid  = UnitGUID(arena)
+				
 				if guid then 
 					counter = counter + 1
 					
-					A.TeamCache.Enemy.GUIDs[guid] = arena
-					if A.Unit(arena):IsHealer() then 
-						A.TeamCache.Enemy.HEALER[arena] = arena
-					elseif A.Unit(arena):IsTank() then 
-						A.TeamCache.Enemy.TANK[arena] = arena
+					TeamCacheEnemyUNITs[arena] 					= guid
+					TeamCacheEnemyGUIDs[guid] 					= arena		
+					TeamCacheEnemyIndexToPLAYERs[i] 			= arena		
+					if A_Unit(arena):IsHealer() then 
+						TeamCacheEnemyHEALER[arena] 			= arena
+					elseif A_Unit(arena):IsTank() then 
+						TeamCacheEnemyTANK[arena] 				= arena
 					else
-						A.TeamCache.Enemy.DAMAGER[arena] = arena
-						if A.Unit(arena):IsMelee() then 
-							A.TeamCache.Enemy.DAMAGER_MELEE[arena] = arena
+						TeamCacheEnemyDAMAGER[arena] 			= arena
+						if A_Unit(arena):IsMelee() then 
+							TeamCacheEnemyDAMAGER_MELEE[arena] 	= arena
 						else 
-							A.TeamCache.Enemy.DAMAGER_RANGE[arena] = arena
+							TeamCacheEnemyDAMAGER_RANGE[arena] 	= arena
 						end                        
 					end
+					
+					local arenapet 								= TeamCacheEnemy.Type .. pet .. i
+					local arenapetguid 							= UnitGUID(arenapet)
+					if arenapetguid then 
+						TeamCacheEnemyUNITs[arenapet] 			= arenapetguid
+						TeamCacheEnemyGUIDs[arenapetguid] 		= arenapet					
+						TeamCacheEnemyIndexToPETs[i] 			= arenapet	
+					end 
 				end
 
-				if counter >= A.TeamCache.Enemy.Size or i >= 40 then 
+				if counter >= TeamCacheEnemy.Size or i >= TeamCacheEnemy.MaxSize then 
+					if counter >= TeamCacheEnemy.Size then 
+						TeamCacheEnemy.MaxSize = counter
+					end 
 					break 
 				end 
 			end   
 		end          
 		
 		-- Friendly
-		A.TeamCache.Friendly.Size = GetNumGroupMembers()
+		TeamCacheFriendly.Size = GetNumGroupMembers()
 		if IsInRaid() then
-			A.TeamCache.Friendly.Type = "raid"
+			TeamCacheFriendly.Type = "raid"
+			TeamCacheFriendly.MaxSize = 40
 		elseif IsInGroup() then
-			A.TeamCache.Friendly.Type = "party"    
+			TeamCacheFriendly.Type = "party"   
+			TeamCacheFriendly.MaxSize = TeamCacheFriendly.Size - 1			
 		else 
-			A.TeamCache.Friendly.Type = nil 
-		end    
+			TeamCacheFriendly.Type = nil 
+			TeamCacheFriendly.MaxSize = TeamCacheFriendly.Size
+		end  
+			
+		local pGUID = UnitGUID(player)
+		TeamCacheFriendlyUNITs[player] 	= pGUID
+		TeamCacheFriendlyGUIDs[pGUID] 	= player 	
 		
-		if A.TeamCache.Friendly.Size > 1 and A.TeamCache.Friendly.Type then 
+		if TeamCacheFriendly.Size > 0 and TeamCacheFriendly.Type then 
 			counter = 0
 			for i = 1, huge do 
-				local member = strconcat(A.TeamCache.Friendly.Type, i)
+				local member = TeamCacheFriendly.Type .. i
 				local guid   = UnitGUID(member)
 				
 				if guid then 
 					counter = counter + 1
 					
-					A.TeamCache.Friendly.GUIDs[guid] = member 
+					TeamCacheFriendlyUNITs[member] 						= guid 
+					TeamCacheFriendlyGUIDs[guid] 						= member 
+					TeamCacheFriendlyIndexToPLAYERs[i] 					= member
 					if not UnitIsUnit(member, player) then 
-						if A.Unit(member):IsHealer() then 
-							A.TeamCache.Friendly.HEALER[member] = member
-						elseif A.Unit(member):IsTank() then  
-							A.TeamCache.Friendly.TANK[member] = member
+						if A_Unit(member):IsHealer() then 
+							TeamCacheFriendlyHEALER[member]	 			= member
+						elseif A_Unit(member):IsTank() then  
+							TeamCacheFriendlyTANK[member] 				= member
 						else 
-							A.TeamCache.Friendly.DAMAGER[member] = member
-							if A.Unit(member):IsMelee() then 
-								A.TeamCache.Friendly.DAMAGER_MELEE[member] = member
+							TeamCacheFriendlyDAMAGER[member] 			= member
+							if A_Unit(member):IsMelee() then 
+								TeamCacheFriendlyDAMAGER_MELEE[member] 	= member
 							else 
-								A.TeamCache.Friendly.DAMAGER_RANGE[member] = member
+								TeamCacheFriendlyDAMAGER_RANGE[member] 	= member
 							end 
 						end
 					end
+					
+					local memberpet 									= TeamCacheFriendly.Type .. pet .. i
+					local memberpetguid 								= UnitGUID(memberpet)
+					if memberpetguid then 
+						TeamCacheFriendlyUNITs[memberpet] 				= memberpetguid
+						TeamCacheFriendlyGUIDs[memberpetguid] 			= memberpet					
+						TeamCacheFriendlyIndexToPETs[i] 				= memberpet	
+					end 
 				end 
 				
-				if counter >= A.TeamCache.Friendly.Size or i >= 40 then 
+				if counter >= TeamCacheFriendly.Size or i >= TeamCacheFriendly.MaxSize then 
+					if counter >= TeamCacheFriendly.Size then 
+						TeamCacheFriendly.MaxSize = counter
+					end 
 					break 
 				end 
 			end 
 		end		
 	end 
 	
+	if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "UPDATE_INSTANCE_INFO" then
+		TMW:Fire("TMW_ACTION_ENTERING", event)	-- callback is used in PetLibrary.lua, HealingEngine.lua, HybridProfile.lua (retired) to initializate and it's better than event 
+	end 
+	
 	TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove in the future
 end 
 
-A.Listener:Add("ACTION_EVENT_BASE", "DUEL_FINISHED", 					OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "DUEL_REQUESTED", 					OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED", 					OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_INDOORS", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_NEW_AREA", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "UI_INFO_MESSAGE", 					OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "UPDATE_INSTANCE_INFO", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "GROUP_ROSTER_UPDATE", 				OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "ARENA_OPPONENT_UPDATE", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_WORLD", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_BATTLEGROUND", 	OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "PLAYER_TARGET_CHANGED", 			OnEvent)
-A.Listener:Add("ACTION_EVENT_BASE", "PLAYER_LOGIN", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "DUEL_FINISHED", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "DUEL_REQUESTED", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_INDOORS", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_NEW_AREA", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "UI_INFO_MESSAGE", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "UPDATE_INSTANCE_INFO", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "GROUP_ROSTER_UPDATE", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ARENA_OPPONENT_UPDATE", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_WORLD", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_BATTLEGROUND", 	OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_TARGET_CHANGED", 			OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_LOGIN", 					OnEvent)

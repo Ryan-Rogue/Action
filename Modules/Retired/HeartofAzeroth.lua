@@ -14,7 +14,9 @@ local MultiUnits					= A.MultiUnits
 local EnemyTeam						= A.EnemyTeam
 local LoC							= A.LossOfControl
 local HealingEngine					= A.HealingEngine
-local Azerite 						= LibStub("AzeriteTraits")	  
+local Azerite 						= LibStub("AzeriteTraits")	
+
+local ACTION_CONST_HEARTOFAZEROTH	= _G.ACTION_CONST_HEARTOFAZEROTH  
 
 function A.HeartOfAzerothShow(icon)
 	return A:Show(icon, ACTION_CONST_HEARTOFAZEROTH)
@@ -242,7 +244,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 			--[[ Damager ]]
 			if MajorSpellName == "Focused Azerite Beam" then 
 				-- GCD 1.5 sec (channeled)
-				if (Azerite:GetRank(spellID) >= 3 or Unit("player"):IsStayingTime() >= 1) and LoC:IsMissed("SILENCE") and LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Unit(unitID):IsEnemy() and Unit(unitID):GetRange() <= 10 and Unit("player"):CombatTime() > 3 then 
+				if (Azerite:GetRank(spellID) >= 3 or Unit("player"):IsStayingTime() >= 1) and LoC:IsMissed("SILENCE") and LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and not ShouldStop and Unit(unitID):IsEnemy() and Unit(unitID):GetRange() <= 10 and MultiUnits:GetByRange(10, 3) >= 3 and Unit("player"):CombatTime() > 3 then 
 					local isMelee = Unit("player"):IsMelee()
 					if ( not A.IsInPvP or (Unit(unitID):IsPlayer() and not EnemyTeam("HEALER"):IsBreakAble(10) and Unit(unitID):WithOutKarmed() and Unit(unitID):HasBuffs("TotalImun") == 0 and Unit(unitID):HasBuffs("DamageMagicImun") == 0) ) then 
 						return A.HeartOfAzerothShow(icon)

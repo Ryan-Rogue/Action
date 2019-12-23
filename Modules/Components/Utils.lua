@@ -7,11 +7,29 @@ local Env 					= CNDT.Env
 local strlowerCache  		= TMW.strlowerCache
 
 local A   					= Action
+local Listener				= A.Listener
 local toStr 				= A.toStr
 local toNum 				= A.toNum
 
-local assert, select, type, next, ipairs, wipe, hooksecurefunc, message	= 
-	  assert, select, type, next, ipairs, wipe, hooksecurefunc, message
+-------------------------------------------------------------------------------
+-- Remap
+-------------------------------------------------------------------------------
+local A_GetSpellInfo, TeamCacheEnemy, TeamCacheEnemyIndexToPLAYERs
+
+Listener:Add("ACTION_EVENT_UTILS", "ADDON_LOADED", function(addonName) 
+	if addonName == ACTION_CONST_ADDON_NAME then 
+		A_GetSpellInfo					= A.GetSpellInfo
+		TeamCacheEnemy					= A.TeamCache.Enemy
+		TeamCacheEnemyIndexToPLAYERs	= TeamCacheEnemy.IndexToPLAYERs
+		Listener:Remove("ACTION_EVENT_UTILS", "ADDON_LOADED")	
+	end 	
+end)
+-------------------------------------------------------------------------------
+
+local _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message = 
+	  _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message
+	  
+local strfind				= _G.strfind	  
 	  
 local CreateFrame, GetCVar, SetCVar =
 	  CreateFrame, GetCVar, SetCVar
@@ -93,23 +111,25 @@ function SPECS:UpdateUnitSpecs()
 	end
 
 	if A.Zone == "arena" then
-		for i = 1, A.TeamCache.Enemy.Size do 
-			local unit = "arena" .. i
+		for i = 1, TeamCacheEnemy.MaxSize do 
+			local unit = TeamCacheEnemyIndexToPLAYERs[i]
 
-			local name, server = UnitName(unit)
-			if name and name ~= ACTION_CONST_UNKNOWN then
-				local specID = GetArenaOpponentSpec(i)
-				name = name .. (server and "-" .. server or "")
-				if Env.UnitSpecs then 
-					Env.UnitSpecs[name] = specID
-				end 
-				Env.ModifiedUnitSpecs[name] = specID				
-			end
+			if unit then 
+				local name, server = UnitName(unit)
+				if name and name ~= ACTION_CONST_UNKNOWN then
+					local specID = GetArenaOpponentSpec(i)
+					name = name .. (server and "-" .. server or "")
+					if Env.UnitSpecs then 
+						Env.UnitSpecs[name] = specID
+					end 
+					Env.ModifiedUnitSpecs[name] = specID				
+				end
+			end 
 		end
 
 		TMW:Fire("TMW_UNITSPEC_UPDATE")
 	elseif A.Zone == "pvp" then
-		for i = 1, A.TeamCache.Enemy.Size do 
+		for i = 1, TeamCacheEnemy.MaxSize do 
 			local name, _, _, _, _, _, _, _, classToken, _, _, _, _, _, _, talentSpec = GetBattlefieldScore(i)
 			if name then
 				local specID = specNameToRole[classToken][talentSpec]
@@ -149,7 +169,7 @@ do
         module:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED",
             function()
                 local _, e, _, sourceGuid, _, _, _, _, _, _, _, spellID, spellName = CombatLogGetCurrentEventInfo()
-                if e == "SPELL_CAST_SUCCESS" and sourceGuid == pGUID and not blacklist[spellID] then
+                if (e == "SPELL_CAST_SUCCESS" or e == "SPELL_MISS") and sourceGuid == pGUID and not blacklist[spellID] then
                     Env.LastPlayerCastName 	= strlowerCache[spellName]
                     Env.LastPlayerCastID 	= spellID
 					A.LastPlayerCastName	= spellName
@@ -159,15 +179,16 @@ do
         end)    
         
         -- Spells that don't work with CLEU and must be tracked with USS.
+		--[[
         local ussSpells = {
             [189110] = true, -- Infernal Strike (DH)
             [189111] = true, -- Infernal Strike (DH)
             [195072] = true, -- Fel Rush (DH)
-        }
+        }]]
         module:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED",
             function(_, unit, _, spellID)
-                if unit == "player" and ussSpells[spellID] and not blacklist[spellID] then
-					local spellName			= A.GetSpellInfo and A.GetSpellInfo(spellID) or GetSpellInfo(spellID)
+                if unit == "player" and not blacklist[spellID] then -- and ussSpells[spellID]
+					local spellName			= A_GetSpellInfo(spellID)
                     Env.LastPlayerCastName 	= strlowerCache[spellName]
                     Env.LastPlayerCastID 	= spellID
 					A.LastPlayerCastName	= spellName
@@ -435,7 +456,7 @@ local function UpdateCVAR()
 	end
 	
 	local nameplateMaxDistance = GetCVar("nameplateMaxDistance")
-    if nameplateMaxDistance and toNum[nameplateMaxDistance] ~= ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
+    if nameplateMaxDistance and toNum[nameplateMaxDistance] < ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
 		SetCVar("nameplateMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
 		if isCheckedOnce then 
 			A.Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
@@ -478,10 +499,10 @@ local function TrueScaleInit()
 end
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETUP_COMPLETE")    
 
-A.Listener:Add("ACTION_EVENT_UTILS", "DISPLAY_SIZE_CHANGED", 	ConsoleUpdate	)
-A.Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 		ConsoleUpdate	)
---A.Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", ConsoleUpdate	)
---A.Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",			UpdateCVAR		)
+Listener:Add("ACTION_EVENT_UTILS", "DISPLAY_SIZE_CHANGED", 		ConsoleUpdate	)
+Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 			ConsoleUpdate	)
+--Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", 	ConsoleUpdate	)
+--Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",				UpdateCVAR		)
 VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
 InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)
 
@@ -559,19 +580,27 @@ end
   
 function A.Hide(icon)
 	-- @usage A.Hide(icon)
-	if icon.attributes.state ~= ACTION_CONST_TMW_DEFAULT_STATE_HIDE then 
-		icon:SetInfo("state; texture", ACTION_CONST_TMW_DEFAULT_STATE_HIDE, "")
+	if not icon then 
+		error("A.Hide tried to hide nil 'icon'", 2)
+	else 
+		if icon.attributes.state ~= ACTION_CONST_TMW_DEFAULT_STATE_HIDE then 
+			icon:SetInfo("state; texture", ACTION_CONST_TMW_DEFAULT_STATE_HIDE, "")
+		end 
 	end 
 end 
 
 function A:Show(icon, texture) 
 	-- @usage self:Show(icon) for own texture with color filter or self:Show(icon, textureID)
-	if texture then 
-		TMWAPI(icon, "texture", texture)
+	if not icon then 
+		error((not texture and self:GetKeyName() or tostring(texture)) .. " tried to use Show() method with nil 'icon'", 2)
 	else 
-		TMWAPI(icon, self:Texture())
+		if texture then 
+			TMWAPI(icon, "texture", texture)
+		else 
+			TMWAPI(icon, self:Texture())
+		end 
+		return true 
 	end 
-	return true 
 end 
 
 function A.FrameHasSpell(frame, spellID)
@@ -605,4 +634,25 @@ function A.FrameHasObject(frame, ...)
 			end 
 		end 
 	end 
+end 
+
+-------------------------------------------------------------------------------
+-- TMW PlayerNames fix
+-------------------------------------------------------------------------------
+if TELLMEWHEN_VERSIONNUMBER <= 87302 then -- Retail 87302
+	local NAMES 											= TMW.NAMES
+	local GetNumBattlefieldScores, 	  GetBattlefieldScore 	= 
+	   _G.GetNumBattlefieldScores, _G.GetBattlefieldScore
+	function NAMES:UPDATE_BATTLEFIELD_SCORE()
+		for i = 1, GetNumBattlefieldScores() do
+			local name, _, _, _, _, _, _, _, class, classToken = GetBattlefieldScore(i)
+			if name then 
+				if self.ClassColors[classToken] then 
+					self.ClassColoredNameCache[name] = self.ClassColors[classToken] .. name .. "|r"
+				elseif self.ClassColors[class] then 
+					self.ClassColoredNameCache[name] = self.ClassColors[class] .. name .. "|r"
+				end 
+			end
+		end
+	end
 end 

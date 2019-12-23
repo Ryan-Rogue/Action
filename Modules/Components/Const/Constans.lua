@@ -4,12 +4,13 @@ ACTION_CONST_TMW_DEFAULT_STATE_HIDE 							= TMW.CONST.STATE.DEFAULT_HIDE
 ACTION_CONST_TMW_DEFAULT_STATE_SHOW 							= TMW.CONST.STATE.DEFAULT_SHOW
 
 -- Action 
+ACTION_CONST_ADDON_NAME											= "TheAction"
 ACTION_CONST_CACHE_DISABLE				 						= false 		-- On own risk, it will disable memorize cache but will reduce a lot of memory drive, it's trade-in toggle between CPU and Memory 	(required reload after change)
 ACTION_CONST_CACHE_MEM_DRIVE									= false			-- On own risk, it will unlock remain cache for low CPU demand functions "aka memory killer" 										(doesn't work if ACTION_CONST_CACHE_DISABLE is 'true')
 ACTION_CONST_CACHE_DEFAULT_TIMER 								= 0.01			-- "Tools.lua" offset on cache control 
 ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT							= 0.005			-- "Unit.lua" offset on cache control 
 ACTION_CONST_CACHE_DEFAULT_TIMER_MULTIUNIT_CLEU					= 0.004
-ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE				= 60			-- Live: 60, Classic: 20
+ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE				= 40 -- 60		-- Live: 60, Classic: 20
 ACTION_CONST_CACHE_DEFAULT_OFFSET_DUEL							= 2.9			-- Delay until duel starts after event trigger
 
 -- Textures

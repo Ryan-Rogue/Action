@@ -6,20 +6,26 @@
 -------------------------------------------------------------------------------
 --- TODO: Delete this after all profile upgrade for Action
 local TMW 							= TMW
-local CNDT 							= TMW.CNDT
-local Env 							= CNDT.Env
 local A 							= Action
+local GetGCD						= A.GetGCD
+local Listener						= A.Listener
 
-local pairs, _G 					= 
-	  pairs, _G 
+local pairs, select, _G 			= 
+	  pairs, select, _G 
+	  
+local CreateFrame					= _G.CreateFrame
+local UIParent						= _G.UIParent	
+local wipe							= _G.wipe  
+local strmatch						= _G.strmatch  
+local UnitIsUnit					= _G.UnitIsUnit  
 	  
 local oMSG, starttime = {}, 0
-local frame = CreateFrame("Frame", nil) 
+local frame = CreateFrame("Frame", nil, UIParent) 
 frame:SetScript("OnUpdate", function() 
-        if TMW.time >= starttime + A.GetGCD() * 2 then
-            wipe(oMSG)            
-            frame:Hide()              
-        end        
+	if TMW.time >= starttime + GetGCD() * 2 then
+		wipe(oMSG)            
+		frame:Hide()              
+	end        
 end)
 local EventTextList = {
     WARRIOR = {
@@ -85,7 +91,7 @@ local EventTextList = {
 }
 
 local function UpdateChat(...)
-    if not MSG_Toggle or A.IsInitialized then 
+    if not _G.MSG_Toggle or A.IsInitialized then 
         return 
     end
     
@@ -113,13 +119,13 @@ local function UpdateChat(...)
     end  
 end 
 
-A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY", 		UpdateChat)
-A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY_LEADER", 	UpdateChat)
-A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID", 			UpdateChat)
-A.Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID_LEADER", 	UpdateChat)
+Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY", 			UpdateChat)
+Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_PARTY_LEADER", 	UpdateChat)
+Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID", 			UpdateChat)
+Listener:Add("ACTION_EVENT_DEPRECATED_MSG", "CHAT_MSG_RAID_LEADER", 	UpdateChat)
 
 
 function MacroSpells(ICON, MSG)    
-    return (MSG_Toggle and ICON and oMSG[ICON] == MSG) or false        
+    return (_G.MSG_Toggle and ICON and oMSG[ICON] == MSG) or false        
 end
 

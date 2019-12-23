@@ -1,18 +1,28 @@
 local TMW 							= TMW
 local A 							= Action
 
---local strlowerCache  				= TMW.strlowerCache
---local isEnemy						= A.Bit.isEnemy
---local isPlayer					= A.Bit.isPlayer
---local toStr 						= A.toStr
---local toNum 						= A.toNum
---local InstanceInfo				= A.InstanceInfo
---local TeamCache					= A.TeamCache
+local Listener						= A.Listener
+local GetToggle						= A.GetToggle
+
 local Azerite 						= LibStub("AzeriteTraits")
---local Pet							= LibStub("PetLibrary")
---local LibRangeCheck  				= LibStub("LibRangeCheck-2.0")
---local SpellRange					= LibStub("SpellRange-1.0")
---local DRData 						= LibStub("DRData-1.1")
+
+-------------------------------------------------------------------------------
+-- Remap
+-------------------------------------------------------------------------------
+local A_LoC, A_Unit, A_EnemyTeam, A_MultiUnits, A_HealingEngine
+
+Listener:Add("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED", function(addonName)
+	if addonName == ACTION_CONST_ADDON_NAME then 
+		A_LoC						= A.LossOfControl
+		A_Unit						= A.Unit
+		A_EnemyTeam					= A.EnemyTeam
+		A_MultiUnits				= A.MultiUnits
+		A_HealingEngine				= A.HealingEngine
+		
+		Listener:Remove("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED")	
+	end 
+end)
+-------------------------------------------------------------------------------
 
 local _G, pairs 					=
 	  _G, pairs
@@ -57,6 +67,12 @@ local Temp							= {
 	SilenceAndDisarm				= {"SILENCE", "DISARM"},
 }
 
+local TempTotalAndMagic				= Temp.TotalAndMagic
+local TempTotalAndFreedom 			= Temp.TotalAndFreedom
+local TempTotalAndMagicAndPhys 		= Temp.TotalAndMagicAndPhys
+local TempMemoryofLucidDreamsSpecs	= Temp.MemoryofLucidDreamsSpecs
+local TempSilenceAndDisarm			= Temp.SilenceAndDisarm
+
 -------------------------------------
 -- API
 --------------------------------------
@@ -80,7 +96,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 	-- @return boolean 
 	-- Note: This is lazy template for all Heart Of Azerote Essences 
 	-- Arguments: skipAuto if true then will skip AUTO template conditions and will check only validance (imun, own CC such as silence, range and etc)	
-	if self.SubType == "HeartOfAzeroth" and Azerite:EssenceIsMajorUseable() and A.GetToggle(1, "HeartOfAzeroth") then 
+	if self.SubType == "HeartOfAzeroth" and Azerite:EssenceIsMajorUseable() and GetToggle(1, "HeartOfAzeroth") then 
 		local Major 			= Azerite:EssenceGetMajor()
 		local MajorSpellName 	= Azerite:EssenceGetMajorBySpellNameOnENG(Major.spellName)
 		
@@ -94,10 +110,10 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, nil, nil, skipShouldStop) and -- no second arg as 'true' coz it checking range 
-					A.LossOfControl:IsMissed("SILENCE") and 
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 
 				then 
-					local isEnemy = A.Unit(unitID):IsEnemy()
+					local isEnemy = A_Unit(unitID):IsEnemy()
 					
 					if 	(
 							IsEnemy or 
@@ -110,7 +126,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 							) or 
 							(
 								isEnemy and 
-								self:AbsentImun(unitID, Temp.TotalAndMagic)
+								self:AbsentImun(unitID, TempTotalAndMagic)
 							)
 						)
 					then
@@ -127,11 +143,11 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
 					(
 						skipAuto or 
-						((not A.Unit("player"):IsMelee() and A.Unit(unitID):GetRange() <= 40) or A.Unit(unitID):GetRange() <= 12)
+						((not A_Unit("player"):IsMelee() and A_Unit(unitID):GetRange() <= 40) or A_Unit(unitID):GetRange() <= 12)
 					) and 
 					(	
-						not A.Unit(unitID):IsEnemy() or						
-						self:AbsentImun(unitID, Temp.TotalAndMagicAndPhys)
+						not A_Unit(unitID):IsEnemy() or						
+						self:AbsentImun(unitID, TempTotalAndMagicAndPhys)
 					)
 				then 
 					return true 					
@@ -147,15 +163,15 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					if skipAuto then 
 						return true 
 					else
-						local isMelee 	= A.Unit("player"):IsMelee()
-						local range 	= A.Unit(unitID):GetRange()
+						local isMelee 	= A_Unit("player"):IsMelee()
+						local range 	= A_Unit(unitID):GetRange()
 						-- -10% damage reducement over 10 sec
 						local isMaxRank = self:GetAzeriteRank() >= 3
 						
 						if 	(isMelee and range >= 10) or 
-							(not isMelee and range >= 10 and range <= 25 and A.Unit("player"):GetCurrentSpeed() > 0) or 
-							(isMaxRank and (A.Unit("player"):IsTanking(unitID, 10) or (A.IsInPvP and A.Unit("player"):UseDeff()))) or 
-							(A.IsInPvP and A.Unit(unitID):IsPlayer() and A.Unit(unitID):IsEnemy() and A.Unit(unitID):HasBuffs("DamagePhysImun") > 0 and self:AbsentImun(unitID, "TotalImun"))							 
+							(not isMelee and range >= 10 and range <= 25 and A_Unit("player"):GetCurrentSpeed() > 0) or 
+							(isMaxRank and (A_Unit("player"):IsTanking(unitID, 10) or (A.IsInPvP and A_Unit("player"):UseDeff()))) or 
+							(A.IsInPvP and A_Unit(unitID):IsPlayer() and A_Unit(unitID):IsEnemy() and A_Unit(unitID):HasBuffs("DamagePhysImun") > 0 and self:AbsentImun(unitID, "TotalImun"))							 
 						then  
 							return true 
 						end 
@@ -172,11 +188,11 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					(
 						skipAuto or 
 						-- Note: Retribution, Protection, Elemental, Warlock, Mage, Balance, Shadow an exception for power check 
-						A.Unit("player"):HasSpec(Temp.MemoryofLucidDreamsSpecs) or
-						A.Unit("player"):PowerPercent() <= 50
+						A_Unit("player"):HasSpec(TempMemoryofLucidDreamsSpecs) or
+						A_Unit("player"):PowerPercent() <= 50
 					) 
 				then 
-					local isEnemy = A.Unit(unitID):IsEnemy()
+					local isEnemy = A_Unit(unitID):IsEnemy()
 					
 					if	(
 							not isEnemy and 
@@ -202,22 +218,22 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							(
 								-- HP lose per sec >= 15
-								A.Unit(unitID):GetDMG() * 100 / A.Unit(unitID):HealthMax() >= 15 or 
-								A.Unit(unitID):TimeToDieX(20) <= 6 or 
-								A.Unit(unitID):HealthPercent() < 70 or 
+								A_Unit(unitID):GetDMG() * 100 / A_Unit(unitID):HealthMax() >= 15 or 
+								A_Unit(unitID):TimeToDieX(20) <= 6 or 
+								A_Unit(unitID):HealthPercent() < 70 or 
 								(
 									A.IsInPvP and 
 									(
-										A.Unit(unitID):UseDeff() or 
+										A_Unit(unitID):UseDeff() or 
 										(
-											A.Unit(unitID):HasFlags() and 
-											A.Unit(unitID):GetRealTimeDMG() > 0 and 
-											A.Unit(unitID):IsFocused(nil, true) 
+											A_Unit(unitID):HasFlags() and 
+											A_Unit(unitID):GetRealTimeDMG() > 0 and 
+											A_Unit(unitID):IsFocused(nil, true) 
 										)
 									)
 								) 
 							) and 
-							A.Unit(unitID):HasBuffs("DeffBuffs", true) == 0
+							A_Unit(unitID):HasBuffs("DeffBuffs", true) == 0
 						)
 					) 
 				then
@@ -229,16 +245,16 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				unitID = "player"				
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 					
-					A.LossOfControl:IsMissed("SILENCE") and 
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and
 					Azerite:EssencePredictHealing(MajorSpellName, self.ID, unitID) and 
 					(
 						skipAuto or 
-						A.Unit(unitID):HealthPercent() < 70
+						A_Unit(unitID):HealthPercent() < 70
 					) and 
 					(
 						not A.IsInPvP or
-						not A.EnemyTeam("HEALER"):IsBreakAble(8)
+						not A_EnemyTeam("HEALER"):IsBreakAble(8)
 					)
 				then 
 					return true 
@@ -254,22 +270,22 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							(
 								-- HP lose per sec taken from physical attacks >= 25
-								A.Unit(unitID):GetDMG(3) * 100 / A.Unit(unitID):HealthMax() >= 25 or 
-								A.Unit(unitID):TimeToDieX(25) <= 4 or 
-								A.Unit(unitID):HealthPercent() < 30 or 
+								A_Unit(unitID):GetDMG(3) * 100 / A_Unit(unitID):HealthMax() >= 25 or 
+								A_Unit(unitID):TimeToDieX(25) <= 4 or 
+								A_Unit(unitID):HealthPercent() < 30 or 
 								(
 									A.IsInPvP and 
 									(
-										A.Unit(unitID):UseDeff() or 
+										A_Unit(unitID):UseDeff() or 
 										(
-											A.Unit(unitID):HasFlags() and 
-											A.Unit(unitID):GetRealTimeDMG() > 0 and 
-											A.Unit(unitID):IsFocused(nil, true) 
+											A_Unit(unitID):HasFlags() and 
+											A_Unit(unitID):GetRealTimeDMG() > 0 and 
+											A_Unit(unitID):IsFocused(nil, true) 
 										)
 									)
 								)
 							) and 
-							A.Unit(unitID):HasBuffs("DeffBuffs", true) == 0
+							A_Unit(unitID):HasBuffs("DeffBuffs", true) == 0
 						)
 					)
 				then 
@@ -286,30 +302,30 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							(
 								-- If can fully absorb 
-								A.Unit(unitID):GetDMG(4) * 10 >= self:GetSpellDescription()[1] or 
+								A_Unit(unitID):GetDMG(4) * 10 >= self:GetSpellDescription()[1] or 
 								-- If can die to 25% from magic attacks in less than 6 sec
-								A.Unit(unitID):TimeToDieMagicX(25) < 6 or 
+								A_Unit(unitID):TimeToDieMagicX(25) < 6 or 
 								-- HP lose per sec >= 30 from magic attacks
-								A.Unit(unitID):GetDMG(4) * 100 / A.Unit(unitID):HealthMax() >= 30 or 
+								A_Unit(unitID):GetDMG(4) * 100 / A_Unit(unitID):HealthMax() >= 30 or 
 								-- HP < 40 and real time incoming damage from mage attacks more than 10%
 								(
-									A.Unit(unitID):HealthPercent() < 40 and 
-									A.Unit(unitID):GetRealTimeDMG(4) > A.Unit(unitID):HealthMax() * 0.1
+									A_Unit(unitID):HealthPercent() < 40 and 
+									A_Unit(unitID):GetRealTimeDMG(4) > A_Unit(unitID):HealthMax() * 0.1
 								) or 
 								(
 									A.IsInPvP and
 									-- Stable real time incoming damage from mage attacks more than 20%
-									A.Unit(unitID):GetRealTimeDMG(4) > A.Unit(unitID):HealthMax() * 0.2 and 							
+									A_Unit(unitID):GetRealTimeDMG(4) > A_Unit(unitID):HealthMax() * 0.2 and 							
 									(
-										A.Unit(unitID):UseDeff() or 
+										A_Unit(unitID):UseDeff() or 
 										(
-											A.Unit(unitID):HasFlags() and 									
-											A.Unit(unitID):IsFocused(nil, true) 
+											A_Unit(unitID):HasFlags() and 									
+											A_Unit(unitID):IsFocused(nil, true) 
 										)
 									)
 								)
 							) and 
-							A.Unit(unitID):HasBuffs("DeffBuffsMagic", true) == 0						
+							A_Unit(unitID):HasBuffs("DeffBuffsMagic", true) == 0						
 						)
 					)
 				then
@@ -323,32 +339,32 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.LossOfControl:IsMissed("SILENCE") and 
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "ARCANE") == 0 and
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "ARCANE") == 0 and
 					(
 						(
 							skipAuto and 
-							A.MultiUnits:GetByRange(15, 1) >= 1						
+							A_MultiUnits:GetByRange(15, 1) >= 1						
 						) or 
 						(
 							not skipAuto and 
-							A.Unit("player"):IsTanking(unitID, 8) and 
-							A.Unit("player"):GetRealTimeDMG(3) > 0 and 
+							A_Unit("player"):IsTanking(unitID, 8) and 
+							A_Unit("player"):GetRealTimeDMG(3) > 0 and 
 							(
 								(
 									A.IsInPvP and 
 									( 
 										(
-											A.Unit(unitID):IsPlayer() and 
-											A.Unit(unitID):IsEnemy() and 
-											A.Unit(unitID):GetCurrentSpeed() >= 100 and 
-											self:AbsentImun(unitID, Temp.TotalAndFreedom, true)
+											A_Unit(unitID):IsPlayer() and 
+											A_Unit(unitID):IsEnemy() and 
+											A_Unit(unitID):GetCurrentSpeed() >= 100 and 
+											self:AbsentImun(unitID, TempTotalAndFreedom, true)
 										) or 
 										-- If someone enemy player bursting in 15 range with > 3 duration
-										A.EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", 15) > 3 
+										A_EnemyTeam("DAMAGER"):GetBuffs("DamageBuffs", 15) > 3 
 									)
 								) or 
-								A.MultiUnits:GetByRange(15, 3) >= 3
+								A_MultiUnits:GetByRange(15, 3) >= 3
 							)
 						)
 					)
@@ -364,10 +380,10 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if  self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):InRange() and  -- It has 100 yards range but I think it's not truth and 40 yards is enough 
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
-					not A.Unit(unitID):IsEnemy() and 
+					A_Unit(unitID):InRange() and  -- It has 100 yards range but I think it's not truth and 40 yards is enough 
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not A_Unit(unitID):IsEnemy() and 
 					self:AbsentImun(unitID) and 
 					Azerite:EssencePredictHealing(MajorSpellName, self.ID, unitID)					
 				then 
@@ -381,15 +397,15 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if  self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):IsPlayer() and 
-					A.Unit(unitID):InRange() and
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "ARCANE") == 0 and
-					not A.Unit(unitID):IsEnemy() and 
+					A_Unit(unitID):IsPlayer() and 
+					A_Unit(unitID):InRange() and
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "ARCANE") == 0 and
+					not A_Unit(unitID):IsEnemy() and 
 					self:AbsentImun(unitID, "TotalImun") and 
 					(
 						skipAuto or 
-						(A.Unit(unitID):TimeToDie() <= 6 or A.Unit(unitID):GetDMG() * 4 >= self:GetSpellDescription()[1])
+						(A_Unit(unitID):TimeToDie() <= 6 or A_Unit(unitID):GetDMG() * 4 >= self:GetSpellDescription()[1])
 					)
 				then 
 					return true 
@@ -402,18 +418,18 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if  self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):IsPlayer() and 
-					A.Unit(unitID):InRange() and 
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "HOLY") == 0 and
-					A.Unit("player"):GetCurrentSpeed() == 0 and 
-					not A.Unit(unitID):IsEnemy() and 
+					A_Unit(unitID):IsPlayer() and 
+					A_Unit(unitID):InRange() and 
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "HOLY") == 0 and
+					A_Unit("player"):GetCurrentSpeed() == 0 and 
+					not A_Unit(unitID):IsEnemy() and 
 					self:AbsentImun(unitID) and 					
 					(
 						skipAuto or 
 						(
-							A.HealingEngine.GetHealthFrequency(3) > 30 and 
-							A.Unit(unitID):TimeToDie() > 8 
+							A_HealingEngine.GetHealthFrequency(3) > 30 and 
+							A_Unit(unitID):TimeToDie() > 8 
 						)
 					)
 				then 
@@ -427,19 +443,19 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):InRange() and 
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
-					not A.Unit(unitID):IsEnemy() and
+					A_Unit(unitID):InRange() and 
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not A_Unit(unitID):IsEnemy() and
 					self:AbsentImun(unitID) and 
 					(
 						skipAuto or 
 						(
-							A.Unit("player"):HasBuffs("BurstHaste") > 0 or 
+							A_Unit("player"):HasBuffs("BurstHaste") > 0 or 
 							(
-								A.Unit(unitID):TimeToDie() > 8 and 
-								A.Unit("player"):PowerPercent() >= 20 and 
-								A.Unit(unitID):GetDMG() * 1.2 > A.Unit("player"):GetHPS()
+								A_Unit(unitID):TimeToDie() > 8 and 
+								A_Unit("player"):PowerPercent() >= 20 and 
+								A_Unit(unitID):GetDMG() * 1.2 > A_Unit("player"):GetHPS()
 							)
 						)
 					)
@@ -454,10 +470,10 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):InRange() and 				
-					A.LossOfControl:IsMissed("SILENCE") and 
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
-					not A.Unit(unitID):IsEnemy() and 
+					A_Unit(unitID):InRange() and 				
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and
+					not A_Unit(unitID):IsEnemy() and 
 					self:AbsentImun(unitID) and 
 					Azerite:EssencePredictHealing(MajorSpellName, self.ID, unitID)
 				then 
@@ -471,22 +487,23 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					unitID = "target"
 				end 
 				
-				if 	A.Unit("player"):CombatTime() > 2 and
+				if 	A_Unit("player"):CombatTime() > 2 and
 					(
 						self:GetAzeriteRank() >= 3 or 
-						A.Unit("player"):IsStayingTime() >= 1
+						A_Unit("player"):IsStayingTime() >= 1
 					) and 
 					self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.LossOfControl:IsMissed("SILENCE") and 
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
-					A.Unit(unitID):IsEnemy() and
-					A.Unit(unitID):GetRange() <= 10 and 
-					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					A_Unit(unitID):IsEnemy() and
+					A_Unit(unitID):GetRange() <= 10 and 
+					A_MultiUnits:GetByRange(10, 3) >= 3 and
+					self:AbsentImun(unitID, TempTotalAndMagic) and 
 					(
 						not A.IsInPvP or 
-						not A.EnemyTeam("HEALER"):IsBreakAble(10)
+						not A_EnemyTeam("HEALER"):IsBreakAble(10)
 					) and 
-					not A.Unit(unitID):IsTotem() 
+					not A_Unit(unitID):IsTotem() 
 				then 
 					return true 
 				end 
@@ -498,19 +515,19 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):IsEnemy() and 
-					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
-					not A.Unit(unitID):IsTotem() and 
+					A_Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID, TempTotalAndMagic) and 
+					not A_Unit(unitID):IsTotem() and 
 					(
 						(
-							A.Unit("player"):IsMelee() and 
-							A.Unit(unitID):GetRange() <= 10 and 
-							A.LossOfControl:IsMissed("DISARM")
+							A_Unit("player"):IsMelee() and 
+							A_Unit(unitID):GetRange() <= 10 and 
+							A_LoC:IsMissed("DISARM")
 						) or 
 						(
-							not A.Unit("player"):IsMelee() and 
-							A.Unit(unitID):GetRange() <= 40 and 
-							A.LossOfControl:IsMissed(Temp.SilenceAndDisarm)
+							not A_Unit("player"):IsMelee() and 
+							A_Unit(unitID):GetRange() <= 40 and 
+							A_LoC:IsMissed(TempSilenceAndDisarm)
 						)
 					)  
 				then 
@@ -524,24 +541,24 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
-					A.Unit(unitID):IsEnemy() and 
-					A.Unit(unitID):GetRange() <= 12 and 
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
+					A_Unit(unitID):IsEnemy() and 
+					A_Unit(unitID):GetRange() <= 12 and 
 					self:AbsentImun(unitID, TotalAndMagic) and 
-					not A.Unit(unitID):IsTotem() and 
+					not A_Unit(unitID):IsTotem() and 
 					(
-						not A.Unit("player"):IsMelee() or 
-						A.LossOfControl:IsMissed("DISARM")
+						not A_Unit("player"):IsMelee() or 
+						A_LoC:IsMissed("DISARM")
 					) and 
 					(
 						not A.IsInPvP or 
-						not A.EnemyTeam():IsBreakAble(12)
+						not A_EnemyTeam():IsBreakAble(12)
 					) and 
 					(
 						skipAuto or 
 						A.IsInPvP or
-						A.MultiUnits:GetByRange(12, 2) >= 2
+						A_MultiUnits:GetByRange(12, 2) >= 2
 					)
 				then 
 					return true  
@@ -554,33 +571,33 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 
-					A.Unit(unitID):IsEnemy() and 
-					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
-					not A.Unit(unitID):IsTotem()
+					A_Unit(unitID):IsEnemy() and 
+					self:AbsentImun(unitID, TempTotalAndMagic) and 
+					not A_Unit(unitID):IsTotem()
 				then 
-					local isMelee = A.Unit("player"):IsMelee()
+					local isMelee = A_Unit("player"):IsMelee()
 					local n = A.Zone == "arena" and 2 or 4
 					
 					if	(
 							isMelee and 
 							(
 								not A.IsInPvP or 
-								not A.EnemyTeam("HEALER"):IsBreakAble(8)
+								not A_EnemyTeam("HEALER"):IsBreakAble(8)
 							) and 
 							(
 								skipAuto or 
-								A.MultiUnits:GetByRange(8, n) >= n
+								A_MultiUnits:GetByRange(8, n) >= n
 							)
 						) or 
 						(
 							not isMelee and 
 							(
 								not A.IsInPvP or 
-								not A.EnemyTeam("HEALER"):IsBreakAble(40)
+								not A_EnemyTeam("HEALER"):IsBreakAble(40)
 							) and 
 							(
 								skipAuto or 
-								A.MultiUnits:GetByRangeInCombat(40, n + 1) >= n + 1
+								A_MultiUnits:GetByRangeInCombat(40, n + 1) >= n + 1
 							)
 						)
 					then 
@@ -595,11 +612,11 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 				
 				if 	self:IsReady(unitID, nil, nil, skipShouldStop) and -- no second arg as 'true' coz it's checking range 
-					A.Unit(unitID):IsEnemy() and 
-					A.LossOfControl:IsMissed("SILENCE") and
-					A.LossOfControl:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and
-					self:AbsentImun(unitID, Temp.TotalAndMagic) and 
-					not A.Unit(unitID):IsTotem()
+					A_Unit(unitID):IsEnemy() and 
+					A_LoC:IsMissed("SILENCE") and
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and
+					self:AbsentImun(unitID, TempTotalAndMagic) and 
+					not A_Unit(unitID):IsTotem()
 				then 
 					return true 
 				end 

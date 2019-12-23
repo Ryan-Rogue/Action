@@ -25,18 +25,19 @@ Action[PLAYERSPEC] = {			-- PLAYERSPEC is Constance (example: ACTION_CONST_MONK_
 	Key = Action.Create({ 		-- Key is name of the action which will be used in APL (Action Priority List)
 	--[[@usage: attributes (table)
 		Required: 
-			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth (TrinketBySlot is only in CORE!)
-			ID (@number) 	- spellID | itemID
-			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor, this will set color which stored in A.Data.C[Color] or here can be own hex 
+			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth|SwapEquip (TrinketBySlot is only in CORE!)
+			ID (@number) 	- spellID | itemID | textureID (textureID only for Type "SwapEquip")
+			Color (@string) - only if type is Spell|SpellSingleColor|Item|ItemSingleColor|SwapEquip, this will set color which stored in A.Data.C[Color] or here can be own hex 
 	 	Optional: 
 			Desc (@string) uses in UI near Icon tab (usually to describe relative action like Penance can be for heal and for dps and it's different actions but with same name)
 			QueueForbidden (@boolean) uses to preset for action fixed queue valid 
 			BlockForbidden (@boolean) uses to preset for action fixed block valid 
-			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth
+			Texture (@number) valid only if Type is Spell|Item|Potion|Trinket|HeartOfAzeroth|SwapEquip
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
 			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth
 			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
+			Equip1, Equip2 (@function) between which equipments do swap, used in :IsExists method, only if Type is SwapEquip
 	]]
 	}),
 }
@@ -289,7 +290,8 @@ For "Shown Main":
 2. Right click on "Condition Icon" make checked "Hide Always"
 3. At the bottom you will see "Conditions" tab, go there and click "+" to add condition "LUA"
 4. Write next code: 
-Action.Rotation(thisobj)
+Action.Rotation(thisobj) -- this is slower than method below 
+Rotation(thisobj)		 -- this is faster method than above since TMW lua has setfenv and this function is linked as pointer to Action.Rotation e.g. Env.Rotation == Action.Rotation but works much faster 
 5. Click and drag itself "Condition Icon" frame to "Shown Main" group and select from opened menu "Add to meta"
 6. Make sure if you moving "Condition Icon" #1 you additing it to "Meta Icon" #1 also in "Shown Main" 
 7. Do same for each "Condition Icon"
