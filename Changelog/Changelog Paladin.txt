@@ -1,3 +1,8 @@
+[Paladin v19]
+Added toggles for MasterAura and LayonHands
+Added very light optimization
+Fixed stopcast texture
+
 [Paladin v18]
 Holy				- Fixed self select to dispel by HealingEngine 
 
