@@ -1,3 +1,6 @@
+[Priest v10]
+Fixed stopcast texture
+
 [Priest v9]
 Holy Disc Shadow 	- Fixed lags and memory leak 
 Holy Disc 		 	- Fixed old ID for line of sight and replaced but localized message 

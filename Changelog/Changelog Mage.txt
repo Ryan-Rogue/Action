@@ -1,3 +1,6 @@
+[Mage v26]
+Fixed stopcast texture
+
 [Mage v25]
 Fire 		- PvE very light rotation changes suggested by @stylli
 

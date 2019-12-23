@@ -1,3 +1,7 @@
+[Demon Hunter v13]
+Fixed stopcast texture
+Fixed Potion nil able buff
+
 [Demon Hunter v12]
 Vengeance: Updated Metamorphosis HP limits (8.2 gives us +50% up from +30%)
 Added 8.2 Heart of Azeroth
