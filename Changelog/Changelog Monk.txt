@@ -1,3 +1,9 @@
+[Monk v10]
+Optimized code for more faster performance
+Added RU sub titles localization for multi dropdown
+BM			- Fixed :1002 attempt to index field 'LOC' (a nil value)
+MW 			- Added tracking range of statue by @focus 
+
 [Monk v9]
 MW			- Fixed :51 attempt to perform arithmetic on local 'RenewingMist' (a nil value)
 
