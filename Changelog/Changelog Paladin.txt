@@ -1,3 +1,6 @@
+[Paladin v20]
+Added Avenging Wrath buff check before use spell if another buff was recently applied (caused bug with Visions of Perfection)
+
 [Paladin v19]
 Added toggles for MasterAura and LayonHands
 Added very light optimization
