@@ -6,7 +6,6 @@ local strlowerCache  		= TMW.strlowerCache
 local A   					= Action	
 local Listener				= A.Listener
 local toNum 				= A.toNum
-local TimerSetRefreshAble	= A.TimerSetRefreshAble
 local UnitCooldown			= A.UnitCooldown
 local CombatTracker			= A.CombatTracker
 local Unit					= A.Unit 
@@ -133,6 +132,7 @@ local ACTION_CONST_TRINKET1											= _G.ACTION_CONST_TRINKET1
 local ACTION_CONST_TRINKET2											= _G.ACTION_CONST_TRINKET2
 local ACTION_CONST_WARRIOR_FURY										= _G.ACTION_CONST_WARRIOR_FURY	  
 	  	  
+local tinsert 				= table.insert	  
 local tsort 				= table.sort	  
 local huge 					= math.huge  
 local wipe 					= _G.wipe	
@@ -332,65 +332,42 @@ local str_comma			= ","
 local str_point			= "."
 local pattern_gmatch 	= "%f[%d]%d[.,%d]*%f[%D]"
 local pattern_gsubspace	= "%s"
-local descriptioncache = setmetatable({}, { __index = function(t, v)
+local descriptioncache 	= setmetatable({}, { __index = function(t, v)
+	-- Stores formated string of description
 	t[v] = strgsub(strgsub(v, pattern_gsubspace, str_null), str_comma, str_point)
 	return t[v]
 end })
+local descriptiontemp	= {
+	-- Stores temprorary data 
+}
 function A.GetSpellDescription(self)
 	-- @usage A:GetSpellDescription() or A.GetSpellDescription(18)
 	-- @return table array like where first index is highest number of the description
-	local text
-	if type(self) == "table" then 
-		text = GetSpellDescription(self.ID)
-		if text then 
-			-- The way to re-use table anyway is found now 
-			if not self.tempDescCache then 
-				self.tempDescCache = {}
+	local spellID = type(self) == "table" and self.ID or self
+	local text = GetSpellDescription(spellID)
+	
+	if text then 
+		-- The way to re-use table anyway is found now 
+		if not descriptiontemp[spellID] then 
+			descriptiontemp[spellID] = {}
+		else 
+			wipe(descriptiontemp[spellID])
+		end 
+		
+		for value in strgmatch(descriptioncache[text], pattern_gmatch) do 
+			if GameLocale == "frFR" and strlen(value) > 3 then -- French users have wierd syntax of floating dots
+				tinsert(descriptiontemp[spellID], toNum[strgsub(value, str_point, str_null)])
 			else 
-				wipe(self.tempDescCache)
+				tinsert(descriptiontemp[spellID], toNum[value])
 			end 
-			
-			for value in strgmatch(descriptioncache[text], pattern_gmatch) do 
-				if GameLocale == "frFR" and strlen(value) > 3 then -- French users have wierd syntax of floating dots
-					self.tempDescCache[#self.tempDescCache + 1] = toNum[strgsub(value, str_point, str_null)]
-				else 
-					self.tempDescCache[#self.tempDescCache + 1] = toNum[value]
-				end 
-			end
-			
-			if #self.tempDescCache > 1 then
-				tsort(self.tempDescCache, sortByHighest)
-			end 
+		end
+		
+		if #descriptiontemp[spellID] > 1 then
+			tsort(descriptiontemp[spellID], sortByHighest)
+		end 
 
-			return self.tempDescCache
-		end
-	else 
-		text = GetSpellDescription(self)
-		if text then 
-			-- That will be erased in ~30 seconds 
-			local numbers = {}
-			local eraseGC
-			function eraseGC()
-				numbers = nil 
-				eraseGC = nil
-			end 
-			
-			for value in strgmatch(descriptioncache[text], pattern_gmatch) do 
-				if GameLocale == "frFR" and strlen(value) > 3 then -- French users have wierd syntax of floating dots
-					numbers[#numbers + 1] = toNum[strgsub(value, str_point, str_null)]
-				else 
-					numbers[#numbers + 1] = toNum[value]
-				end 
-			end
-			
-			if #numbers > 1 then
-				tsort(numbers, sortByHighest)
-			end 
-			
-			TimerSetRefreshAble(numbers, 30, eraseGC) 
-			return numbers
-		end
-	end 
+		return descriptiontemp[spellID]
+	end
 	
 	return empty2 
 end
@@ -1418,8 +1395,6 @@ function A.Create(attributes)
 		s.isTalent = attributes.isTalent
 		-- Stance 
 		s.isStance = attributes.isStance
-		-- For GetSpellDescription
-		s.tempDescCache = {}
 	elseif attributes.Type == "SpellSingleColor" then 
 		s = setmetatable(s, {__index = A})	
 		s.Type = "Spell"
@@ -1436,8 +1411,6 @@ function A.Create(attributes)
 		s.isTalent = attributes.isTalent
 		-- Stance 
 		s.isStance = attributes.isStance
-		-- For GetSpellDescription
-		s.tempDescCache = {}
 	elseif attributes.Type == "Trinket" or attributes.Type == "Potion" or attributes.Type == "Item" then 
 		s = setmetatable(s, {
 				__index = function(self, key)

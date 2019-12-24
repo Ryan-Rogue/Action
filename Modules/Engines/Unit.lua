@@ -6,7 +6,6 @@ local strlowerCache  						= TMW.strlowerCache
 local A   									= Action	
 local Listener								= A.Listener
 local insertMulti							= A.TableInsertMulti
-local toStr 								= A.toStr
 local toNum 								= A.toNum
 local strElemBuilder						= A.strElemBuilder
 local InstanceInfo							= A.InstanceInfo
