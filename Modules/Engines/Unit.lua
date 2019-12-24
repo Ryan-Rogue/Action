@@ -1647,6 +1647,16 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return UnitExists(unitID)
 	end, "UnitID"),
+	IsNameplate								= Cache:Pass(function(self)  
+		-- @return boolean
+		-- Note: Only enemy plates
+		local unitID 						= self.UnitID
+		for nameplateUnit in pairs(ActiveUnitPlates) do 
+			if UnitIsUnit(unitID, nameplateUnit) then 
+				return true 
+			end 
+		end 
+	end, "UnitID"),
 	IsConnected								= Cache:Pass(function(self)  
 		-- @return boolean
 		local unitID 						= self.UnitID
