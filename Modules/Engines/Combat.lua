@@ -140,6 +140,9 @@ local CombatTracker 							= {
 			}
 		else 
 			self.Data[GUID].lastSeen 		= timestamp 
+			if self.Data[GUID].combat_time == 0 then 
+				self.Data[GUID].combat_time = timestamp
+			end
 		end	
 	end,
 	CleanTableByTime						= function(t, time)
@@ -900,6 +903,11 @@ Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_ENABLED", 				function
 	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A_Player:IsStealthed() then 
 		wipe(UnitTrackerData)
 		wipe(CombatTrackerData)
+	else 
+		local GUID = GetGUID("player")
+		if CombatTrackerData[GUID] then 
+			CombatTrackerData[GUID].combat_time = 0
+		end 
 	end 
 end)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				function()
@@ -950,8 +958,12 @@ A.CombatTracker									= {
 		local unit = unitID or "player"
 		local GUID = GetGUID(unit)
 		
-		if CombatTrackerData[GUID] and ((UnitIsUnit(unit, "player") and InCombatLockdown()) or UnitAffectingCombat(unit)) then   
-			return TMW.time - CombatTrackerData[GUID].combat_time, GUID             
+		if CombatTrackerData[GUID] and CombatTrackerData[GUID].combat_time ~= 0 then 
+			if (UnitIsUnit(unit, "player") and InCombatLockdown()) or UnitAffectingCombat(unit) then   
+				return TMW.time - CombatTrackerData[GUID].combat_time, GUID   
+			else
+				CombatTrackerData[GUID].combat_time = 0
+			end 
 		end		
 		return 0, GUID		
 	end, 

@@ -45,6 +45,11 @@ local ActiveUnitPlates						= MultiUnits:GetActiveUnitPlates()
 local _G, setmetatable, unpack, select, next, type, pairs, ipairs, math, error =
 	  _G, setmetatable, unpack, select, next, type, pairs, ipairs, math, error
 	  
+local ACTION_CONST_MAX_BOSS_FRAMES			= _G.ACTION_CONST_MAX_BOSS_FRAMES
+local ACTION_CONST_CACHE_MEM_DRIVE			= _G.ACTION_CONST_CACHE_MEM_DRIVE
+local ACTION_CONST_CACHE_DISABLE			= _G.ACTION_CONST_CACHE_DISABLE
+local ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT	= _G.ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT	  
+	  
 local huge 									= math.huge	  
 local math_floor							= math.floor
 local math_random							= math.random
