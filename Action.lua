@@ -1,5 +1,5 @@
 --- 
-local DateTime 								= "23.12.2019"
+local DateTime 								= "24.12.2019"
 ---
 local TMW 									= TMW
 local strlowerCache  						= TMW.strlowerCache
@@ -5602,9 +5602,9 @@ end
 
 function Action.GetToggle(n, toggle)
 	-- @usage: Action.GetToggle(tab.name (@number), key (@string ActionDB))
-	if not TMWdb.profile.ActionDB or not TMWdb.global.ActionDB then 		
+	if not TMWdb then 		
 		if toggle == "FPS" then
-			return TMWdb.global.Interval
+			return 0.05 -- TMWdb.global.Interval
 		end 
 		if toggle == "DisableMinimap" or toggle == "DisableRotationDisplay" or toggle == "DisableClassPortraits" then 
 			return true
@@ -9297,6 +9297,11 @@ Action:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_SPECIALIZATION_CHANG
 Action:RegisterEvent("PLAYER_LOGIN", 				"PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("PLAYER_ENTERING_WORLD", 		"PLAYER_SPECIALIZATION_CHANGED")
 Action:RegisterEvent("UPDATE_INSTANCE_INFO", 		"PLAYER_SPECIALIZATION_CHANGED")
+hooksecurefunc(TMW, "InitializeDatabase", function()
+	if not TMWdb then 
+		TMWdb = TMW.db
+	end 
+end)
 
 local function OnInitialize()	
 	-- This function calls only if TMW finished EVERYTHING load

@@ -8,8 +8,12 @@ local strlowerCache  		= TMW.strlowerCache
 
 local A   					= Action
 local Listener				= A.Listener
+local GetToggle				= A.GetToggle
 local toStr 				= A.toStr
 local toNum 				= A.toNum
+local Print 				= A.Print
+
+local ActionDataColor		= A.Data.C
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -29,7 +33,13 @@ end)
 local _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message = 
 	  _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message
 	  
+local ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE	= _G.ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE
+local ACTION_CONST_TMW_DEFAULT_STATE_HIDE 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_HIDE	  
+local ACTION_CONST_TMW_DEFAULT_STATE_SHOW 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_SHOW	  
+	  
 local strfind				= _G.strfind	  
+local strmatch				= _G.strmatch
+local UIParent				= _G.UIParent	  
 	  
 local CreateFrame, GetCVar, SetCVar =
 	  CreateFrame, GetCVar, SetCVar
@@ -230,9 +240,9 @@ if DogTag then
 	DogTag:AddTag("TMW", "ActionBurst", {
         code = function()
 			if A.IsInitialized then 
-				local Toggle = A.GetToggle(1, "Burst") or ""
+				local Toggle = GetToggle(1, "Burst") or ""
 				Toggle = Toggle and Toggle:upper()
-				return Toggle == "EVERYTHING" and ("|c" .. A.Data.C["GREEN"] .. "EVERY|r") or Toggle == "OFF" and ("|c" .. removeLastChar(A.Data.C["RED"]) .. Toggle .. "|r") or ("|c" .. A.Data.C["GREEN"] .. Toggle .. "|r")
+				return Toggle == "EVERYTHING" and ("|c" .. ActionDataColor["GREEN"] .. "EVERY|r") or Toggle == "OFF" and ("|c" .. removeLastChar(ActionDataColor["RED"]) .. Toggle .. "|r") or ("|c" .. ActionDataColor["GREEN"] .. Toggle .. "|r")
 			else 
 				return ""
 			end 
@@ -247,7 +257,7 @@ if DogTag then
 	DogTag:AddTag("TMW", "ActionAoE", {
         code = function()
 			if A.IsInitialized then 
-				return A.GetToggle(2, "AoE") and ("|c" .. A.Data.C["GREEN"] .. "AoE|r") or "|c" .. removeLastChar(A.Data.C["RED"]) .. "AoE|r"
+				return GetToggle(2, "AoE") and ("|c" .. ActionDataColor["GREEN"] .. "AoE|r") or "|c" .. removeLastChar(ActionDataColor["RED"]) .. "AoE|r"
 			else 
 				return ""
 			end 
@@ -262,7 +272,7 @@ if DogTag then
 	-- Taste's 
     DogTag:AddTag("TMW", "ActionModeCD", {
         code = function()            
-			if A.IsInitialized and A.GetToggle(1, "Burst") ~= "Off" then
+			if A.IsInitialized and GetToggle(1, "Burst") ~= "Off" then
 			    return "|cff00ff00CD|r"
 			else 
 				return "|cFFFF0000CD|r"
@@ -276,7 +286,7 @@ if DogTag then
     })
 	DogTag:AddTag("TMW", "ActionModeAoE", {
         code = function()            
-			if A.IsInitialized and A.GetToggle(2, "AoE") then
+			if A.IsInitialized and GetToggle(2, "AoE") then
 			    return "|cff00ff00AoE|r"
 			else 
 				return "|cFFFF0000AoE|r"
@@ -411,21 +421,21 @@ local function UpdateCVAR()
     if GetCVar("Contrast") ~= "50" then 
 		SetCVar("Contrast", 50)
 		if isCheckedOnce then 
-			A.Print("Contrast should be 50")		
+			Print("Contrast should be 50")		
 		end
 	end
 	
     if GetCVar("Brightness") ~= "50" then 
 		SetCVar("Brightness", 50) 
 		if isCheckedOnce then 
-			A.Print("Brightness should be 50")			
+			Print("Brightness should be 50")			
 		end 
 	end
 	
     if GetCVar("Gamma") ~= "1.000000" then 
 		SetCVar("Gamma", "1.000000") 
 		if isCheckedOnce then 
-			A.Print("Gamma should be 1")	
+			Print("Gamma should be 1")	
 		end 
 	end
 	
@@ -447,7 +457,7 @@ local function UpdateCVAR()
 	local AAM = toNum[GetCVar("ffxAntiAliasingMode")]
     if AAM > 2 and AAM ~= 6 then 		
 		SetCVar("ffxAntiAliasingMode", 0) 
-		A.Print("You can't set higher AntiAliasing mode than FXAA or not equal to MSAA 8x")
+		Print("You can't set higher AntiAliasing mode than FXAA or not equal to MSAA 8x")
 	end
 	]]
 	
@@ -459,7 +469,7 @@ local function UpdateCVAR()
     if nameplateMaxDistance and toNum[nameplateMaxDistance] < ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
 		SetCVar("nameplateMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
 		if isCheckedOnce then 
-			A.Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+			Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
 		end 
 	end		
 	
@@ -471,7 +481,7 @@ local function UpdateCVAR()
     if GetCVar("nameplateShowEnemies") ~= "1" then
         SetCVar("nameplateShowEnemies", 1) 
 		if isCheckedOnce then 
-			A.Print("Enemy nameplates should be enabled")
+			Print("Enemy nameplates should be enabled")
 		end 
     end
 	

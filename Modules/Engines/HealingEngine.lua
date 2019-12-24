@@ -539,13 +539,13 @@ local function OnUpdate(MODE, useActualHP)
         -- Sort by Percent or Actual
         if not ActualHP then
 			for _, v in pairs(HealingEngineMembers) do 
-				if type(v) == "table" and #v > 1 then 
+				if type(v) == "table" and #v > 1 and v[1].HP then 
 					tsort(v, sort_HP)
 				end 
 			end 		
         elseif ActualHP then
 			for _, v in pairs(HealingEngineMembers) do 
-				if type(v) == "table" and #v > 1 then 
+				if type(v) == "table" and #v > 1 and v[1].AHP then 
 					tsort(v, sort_AHP)
 				end 
 			end 		
