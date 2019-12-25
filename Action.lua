@@ -3921,6 +3921,14 @@ local function GetActionTableByKey(key)
 		return Action[key]
 	end 
 end 
+hooksecurefunc(StdUi, "FrameTooltip", function(self, owner)
+	-- StdUi v3 added a lot of bugs with tooltips, this code supposed to fix them 
+	owner.stdUiTooltip:SetParent(UIParent)
+	owner.stdUiTooltip:SetFrameStrata("TOOLTIP")
+	owner.stdUiTooltip:SetClampedToScreen(true)
+	local _, oldHeight = owner.stdUiTooltip.text:GetFont()
+	owner.stdUiTooltip.text:SetFontSize(oldHeight * 1.2)
+end)
 
 -------------------------------------------------------------------------------
 -- UI: LUA - Container
@@ -3953,7 +3961,7 @@ local function RunLua(luaCode, thisunit)
 end
 local function CreateLuaEditor(parent, title, w, h, editTT)
 	-- @return frame which is simular between WeakAura and TellMeWhen (if IndentationLib loaded, otherwise without effects like colors and tabulations)
-	local LuaWindow = StdUi:Window(parent, title, w, h)
+	local LuaWindow = StdUi:Window(parent, w, h, title)
 	LuaWindow:SetShown(false)
 	LuaWindow:SetFrameStrata("DIALOG")
 	LuaWindow:SetMovable(false)
@@ -3967,7 +3975,10 @@ local function CreateLuaEditor(parent, title, w, h, editTT)
 	LuaWindow.LineNumber:SetFontSize(14)
 	StdUi:GlueTop(LuaWindow.LineNumber, LuaWindow, 0, -30)
 	
-	LuaWindow.EditBox = StdUi:MultiLineBox(LuaWindow, 100, 5, "")
+	local widget = StdUi:MultiLineBox(LuaWindow, 100, 5, "") 
+	widget.editBox.stdUi = StdUi
+	widget.scrollFrame.stdUi = StdUi
+	LuaWindow.EditBox = widget.editBox
 	LuaWindow.EditBox:SetText("")
 	LuaWindow.EditBox.panel:SetBackdropColor(0, 0, 0, 1)
 	StdUi:GlueAcross(LuaWindow.EditBox.panel, LuaWindow, 5, -50, -5, 5)
@@ -4045,7 +4056,7 @@ local function CreateLuaEditor(parent, title, w, h, editTT)
 	end)
 		
 	-- Update Line Number 
-	LuaWindow.EditBox:SetScript("OnCursorChanged", function()
+	LuaWindow.EditBox:HookScript("OnCursorChanged", function() 
 		local cursorPosition = LuaWindow.EditBox:GetCursorPosition()
 		local next = -1
 		local line = 0
@@ -5591,7 +5602,7 @@ function Action.SetToggle(arg, custom)
 							if toggle == "HE_Toggle" then 
 								child:SetText(L["TAB"][1][bool])
 							else 
-								child:SetText(bool)
+								child:SetText(child:FindValueText(bool))
 							end
 						end 
 					elseif child.Identify.Type == "Slider" then							
@@ -5677,7 +5688,7 @@ function Action.ToggleMainUI()
 			Action.MainUI.PDateTime:SetText(TMWdb:GetCurrentProfile() .. "\n" .. (Action.Data.ProfileUI.DateTime or ""))			
 		end 
 	else 
-		Action.MainUI = StdUi:Window(UIParent, "The Action", 540, 640)	
+		Action.MainUI = StdUi:Window(UIParent, 540, 640, "The Action")
 		Action.MainUI.titlePanel.label:SetFontSize(20)
 		Action.MainUI.default_w = Action.MainUI:GetWidth()
 		Action.MainUI.default_h = Action.MainUI:GetHeight()
@@ -5729,7 +5740,7 @@ function Action.ToggleMainUI()
 			Action.MainUI.ResetQuestion:SetShown(not Action.MainUI.ResetQuestion:IsShown())
 		end)
 		
-		Action.MainUI.ResetQuestion = StdUi:Window(Action.MainUI, L["TAB"]["RESETQUESTION"], 350, 250)
+		Action.MainUI.ResetQuestion = StdUi:Window(Action.MainUI, 350, 250, L["TAB"]["RESETQUESTION"])
 		Action.MainUI.ResetQuestion:SetPoint("CENTER")
 		Action.MainUI.ResetQuestion:SetFrameStrata("TOOLTIP")
 		Action.MainUI.ResetQuestion:SetFrameLevel(50)
@@ -5980,7 +5991,7 @@ function Action.ToggleMainUI()
 			end)
 			StdUi:FrameTooltip(PvEPvPToggle, L["TAB"][tab.name]["PVEPVPTOGGLETOOLTIP"], nil, "TOPRIGHT", true)
 			PvEPvPToggle.FontStringTitle = StdUi:FontString(PvEPvPToggle, L["TAB"][tab.name]["PVEPVPTOGGLE"])
-			StdUi:GlueAbove(PvEPvPToggle.FontStringTitle, PvEPvPToggle)
+			StdUi:GlueAbove(PvEPvPToggle.FontStringTitle, PvEPvPToggle)					
 			
 			local PvEPvPresetbutton = StdUi:SquareButton(anchor, PvEPvPToggle:GetHeight(), PvEPvPToggle:GetHeight(), "DELETE")
 			PvEPvPresetbutton:SetScript('OnClick', function()
@@ -5989,7 +6000,7 @@ function Action.ToggleMainUI()
 				Action.Print(L["RESETED"] .. ": " .. (Action.IsInPvP and "PvP" or "PvE"))
 				TMW:Fire("TMW_ACTION_MODE_CHANGED")
 			end)
-			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)			
+			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)	
 			StdUi:GlueAfter(PvEPvPresetbutton, PvEPvPToggle, 0, 0)
 
 			local InterfaceLanguages = {
@@ -6571,14 +6582,14 @@ function Action.ToggleMainUI()
 			StdUi:FrameTooltip(HideOnScreenshot, L["TAB"][tab.name]["HIDEONSCREENSHOTTOOLTIP"], nil, "BOTTOMLEFT", true)	
 			
 			local GlobalOverlay = anchor:AddRow()					
-			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5 })			
-			GlobalOverlay:AddElement(LayoutSpace(anchor), { column = 1 })			
+			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5.35 })			
+			GlobalOverlay:AddElement(LayoutSpace(anchor), { column = 0.65 })			
 			GlobalOverlay:AddElement(anchor.InterfaceLanguage, { column = 6 })			
 			anchor:AddRow({ margin = { top = 10 } }):AddElements(ReTarget, Trinkets, { column = "even" })			
 			anchor:AddRow():AddElements(ReFocus, Burst, { column = "even" })			
 			local SpecialRow = anchor:AddRow()
-			SpecialRow:AddElement(FPS, { column = 5.8 })
-			SpecialRow:AddElement(LayoutSpace(anchor), { column = 0.2 })
+			SpecialRow:AddElement(FPS, { column = 5.9 })
+			SpecialRow:AddElement(LayoutSpace(anchor), { column = 0.1 })
 			SpecialRow:AddElement(HealthStone, { column = 6 })
 			anchor:AddRow({ margin = { top = 10 } }):AddElements(AutoTarget, LosSystem, { column = "even" })
 			anchor:AddRow({ margin = { top = -5 } }):AddElements(Potion, DBMFrame, { column = "even" })			
@@ -6612,7 +6623,7 @@ function Action.ToggleMainUI()
 				end
 			end			
 		
-			anchor:DoLayout()				
+			anchor:DoLayout()		
 		end 
 		
 		if tab.name == 2 then 	
@@ -9732,9 +9743,8 @@ function Action:OnInitialize()
 		if Action.MainUI and Action.MainUI:IsShown() then 
 			Action.ToggleMainUI()
 		end
-		
-		Action.IsInitialized = nil		
-		if ActionHasRunningDB then 			
+		Action.IsInitialized = nil
+		if ActionHasRunningDB then 
 			-- SpellLevel
 			SpellLevel:Reset(true)
 			-- ReFocus // ReTarget 
@@ -9749,7 +9759,6 @@ function Action:OnInitialize()
 			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
 			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
 		end 
-		
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
 		-- Note: Can cause issues if there loops, timers, frames or hooks 	
 		if profileEvent == "OnProfileChanged" then
