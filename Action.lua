@@ -1957,6 +1957,7 @@ local ActionDataQ 							= Action.Data.Q
 local ActionDataT 							= Action.Data.T
 local ActionDataTG							= Action.Data.TG
 local ActionDataAuras						= Action.Data.Auras
+local ActionHasRunningDB
 
 -- Templates
 -- Important: Default LUA overwrite problem was fixed by additional LUAVER key, however [3] "QLUA" and "LUA" was leaved and only 'Reset Settings' can clear it 
@@ -3881,6 +3882,9 @@ local function CreateResizer(parent)
 	frame.resizer:Show()
 	frame.resizer.y_min = parent:GetHeight()
 	frame.resizer.x_min = parent:GetWidth()
+	if TELLMEWHEN_VERSIONNUMBER  >= 87302 then 
+		frame.resizer.resizeButton.module.IsEnabled = true 
+	end 
 	TMW:TT(frame.resizer.resizeButton, L["RESIZE"], L["RESIZE_TOOLTIP"], 1, 1)
 	return frame
 end 
@@ -5602,7 +5606,7 @@ end
 
 function Action.GetToggle(n, toggle)
 	-- @usage: Action.GetToggle(tab.name (@number), key (@string ActionDB))
-	if not TMWdb then 		
+	if not ActionHasRunningDB then 		
 		if toggle == "FPS" then
 			return 0.05 -- TMWdb.global.Interval
 		end 
@@ -5985,7 +5989,8 @@ function Action.ToggleMainUI()
 				Action.Print(L["RESETED"] .. ": " .. (Action.IsInPvP and "PvP" or "PvE"))
 				TMW:Fire("TMW_ACTION_MODE_CHANGED")
 			end)
-			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)					
+			StdUi:FrameTooltip(PvEPvPresetbutton, L["TAB"][tab.name]["PVEPVPRESETTOOLTIP"], nil, "TOPRIGHT", true)			
+			StdUi:GlueAfter(PvEPvPresetbutton, PvEPvPToggle, 0, 0)
 
 			local InterfaceLanguages = {
 				{ text = "Auto", value = "Auto" },	
@@ -6566,9 +6571,8 @@ function Action.ToggleMainUI()
 			StdUi:FrameTooltip(HideOnScreenshot, L["TAB"][tab.name]["HIDEONSCREENSHOTTOOLTIP"], nil, "BOTTOMLEFT", true)	
 			
 			local GlobalOverlay = anchor:AddRow()					
-			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5.5 })			
-			GlobalOverlay:AddElement(PvEPvPresetbutton, { column = 0 })			
-			GlobalOverlay:AddElement(LayoutSpace(anchor), { column = 0.5})
+			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5 })			
+			GlobalOverlay:AddElement(LayoutSpace(anchor), { column = 1 })			
 			GlobalOverlay:AddElement(anchor.InterfaceLanguage, { column = 6 })			
 			anchor:AddRow({ margin = { top = 10 } }):AddElements(ReTarget, Trinkets, { column = "even" })			
 			anchor:AddRow():AddElements(ReFocus, Burst, { column = "even" })			
@@ -9448,6 +9452,9 @@ local function OnInitialize()
 	end
 	TMWdb.global.ActionDB = tCompare(GlobalFactory, TMWdb.global.ActionDB)	
 	
+	-- to avoid lua errors with calls GetToggle 	
+	ActionHasRunningDB = true 
+	
 	----------------------------------
 	-- All remaps and additional sort DB 
 	----------------------------------		
@@ -9725,20 +9732,24 @@ function Action:OnInitialize()
 		if Action.MainUI and Action.MainUI:IsShown() then 
 			Action.ToggleMainUI()
 		end
-		Action.IsInitialized = nil
-		-- SpellLevel
-		SpellLevel:Reset(true)
-		-- ReFocus // ReTarget 
-		Re:Reset()
-		-- ScreenshotHider
-		ScreenshotHider:Reset()
-		-- LOSInit 
-		LineOfSight:Reset()
-		-- ToggleMSG 
-		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
-		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY_LEADER")
-		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
-		Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
+		
+		Action.IsInitialized = nil		
+		if ActionHasRunningDB then 			
+			-- SpellLevel
+			SpellLevel:Reset(true)
+			-- ReFocus // ReTarget 
+			Re:Reset()
+			-- ScreenshotHider
+			ScreenshotHider:Reset()
+			-- LOSInit 
+			LineOfSight:Reset()
+			-- ToggleMSG 
+			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY")
+			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_PARTY_LEADER")
+			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
+			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
+		end 
+		
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
 		-- Note: Can cause issues if there loops, timers, frames or hooks 	
 		if profileEvent == "OnProfileChanged" then

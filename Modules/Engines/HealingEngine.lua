@@ -1290,7 +1290,7 @@ end
 function A.HealingEngine.GetTimeToFullHealth()
 	-- @return number
 	if #HealingEngineFrequencyActual > 0 then 
-		local HPS = HealingEngine.GetIncomingHPS()
+		local HPS = A.HealingEngine.GetIncomingHPS()
 		if HPS > 0 then
 			return (HealingEngineFrequencyActual[#HealingEngineFrequencyActual].MAXHP - HealingEngineFrequencyActual[#HealingEngineFrequencyActual].AHP) / HPS
 		end 
