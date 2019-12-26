@@ -9740,11 +9740,7 @@ function Action:OnInitialize()
 		if not TMWdb then 
 			TMWdb = TMW.db
 		end 
-		
-		-- Turn off everything 
-		if Action.MainUI and Action.MainUI:IsShown() then 
-			Action.ToggleMainUI()
-		end
+				
 		Action.IsInitialized = nil
 		if ActionHasRunningDB then 
 			-- SpellLevel
@@ -9761,6 +9757,12 @@ function Action:OnInitialize()
 			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID")
 			Action.Listener:Remove("ACTION_EVENT_MSG", "CHAT_MSG_RAID_LEADER")	
 		end 
+		
+		-- Turn off everything 
+		if Action.MainUI and Action.MainUI:IsShown() then 
+			Action.ToggleMainUI()
+		end
+		
 		-- TMW has wrong condition which prevent run already running snippets and it cause issue to refresh same variables as example, so let's fix this 
 		-- Note: Can cause issues if there loops, timers, frames or hooks 	
 		if profileEvent == "OnProfileChanged" then

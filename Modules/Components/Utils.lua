@@ -88,7 +88,7 @@ local function ClearTrash()
 			isRemove = nil 
 		end 
 		
-		if TMW.db.global.NumGroups and TMW.db.global.NumGroups ~= 5 and TMW.db.global.Groups then 
+		if TMW.db.global.NumGroups and TMW.db.global.NumGroups >= 5 and TMW.db.global.Groups then 
 			local isRemove 						= {
 				["Global 1: Toggles"]			= true,
 				["Global 2: Settings Button"]	= true,
@@ -110,7 +110,10 @@ local function ClearTrash()
 			end 
 			
 			if wasRemoved then 
-				A.TimerSet("UPDATE_AFTER_REMOVE", 2, function() TMW:Fire("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE") end)				
+				A.TimerSet("UPDATE_AFTER_REMOVE", 2, function() TMW:Fire("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE") end)	
+				if TMW.db.global.NumGroups == 0 then 
+					message("Reinstall profile again (from server)!")
+				end 
 			end 
 			
 			isRemove = nil 
