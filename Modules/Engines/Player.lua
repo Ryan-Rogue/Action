@@ -340,6 +340,7 @@ Listener:Add("ACTION_EVENT_PLAYER_LEVEL", "PLAYER_LOGIN", 					Data.logLevel)
 
 Listener:Add("ACTION_EVENT_PLAYER_SWAP_EQUIP", "ITEM_LOCKED", 				Data.logSwapLocked)
 Listener:Add("ACTION_EVENT_PLAYER_SWAP_EQUIP", "ITEM_UNLOCKED", 			Data.logSwapUnlocked)
+Listener:Add("ACTION_EVENT_PLAYER_SWAP_EQUIP", "MERCHANT_CLOSED", 			Data.logSwapUnlocked)
 
 Listener:Add("ACTION_EVENT_PLAYER", "UPDATE_SHAPESHIFT_FORMS", 				Data.UpdateStance)
 Listener:Add("ACTION_EVENT_PLAYER", "UPDATE_SHAPESHIFT_FORM", 				Data.UpdateStance)
