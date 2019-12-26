@@ -380,8 +380,13 @@ function A:GetSpellCastTime()
 end 
 
 function A:GetSpellCastTimeCache()
+	-- @usage A:GetSpellCastTimeCache() or A.GetSpellCastTimeCache(116)
 	-- @return number 
-	return (select(4, self:Info()) or 0) / 1000 
+	if type(self) == "table" then 
+		return (select(4, self:Info()) or 0) / 1000 
+	else
+		return (select(4, A_GetSpellInfo(self)) or 0) / 1000
+	end  
 end 
 
 function A:GetSpellCharges()

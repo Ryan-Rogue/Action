@@ -485,8 +485,8 @@ end
 --[[ This Logs the last cast and amount for every unit ]]
 -- Note: Only @player self and in PvP any players 
 CombatTracker.logLastCast 						= function(...) 
-	local timestamp,_,_, SourceGUID,_, sourceFlags,_, DestGUID,_,_,_, spellID, spellName = ... -- CombatLogGetCurrentEventInfo()
-	if (A.IsInPvP and isPlayer(sourceFlags)) or SourceGUID == GetGUID("player") then 
+	local timestamp,_,_, SourceGUID,_, sourceFlags,_, _,_,_,_, spellID, spellName = ... -- CombatLogGetCurrentEventInfo()
+	if (A.IsInPvP and sourceFlags and isPlayer(sourceFlags)) or SourceGUID == GetGUID("player") then 
 		-- LastCast time
 		if not CombatTrackerData[SourceGUID].spell_lastcast_time then 
 			CombatTrackerData[SourceGUID].spell_lastcast_time = {}
@@ -655,7 +655,8 @@ local UnitTracker 								= {
 		if unitID == "player" and (not self.InfoByUnitID[unitID][spellID] or not self.InfoByUnitID[unitID][spellID].isFlying) then 
 			local GUID = GetGUID(unitID)
 			
-			if GUID then 			
+			if GUID then 		
+				local timestamp = TMW.time
 				if not self.Data[GUID] then 
 					self.Data[GUID] = {}
 				end 
@@ -664,8 +665,11 @@ local UnitTracker 								= {
 					self.Data[GUID][spellID] = {}
 				end 				
 				
-				self.Data[GUID][spellID].start 	  = TMW.time 
+				self.Data[GUID][spellID].start 	  = timestamp
 				self.Data[GUID][spellID].isFlying = true 
+				-- We will log CombatTrackerData here because this event fires earlier than CLEU 
+				CombatTracker:AddToData(GUID, timestamp)
+				CombatTracker.logLastCast(timestamp, nil, nil, GUID, nil, nil, nil, nil, nil, nil, nil, spellID, A_GetSpellInfo(spellID))
 			end 
 		end 
 	end, 
