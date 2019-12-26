@@ -54,7 +54,8 @@ local huge 									= math.huge
 local math_floor							= math.floor
 local math_random							= math.random
 local wipe									= _G.wipe
-local strsplit								= _G.strsplit	  
+local strsplit								= _G.strsplit	 
+local debugstack							= _G.debugstack 
 	  
 local GameLocale 							= _G.GetLocale()	  
 local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo	  
@@ -964,7 +965,12 @@ local AssociativeTables = setmetatable({ NullTable = {} }, { -- Only for Auras!
 	-- Note: GetSpellInfo instead of A_GetSpellInfo because we will use it one time either if GC collected dead links, pointless for performance A_GetSpellInfo anyway
 	if not v then
 		if A.IsInitialized then -- old profiles are funky some times..
-			error("Unit.lua script tried to put in AssociativeTables 'nil' as index and it caused null table return. Below must be shown level of stack 2.", 2)
+			local error_snippet = debugstack():match("%p%l+%s\"?%u%u%u%s%u%l.*")
+			if error_snippet then 
+				error("Unit.lua script tried to put in AssociativeTables 'nil' as index and it caused null table return. The script successfully found the first occurrence of the error stack in the TMW snippet: " .. error_snippet, 0)
+			else 
+				error("Unit.lua script tried to put in AssociativeTables 'nil' as index and it caused null table return. Failed to find TMW snippet stack error. Below must be shown level of stack 1.", 1)
+			end 
 		end 
 		return t.NullTable
 	end 
@@ -1992,7 +1998,8 @@ A.Unit = PseudoClass({
 		end 
 	end, "UnitID"),
 	ThreatSituation							= Cache:Pass(function(self, otherunit)  
-		-- @return number  
+		-- @return number 
+		-- Returns: status (0 -> 3), percent of threat, value or threat 		
 		-- Nill-able: otherunit
 		local unitID 						= self.UnitID
 		return UnitThreatSituation(unitID, otherunit or "target") or 0	       
@@ -2680,22 +2687,27 @@ A.Unit = PseudoClass({
 			(
 				self(unitID):IsExecuted() or
 				(
-					self(unitID):HasFlags() and                                         
-					self(unitID):CombatTime() > 0 and 
-					self(unitID):GetRealTimeDMG() > 0 and 
-					self(unitID):TimeToDie() <= 14 and 
+					A.IsInPvP and 
 					(
-						self(unitID):TimeToDie() <= 8 or 
-						self(unitID):HasBuffs("DeffBuffs") < 1                         
+						(					
+							self(unitID):HasFlags() and                                         
+							self(unitID):CombatTime() > 0 and 
+							self(unitID):GetRealTimeDMG() > 0 and 
+							self(unitID):TimeToDie() <= 14 and 
+							(
+								self(unitID):TimeToDie() <= 8 or 
+								self(unitID):HasBuffs("DeffBuffs") < 1                         
+							)
+						) or 
+						(
+							self(unitID):IsFocused(nil, true) and 
+							(
+								self(unitID):TimeToDie() <= 10 or 
+								self(unitID):HealthPercent() <= 70
+							)
+						) 
 					)
-				) or 
-				(
-					self(unitID):IsFocused(nil, true) and 
-					(
-						self(unitID):TimeToDie() <= 10 or 
-						self(unitID):HealthPercent() <= 70
-					)
-				) 
+				)
 			)                   
 		end 
 	end, "UnitGUID"),
@@ -2704,13 +2716,13 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return 
 		(
+			self(unitID):IsExecuted() or 
 			self(unitID):IsFocused(nil, true) or 
 			(
 				self(unitID):TimeToDie() < 8 and 
 				self(unitID):IsFocused() 
 			) or 
-			self(unitID):HasDeBuffs("DamageDeBuffs") > 5 or 
-			self(unitID):IsExecuted()
+			self(unitID):HasDeBuffs("DamageDeBuffs") > 5
 		) 			
 	end, "UnitGUID"),	
 })	
@@ -2750,21 +2762,21 @@ A.FriendlyTeam = PseudoClass({
 		
 		if TeamCacheFriendly.Size <= 1 then
 			member = "player"
-			if spells then 
-				duration = A_Unit(member):HasDeBuffs(spells) 
-				if duration ~= 0 then 
-					return duration, member
+			if A_Unit(member):Role(ROLE) then 
+				if spells then 
+					duration = A_Unit(member):HasDeBuffs(spells) 
+					if duration ~= 0 then 
+						return duration, member
+					end 
 				else 
-					return 0, str_none
-				end 
-			else 
-				duration = A_Unit(member):InCC()
-				if duration ~= 0 then 
-					return duration, member
-				else 
-					return 0, str_none
+					duration = A_Unit(member):InCC()
+					if duration ~= 0 then 
+						return duration, member
+					end 
 				end 
 			end 
+			
+			return 0, str_none
 		end 			
 				
 		if ROLE and TeamCacheFriendly[ROLE] then
@@ -2812,12 +2824,13 @@ A.FriendlyTeam = PseudoClass({
 		local duration, member
 		
 		if TeamCacheFriendly.Size <= 1 then 
-			duration = A_Unit("player"):HasBuffs(spells, source)
-			if duration ~= 0 then 
-				return duration, "player"
-			else 
-				return 0, str_none
+			if A_Unit("player"):Role(ROLE) then 
+				duration = A_Unit("player"):HasBuffs(spells, source)
+				if duration ~= 0 then 
+					return duration, "player"
+				end  
 			end 
+			return 0, str_none			 
 		end 		
 		
 		if ROLE and TeamCacheFriendly[ROLE] then 
@@ -2841,7 +2854,7 @@ A.FriendlyTeam = PseudoClass({
 			end  
 			
 			if TeamCacheFriendly.Type ~= "raid" then
-				duration = A_Unit("player"):HasBuffs(spells) 
+				duration = A_Unit("player"):HasBuffs(spells, source) 
 				if duration ~= 0 then 
 					return duration, "player" 
 				end
@@ -2857,12 +2870,13 @@ A.FriendlyTeam = PseudoClass({
 		local duration, member
 		
 		if TeamCacheFriendly.Size <= 1 then 
-			duration = A_Unit("player"):HasDeBuffs(spells)
-			if duration ~= 0 then 
-				return duration, "player"
-			else 
-				return 0, str_none
+			if A_Unit("player"):Role(ROLE) then 
+				duration = A_Unit("player"):HasDeBuffs(spells)
+				if duration ~= 0 then 
+					return duration, "player"
+				end 
 			end 
+			return 0, str_none			 
 		end 		
 		
 		if ROLE and TeamCacheFriendly[ROLE] then 
@@ -2901,7 +2915,7 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE		
 		
 		if TeamCacheFriendly.Size <= 1 then 
-			if A_Unit("player"):TimeToDie() <= seconds then
+			if A_Unit("player"):Role(ROLE) and A_Unit("player"):TimeToDie() <= seconds then
 				return 1 >= count, 1, "player"
 			end  
 			
@@ -2950,7 +2964,10 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 
 		if TeamCacheFriendly.Size <= 1 then 
-			return A_Unit("player"):TimeToDie(), 1
+			if A_Unit("player"):Role(ROLE) then 
+				return A_Unit("player"):TimeToDie(), 1
+			end 
+			return 0, 0
 		end 
 		
 		local member 
@@ -2972,7 +2989,7 @@ A.FriendlyTeam = PseudoClass({
 			end  
 			
 			if TeamCacheFriendly.Type ~= "raid" then
-				value = value + A_Unit(member):TimeToDie()
+				value = value + A_Unit("player"):TimeToDie()
 				members = members + 1
 			end 
 		end 
@@ -2989,11 +3006,12 @@ A.FriendlyTeam = PseudoClass({
 		local ROLE 							= self.ROLE
 
 		if TeamCacheFriendly.Size <= 1 then 
-			if A_Unit("player"):HasBuffs(spells, source) == 0 then 
-				return true, "player"
-			else 
-				return false, str_none 
+			if A_Unit("player"):Role(ROLE) then 
+				if A_Unit("player"):HasBuffs(spells, source) == 0 then 
+					return true, "player"
+				end 
 			end 
+			return false, str_none 			 
 		end 
 		
 		local member 
@@ -3023,6 +3041,15 @@ A.FriendlyTeam = PseudoClass({
 		-- Nill-able: range, combatTime
 		local ROLE 							= self.ROLE
 		local member
+		
+		if TeamCacheFriendly.Size <= 1 then 
+			if A_Unit("player"):Role(ROLE) then 
+				if A_Unit("player"):CombatTime() > 0 and (not combatTime or A_Unit("player"):CombatTime() <= combatTime) then 
+					return true, "player"
+				end 
+			end 
+			return false, str_none 			 
+		end 
 		
 		if ROLE and TeamCacheFriendly[ROLE] then  
 			for member in pairs(TeamCacheFriendly[ROLE]) do
@@ -3226,7 +3253,7 @@ A.EnemyTeam = PseudoClass({
 		else
 			-- Note: It's much faster than querying through index
 			for arena in pairs(ActiveUnitPlates) do               
-				if A_Unit(arena):IsPlayer() and not UnitIsUnit("target", arena) and (not range or A_Unit(arena):GetRange() <= range) and A_Unit(arena):HasDeBuffs("BreakAble") ~= 0 then
+				if A_Unit(arena):IsPlayer() and A_Unit(arena):Role(ROLE) and not UnitIsUnit("target", arena) and (not range or A_Unit(arena):GetRange() <= range) and A_Unit(arena):HasDeBuffs("BreakAble") ~= 0 then
 					return true, arena 
 				end            
 			end  			 
@@ -3252,7 +3279,7 @@ A.EnemyTeam = PseudoClass({
 			end 
 		else
 			for arena in pairs(ActiveUnitPlates) do                 
-				if A_Unit(arena):IsPlayer() and (not range or A_Unit(arena):GetRange() <= range) then
+				if A_Unit(arena):IsPlayer() and A_Unit(arena):Role(ROLE) and (not range or A_Unit(arena):GetRange() <= range) then
 					count = count + 1 	
 					if not stop or count >= stop then
 						return true, count, arena  
@@ -3264,7 +3291,7 @@ A.EnemyTeam = PseudoClass({
 		return false, count, arena or str_none
 	end, "ROLE"),
 	-- [[ Without ROLE argument ]]
-	HasInvisibleUnits 						= Cache:Wrap(function(self, checkVisible)
+	HasInvisibleUnits 						= Cache:Pass(function(self, checkVisible)
 		-- @return boolean, unitID, unitClass
 		-- Nill-able: checkVisible
 		local arena, class
@@ -3286,7 +3313,7 @@ A.EnemyTeam = PseudoClass({
 		-- Nill-able: max_index
 		if TeamCacheEnemy.Size > 0 then 
 			local pet, spell_type
-			for i = 1, (max_index or 3) do -- Retail 3, Classic 10
+			for i = 1, (max_index or (TeamCacheEnemy.MaxSize >= 3 and 3) or TeamCacheEnemy.MaxSize) do -- Retail 3, Classic 10
 				pet = TeamCacheEnemyIndexToPETs[i]
 				if pet then 
 					spell_type = type(spell)
