@@ -11,6 +11,7 @@ local IsExplosivesExists							= A.IsExplosivesExists
 local IsQueueReady									= A.IsQueueReady
 local QueueData										= A.Data.Q
 
+local InstanceInfo									= A.InstanceInfo
 local UnitCooldown									= A.UnitCooldown
 local Unit											= A.Unit 
 local Player										= A.Player 
@@ -19,7 +20,7 @@ local MultiUnits									= A.MultiUnits
 
 local LoC_GetExtra									= LoC.GetExtra
 
-local _G, math										= _G, math 
+local _G, math, type								= _G, math, type
 local huge 											= math.huge
 
 local UnitBuff										= _G.UnitBuff
@@ -179,7 +180,7 @@ function A.CanUseHealthstoneOrAbyssalHealingPotion()
 				elseif Unit(player):HealthPercent() <= Healthstone then 
 					return A.HS							 
 				end
-			elseif A.AbyssalHealingPotion:IsReady(player, true) then 			
+			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.AbyssalHealingPotion:IsReady(player, true) then 			
 				if Healthstone >= 100 then -- AUTO 
 					if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.AbyssalHealingPotion:GetItemDescription()[1] then 
 						return A.AbyssalHealingPotion
@@ -225,7 +226,7 @@ function A.Rotation(icon)
 		end	
 		
 		-- Use specialization spell trinkets
-		if A[A.PlayerSpec][meta] and A[A.PlayerSpec][meta](icon) then  
+		if type(A[A.PlayerSpec][meta]) == "function" and A[A.PlayerSpec][meta](icon) then  
 			return true 			
 		end 	
 
