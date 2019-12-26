@@ -30,16 +30,18 @@ Listener:Add("ACTION_EVENT_UTILS", "ADDON_LOADED", function(addonName)
 end)
 -------------------------------------------------------------------------------
 
-local _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message = 
-	  _G, assert, error, tostring, select, type, next, ipairs, wipe, hooksecurefunc, message
+local _G, assert, error, tostring, select, type, next, ipairs, table, wipe, hooksecurefunc, message = 
+	  _G, assert, error, tostring, select, type, next, ipairs, table, wipe, hooksecurefunc, message
 	  
 local ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE	= _G.ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE
 local ACTION_CONST_TMW_DEFAULT_STATE_HIDE 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_HIDE	  
 local ACTION_CONST_TMW_DEFAULT_STATE_SHOW 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_SHOW	  
 	  
+local tremove				= table.remove	  
 local strfind				= _G.strfind	  
 local strmatch				= _G.strmatch
-local UIParent				= _G.UIParent	  
+local UIParent				= _G.UIParent	
+local C_UI					= _G.C_UI  
 	  
 local CreateFrame, GetCVar, SetCVar =
 	  CreateFrame, GetCVar, SetCVar
@@ -58,29 +60,61 @@ local UnitName, UnitGUID 	=
 -------------------------------------------------------------------------------
 -- Clear old global snippets (always even if user accidentally installed it again)
 local function ClearTrash()
-	if TMW.db and TMW.db.global and TMW.db.global.CodeSnippets and type(TMW.db.global.CodeSnippets.n) == "number" and TMW.db.global.CodeSnippets.n > 0 then 
-		local isRemove = {
-			["Stuff"] 			= true, 
-			["TMW Monitor"] 	= true,
-			["CombatTracker"] 	= true,
-			["LibPvP"] 			= true,
-			["MultiUnits"] 		= true,
-			["Scale and Chat"] 	= true,
-			["MSGEvents"] 		= true,
-			["AzeriteTraits"] 	= true,
-			["Hybrid profile"] 	= true,
-			["PMultiplier"] 	= true,
-			["HealingEngine"] 	= true, 
-			["PetLib"] 			= true, 
-			["BossMods"] 		= true, 
-			["DEV"] 			= true,
-		}
-		for i, snippet in ipairs(TMW.db.global.CodeSnippets) do
-			if isRemove[snippet.Name] then
-				TMW.db.global.CodeSnippets[i] = nil 
-				TMW.db.global.CodeSnippets.n = TMW.db.global.CodeSnippets.n - 1
-			end
-		end		 	
+	if TMW.db and TMW.db.global then 
+		if TMW.db.global.CodeSnippets and type(TMW.db.global.CodeSnippets.n) == "number" and TMW.db.global.CodeSnippets.n > 0 then 
+			local isRemove = {
+				["Stuff"] 						= true, 
+				["TMW Monitor"] 				= true,
+				["CombatTracker"] 				= true,
+				["LibPvP"] 						= true,
+				["MultiUnits"] 					= true,
+				["Scale and Chat"] 				= true,
+				["MSGEvents"] 					= true,
+				["AzeriteTraits"] 				= true,
+				["Hybrid profile"] 				= true,
+				["PMultiplier"] 				= true,
+				["HealingEngine"] 				= true, 
+				["PetLib"] 						= true, 
+				["BossMods"] 					= true, 
+				["DEV"] 						= true,			
+			}
+			for i, snippet in ipairs(TMW.db.global.CodeSnippets) do
+				if isRemove[snippet.Name] then
+					TMW.db.global.CodeSnippets[i] = nil 
+					TMW.db.global.CodeSnippets.n = TMW.db.global.CodeSnippets.n - 1
+				end
+			end	
+			
+			isRemove = nil 
+		end 
+		
+		if TMW.db.global.NumGroups and TMW.db.global.NumGroups ~= 5 and TMW.db.global.Groups then 
+			local isRemove 						= {
+				["Global 1: Toggles"]			= true,
+				["Global 2: Settings Button"]	= true,
+				["Global: Help Text"]			= true,
+				["Global: Help Text (Meta)"]	= true,
+				["Global Anchor"]				= true,
+			}
+			
+			local wasRemoved
+			for i = 1, 5 do 
+				for j = 1, 5 do 
+					if isRemove[TMW.db.global.Groups[j].Name] then 
+						tremove(TMW.db.global.Groups, j)
+						wasRemoved = true 
+						TMW.db.global.NumGroups = TMW.db.global.NumGroups - 1
+						break 
+					end 
+				end 
+			end 
+			
+			if wasRemoved then 
+				A.TimerSet("UPDATE_AFTER_REMOVE", 2, function() TMW:Fire("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE") end)				
+			end 
+			
+			isRemove = nil 
+		end 
 	end 	
 end 
 hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)	  

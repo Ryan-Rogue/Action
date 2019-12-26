@@ -318,7 +318,7 @@ local function UpdateChesderGroups()
 			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
 		end   
 		if _G.TellMeWhen_GlobalGroup3_Icon7 and not _G.TellMeWhen_GlobalGroup3_Icon7.Enabled then
-			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 8 7")
+			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 3 7")
 			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
 		end
 	else 
@@ -354,6 +354,7 @@ end)
 
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", 	UpdateAll, 		"TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")	
 TMW:RegisterCallback("TMW_ACTION_ENTERING", 	HybridProfileLaunch)	
+TMW:RegisterCallback("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE", UpdateAll)
 
 -- Used for debug 
 function RunLocalToggles(profile)
