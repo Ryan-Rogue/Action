@@ -7,7 +7,7 @@ local isPlayer									= A.Bit.isPlayer
 local TeamCache									= A.TeamCache
 local TeamCacheFriendly							= TeamCache.Friendly
 local TeamCacheFriendlyUNITs					= TeamCacheFriendly.UNITs
---local TeamCacheFriendlyGUIDs					= TeamCacheFriendly.GUIDs
+local TeamCacheFriendlyGUIDs					= TeamCacheFriendly.GUIDs
 local TeamCacheFriendlyIndexToPLAYERs			= TeamCacheFriendly.IndexToPLAYERs
 --local TeamCacheFriendlyIndexToPETs			= TeamCacheFriendly.IndexToPETs
 local TeamCacheEnemy							= TeamCache.Enemy
@@ -77,6 +77,13 @@ local function GetGroupMaxSize(group)
 	else
 		return TeamCacheFriendly.MaxSize
 	end 
+end 
+
+local function IsFriendlyHunterIsGUID(GUID)
+	-- @return boolean
+	-- Note: We have to use this for Unit.lua to determine if hunter is melee or not by some of used specified surv spec spells 
+	local unitID = TeamCacheFriendlyGUIDs[GUID]
+	return unitID and A_Unit(unitID):Class() == "HUNTER"
 end 
 
 -------------------------------------------------------------------------------
@@ -486,7 +493,7 @@ end
 -- Note: Only @player self and in PvP any players 
 CombatTracker.logLastCast 						= function(...) 
 	local timestamp,_,_, SourceGUID,_, sourceFlags,_, _,_,_,_, spellID, spellName = ... -- CombatLogGetCurrentEventInfo()
-	if (A.IsInPvP and sourceFlags and isPlayer(sourceFlags)) or SourceGUID == GetGUID("player") then 
+	if (sourceFlags and ((A.IsInPvP and isPlayer(sourceFlags)) or IsFriendlyHunterIsGUID(SourceGUID))) or SourceGUID == GetGUID("player") then 
 		-- LastCast time
 		if not CombatTrackerData[SourceGUID].spell_lastcast_time then 
 			CombatTrackerData[SourceGUID].spell_lastcast_time = {}
