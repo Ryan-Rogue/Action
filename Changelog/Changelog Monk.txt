@@ -1,3 +1,6 @@
+[Monk v12]
+Added cached pointers to tables
+
 [Monk v11]
 Null wiped non usable indexes 
 
