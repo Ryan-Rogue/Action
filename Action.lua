@@ -4496,8 +4496,8 @@ local SpellLevel = {
 		self.PlayerLVL 	 = nil 
 		self.PlayerSpec  = nil	
 	end,
-	Reset 			= function(self)	
-		if Action.GetToggle(3, "CheckSpellLevel") then 
+	Reset 			= function(self, isSwapProfile)	
+		if not isSwapProfile and Action.GetToggle(3, "CheckSpellLevel") then 
 			Action.SetToggle({3, "CheckSpellLevel", L["TAB"][3]["CHECKSPELLLVL"] .. ": "}, false)
 		end 
 		self:Wipe()
