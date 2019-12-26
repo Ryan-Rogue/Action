@@ -1,3 +1,6 @@
+[Monk v11]
+Null wiped non usable indexes 
+
 [Monk v10]
 Optimized code for more faster performance
 Added RU sub titles localization for multi dropdown
