@@ -1,26 +1,26 @@
 --- 
-local DateTime 								= "25.12.2019"
+local DateTime 														= "26.12.2019"
 ---
-local TMW 									= TMW
-local strlowerCache  						= TMW.strlowerCache
+local TMW 															= TMW
+local strlowerCache  												= TMW.strlowerCache
 local TMWdb
 
-local StdUi 								= LibStub("StdUi")
-local LibDBIcon	 							= LibStub("LibDBIcon-1.0")
-local LSM 									= LibStub("LibSharedMedia-3.0")
+local StdUi 														= LibStub("StdUi")
+local LibDBIcon	 													= LibStub("LibDBIcon-1.0")
+local LSM 															= LibStub("LibSharedMedia-3.0")
 	  LSM:Register(LSM.MediaType.STATUSBAR, "Flat", [[Interface\Addons\TheAction\Media\Flat]])
 
 local pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, next, select, _G, coroutine, table, math, string, hooksecurefunc, wipe, 	 safecall, 	    debugprofilestop = 
 	  pcall, ipairs, pairs, type, assert, error, setfenv, tostringall, tostring, tonumber, getmetatable, setmetatable, loadstring, next, select, _G, coroutine, table, math, string, hooksecurefunc, wipe, TMW.safecall, _G.debugprofilestop_SAFE
 	   
-local tinsert								= table.insert 
-local tremove								= table.remove 
-local huge	 								= math.huge
-local math_abs								= math.abs
-local math_floor							= math.floor
-local strgsub 								= string.gsub	
-local strformat 							= string.format
-local strjoin	 							= string.join  
+local tinsert														= table.insert 
+local tremove														= table.remove 
+local huge	 														= math.huge
+local math_abs														= math.abs
+local math_floor													= math.floor
+local strgsub 														= string.gsub	
+local strformat 													= string.format
+local strjoin	 													= string.join  
 
 local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick, GetItemSpell, GetSpellInfo, GetSpellAvailableLevel, GetNumMacros, GetMacroInfo, GetMacroIcons = 
 	  GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpecializationInfo, GetSpecialization, GetFramerate, GetMouseFocus, GetLocale, GetBindingFromClick, GetItemSpell, GetSpellInfo, GetSpellAvailableLevel, GetNumMacros, GetMacroInfo, GetMacroIcons
@@ -28,26 +28,26 @@ local GetRealmName, GetExpansionLevel, GetNumSpecializationsForClassID, GetSpeci
 local UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitGUID, UnitAura, UnitPower = 
 	  UnitName, UnitClass, UnitRace, UnitLevel, UnitExists, UnitIsUnit, UnitGUID, UnitAura, UnitPower	  
 	    
-local GameLocale 							= GetLocale()	
+local GameLocale 													= GetLocale()	
 -- Mexico is used esES
 if GameLocale == "esMX" then 
 	GameLocale = "esES"
 end 
-local UIParent								= _G.UIParent
-local C_UI									= _G.C_UI
-local Spell									= _G.Spell 	  								-- ObjectAPI/Spell.lua
-local FindSpellBookSlotBySpellID 			= _G.FindSpellBookSlotBySpellID	   
-local AzeriteEssence 						= _G.C_AzeriteEssence
-local CreateFrame 							= _G.CreateFrame	
-local PlaySound								= _G.PlaySound	  
-local InCombatLockdown						= _G.InCombatLockdown
-local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo
-local IsControlKeyDown						= _G.IsControlKeyDown
+local UIParent														= _G.UIParent
+local C_UI															= _G.C_UI
+local Spell															= _G.Spell 	  								-- ObjectAPI/Spell.lua
+local FindSpellBookSlotBySpellID 									= _G.FindSpellBookSlotBySpellID	   
+local AzeriteEssence 												= _G.C_AzeriteEssence
+local CreateFrame 													= _G.CreateFrame	
+local PlaySound														= _G.PlaySound	  
+local InCombatLockdown												= _G.InCombatLockdown
+local CombatLogGetCurrentEventInfo									= _G.CombatLogGetCurrentEventInfo
+local IsControlKeyDown												= _G.IsControlKeyDown
 
-_G.Action 									= LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0") 
-local Action 								= _G.Action 
-Action.PlayerRace 							= select(2, UnitRace("player"))
-Action.PlayerClassName, Action.PlayerClass  = UnitClass("player")
+_G.Action 															= LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0") 
+local Action 														= _G.Action 
+Action.PlayerRace 													= select(2, UnitRace("player"))
+Action.PlayerClassName, Action.PlayerClass, Action.PlayerClassID  	= UnitClass("player")
 
 -------------------------------------------------------------------------------
 -- Localization
@@ -1951,12 +1951,12 @@ Action.Data = {
 	Auras = {},
 }
 
-local ActionDataDefaultProfile 				= Action.Data.DefaultProfile
-local ActionDatatheme 						= Action.Data.theme
-local ActionDataQ 							= Action.Data.Q
-local ActionDataT 							= Action.Data.T
-local ActionDataTG							= Action.Data.TG
-local ActionDataAuras						= Action.Data.Auras
+local ActionDataDefaultProfile 										= Action.Data.DefaultProfile
+local ActionDatatheme 												= Action.Data.theme
+local ActionDataQ 													= Action.Data.Q
+local ActionDataT 													= Action.Data.T
+local ActionDataTG													= Action.Data.TG
+local ActionDataAuras												= Action.Data.Auras
 local ActionHasRunningDB
 
 -- Templates
@@ -2619,7 +2619,8 @@ local function tMerge(default, new, special, nonexistremove)
 	for k, v in pairs(default) do 
 		if type(v) == "table" then 
 			if special and k == "PLAYERSPEC" then
-				for i = 1, GetNumSpecializationsForClassID(select(3, UnitClass("player"))) do 
+				local classID = Action.PlayerClassID or select(3, UnitClass("player"))
+				for i = 1, GetNumSpecializationsForClassID(classID) do 
 					result[GetSpecializationInfo(i)] = tMerge(v, v, special, nonexistremove) 
 				end	
 			elseif special and v.ISINTERRUPT then 
@@ -9318,7 +9319,8 @@ hooksecurefunc(TMW, "InitializeDatabase", function()
 	end 
 end)
 
-local function OnInitialize()	
+local OnInitialize
+function OnInitialize()	
 	-- This function calls only if TMW finished EVERYTHING load
 	-- This will initialize ActionDB for current profile by Action.Data.ProfileUI > Action.Data.ProfileDB (which in profile snippet)
 	if not TMWdb then 
