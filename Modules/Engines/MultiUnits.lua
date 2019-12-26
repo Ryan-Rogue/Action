@@ -49,6 +49,7 @@ end)
 -------------------------------------------------------------------------------	  
 local MultiUnits 									= {
 	activeUnitPlates 								= {},
+	activeUnitPlatesAny								= {},
 	--activeUnitPlatesGUID 							= {},
 	activeExplosives								= {},
 	activeUnitCLEU 									= {},
@@ -64,7 +65,8 @@ local MultiUnits 									= {
 	},
 }
 
-local MultiUnitsActiveUnitPlates					= MultiUnits.activeUnitPlates
+local MultiUnitsActiveUnitPlates					= MultiUnits.activeUnitPlates -- Only enemies 
+local MultiUnitsActiveUnitPlatesAny					= MultiUnits.activeUnitPlatesAny -- Enemies + Friendly
 --local MultiUnitsActiveUnitPlatesGUID				= MultiUnits.activeUnitPlatesGUID
 local MultiUnitsActiveExplosives					= MultiUnits.activeExplosives
 local MultiUnitsActiveUnitCLEU						= MultiUnits.activeUnitCLEU
@@ -73,24 +75,28 @@ local MultiUnitsOnEventWipeCLEU						= MultiUnits.onEventWipeCLEU
 
 -- Nameplates
 MultiUnits.AddNameplate								= function(unitID)
-	if UnitCanAttack(player, unitID) and 
+	if UnitCanAttack(player, unitID) then  
 		-- Patch 8.2
 		-- 1519 is The Eternal Palace: Precipice of Dreams
-		( A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup() )
-	then 
-		MultiUnitsActiveUnitPlates[unitID] = unitID
-		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 and A_Unit(unitID):IsExplosives() then 
-			MultiUnitsActiveExplosives[unitID] = unitID
+		if A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup() then
+			MultiUnitsActiveUnitPlates[unitID] 		= unitID
+			MultiUnitsActiveUnitPlatesAny[unitID] 	= unitID
+			if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 and A_Unit(unitID):IsExplosives() then 
+				MultiUnitsActiveExplosives[unitID] = unitID
+			end 
+			--local GUID 								= UnitGUID(unitID)
+			--if GUID then 
+				--MultiUnitsActiveUnitPlatesGUID[GUID] 	= unitID
+			--end 		
 		end 
-		--local GUID 								= UnitGUID(unitID)
-		--if GUID then 
-			--MultiUnitsActiveUnitPlatesGUID[GUID] 	= unitID
-		--end 		
+	else 
+		MultiUnitsActiveUnitPlatesAny[unitID] = unitID
 	end
 end
 
 MultiUnits.RemoveNameplate							= function(unitID)
     MultiUnitsActiveUnitPlates[unitID] 				= nil
+    MultiUnitsActiveUnitPlatesAny[unitID] 			= nil
 	MultiUnitsActiveExplosives[unitID] 				= nil 
 	--local GUID 									= UnitGUID(unitID)
 	--if GUID then 
@@ -104,6 +110,7 @@ end
 
 MultiUnits.OnResetNameplates						= function()
 	wipe(MultiUnitsActiveUnitPlates)
+	wipe(MultiUnitsActiveUnitPlatesAny)
 	wipe(MultiUnitsActiveExplosives)
 	--wipe(MultiUnitsActiveUnitPlatesGUID)
 end 
@@ -190,14 +197,20 @@ A.MultiUnits = {}
 
 -- Nameplates 
 function A.MultiUnits.GetActiveUnitPlates(self)
-	-- @return table (enemy nameplates) or nil
+	-- @return table (enemy nameplates) 
 	-- @usage A.MultiUnits:GetActiveUnitPlates()
 	return MultiUnitsActiveUnitPlates
 end 
 
+function A.MultiUnits.GetActiveUnitPlatesAny(self)
+	-- @return table (enemy + friendly nameplates) 
+	-- @usage A.MultiUnits:GetActiveUnitPlatesAny()
+	return MultiUnitsActiveUnitPlatesAny
+end 
+
 --[[
 function A.MultiUnits.GetActiveUnitPlatesGUID(self)
-	-- @return table (enemy nameplates GUID) or nil
+	-- @return table (enemy nameplates GUID) 
 	-- @usage A.MultiUnits:GetActiveUnitPlates()
 	return MultiUnitsActiveUnitPlatesGUID
 end 
