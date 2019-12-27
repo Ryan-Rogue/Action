@@ -1162,7 +1162,7 @@ function Env.AoEFlourish(pHP)
 			total = total + 1
 		end
 	end
-	return total >= #members * 0.3
+	return total >= #HealingEngineMembersALL * 0.3
 end
 -- PVE Dispels
 -- NOTE: RETIRED VERSION HAS > INSTEAD OF ACTUAL >=
