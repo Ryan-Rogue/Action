@@ -150,6 +150,11 @@ function A.UI_INFO_MESSAGE_IS_WARMODE(...)
 end 
 
 local LastEvent, counter
+local IsEventIsChallenge = {
+	CHALLENGE_MODE_COMPLETED 		= true,
+	CHALLENGE_MODE_RESET			= true,
+	CHALLENGE_MODE_KEYSTONE_SLOTTED = true,
+}
 local function OnEvent(event, ...)    
     -- Don't call it several times
     if TMW.time == LastEvent and TeamCacheFriendlyUNITs.player then 
@@ -159,7 +164,7 @@ local function OnEvent(event, ...)
 	
 	-- Update IsInInstance, Zone
     A.IsInInstance, A.Zone = IsInInstance()
-	if event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "PLAYER_LOGIN" then 
+	if event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "PLAYER_LOGIN" or IsEventIsChallenge[event] then 
 		A.ZoneID = GetBestMapForUnit(player) or 0
 		
 		local name, instanceType, difficultyID, _, _, _, _, instanceID, instanceGroupSize = GetInstanceInfo()
@@ -171,7 +176,9 @@ local function OnEvent(event, ...)
 			InstanceInfo.GroupSize		= instanceGroupSize
 			InstanceInfo.isRated		= IsRatedMap()
 			InstanceInfo.KeyStone		= GetActiveKeystoneInfo() or 0
-			A.TimeStampZone 			= TMW.time
+			if not IsEventIsChallenge[event] then 
+				A.TimeStampZone 		= TMW.time
+			end 
 		end 
 	end 
 	
@@ -196,7 +203,7 @@ local function OnEvent(event, ...)
 			return
 		end            
 		
-		if not A.IsInDuel and (event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_LOGIN") then                                
+		if not A.IsInDuel and (event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_ENTERING_BATTLEGROUND" or event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_LOGIN" or IsEventIsChallenge[event]) then                                
 			local oldMode = A.IsInPvP
 			A.IsInPvP = A:CheckInPvP()  
 			if oldMode ~= A.IsInPvP then 
@@ -351,16 +358,21 @@ local function OnEvent(event, ...)
 	TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove in the future
 end 
 
-Listener:Add("ACTION_EVENT_BASE", "DUEL_FINISHED", 					OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "DUEL_REQUESTED", 				OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED", 					OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_INDOORS", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_NEW_AREA", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "UI_INFO_MESSAGE", 				OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "UPDATE_INSTANCE_INFO", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "GROUP_ROSTER_UPDATE", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "ARENA_OPPONENT_UPDATE", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_WORLD", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_BATTLEGROUND", 	OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "PLAYER_TARGET_CHANGED", 			OnEvent)
-Listener:Add("ACTION_EVENT_BASE", "PLAYER_LOGIN", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "DUEL_FINISHED", 						OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "DUEL_REQUESTED", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED", 						OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_INDOORS", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ZONE_CHANGED_NEW_AREA", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "UI_INFO_MESSAGE", 					OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "UPDATE_INSTANCE_INFO", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "GROUP_ROSTER_UPDATE", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "ARENA_OPPONENT_UPDATE", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_WORLD", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_ENTERING_BATTLEGROUND", 		OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_TARGET_CHANGED", 				OnEvent)
+Listener:Add("ACTION_EVENT_BASE", "PLAYER_LOGIN", 						OnEvent)
+
+-- Retail Challenge Mode 
+for k in pairs(IsEventIsChallenge) do 
+	Listener:Add("ACTION_EVENT_BASE", k, 								OnEvent)
+end 
