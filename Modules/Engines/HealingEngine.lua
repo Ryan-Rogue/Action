@@ -1396,6 +1396,31 @@ function A.HealingEngine.HealingBySpell(predictName, spell, isMelee)
 	return total 
 end 
 
+function A.HealingEngine.HealingBySpiritofPreservation(obj, stop, skipShouldStop)
+	-- @return number 
+	local total 	= 0
+	local isTable 	= type(obj) == "table"
+	
+	if #HealingEngineMembersALL > 0 then 		
+		for i = 1, #HealingEngineMembersALL do 
+			if isTable then 
+				if obj:IsReady(HealingEngineMembersALL[i].Unit, true, nil, skipShouldStop) and Azerite:EssencePredictHealing("Spirit of Preservation", obj.ID, HealingEngineMembersALL[i].Unit) then
+					total = total + 1
+				end
+			else
+				if Env.SpellInRange(HealingEngineMembersALL[i].Unit, obj) and Azerite:EssencePredictHealing("Spirit of Preservation", obj, HealingEngineMembersALL[i].Unit) then
+					total = total + 1
+				end
+			end 
+			
+			if stop and total >= stop then 
+				break 
+			end 
+		end 		
+	end 
+	return total 	
+end 
+
 --- Unit Controller 
 function A.HealingEngine.IsMostlyIncDMG(unitID)
 	-- @return boolean, number (realtime incoming damage)	

@@ -5,7 +5,7 @@
 local TMW 								= TMW 
 local A 								= Action 
 local Listener							= A.Listener
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 4)
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 5)
 
 if not Lib or not A or not TMW then 
 	if A then 
@@ -47,6 +47,8 @@ local FindSpellOverrideByID 			= _G.FindSpellOverrideByID
 local AzeriteEmpoweredItem 				= _G.C_AzeriteEmpoweredItem
 local AzeriteEssence 					= _G.C_AzeriteEssence
 local GetSpellInfo						= _G.GetSpellInfo
+local _, _, _, tocversion 				= _G.GetBuildInfo()
+Lib.has_8_3_0							= tocversion > 80205
 
 local Data 								= {
 	InventorySlots 						= { 1, 2, 3, 5 },
@@ -54,9 +56,10 @@ local Data 								= {
 	Essences 							= {
 		Total 							= {},
 		-- Also will be created if relative slot is used:
-		-- Major	= {},
-		-- MinorOne	= {},
-		-- MinorTwo = {},
+		-- Major		= {},
+		-- MinorOne		= {},
+		-- MinorTwo 	= {},
+		-- MinorThree 	= {},
 	},	
 } 
 
@@ -85,32 +88,47 @@ end
 -------------------------------------------------------------------------------
 Lib.CONST = {
 	--[[ Essences Used by All Roles - Passive]]
-	VisionofPerfection			= 299368,
-	ConflictandStrife			= 304017,
+	VisionofPerfection				= 299368,
+	ConflictandStrife				= 304017,	
 	--[[ Essences Used by All Roles - Active]]
-	ConcentratedFlame 			= 295373, 
-	WorldveinResonance			= 295186, 
-	RippleinSpace				= 302731, 
-	MemoryofLucidDreams			= 298357, 
+	ConcentratedFlame 				= 295373, 
+	WorldveinResonance				= 295186, 
+	RippleinSpace					= 302731, 
+	MemoryofLucidDreams				= 298357, 
 	--[[ Tank ]]
-	AzerothsUndyingGift			= 293019, 
-	AnimaofDeath				= 294926, 
-	AegisoftheDeep				= 298168, 
-	EmpoweredNullBarrier		= 295746, 
-	SuppressingPulse			= 293031, 
+	AzerothsUndyingGift				= 293019, 
+	AnimaofDeath					= 294926, 
+	AegisoftheDeep					= 298168, 
+	EmpoweredNullBarrier			= 295746, 
+	SuppressingPulse				= 293031, 
 	--[[ Healer ]]
-	Refreshment					= 296197, 
-	Standstill					= 296094, 
-	LifeBindersInvocation		= 293032, 
-	OverchargeMana				= 296072, 
-	VitalityConduit				= 296230, 
+	Refreshment						= 296197, 
+	Standstill						= 296094, 
+	LifeBindersInvocation			= 293032, 
+	OverchargeMana					= 296072, 
+	VitalityConduit					= 296230, 
 	--[[ Damager ]]
-	FocusedAzeriteBeam			= 295258, 
-	GuardianofAzeroth			= 295840, 
-	BloodoftheEnemy				= 297108, 
-	PurifyingBlast				= 295337, 
-	TheUnboundForce				= 298452, 
+	FocusedAzeriteBeam				= 295258, 
+	GuardianofAzeroth				= 295840, 
+	BloodoftheEnemy					= 297108, 
+	PurifyingBlast					= 295337, 
+	TheUnboundForce					= 298452, 
 }
+
+if Lib.has_8_3_0 then 
+	--[[ Tank - Passive ]]
+	Lib.CONST.TouchoftheEverlasting	= 295046	
+	--[[ Essences Used by All Roles - Active]]
+	Lib.CONST.ReplicaofKnowledge	= 312725
+	--[[ Tank ]]
+	Lib.CONST.VigilantProtector		= 310592	
+	--[[ Healer ]]
+	Lib.CONST.SpiritofPreservation	= 297375 
+	Lib.CONST.GuardianShell			= 296036 
+	--[[ Damager ]]
+	Lib.CONST.MomentofGlory 		= 311203
+	Lib.CONST.ReapingFlames		 	= 310690
+end 
 
 -------------------------------------------------------------------------------
 -- Azerite Essences - Major and Minor
@@ -246,6 +264,23 @@ if AzeriteEssence then
 		[Spell:CreateFromSpellID(199045):GetSpellName()]	= true,
 		[199045] 											= true,		
 	}
+
+	if Lib.has_8_3_0 then 
+		-- Expend GetMajorBySpellNameOnENG
+		--[[ Essences Used by All Roles - Active]]
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.ReplicaofKnowledge):GetSpellName()] 	= "Replica of Knowledge"
+		--[[ Tank ]]
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.VigilantProtector):GetSpellName()] 		= "Vigilant Protector"
+		--[[ Healer ]]
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.SpiritofPreservation):GetSpellName()] 	= "Spirit of Preservation"
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.GuardianShell):GetSpellName()] 			= "Guardian Shell"
+		--[[ Damager ]]
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.MomentofGlory):GetSpellName()] 			= "Moment of Glory"
+		DataEssences.GetMajorBySpellNameOnENG[Spell:CreateFromSpellID(Lib.CONST.ReapingFlames):GetSpellName()] 			= "Reaping Flames"
+		
+		-- Expend IsPassive
+		DataEssences.IsPassive[Spell:CreateFromSpellID(Lib.CONST.TouchoftheEverlasting):GetSpellName()] 				= true
+	end 
 end 
 
 function DataEssences.GetInfo(milestone) 
@@ -276,10 +311,11 @@ function DataEssences.GetInfo(milestone)
 end 
 
 function DataEssences.Update() 
-	-- Updates Major (1) and Minor (2) slots  
+	-- Updates Major (1) and Minor (3) slots  
 	DataEssences.Major 		= nil
 	DataEssences.MinorOne 	= nil 
 	DataEssences.MinorTwo 	= nil
+	DataEssences.MinorThree	= nil
 	wipe(DataEssences.Total)
 	
 	if AzeriteEssence and AzeriteEmpoweredItemIsHeartOfAzerothEquipped() then
@@ -301,10 +337,15 @@ function DataEssences.Update()
 				if DataEssences.MinorTwo then 
 					DataEssences.Total[DataEssences.MinorTwo.spellName] = DataEssences.MinorTwo 
 				end
+			elseif Lib.has_8_3_0 and milestone.slot == EnumAzeriteEssence.PassiveThreeSlot then 
+				DataEssences.MinorThree = DataEssences.GetInfo(milestone)
+				if DataEssences.MinorThree then 
+					DataEssences.Total[DataEssences.MinorThree.spellName] = DataEssences.MinorThree 
+				end
 			end
 			
 			-- Break 
-			if DataEssences.Major and DataEssences.MinorOne and DataEssences.MinorTwo then 
+			if DataEssences.Major and DataEssences.MinorOne and DataEssences.MinorTwo and DataEssences.MinorThree then 
 				break 
 			end 
 		end 
@@ -393,7 +434,7 @@ end
 
 function Lib:EssenceGetMajorBySpellNameOnENG(spellName)
 	-- @return string (ENGLISH localization of equal spellName) or nil
-	return DataEssences.GetMajorBySpellNameOnENG[spellName]
+	return DataEssences.GetMajorBySpellNameOnENG[spellName or ""]
 end 
 
 function Lib:EssenceIsMajorUseable(spellID) 
@@ -421,11 +462,11 @@ end
 function Lib:EssenceHasMinor(spellID)
 	-- @return boolean 
 	-- Note: Search by localized spellName, essenceName or spellID 
-	if (DataEssences.MinorOne and DataEssences.MinorOne.spellID == spellID) or (DataEssences.MinorTwo and DataEssences.MinorTwo.spellID == spellID) then 
+	if (DataEssences.MinorOne and DataEssences.MinorOne.spellID == spellID) or (DataEssences.MinorTwo and DataEssences.MinorTwo.spellID == spellID) or (DataEssences.MinorThree and DataEssences.MinorThree.spellID == spellID) then 
 		return true 
 	else 
 		local spellName = GetInfoSpell(spellID)
-		if (DataEssences.MinorOne and (DataEssences.MinorOne.spellName == spellName or DataEssences.MinorOne.Name == spellName)) or (DataEssences.MinorTwo and (DataEssences.MinorTwo.spellName == spellName or DataEssences.MinorTwo.Name == spellName)) then 
+		if (DataEssences.MinorOne and (DataEssences.MinorOne.spellName == spellName or DataEssences.MinorOne.Name == spellName)) or (DataEssences.MinorTwo and (DataEssences.MinorTwo.spellName == spellName or DataEssences.MinorTwo.Name == spellName)) or (DataEssences.MinorThree and (DataEssences.MinorThree.spellName == spellName or DataEssences.MinorThree.Name == spellName)) then 
 			return true 
 		end 
 	end  
@@ -536,6 +577,13 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 		end
 		
 		return false, total * totalMembers
+	end 
+	
+	if MajorSpellNameENG == "Spirit of Preservation" then 
+		-- @direct  
+		HealthDeficit	 	= A_Unit(unitID):HealthDeficit()
+		local desc 			= A_GetSpellDescription(spellID)
+		total 				= (desc[1] * variation) + Unit(unitID):GetIncomingHeals() + (HPS * desc[2]) - (DMG * desc[2])
 	end 
 	
 	return HealthDeficit >= total, total

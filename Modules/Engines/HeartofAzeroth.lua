@@ -1,15 +1,20 @@
-local TMW 							= TMW
-local A 							= Action
+local TMW 								= TMW
+local A 								= Action
 
-local Listener						= A.Listener
-local GetToggle						= A.GetToggle
+local Listener							= A.Listener
+local GetToggle							= A.GetToggle
 
-local Azerite 						= LibStub("AzeriteTraits")
+local TeamCache							= A.TeamCache
+local TeamCacheFriendly 				= TeamCache.Friendly
+local TeamCacheFriendlyHEALER			= TeamCacheFriendly.HEALER
+local TeamCacheFriendlyIndexToPLAYERs	= TeamCacheFriendly.IndexToPLAYERs
+
+local Azerite 							= LibStub("AzeriteTraits")
 
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
-local A_LoC, A_Unit, A_EnemyTeam, A_MultiUnits, A_HealingEngine
+local A_LoC, A_Unit, A_EnemyTeam, A_MultiUnits, A_HealingEngine, A_Player
 
 Listener:Add("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED", function(addonName)
 	if addonName == ACTION_CONST_ADDON_NAME then 
@@ -18,16 +23,18 @@ Listener:Add("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED", function(addonName)
 		A_EnemyTeam					= A.EnemyTeam
 		A_MultiUnits				= A.MultiUnits
 		A_HealingEngine				= A.HealingEngine
+		A_Player					= A.Player
 		
 		Listener:Remove("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED")	
 	end 
 end)
 -------------------------------------------------------------------------------
 
-local _G, pairs 					=
-	  _G, pairs
-
-local GetSpecializationRoleByID 	= GetSpecializationRoleByID
+local _G, pairs, next				=
+	  _G, pairs, next
+	  
+local UnitIsUnit					= _G.UnitIsUnit	  
+local GetSpecializationRoleByID 	= _G.GetSpecializationRoleByID
 local AzeriteEssence 				= _G.C_AzeriteEssence
 local AzeriteEssences 				= {
 	ALL = {
@@ -58,6 +65,16 @@ local AzeriteEssences 				= {
 		TheUnboundForce				= { Type = "HeartOfAzeroth", ID = Azerite.CONST.TheUnboundForce 		}, -- filler (high priority)
 	},
 }
+
+-- Push 8.3 new essences 
+if Azerite.has_8_3_0 then 
+	AzeriteEssences.ALL.ReplicaofKnowledge 		= { Type = "HeartOfAzeroth", ID = Azerite.CONST.ReplicaofKnowledge 		}  -- replicate the target current major essence slot giving us R1 or R2 or R3 depending of our current essence rank 
+	AzeriteEssences.TANK.VigilantProtector		= { Type = "HeartOfAzeroth", ID = Azerite.CONST.VigilantProtector 		}  -- mass taunt 8 yards 
+	AzeriteEssences.HEALER.SpiritofPreservation	= { Type = "HeartOfAzeroth", ID = Azerite.CONST.SpiritofPreservation	}  -- aoe friendly heal 
+	AzeriteEssences.HEALER.GuardianShell		= { Type = "HeartOfAzeroth", ID = Azerite.CONST.GuardianShell			}  -- aoe friendly absorb 	 - release 12 protective spheres outward over 4 sec, granting the first ally to touch it a barrier that absorbs X damage for 10 sec
+	AzeriteEssences.DAMAGER.MomentofGlory		= { Type = "HeartOfAzeroth", ID = Azerite.CONST.MomentofGlory			}  -- aoe friendly burst 	 - release wave of energy on ally near 15yrd that boost their damage essence by 45%
+	AzeriteEssences.DAMAGER.ReapingFlames		= { Type = "HeartOfAzeroth", ID = Azerite.CONST.ReapingFlames			}  -- filler (high priority) - damage the target, if the target has < 20% health then cooldown is reduced by 30sec
+end 
 
 local Temp							= {
 	TotalAndMagic					= {"TotalImun", "DamageMagicImun"},
@@ -97,11 +114,12 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 	-- Note: This is lazy template for all Heart Of Azerote Essences 
 	-- Arguments: skipAuto if true then will skip AUTO template conditions and will check only validance (imun, own CC such as silence, range and etc)	
 	if self.SubType == "HeartOfAzeroth" and Azerite:EssenceIsMajorUseable() and GetToggle(1, "HeartOfAzeroth") then 
-		local Major 			= Azerite:EssenceGetMajor()
-		local MajorSpellName 	= Azerite:EssenceGetMajorBySpellNameOnENG(Major.spellName)
+		local MajorSpellName 	= Azerite:EssenceGetMajorBySpellNameOnENG(Azerite:EssenceGetMajor().spellName)
 		
-		if MajorSpellName and Major and Major.spellName == self:Info() then 
-			self.ID 			= Major.spellID
+		if MajorSpellName and Azerite:EssenceGetMajor().spellName == self:Info() then 
+			if self.ID ~= Azerite:EssenceGetMajor().spellID then 
+				self.ID 		= Azerite:EssenceGetMajor().spellID
+			end 
 			
 			--[[ Essences Used by All Roles ]]
 			if MajorSpellName == "Concentrated Flame" then 				
@@ -205,6 +223,35 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					then
 						return true 
 					end 
+				end 
+			end 
+			
+			if MajorSpellName == "Replica of Knowledge" then
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	not UnitIsUnit(unitID, "player") and
+					self:IsReady(unitID, nil, nil, skipShouldStop) and -- no second arg as 'true' coz it checking range 
+					A_Player:IsStaying() and 
+					A_Unit(unitID):IsPlayer() and 
+					A_Unit(unitID):GetLevel() >= A.PlayerLevel and
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					(
+						skipAuto or 
+						(
+							A_Unit("player"):CombatTime() > 0 and 
+							(
+								(A_Unit("player"):IsDamager() and A_Unit(unitID):IsDamager()) or 
+								(A_Unit("player"):IsHealer() and (A_Unit(unitID):IsHealer() or (not next(TeamCacheFriendlyHEALER) and A_Unit(unitID):IsDamager())) and A_Unit(unitID):TimeToDie() > 10) or
+								(A_Unit("player"):IsTank() and (A_Unit(unitID):IsHealer() or A_Unit(unitID):IsTank()))
+							)
+						)
+					) and 
+					self:AbsentImun(unitID) 
+				then
+					return true
 				end 
 			end 
 			
@@ -373,6 +420,20 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 			end 
 			
+			if MajorSpellName == "Vigilant Protector" then 
+				if 	self:IsReady(unitID or "player", true, nil, skipShouldStop) and 
+					(						
+						skipAuto or
+						(
+							A_Unit("player"):CombatTime() >= 5 and
+							A_MultiUnits:GetByRangeTaunting(8, 3, 10) >= 3
+						)
+					)
+				then 
+					return true 
+				end 
+			end 
+			
 			--[[ Healer ]]
 			if MajorSpellName == "Refreshment" then
 				if not unitID then 
@@ -479,6 +540,52 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				then 
 					return true 
 				end 
+			end 
+			
+			if MajorSpellName == "Spirit of Preservation" then 
+				if 	A_Player:IsStayingTime() > 0.7 and 
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and 
+					A_Unit("player"):CombatTime() > 0 and		
+					(
+						skipAuto or 
+						(
+							A_Unit(unitID or "target"):TimeToDie() > 8 and 
+							A_HealingEngine.HealingBySpiritofPreservation(self, A_HealingEngine.GetMinimumUnits(2, 5), skipShouldStop) >= A_HealingEngine.GetMinimumUnits(2, 5)
+						)
+					)
+				then 
+					return true 
+				end 
+			end
+			
+			if MajorSpellName == "Guardian Shell" then
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	self:IsReady(unitID, true, nil, skipShouldStop) and 				
+					A_Player:IsStayingTime() > 0.7 and 
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					A_Unit("player"):CombatTime() > 0 and		
+					A_Unit(unitID):InRange() and
+					(						
+						skipAuto or 
+						(								
+							A_Unit(unitID):TimeToDie() > 14 and 
+							(
+								A_HealingEngine.GetTimeToFullDie() < 12 or 
+								(
+									A_HealingEngine.GetHealthFrequency(3) > 25 and 
+									A_HealingEngine.GetIncomingDMGAVG() >= 15
+								)
+							)
+						)
+					)
+				then 
+					return true 
+				end 			
 			end 
 			
 			--[[ Damager ]]
@@ -622,6 +729,48 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 				end 
 			end 
 			
+			if MajorSpellName == "Moment of Glory" then 
+				-- Note: Need some tweaks regarding used essences by members probably or not - have to think how to play with it, no auto template right now e.g. use on CD on bosses / players usually
+				if self:IsReady("player", true, nil, skipShouldStop) and A_Player:IsStaying() and A_LoC:IsMissed("SILENCE") and A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and (skipAuto or A_Unit("player"):CombatTime() > 0) then 
+					local member
+					for i = 1, TeamCacheFriendly.MaxSize do
+						member = TeamCacheFriendlyIndexToPLAYERs[i]						
+						if member and A_Unit(member):InRange() then 
+							if A_Unit(member):HasBuffs(self.ID) > 0 then 
+								return false 
+							end 
+							
+							if A_Unit(member):GetLevel() >= A.PlayerLevel then
+								return true
+							end 
+						end 
+					end 
+				end 
+			end 
+			
+			if MajorSpellName == "Reaping Flames" then 				
+				if not unitID then 
+					unitID = "target"
+				end 
+				
+				if 	self:IsReady(unitID, nil, nil, skipShouldStop) and -- no second arg as 'true' coz it checking range 
+					A_LoC:IsMissed("SILENCE") and 
+					A_LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					self:AbsentImun(unitID, TempTotalAndMagic) 
+				then 
+					if skipAuto then 
+						return true
+					end 
+										
+					local TTD20					= A_Unit(unitID):TimeToDieX(20)
+					-- Note: Don't use if
+					if TTD20 > 0 and TTD20 <= 30 and (Azerite:GetRank(self.ID) < 2 or A_Unit(unitID):HealthPercent() < 80) then 
+						return false 
+					end 
+
+					return true 
+				end 
+			end 
 		end 		
 	end 
 	

@@ -4,19 +4,37 @@
 -- PROVIDE SUPPORT FOR OLD PROFILES
 --
 -------------------------------------------------------------------------------
-local TMW 							= TMW
-local CNDT 							= TMW.CNDT
-local Env 							= CNDT.Env
+local TMW 								= TMW
+local CNDT 								= TMW.CNDT
+local Env 								= CNDT.Env
 
-local A 							= Action
-local Unit 							= A.Unit
-local MultiUnits					= A.MultiUnits
-local EnemyTeam						= A.EnemyTeam
-local LoC							= A.LossOfControl
-local HealingEngine					= A.HealingEngine
-local Azerite 						= LibStub("AzeriteTraits")	
+local A 								= Action
+local Unit 								= A.Unit
+local MultiUnits						= A.MultiUnits
+local EnemyTeam							= A.EnemyTeam
+local LoC								= A.LossOfControl
+local HealingEngine						= A.HealingEngine
+local Player							= A.Player
+local GetPing							= A.GetPing
+local ShouldStop						= A.ShouldStop
 
-local ACTION_CONST_HEARTOFAZEROTH	= _G.ACTION_CONST_HEARTOFAZEROTH  
+local TeamCache							= A.TeamCache
+local TeamCacheFriendly 				= TeamCache.Friendly
+local TeamCacheFriendlyHEALER			= TeamCacheFriendly.HEALER
+local TeamCacheFriendlyIndexToPLAYERs	= TeamCacheFriendly.IndexToPLAYERs
+
+local Azerite 							= LibStub("AzeriteTraits")	
+
+local _G, pairs, next					=
+	  _G, pairs, next
+
+local UnitIsUnit						= _G.UnitIsUnit	  
+local ACTION_CONST_HEARTOFAZEROTH		= _G.ACTION_CONST_HEARTOFAZEROTH  
+
+local Temp								= {
+	MemoryofLucidDreamsSpecs			= {66, 70, 263, 265, 266, 267, 62, 63, 64, 102, 258},
+	TotalAndMagic						= {"TotalImun", "DamageMagicImun"},
+}
 
 function A.HeartOfAzerothShow(icon)
 	return A:Show(icon, ACTION_CONST_HEARTOFAZEROTH)
@@ -29,8 +47,8 @@ function A.LazyHeartOfAzeroth(icon, unit)
 		local spellID 			= Major.spellID 		
 		local MajorSpellName 	= Azerite:EssenceGetMajorBySpellNameOnENG(spellName)
 		
-		if MajorSpellName and Env.SpellCD(spellID) <= A.GetPing() and Unit("player"):CombatTime() > 0 then 
-			local ShouldStop 	= A.ShouldStop()
+		if MajorSpellName and Env.SpellCD(spellID) <= GetPing() and Unit("player"):CombatTime() > 0 then 
+			local ShouldStop 	= ShouldStop()
 			local unitID 		= unit and unit or "target"
 			
 			--[[ Essences Used by All Roles ]]
@@ -75,13 +93,38 @@ function A.LazyHeartOfAzeroth(icon, unit)
 			if MajorSpellName == "Memory of Lucid Dreams" then
 				-- GCD 1.5 sec
 				-- Note: Retribution, Protection, Elemental, Warlock, Mage, Balance, Shadow an exception for power check 
-				if not ShouldStop and (Unit("player"):HasSpec({66, 70, 263, 265, 266, 267, 62, 63, 64, 102, 258}) or Unit("player"):PowerPercent() <= 50) and (A.Zone == "none" or Unit(unitID):IsBoss() or Unit(unitID):IsPlayer()) then 				
+				if not ShouldStop and (Unit("player"):HasSpec(Temp.MemoryofLucidDreamsSpecs) or Unit("player"):PowerPercent() <= 50) and (A.Zone == "none" or Unit(unitID):IsBoss() or Unit(unitID):IsPlayer()) then 				
 					-- PvP condition
 					if not A.IsInPvP or not Unit(unitID):IsPlayer() or (not Unit(unitID):IsEnemy() and Unit(unitID):DeBuffCyclone() == 0) or (Unit(unitID):IsEnemy() and Unit(unitID):WithOutKarmed() and Unit(unitID):HasBuffs("TotalImun") == 0) then 
 						return A.HeartOfAzerothShow(icon)
 					end 
 				end
 			end 
+			
+			if MajorSpellName == "Replica of Knowledge" then
+				-- GCD 1.5 sec
+				-- Cast 1.5 sec 
+				if 	not ShouldStop and 
+					not UnitIsUnit(unitID, "player") and
+					Env.SpellInRange(unitID, spellID) and 
+					Player:IsStaying() and 
+					Unit(unitID):IsPlayer() and 
+					Unit(unitID):GetLevel() >= A.PlayerLevel and
+					LoC:IsMissed("SILENCE") and 
+					LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					(
+						Unit("player"):CombatTime() > 0 and 
+						(
+							(Unit("player"):IsDamager() and Unit(unitID):IsDamager()) or 
+							(Unit("player"):IsHealer() and (Unit(unitID):IsHealer() or (not next(TeamCacheFriendlyHEALER) and Unit(unitID):IsDamager())) and Unit(unitID):TimeToDie() > 10) or
+							(Unit("player"):IsTank() and (Unit(unitID):IsHealer() or Unit(unitID):IsTank()))
+						)
+					) and 
+					Unit(unitID):DeBuffCyclone() == 0
+				then
+					return A.HeartOfAzerothShow(icon)
+				end 
+			end 			
 			
 			--[[ Tank ]]
 			if MajorSpellName == "Azeroth's Undying Gift" then
@@ -202,6 +245,15 @@ function A.LazyHeartOfAzeroth(icon, unit)
 				end
 			end 
 			
+			if MajorSpellName == "Vigilant Protector" then 
+				if 	not ShouldStop and 			
+					Unit("player"):CombatTime() >= 5 and
+					MultiUnits:GetByRangeTaunting(8, 3, 10) >= 3
+				then 
+					return true 
+				end 
+			end 
+			
 			--[[ Healer ]]
 			if MajorSpellName == "Refreshment" then 
 				-- GCD 1.5 sec 
@@ -240,6 +292,44 @@ function A.LazyHeartOfAzeroth(icon, unit)
 					return A.HeartOfAzerothShow(icon)
 				end 
 			end 
+			
+			if MajorSpellName == "Spirit of Preservation" then 
+				-- GCD 1.5 sec (channeled)
+				if 	not ShouldStop and 	
+					not Unit(unitID):IsEnemy() and 
+					Player:IsStayingTime() > 0.7 and 
+					LoC:IsMissed("SILENCE") and 
+					LoC:Get("SCHOOL_INTERRUPT", "NATURE") == 0 and 
+					Unit("player"):CombatTime() > 0 and		
+					Unit(unitID):TimeToDie() > 8 and 
+					Unit(unitID):DeBuffCyclone() == 0 and
+					HealingEngine.HealingBySpiritofPreservation(spellID, HealingEngine.GetMinimumUnits(2, 5)) >= HealingEngine.GetMinimumUnits(2, 5)
+				then 
+					return A.HeartOfAzerothShow(icon) 
+				end 
+			end
+			
+			if MajorSpellName == "Guardian Shell" then
+				-- GCD 1.5 sec (channeled)
+				if 	not ShouldStop and 	
+					not Unit(unitID):IsEnemy() and 				
+					Player:IsStayingTime() > 0.7 and 
+					LoC:IsMissed("SILENCE") and 
+					LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					Unit("player"):CombatTime() > 0 and		
+					Unit(unitID):InRange() and
+					Unit(unitID):TimeToDie() > 14 and 
+					(
+						HealingEngine.GetTimeToFullDie() < 12 or 
+						(
+							HealingEngine.GetHealthFrequency(3) > 25 and 
+							HealingEngine.GetIncomingDMGAVG() >= 15
+						)
+					)
+				then 
+					return A.HeartOfAzerothShow(icon)  
+				end 			
+			end 						
 			
 			--[[ Damager ]]
 			if MajorSpellName == "Focused Azerite Beam" then 
@@ -302,6 +392,44 @@ function A.LazyHeartOfAzeroth(icon, unit)
 				end 
 			end 
 			
+			if MajorSpellName == "Moment of Glory" then 
+				-- GCD 1.5 sec (cast)
+				-- Note: Need some tweaks regarding used essences by members probably or not - have to think how to play with it, no auto template right now e.g. use on CD on bosses / players usually
+				if not ShouldStop and Unit(unitID):IsEnemy() and Player:IsStaying() and LoC:IsMissed("SILENCE") and LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and Unit("player"):CombatTime() > 0 and (Unit(unitID):IsPlayer() or Unit(unitID):IsBoss()) then 
+					local member
+					for i = 1, TeamCacheFriendly.MaxSize do
+						member = TeamCacheFriendlyIndexToPLAYERs[i]						
+						if member and Unit(member):InRange() then 
+							if Unit(member):HasBuffs(spellID) > 0 then 
+								return false 
+							end 
+							
+							if Unit(member):GetLevel() >= A.PlayerLevel then
+								return A.HeartOfAzerothShow(icon)
+							end 
+						end 
+					end 
+				end 
+			end 
+			
+			if MajorSpellName == "Reaping Flames" then 
+				-- GCD 1.5 sec
+				if 	not ShouldStop and
+					Unit(unitID):IsEnemy() and 
+					Env.SpellInRange(unitID, spellID) and
+					LoC:IsMissed("SILENCE") and 
+					LoC:Get("SCHOOL_INTERRUPT", "FIRE") == 0 and 
+					A.AbsentImun(nil, unitID, Temp.TotalAndMagic) 
+				then 				
+					local TTD20					= Unit(unitID):TimeToDieX(20)
+					-- Note: Don't use if
+					if TTD20 > 0 and TTD20 <= 30 and (Azerite:GetRank(spellID) < 2 or Unit(unitID):HealthPercent() < 80) then 
+						return false 
+					end 
+
+					return A.HeartOfAzerothShow(icon) 
+				end 
+			end 
 		end 		
 	end 
 	
