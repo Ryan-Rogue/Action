@@ -71,7 +71,7 @@ local TMW 								= TMW
 local A 								= Action 
 local Listener							= A.Listener
 local Print								= A.Print
-local Lib 								= LibStub:NewLibrary("PetLibrary", 5)
+local Lib 								= LibStub:NewLibrary("PetLibrary", 6)
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -112,6 +112,8 @@ local IsSpellKnown, IsActionInRange, GetActionInfo, PetHasActionBar, GetPetActio
 local CombatLogGetCurrentEventInfo		= CombatLogGetCurrentEventInfo	 
 local UnitGUID							= UnitGUID 
 local UnitName							= UnitName
+local UnitExists						= UnitExists
+local UnitIsUnit						= UnitIsUnit
 local UnitIsDeadOrGhost					= UnitIsDeadOrGhost
 
 local Frame = CreateFrame("Frame", nil, UIParent)
@@ -122,7 +124,7 @@ end
 	  
 local function ConvertGUIDtoNPCID(GUID)
 	if A_Unit then 
-		local _, _, _, _, _, npc_id = A_Unit():InfoGUID(GUID) -- A_Unit() because no unitID 
+		local _, _, _, _, _, npc_id = A_Unit(""):InfoGUID(GUID) -- A_Unit("") because no unitID 
 		return npc_id
 	else
 		local _, _, _, _, _, _, _, NPCID = strfind(GUID, "(%S+)-(%d+)-(%d+)-(%d+)-(%d+)-(%d+)-(%S+)")
@@ -147,6 +149,7 @@ local function ChatPrint(...)
 end  
 
 local Pet 								= {
+	IsAttacking							= false,
 	-- Spells 
 	Data								= {},
 	NameErrors							= setmetatable({}, { __mode = "kv" }),
@@ -423,7 +426,8 @@ end
 
 local function ClearMainPet()
 	for k, v in pairs(PetTrackerData) do 
-		if v.isMain then 		
+		if v.isMain then 	
+			Pet.IsAttacking 			= false
 			-- Erase static 
 			Pet.MainGUID 				= nil 
 			local petGUID 				= v.isMain
@@ -580,6 +584,8 @@ Pet.UNIT_FLAGS							= function(...)
 	end 
 end 
 Listener:Add("ACTION_EVENT_PET_LIBRARY", "UNIT_FLAGS", 								Pet.UNIT_FLAGS)
+Listener:Add("ACTION_EVENT_PET_LIBRARY", "PET_ATTACK_START", function() Pet.IsAttacking = true end)
+Listener:Add("ACTION_EVENT_PET_LIBRARY", "PET_ATTACK_STOP", function() Pet.IsAttacking = false end)
 
 -------------------------------------------------------------------------------
 -- API - Spells 
@@ -659,6 +665,11 @@ function Lib:IsActive(petID, petName, skipIsDead)
 			return PetHasActionBar() or GetPetActionsUsable()
 		end 
 	end 
+end 
+
+function Lib:IsAttacking(unitID)
+	-- @return boolean 
+	return Pet.IsAttacking and UnitExists("pettarget") and (not unitID or UnitIsUnit("pettarget", unitID))
 end 
 
 function Lib:DisableErrors(state)
