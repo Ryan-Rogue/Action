@@ -1,3 +1,7 @@
+[Monk v13]
+Fixed RU titles localization (second row titles remain to be on EN)
+Added new 8.3 essences
+
 [Monk v12]
 Added cached pointers to tables
 
