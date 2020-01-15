@@ -149,8 +149,8 @@ local Spell					= _G.Spell
 local IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell =
 	  IsPlayerSpell, IsUsableSpell, IsHelpfulSpell, IsHarmfulSpell, IsAttackSpell, IsCurrentSpell
 
-local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown = 
-	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown
+local 	  GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount,	GetSpellPowerCost, 	   CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown, GetSpellAutocast = 
+	  TMW.GetSpellTexture, GetSpellLink, GetSpellInfo, GetSpellDescription, GetSpellCount, 	GetSpellPowerCost, Env.CooldownDuration, GetSpellCharges, GetHaste, GetShapeshiftFormCooldown, GetSpellBaseCooldown, GetSpellAutocast
 
 -- Item 	  
 local IsUsableItem, IsHelpfulItem, IsHarmfulItem, IsCurrentItem  =
@@ -169,6 +169,7 @@ local UnitIsUnit, UnitIsPlayer		   	= UnitIsUnit, UnitIsPlayer
 
 -- Empty 
 local empty1, empty2 		= { 0, -1 }, { 0, 0, 0, 0, 0, 0, 0, 0 } 
+local emptycreate			= {}
 
 -- Auras
 local IsBreakAbleDeBuff = {}
@@ -448,6 +449,12 @@ end
 function A:GetSpellAbsorb(unitID)
 	-- @return number (taken current absort amount of the spell - during fight)
 	return CombatTracker:GetAbsorb(unitID or "player", self:Info())
+end 
+
+function A:GetSpellAutocast()
+	-- @return boolean, boolean 
+	-- Returns autocastable, autostate 
+	return GetSpellAutocast(self:Info())
 end 
 
 function A:IsSpellLastGCD(byID)
@@ -1340,8 +1347,8 @@ end
 -------------------------------------------------------------------------------
 -- UI: Create
 -------------------------------------------------------------------------------
-function A.Create(attributes)
-	--[[@usage: attributes (table)
+function A.Create(arg)
+	--[[@usage: arg (table)
 		Required: 
 			Type (@string)	- Spell|SpellSingleColor|Item|ItemSingleColor|Potion|Trinket|TrinketBySlot|HeartOfAzeroth|SwapEquip (TrinketBySlot is only in CORE!)
 			ID (@number) 	- spellID | itemID | textureID (textureID only for Type "SwapEquip")
@@ -1357,9 +1364,7 @@ function A.Create(attributes)
 			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
 			Equip1, Equip2 (@function) between which equipments do swap, used in :IsExists method, only if Type is SwapEquip
 	]]
-	if not attributes then 
-		local attributes = {}
-	end 	
+	local attributes = arg or emptycreate
 	local s = {
 		ID = attributes.ID,
 		SubType = attributes.Type,

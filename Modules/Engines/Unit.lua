@@ -63,9 +63,9 @@ local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo
 local GetUnitSpeed							= _G.GetUnitSpeed
 local GetSpellInfo							= _G.GetSpellInfo
 local UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible =
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs =
 	  UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -689,6 +689,7 @@ local AuraList = {
         210294, -- Divine Favor 
         212295, -- Nether Ward
         271466, -- Luminous Barrier
+		311203, -- Moment of Glory
     },
     SecondPurje = {
         1044, -- Blessing of Freedom        
@@ -1204,6 +1205,38 @@ local Info = {
 		["不死族"]				= true,
 		[""]					= false,		
 	},
+	IsDemon						= {
+		["Demon"]				= true,
+		["Dämon"]				= true,
+		["Demonio"]				= true,
+		["Démon"]				= true,
+		["Demone"]				= true,
+		["Demônio"]				= true,
+		["Демон"]				= true,
+		["악마"]					= true,
+		["恶魔"]				= true,
+		["惡魔"]				= true,
+	},
+	IsHumanoid					= {
+		["Humanoid"]			= true,
+		["Humanoide"]			= true,
+		["Humanoïde"]			= true,
+		["Umanoide"]			= true,
+		["Гуманоид"]			= true,
+		["인간형"]					= true,
+		["人型生物"]				= true,
+		["人型生物"]				= true,
+	},
+	IsElemental					= {
+		["Elemental"]			= true,
+		["Elementar"]			= true,
+		["Élémentaire"]			= true,
+		["Elementale"]			= true,
+		["Элементаль"]			= true,
+		["정령"]					= true,
+		["元素生物"]				= true,
+		["元素生物"]				= true,
+	},
 	IsTotem 					= {
 		["Totem"]				= true,
 		["Tótem"]				= true,
@@ -1459,6 +1492,9 @@ local InfoClassIsMelee 						= Info.ClassIsMelee
 local InfoAllCC 							= Info.AllCC
 
 local InfoIsUndead							= Info.IsUndead
+local InfoIsDemon							= Info.IsDemon
+local InfoIsHumanoid						= Info.IsHumanoid
+local InfoIsElemental						= Info.IsElemental
 local InfoIsTotem							= Info.IsTotem
 local InfoIsDummy							= Info.IsDummy
 local InfoIsDummyPvP						= Info.IsDummyPvP
@@ -1508,6 +1544,11 @@ A.Unit = PseudoClass({
 		-- @return string or empty string  
 		local unitID 						= self.UnitID
 		return UnitClassification(unitID) or str_empty
+	end, "UnitID"),
+	CreatureType							= Cache:Pass(function(self)  
+		-- @return string or empty string  
+		local unitID 						= self.UnitID
+		return UnitCreatureType(unitID) or str_empty
 	end, "UnitID"),
 	InfoGUID 								= Cache:Wrap(function(self, unitGUID)
 		-- @return 
@@ -1591,6 +1632,15 @@ A.Unit = PseudoClass({
 			return TeamCacheEnemyHEALER[unitID] or self(unitID):HasSpec(InfoSpecIs["HEALER"])  
 		else 
 			return TeamCacheFriendlyHEALER[unitID] or self(unitID):Role() == "HEALER"
+		end 
+	end, "UnitID"),
+	IsDamager 								= Cache:Pass(function(self)  
+		-- @return boolean 
+		local unitID 						= self.UnitID
+	    if self(unitID):IsEnemy() then
+			return TeamCacheEnemyDAMAGER[unitID] or self(unitID):HasSpec(InfoSpecIs["DAMAGER"])  
+		else 
+			return TeamCacheFriendlyDAMAGER[unitID] or self(unitID):Role() == "DAMAGER"
 		end 
 	end, "UnitID"),
 	IsTank 									= Cache:Pass(function(self)    
@@ -1966,6 +2016,24 @@ A.Unit = PseudoClass({
 		local unitType 						= UnitCreatureType(unitID) or str_empty
 		return InfoIsUndead[unitType]	       	
 	end, "UnitID"),
+	IsDemon									= Cache:Pass(function(self)
+		-- @return boolean 
+		local unitID 						= self.UnitID 
+		local unitType 						= UnitCreatureType(unitID) or str_empty
+		return InfoIsDemon[unitType]	       	
+	end, "UnitID"),
+	IsHumanoid								= Cache:Pass(function(self)
+		-- @return boolean 
+		local unitID 						= self.UnitID 
+		local unitType 						= UnitCreatureType(unitID) or str_empty
+		return self(unitID):IsPlayer() or InfoIsHumanoid[unitType]	       	
+	end, "UnitID"),
+	IsElemental								= Cache:Pass(function(self)
+		-- @return boolean 
+		local unitID 						= self.UnitID 
+		local unitType 						= UnitCreatureType(unitID) or str_empty
+		return InfoIsElemental[unitType]	       	
+	end, "UnitID"),
 	IsTotem 								= Cache:Pass(function(self)
 		-- @return boolean 
 		local unitID 						= self.UnitID 
@@ -2051,6 +2119,19 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return select(2, self(unitID):GetCurrentSpeed())
 	end, "UnitGUID"),
+	GetTotalHealAbsorbs						= Cache:Pass(function(self) 
+		-- @return number 
+		-- Note: 
+		-- Returns the total amount of healing the unit can absorb without gaining health
+		-- Abilities like Necrotic Strike cause affected units to absorb healing without gaining health
+		local unitID 						= self.UnitID
+		return UnitGetTotalHealAbsorbs(unitID) or 0
+	end, "UnitID"),
+	GetTotalHealAbsorbsPercent				= Cache:Pass(function(self) 
+		-- @return number 
+		local unitID 						= self.UnitID
+		return self(unitID):GetTotalHealAbsorbs() * 100 / self(unitID):HealthMax()
+	end, "UnitID"),
 	-- Combat: Diminishing
 	GetDR 									= Cache:Pass(function(self, drCat) 
 		-- @return: DR_Tick (@number), DR_Remain (@number), DR_Application (@number), DR_ApplicationMax (@number)
@@ -2160,6 +2241,22 @@ A.Unit = PseudoClass({
 			return select(index, CombatTracker:GetHPS(unitID))
 		else
 			return CombatTracker:GetHPS(unitID)
+		end 
+	end, "UnitID"),
+	GetSchoolDMG							= Cache:Pass(function(self, index)
+		-- @return number
+		-- [1] Holy 
+		-- [2] Fire 
+		-- [3] Nature 
+		-- [4] Frost 
+		-- [5] Shadow 
+		-- [6] Arcane 
+		-- Note: By @player only!
+		local unitID 						= self.UnitID
+		if index then 
+			return select(index, CombatTracker:GetSchoolDMG(unitID))
+		else
+			return CombatTracker:GetSchoolDMG(unitID)
 		end 
 	end, "UnitID"),
 	GetSpellAmountX 						= Cache:Pass(function(self, spell, x)

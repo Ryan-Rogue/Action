@@ -1208,8 +1208,6 @@ local types = {
         { id = 278961, dur = 0, stack = 0},
         -- Decaying Spores
         { id = 259714, dur = 0, stack = 1},
-        -- Festering Bite
-        { id = 263074, dur = 0, stack = 0},
 		-- Decaying Spores
 		{ id = 273226, dur = 0, stack = 1},
 		-- Rotting Wounds
@@ -1238,7 +1236,7 @@ local types = {
 		{ id = 285460, dur = 0, stack = 0 },
 		-- 8.2 Mechagon - Flaming Refuse
 		{ id = 294180, dur = 0, stack = 0 },
-		-- 8.2 Mechagon -  Capacitor Discharge
+		-- 8.2 Mechagon - Capacitor Discharge
 		{ id = 295168, dur = 0, stack = 0 },
 		-- 8.2 Queen Azshara - Arcane Burst
 		{ id = 303657, dur = 10, stack = 0 },
@@ -1276,8 +1274,6 @@ local types = {
         { id = 257908, dur = 0, stack = 0},
         -- Choking Brine
         { id = 264560, dur = 0, stack = 0},
-        -- Electrifying Shock
-        { id = 268233, dur = 0, stack = 0},
         -- Touch of the Drowned (if no party member is afflicted by Mental Assault (268391))
         { id = 268322, dur = 0, stack = 0},
         -- Mental Assault 
@@ -1290,7 +1286,7 @@ local types = {
         { id = 272571, dur = 0, stack = 0},
         -- Putrid Waters
         { id = 274991, dur = 0, stack = 0},
-        -- Flame Shock (if no party member is afflicted by Snake Charm (268008)))
+        -- Flame Shock (if no party member is afflicted by Snake Charm (268008))
         { id = 268013, dur = 0, stack = 0},
         -- Snake Charm
         { id = 268008, dur = 0, stack = 0},

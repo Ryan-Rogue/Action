@@ -1,7 +1,8 @@
 --- 
-local DateTime 														= "07.01.2020"
+local DateTime 														= "15.01.2020"
 ---
 local TMW 															= TMW
+local Env 															= TMW.CNDT.Env
 local strlowerCache  												= TMW.strlowerCache
 local TMWdb
 
@@ -33,6 +34,7 @@ local GameLocale 													= GetLocale()
 if GameLocale == "esMX" then 
 	GameLocale = "esES"
 end 
+local DEFAULT_CHAT_FRAME											= _G.DEFAULT_CHAT_FRAME
 local UIParent														= _G.UIParent
 local C_UI															= _G.C_UI
 local Spell															= _G.Spell 	  								-- ObjectAPI/Spell.lua
@@ -45,6 +47,7 @@ local CombatLogGetCurrentEventInfo									= _G.CombatLogGetCurrentEventInfo
 local IsControlKeyDown												= _G.IsControlKeyDown
 
 _G.Action 															= LibStub("AceAddon-3.0"):NewAddon("Action", "AceEvent-3.0") 
+Env.Action 															= _G.Action
 local Action 														= _G.Action 
 Action.PlayerRace 													= select(2, UnitRace("player"))
 Action.PlayerClassName, Action.PlayerClass, Action.PlayerClassID  	= UnitClass("player")
@@ -1879,6 +1882,11 @@ function Action.GetLocalization()
 	return L
 end 
 
+function Action.GetCL()
+	-- @return string (Current locale language of the UI)
+	return CL 
+end 
+
 -------------------------------------------------------------------------------
 -- DB: Database
 -------------------------------------------------------------------------------
@@ -2290,8 +2298,6 @@ local GlobalFactory = {
 				[278961] = {},
 				-- Decaying Spores
 				[259714] = {},
-				-- Festering Bite
-				[263074] = {},
 				-- Decaying Spores
 				[273226] = { byID = true, stack = 2 },
 				-- Rotting Wounds
@@ -2361,7 +2367,10 @@ local GlobalFactory = {
 				-- Choking Brine
 				[264560] = {},
 				-- Electrifying Shock
-				[268233] = {},
+				[268233] = { LUAVER = 1, LUA = [[ 
+					-- Skips Mechagon - Mechagon Island, boss: Naeno Megacrash
+					return ZoneID ~= 1490
+				]] },
 				-- Touch of the Drowned 
 				[268322] = { LUAVER = 2, LUA = [[ -- if no party member is afflicted by Mental Assault (268391)
 				return FriendlyTeam():GetDeBuffs(268391) == 0 ]] },
@@ -2458,6 +2467,8 @@ local GlobalFactory = {
 				[198111] = { dur = 0 },
 				-- Warlock: Nether Ward
 				[212295] = { dur = 1 },
+				-- Moment of Glory
+				[311203] = { dur = 0 },
 			},
 			PurgeLow = {
 				-- Paladin: Blessing of Freedom  
@@ -3940,29 +3951,34 @@ end)
 -- UI: LUA - Container
 -------------------------------------------------------------------------------
 local Functions = {}
+local FormatedLuaCode = setmetatable({}, { __index = function(t, luaCode)
+	t[luaCode] = setmetatable({}, { __index = function(tbl, thisunit)
+		tbl[thisunit] = luaCode:gsub("thisunit", '"' .. thisunit .. '"') 
+		return tbl[thisunit]
+    end })
+	return t[luaCode]
+end })
 local function GetCompiledFunction(luaCode, thisunit)
-	local func, key, err
-	luaCode = luaCode:gsub("thisunit", '"' .. (thisunit or "") .. '"') 
+	local func, err
+	luaCode = FormatedLuaCode[luaCode][thisunit or ""] 
 	if Functions[luaCode] then
-		key, err = tostring(Functions[luaCode]):gsub("function: ", "LF_")
-		return Functions[luaCode], key, err
+		return Functions[luaCode]
 	end	
 
 	func, err = loadstring(luaCode)
 	
 	if func then
 		setfenv(func, setmetatable(Action, { __index = _G }))
-		key = tostring(func):gsub("function: ", "LF_")
 		Functions[luaCode] = func
 	end	
-	return func, key, err
+	return func, err
 end
 local function RunLua(luaCode, thisunit)
 	if not luaCode or luaCode == "" then 
 		return true 
 	end 
 	
-	local func, key, err = GetCompiledFunction(luaCode, thisunit)
+	local func = GetCompiledFunction(luaCode, thisunit)
 	return func and func()
 end
 local function CreateLuaEditor(parent, title, w, h, editTT)
@@ -3994,7 +4010,7 @@ local function CreateLuaEditor(parent, title, w, h, editTT)
 	end 	
 	
 	-- The indention lib overrides GetText, but for the line number
-	-- display we ned the original, so save it here
+	-- display we need the original, so save it here
 	LuaWindow.EditBox.GetOriginalText = LuaWindow.EditBox.GetText
 	-- ForAllIndentsAndPurposes
 	if IndentationLib then
@@ -4087,10 +4103,10 @@ local function CreateLuaEditor(parent, title, w, h, editTT)
 			end 
 		
 			-- Check syntax on errors
-			local func, key, err = GetCompiledFunction(Code)
+			local func, err = GetCompiledFunction(Code)
 			if not func then 				
 				LuaWindow.EditBox.LuaErrors = true	
-				error(err)
+				error(err or "Unexpected error in GetCompiledFunction function - Code exists in table but 'err' become 'nil'")
 				return
 			end 
 			
@@ -9254,10 +9270,7 @@ function Action.Print(text, bool, ignore)
 	if not ignore and TMWdb and TMWdb.profile.ActionDB and TMWdb.profile.ActionDB[1] and TMWdb.profile.ActionDB[1].DisablePrint then 
 		return 
 	end 
-    local hex = "00ccff"
-    local prefix = strformat("|cff%s%s|r", hex:upper(), "Action:")	
-	local fulltext = text .. (bool ~= nil and tostring(bool) or "")
-    DEFAULT_CHAT_FRAME:AddMessage(strjoin(" ", prefix, fulltext))
+    DEFAULT_CHAT_FRAME:AddMessage(strjoin(" ", "|cff00ccffAction:|r", text .. (bool ~= nil and tostring(bool) or "")))
 end
 
 function Action.PrintHelpToggle()
