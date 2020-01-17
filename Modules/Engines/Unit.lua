@@ -1739,6 +1739,14 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return UnitIsCharmed(unitID)
 	end, "UnitID"),
+	IsMounted								= Cache:Pass(function(self)  
+		-- @return boolean
+		local unitID 						= self.UnitID
+		if UnitIsUnit(unitID, "player")  then 
+			return Player:IsMounted()
+		end 
+		return select(2, self(unitID):GetCurrentSpeed()) >= 200
+	end, "UnitID"),
 	IsMovingOut								= Cache:Pass(function(self, snap_timer)
 		-- @return boolean 
 		-- snap_timer must be in miliseconds e.g. 0.2 or leave it empty, it's how often unit must be updated between snapshots to understand in which side he's moving 
@@ -2715,7 +2723,8 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID	
 				
 		if self(unitID):IsEnemy() then
-			if next(TeamCacheFriendlyDAMAGER) then     
+			if next(TeamCacheFriendlyDAMAGER) then  
+				local member
 				for member in pairs(TeamCacheFriendlyDAMAGER) do 
 					if UnitIsUnit(member .. "target", unitID) 
 					and not UnitIsUnit(member, "player")
@@ -2728,11 +2737,20 @@ A.Unit = PseudoClass({
 				end 
 			end
 		else
+			local arena
+			local specsmap = (specs and InfoSpecIs[specs]) or specs or false
 			if next(TeamCacheEnemyDAMAGER) then 
-				-- TYPES AND ROLES
-				local arena
-				local specsmap = (specs and InfoSpecIs[specs]) or specs or false
 				for arena in pairs(TeamCacheEnemyDAMAGER) do
+					if UnitIsUnit(arena .. "target", unitID) 
+					and (not specsmap or 	self(arena):HasSpec(specsmap))
+					and (not burst or 		self(arena):HasBuffs("DamageBuffs") > 2) 
+					and (not deffensive or 	self(unitID):HasBuffs("DeffBuffs") < 2)
+					and (not range or 		self(arena):GetRange() <= range) then 
+						return true
+					end
+				end 
+			else 
+				for arena in pairs(ActiveUnitPlates) do  
 					if UnitIsUnit(arena .. "target", unitID) 
 					and (not specsmap or 	self(arena):HasSpec(specsmap))
 					and (not burst or 		self(arena):HasBuffs("DamageBuffs") > 2) 

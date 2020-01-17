@@ -458,7 +458,13 @@ function A:GetSpellAutocast()
 end 
 
 function A:IsSpellLastGCD(byID)
+	-- @return boolean
 	return (byID and self.ID == A.LastPlayerCastID) or (not byID and self:Info() == A.LastPlayerCastName)
+end 
+
+function A:IsSpellLastCastOrGCD(byID)
+	-- @return boolean
+	return self:IsSpellLastGCD(byID) or self:IsSpellInCasting()
 end 
 
 function A:IsSpellInFlight()
@@ -1127,6 +1133,11 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 
 		return true
 	end 
+end 
+
+function A:IsBlockedByAny()
+	-- @return boolean
+	return self:IsBlocked() or self:IsBlockedByQueue() or (self.Type == "Spell" and (self:IsBlockedBySpellLevel() or (self.isTalent and not self:IsSpellLearned()))) or (self.Type ~= "Spell" and self.Type ~= "SwapEquip" and self:GetCount() == 0 and not self:GetEquipped())
 end 
 
 function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
