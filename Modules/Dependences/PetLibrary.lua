@@ -18,7 +18,7 @@ Pet:Add(252, {
 	47481, -- Gnaw
 	-- strings also accepted!
 	"Gnaw",
-	GetSpellInfo(47481),
+	(GetSpellInfo(47481)), -- must be in '(' ')' because call this function will return multi returns through ',' 
 })
 -- Example of use:
 /dump LibStub("PetLibrary"):IsInRange(47482, "target") 
@@ -71,7 +71,7 @@ local TMW 								= TMW
 local A 								= Action 
 local Listener							= A.Listener
 local Print								= A.Print
-local Lib 								= LibStub:NewLibrary("PetLibrary", 6)
+local Lib 								= LibStub:NewLibrary("PetLibrary", 7)
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -591,7 +591,7 @@ Listener:Add("ACTION_EVENT_PET_LIBRARY", "PET_ATTACK_STOP", function() Pet.IsAtt
 -- API - Spells 
 -------------------------------------------------------------------------------
 -- Note: Library accepts spellName and spellID, if specified spellName then only string will be performed otherwise both spellID and spellName 
--- Note: petSpell can be table {123, 124} or {123, "spellName", spellID} 
+-- Note: petSpell can be table {123, 124} or {123, "spellName", spellID, (GetSpellInfo(47481)), -- must be in '(' ')' because call this function will return multi returns through ','} 
 
 function Lib:Add(specID, petSpells)
 	-- Adds to track specified spells for noted player specID 
@@ -699,8 +699,13 @@ function Lib:UninitializeTrackerFor(specID)
 end 
 
 function Lib:GetTrackerData()
-	-- @return table 
+	-- @return table which holds [petID] = PetData (@table name, duration, count, GUIDs (GUIDs is also @table with [PetGUID] = { updated, start, expiration }))
 	return PetTrackerData
+end 
+
+function Lib:GetTrackerGUID()
+	-- @return table ([GUID] = petID to navigate in CLEU for PetTrackerData)
+	return PetTrackerGUID
 end 
 
 function Lib:GetMainPet()
