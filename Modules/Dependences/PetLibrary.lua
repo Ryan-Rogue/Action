@@ -71,7 +71,7 @@ local TMW 								= TMW
 local A 								= Action 
 local Listener							= A.Listener
 local Print								= A.Print
-local Lib 								= LibStub:NewLibrary("PetLibrary", 7)
+local Lib 								= LibStub:NewLibrary("PetLibrary", 8)
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -625,7 +625,7 @@ end
 
 function Lib:IsSpellKnown(spell)
 	-- @return boolean 
-	return IsSpellKnown(spell, true) or (type(spell) == "number" and IsSpellKnown(GetInfoSpell(spell), true)) -- PetData[A.PlayerSpec] and PetData[A.PlayerSpec][spell] or 
+	return IsSpellKnown(spell, true) -- PetData[A.PlayerSpec] and PetData[A.PlayerSpec][spell] or 
 end 
 
 function Lib:GetMultiUnitsBySpell(petSpell, units)
