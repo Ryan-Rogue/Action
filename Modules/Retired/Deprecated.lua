@@ -1274,6 +1274,8 @@ local types = {
         { id = 257908, dur = 0, stack = 0},
         -- Choking Brine
         { id = 264560, dur = 0, stack = 0},
+		-- Electrifying Shock
+		{ id = 268233, dur = 0, stack = 0},
         -- Touch of the Drowned (if no party member is afflicted by Mental Assault (268391))
         { id = 268322, dur = 0, stack = 0},
         -- Mental Assault 
@@ -1430,17 +1432,21 @@ function Env.PvEDispel(unit)
                 -- Putrid Waters (275014, don't dispel self)
                 if Spell.stack == 0 then 
                     if Unit(unit):HasDeBuffs(Spell.id) > duration then 
-                        if (Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
-                        (Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
-                        (Spell.id ~= 275014 or not UnitIsUnit("player", unit)) then 
+                        if 	(Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
+							(Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
+							(Spell.id ~= 275014 or not UnitIsUnit("player", unit)) and 
+							(Spell.id ~= 268233 or A.ZoneID ~= 1490) 
+						then 
                             return true 
                         end
                     end 
                 else
                     if Unit(unit):HasDeBuffs(Spell.id) > duration and Unit(unit):HasDeBuffsStacks(Spell.id, nil, true) > Spell.stack then 
-                        if (Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
-                        (Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
-                        (Spell.id ~= 275014 or not UnitIsUnit("player", unit)) then 
+                        if 	(Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
+							(Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
+							(Spell.id ~= 275014 or not UnitIsUnit("player", unit)) and 
+							(Spell.id ~= 268233 or A.ZoneID ~= 1490)
+						then 
                             return true 
                         end
                     end 
