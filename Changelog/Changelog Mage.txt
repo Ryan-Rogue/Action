@@ -1,3 +1,6 @@
+[Mage v27]
+Spellsteal	- PvP fixed use while burst 
+
 [Mage v26]
 Fixed stopcast texture
 
