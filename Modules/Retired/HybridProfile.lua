@@ -317,6 +317,12 @@ local function UpdateChesderGroups()
 			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global " .. i)
 			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
 		end   
+		-- Enable Toggle if was disabled 
+		if _G.TellMeWhen_GlobalGroup2_Icon1 and not _G.TellMeWhen_GlobalGroup2_Icon1.Enabled then
+			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 2 1")
+			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+		end
+		-- Enable PvP / PvE switcher if was disabled 
 		if _G.TellMeWhen_GlobalGroup3_Icon7 and not _G.TellMeWhen_GlobalGroup3_Icon7.Enabled then
 			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw enable global 3 7")
 			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
