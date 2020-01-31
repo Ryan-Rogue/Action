@@ -1234,6 +1234,8 @@ local types = {
         { id = 252687, dur = 0, stack = 2},
     },
     Magic = {
+		-- 8.3 Annihilation
+		{ id = 306982, dur = 0, stack = 9, byID = true },
 		-- 8.3 Recurring Nightmare
 		{ id = 312486, dur = 0, stack = 0, byID = true },	
 		-- 8.3 Corrupted Mind

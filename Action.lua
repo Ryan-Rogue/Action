@@ -2326,6 +2326,8 @@ local GlobalFactory = {
 				[252687] = { stack = 2 },				
 			},
 			Magic = {	
+				-- 8.3 Annihilation
+				[306982] = { byID = true, stack = 10 },
 				-- 8.3 Recurring Nightmare
 				[312486] = { byID = true, stack = 1 },
 				-- 8.3 Corrupted Mind
