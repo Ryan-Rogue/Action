@@ -1168,6 +1168,12 @@ end
 -- NOTE: RETIRED VERSION HAS > INSTEAD OF ACTUAL >=
 local types = {
     Poison = {
+		-- 8.3 Heartpiercer Venom
+		{ id = 316506, dur = 0.5, stack = 0, byID = true },
+		-- 8.3 Mind-Numbing Toxin
+		{ id = 314593, dur = 0, stack = 0, byID = true },
+		-- 8.3 Volatile Rupture
+		{ id = 314467, dur = 1.49, stack = 0, byID = true },
         -- Venomfang Strike
         { id = 252687, dur = 0, stack = 0},
         -- Hidden Blade
@@ -1190,8 +1196,10 @@ local types = {
 		{ id = 257777, dur = 0, stack = 0},
     },
     Disease = {
+		-- 8.3 Crippling Pestilence
+		{ id = 314406, dur = 0, stack = 0, byID = true },
 		-- 8.2 Mechagon - Consuming Slime
-		{ id = 300659, dur = 0, stack = 0},
+		{ id = 300659, dur = 0, stack = 0},		
 		-- 8.2 Mechagon - Gooped
 		{ id = 298124, dur = 0, stack = 0},
         -- Infected Wound
@@ -1226,8 +1234,18 @@ local types = {
         { id = 252687, dur = 0, stack = 2},
     },
     Magic = {
+		-- 8.3 Recurring Nightmare
+		{ id = 312486, dur = 0, stack = 0, byID = true },	
+		-- 8.3 Corrupted Mind
+		{ id = 313400, dur = 0, stack = 0, byID = true },	
+		-- 8.3 Grasping Tendrils
+		{ id = 315176, dur = 0, stack = 0, byID = true },
+		-- 8.3 Mind Flay
+		{ id = 314592, dur = 1.49, stack = 0, byID = true },
+		-- 8.3 Cascading Terror
+		{ id = 314483, dur = 0, stack = 0, byID = true },
 		-- 8.2 Mechagon - Blazing Chomp
-		{ id = 294929, dur = 0, stack = 0 },
+		{ id = 294929, dur = 0, stack = 0 },		
 		-- 8.2 Mechagon - Shrink
 		{ id = 299572, dur = 0, stack = 0 },
 		-- 8.2 Mechagon - Arcing Zap
@@ -1312,8 +1330,6 @@ local types = {
         { id = 263891, dur = 0, stack = 0},
         -- Fragment Soul
         { id = 264378, dur = 0, stack = 0},
-        -- Reap Soul
-        { id = 288388, dur = 0, stack = 19},
         -- Putrid Waters
         { id = 275014, dur = 0, stack = 0},
     }, 
@@ -1431,7 +1447,7 @@ function Env.PvEDispel(unit)
                 -- Flame Shock (268013, if no party member is afflicted by Snake Charm (268008))
                 -- Putrid Waters (275014, don't dispel self)
                 if Spell.stack == 0 then 
-                    if Unit(unit):HasDeBuffs(Spell.id) > duration then 
+                    if Unit(unit):HasDeBuffs(Spell.id, nil, Spell.byID) > duration then 
                         if 	(Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
 							(Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
 							(Spell.id ~= 275014 or not UnitIsUnit("player", unit)) and 
@@ -1441,7 +1457,7 @@ function Env.PvEDispel(unit)
                         end
                     end 
                 else
-                    if Unit(unit):HasDeBuffs(Spell.id) > duration and Unit(unit):HasDeBuffsStacks(Spell.id, nil, true) > Spell.stack then 
+                    if Unit(unit):HasDeBuffs(Spell.id, nil, Spell.byID) > duration and Unit(unit):HasDeBuffsStacks(Spell.id, nil, true) > Spell.stack then 
                         if 	(Spell.id ~= 268322 or FriendlyTeam():GetDeBuffs(268391) == 0) and 
 							(Spell.id ~= 268013 or FriendlyTeam():GetDeBuffs(268008) == 0) and 
 							(Spell.id ~= 275014 or not UnitIsUnit("player", unit)) and 

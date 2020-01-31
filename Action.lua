@@ -2256,6 +2256,12 @@ local GlobalFactory = {
 				[265368] = { canStealOrPurge = true },
 			},
 			Poison = {
+				-- 8.3 Heartpiercer Venom
+				[316506] = { byID = true, dur = 0.5 },
+				-- 8.3 Mind-Numbing Toxin
+				[314593] = { byID = true },
+				-- 8.3 Volatile Rupture
+				[314467] = { byID = true, dur = 1.49 },
 				-- Venomfang Strike
 				[252687] = {},
 				-- Poisoning Strike
@@ -2280,6 +2286,8 @@ local GlobalFactory = {
 				[257777] = { dur = 1.49 },
 			},
 			Disease = {
+				-- 8.3 Crippling Pestilence
+				[314406] = { byID = true, dur = 1.49 },
 				-- 8.2 Mechagon - Consuming Slime
 				[300659] = {},
 				-- 8.2 Mechagon - Gooped
@@ -2317,7 +2325,19 @@ local GlobalFactory = {
 				-- Withering Curse
 				[252687] = { stack = 2 },				
 			},
-			Magic = {				
+			Magic = {	
+				-- 8.3 Recurring Nightmare
+				[312486] = { byID = true, stack = 1 },
+				-- 8.3 Corrupted Mind
+				[313400] = { byID = true },
+				-- 8.3 Grasping Tendrils
+				[315176] = { byID = true },
+				-- 8.3 Mind Flay
+				[314592] = { byID = true, dur = 1.49 },
+				-- 8.3 Cascading Terror
+				[314478] = { byID = true },
+				-- 8.3 Cascading Terror				
+				[314483] = { byID = true },
 				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
 				-- 8.2 Mechagon - Shrink
@@ -2409,8 +2429,6 @@ local GlobalFactory = {
 				[263891] = {},
 				-- Fragment Soul
 				[264378] = {},
-				-- Reap Soul
-				[288388] = { stack = 20 },
 				-- Putrid Waters
 				[275014] = { LUAVER = 2, LUA = [[ -- Don't dispel self
 				return not UnitIsUnit("player", thisunit) ]] },
