@@ -1240,8 +1240,6 @@ local types = {
 		{ id = 312486, dur = 0, stack = 0, byID = true },	
 		-- 8.3 Corrupted Mind
 		{ id = 313400, dur = 0, stack = 0, byID = true },	
-		-- 8.3 Grasping Tendrils
-		{ id = 315176, dur = 0, stack = 0, byID = true },
 		-- 8.3 Mind Flay
 		{ id = 314592, dur = 1.49, stack = 0, byID = true },
 		-- 8.3 Cascading Terror

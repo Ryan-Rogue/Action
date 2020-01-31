@@ -2332,8 +2332,6 @@ local GlobalFactory = {
 				[312486] = { byID = true, stack = 1 },
 				-- 8.3 Corrupted Mind
 				[313400] = { byID = true },
-				-- 8.3 Grasping Tendrils
-				[315176] = { byID = true },
 				-- 8.3 Mind Flay
 				[314592] = { byID = true, dur = 1.49 },
 				-- 8.3 Cascading Terror
