@@ -910,6 +910,12 @@ local UnitTrackerIsEventIsDied					= UnitTracker.IsEventIsDied
 -------------------------------------------------------------------------------
 local LossOfControl								= {
 	LastEvent 									= 0,
+	RemapType									= {
+		["STUN_MECHANIC"]						= "STUN",
+		["FEAR_MECHANIC"]						= "FEAR",
+		--["INTERRUPT"]							= "SCHOOL_INTERRUPT",
+	},
+	TextToName									= {},
 	["SCHOOL_INTERRUPT"]						= {
 		["PHYSICAL"] = {
 			bit = 0x1,
@@ -970,6 +976,20 @@ local LossOfControl								= {
 	["FEAR"]									= 0, -- "Feared"	
 }
 
+do 
+	for name, val in pairs(LossOfControl) do 
+		if name ~= "LastEvent" then 
+			if name == "RemapType" then 
+				for k, v in pairs(val) do 
+					LossOfControl.TextToName[_G["LOSS_OF_CONTROL_DISPLAY_" .. k]] = v 
+				end 
+			elseif type(val) == "number" then 
+				LossOfControl.TextToName[_G["LOSS_OF_CONTROL_DISPLAY_" .. name]] = name 
+			end 
+		end 
+	end 
+end 
+
 LossOfControl.OnEvent							= function(...)
     if TMW.time == LossOfControl.LastEvent then
         return
@@ -978,36 +998,32 @@ LossOfControl.OnEvent							= function(...)
     
 	local isValidType = false
     for eventIndex = 1, GetNumEvents() do 
-        local locType, spellID, text, _, start, timeRemaining, duration, lockoutSchool = GetEventInfo(eventIndex)  			
-		
-		if LossOfControl[locType] then 
-			if locType == "SCHOOL_INTERRUPT" then
-				-- Check that the user has requested the schools that are locked out.
-				if lockoutSchool and lockoutSchool ~= 0 then 
-					for name, val in pairs(LossOfControl[locType]) do
-						if bitband(lockoutSchool, val.bit) ~= 0 then 						                 						
-							isValidType = true
-							LossOfControl[locType][name].result = (start or 0) + (duration or 0)											
-						end 
-					end 
-				end 
-			else 
-				for name in pairs(LossOfControl) do 
-					if _G["LOSS_OF_CONTROL_DISPLAY_" .. name] == text then 
-						-- Check that the user has requested the category that is active on the player.
+        local locType, spellID, text, _, start, timeRemaining, duration, lockoutSchool = GetEventInfo(eventIndex)  	
+
+		if locType == "SCHOOL_INTERRUPT" then
+			-- Check that the user has requested the schools that are locked out.
+			if lockoutSchool and lockoutSchool ~= 0 then 
+				for name, val in pairs(LossOfControl[locType]) do
+					if bitband(lockoutSchool, val.bit) ~= 0 then 						                 						
 						isValidType = true
-						LossOfControl[locType] = (start or 0) + (duration or 0)
-						break 
+						LossOfControl[locType][name].result = (start or 0) + (duration or 0)											
 					end 
 				end 
-			end
-		end 
+			end 
+		elseif text then  
+			local name = LossOfControl.TextToName[text]
+			if name then 
+				-- Check that the user has requested the category that is active on the player.
+				isValidType = true
+				LossOfControl[name] = (start or 0) + (duration or 0)				
+			end 
+		end		 
     end 
     
     -- Reset running durations.
     if not isValidType then 
-        for name, val in pairs(LossOfControl) do 
-            if name ~= "LastEvent" and type(val) == "number" and LossOfControl[name] > 0 then
+        for _, name in pairs(LossOfControl.TextToName) do 
+            if LossOfControl[name] > 0 then
                 LossOfControl[name] = 0
             end            
         end

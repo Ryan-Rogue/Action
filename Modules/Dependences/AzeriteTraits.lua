@@ -5,7 +5,7 @@
 local TMW 								= TMW 
 local A 								= Action 
 local Listener							= A.Listener
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 5)
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 6)
 
 if not Lib or not A or not TMW then 
 	if A then 
@@ -293,7 +293,7 @@ function DataEssences.GetInfo(milestone)
 			local spellID = FindSpellOverrideByID(spellInfo)    
 			local temp = {
 				spellID = spellID,
-				spellName = GetInfoSpell(spellID),
+				spellName = (GetInfoSpell(spellID)),
 				essenceID = essenceID,							-- same info.ID
 				milestoneID = milestone.ID,
 				requiredLevel = milestone.requiredLevel,
