@@ -41,8 +41,8 @@ end)
 local DRData 									= LibStub("DRData-1.1") 
 --
 
-local _G, type, pairs, table, next, math, bit = 
-	  _G, type, pairs, table, next, math, bit
+local _G, type, pairs, table, next, select, math, bit = 
+	  _G, type, pairs, table, next, select, math, bit
 	  
 local tinsert	  								= table.insert -- Short inline expresson will never win here coz of how it does jumping through addresses
 local tremove	  								= table.remove
@@ -1138,6 +1138,18 @@ end)
 -------------------------------------------------------------------------------
 -- API: CombatTracker
 -------------------------------------------------------------------------------
+local function UnitHasCombat(unitID)
+	-- @return boolean 
+	-- Note: Special function supposed to make forced unit in combat if UnitAffectingCombat doesn't work for specific npcID
+	
+	-- 1580: Ny'alotha - Vision of Destiny
+	if A.ZoneID == 1580 and select(6, A_Unit(unitID):InfoGUID()) == 158327 then 
+		return true 
+	end 
+	
+	return false 
+end 
+
 A.CombatTracker									= {
 	--[[ Returns the total ammount of time a unit is in-combat for ]]
 	CombatTime									= function(self, unitID)
@@ -1146,7 +1158,7 @@ A.CombatTracker									= {
 		local GUID = GetGUID(unit)
 		
 		if CombatTrackerData[GUID] and CombatTrackerData[GUID].combat_time ~= 0 then 
-			if (UnitIsUnit(unit, "player") and InCombatLockdown()) or UnitAffectingCombat(unit) then   
+			if (UnitIsUnit(unit, "player") and InCombatLockdown()) or UnitAffectingCombat(unit) or UnitHasCombat(unit) then   
 				return TMW.time - CombatTrackerData[GUID].combat_time, GUID   
 			else
 				CombatTrackerData[GUID].combat_time = 0
