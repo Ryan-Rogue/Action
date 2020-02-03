@@ -1196,6 +1196,8 @@ local types = {
 		{ id = 257777, dur = 0, stack = 0},
     },
     Disease = {
+		-- 8.3 Lingering Nausea
+		{ id = 250372, dur = 0, stack = 0, byID = true },
 		-- 8.3 Crippling Pestilence
 		{ id = 314406, dur = 0, stack = 0, byID = true },
 		-- 8.2 Mechagon - Consuming Slime
@@ -1234,6 +1236,10 @@ local types = {
         { id = 252687, dur = 0, stack = 2},
     },
     Magic = {
+		-- 8.3 Wildfire
+		{ id = 253562, dur = 1.49, stack = 0, byID = true },
+		-- 8.3 Heart of Darkness
+		{ id = 310224, byID = true, dur = 1.49, stack = 0 },
 		-- 8.3 Annihilation
 		{ id = 306982, dur = 0, stack = 9, byID = true },
 		-- 8.3 Recurring Nightmare

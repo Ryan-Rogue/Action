@@ -2286,6 +2286,8 @@ local GlobalFactory = {
 				[257777] = { dur = 1.49 },
 			},
 			Disease = {
+				-- 8.3 Lingering Nausea
+				[250372] = { byID = true, dur = 1.49 },
 				-- 8.3 Crippling Pestilence
 				[314406] = { byID = true, dur = 1.49 },
 				-- 8.2 Mechagon - Consuming Slime
@@ -2326,8 +2328,12 @@ local GlobalFactory = {
 				[252687] = { stack = 2 },				
 			},
 			Magic = {	
+				-- 8.3 Wildfire
+				[253562] = { byID = true, dur = 1.49 },
+				-- 8.3 Heart of Darkness
+				[310224] = { byID = true, dur = 1.49 },
 				-- 8.3 Annihilation
-				[306982] = { byID = true, stack = 10 },
+				[310224] = { byID = true, stack = 10 },
 				-- 8.3 Recurring Nightmare
 				[312486] = { byID = true, stack = 1 },
 				-- 8.3 Corrupted Mind
@@ -2644,6 +2650,22 @@ local GlobalFactory = {
 	},
 }
 
+local GlobalFactoryErased = {
+	-- The table which holds all keys which must be erased from actual db, must be [key] = true construct
+	[5] = {
+		PvE = {
+			Magic = {
+				-- Reap Soul
+				[288388] = true,
+				-- 8.3 Grasping Tendrils
+				[315176] = true,
+				-- 8.3 Annihilation
+				[306982] = true,
+			},
+		},
+	},
+}
+
 -- Table controlers 	
 local function tMerge(default, new, special, nonexistremove)
 	-- Forced push all keys new > default 
@@ -2741,6 +2763,23 @@ local function tCompare(default, new, upkey, skip)
 	return result 
 end
 
+local function tEraseKeys(default, new)
+	-- Cleans in 'default' table keys which persistent in 'new' table 
+	if new then 
+		for k, v in pairs(new) do 
+			if default[k] then 
+				if type(v) == "table" then 
+					tEraseKeys(default[k], v)
+				else 
+					default[k] = nil 
+					Action.Print(L.DEBUG .. L.TAB[5].HEADBUTTON .. " " .. GetSpellInfo(k) .. " " .. L.RESETED:lower())
+				end 
+			end
+		end 
+	end 
+	return default
+end 
+
 -- TMWdb.global.ActionDB[5] -> TMWdb.profile.ActionDB[5]
 local function DispelPurgeEnrageRemap()
 	-- Note: This function should be called every time when [5] "Auras" in UI has been changed or shown
@@ -2755,7 +2794,7 @@ local function DispelPurgeEnrageRemap()
 				ActionDataAuras[Mode][Category] = {} 
 			end 
 			for SpellID, v in pairs(Category_v) do 
-				local Name = Spell:CreateFromSpellID(SpellID):GetSpellName()	
+				local Name = GetSpellInfo(SpellID) -- Spell:CreateFromSpellID(SpellID):GetSpellName()	
 				ActionDataAuras[Mode][Category][Name] = { 
 					ID = SpellID, 
 					Name = Name, 
@@ -3797,7 +3836,11 @@ local function DispelPurgeEnrageRemap()
 					end 
 
 					-- Always to reset
-					TMWdb.profile.ActionDB[5][specID][Mode][Category][GameLocale] = {}
+					if TMWdb.profile.ActionDB[5][specID][Mode][Category][GameLocale] then 
+						wipe(TMWdb.profile.ActionDB[5][specID][Mode][Category][GameLocale])
+					else 
+						TMWdb.profile.ActionDB[5][specID][Mode][Category][GameLocale] = {}
+					end 
 				
 					if Category:match("Dispel") then 
 						ActionDataAuras.DisableCheckboxes[specID].UseDispel = false 
@@ -9385,6 +9428,7 @@ function OnInitialize()
 	
 	Action.IsInitialized = nil	
 	Action.IsGGLprofile = profile:match("GGL") and true or false  	-- Don't remove it because this is validance for HealingEngine   
+	Action.IsBasicProfile = profile == "[GGL] Basic"
 	TMW:Fire("TMW_ACTION_DEPRECATED")								-- TODO: Remove 
 	
 	----------------------------------
@@ -9518,7 +9562,7 @@ function OnInitialize()
 	if not TMWdb.global.ActionDB then 		
 		Action.Print("|cff00cc66ActionDB.global|r " .. L["CREATED"])
 	end
-	TMWdb.global.ActionDB = tCompare(GlobalFactory, TMWdb.global.ActionDB)	
+	TMWdb.global.ActionDB = tEraseKeys(tCompare(GlobalFactory, TMWdb.global.ActionDB), GlobalFactoryErased)
 	
 	-- to avoid lua errors with calls GetToggle 	
 	ActionHasRunningDB = true 
