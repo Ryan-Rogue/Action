@@ -127,6 +127,8 @@ hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 -------------------------------------------------------------------------------
 CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
 CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
+--CNDT:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
+--CNDT:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_TALENT_UPDATE")
 CNDT:PLAYER_TALENT_UPDATE()
 
 -------------------------------------------------------------------------------
@@ -737,3 +739,16 @@ Listener:Add("ACTION_EVENT_UTILS_TMW_OPTIONS", "ADDON_LOADED", function(addonNam
 		Listener:Remove("ACTION_EVENT_UTILS_TMW_OPTIONS", "ADDON_LOADED")	
 	end 	
 end)
+
+-------------------------------------------------------------------------------
+-- TMW LockToggle fix
+-------------------------------------------------------------------------------
+local InCombatLockdown = _G.InCombatLockdown
+local function LockToggle()
+	if not TMW.Locked and not TMW.ALLOW_LOCKDOWN_CONFIG and InCombatLockdown() then 
+		TMW.ALLOW_LOCKDOWN_CONFIG = true 
+		TMW:LockToggle()
+		TMW.ALLOW_LOCKDOWN_CONFIG = false
+	end 
+end 
+hooksecurefunc(TMW, "LockToggle", LockToggle)

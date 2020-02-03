@@ -307,7 +307,7 @@ end
 
 local function UpdateChesderGroups()   
     local current 		= TMW.db:GetCurrentProfile() 
-	local isOldProfile 	= ProfileToggle[current] and _G.TellMeWhen_Group3 and true 
+	local isOldProfile 	= ProfileToggle[current] and true 
     Env.BasicRotation 	= current == "[GGL] Basic"
     Env.IsGGLprofile 	= strmatch(current, "GGL") == "GGL" 
 	A.IsOLDprofile 		= isOldProfile or Env.BasicRotation

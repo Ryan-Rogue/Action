@@ -188,18 +188,19 @@ local function OnEvent(event, ...)
 			A.IsInPvP = IsWarModeDesired()
 			A.IsInWarMode = A.IsInPvP or nil
 			TMW:Fire("TMW_ACTION_MODE_CHANGED") 
-			TMW:Fire("TMW_ACTION_DEPRECATED")			
+			TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove on old profiles			
 			return 
 		end            
 		
 		if event == "DUEL_REQUESTED" then
 			A.IsInPvP, A.IsInDuel, A.TimeStampDuel = true, true, TMW.time
 			TMW:Fire("TMW_ACTION_MODE_CHANGED")
+			TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove on old profiles
 			return
 		elseif event == "DUEL_FINISHED" then
 			A.IsInPvP, A.IsInDuel, A.TimeStampDuel = A:CheckInPvP(), nil, nil
 			TMW:Fire("TMW_ACTION_MODE_CHANGED")
-			TMW:Fire("TMW_ACTION_DEPRECATED")
+			TMW:Fire("TMW_ACTION_DEPRECATED") -- TODO: Remove on old profiles
 			return
 		end            
 		
