@@ -1250,6 +1250,10 @@ local types = {
 		{ id = 314592, dur = 1.49, stack = 0, byID = true },
 		-- 8.3 Cascading Terror
 		{ id = 314483, dur = 0, stack = 0, byID = true },
+		-- 8.3 Cascading Terror
+		{ id = 314478, dur = 0, stack = 0, byID = true },
+		-- 8.3 Unleashed Insanity
+		{ id = 310361, dur = 0, stack = 0, byID = true },
 		-- 8.2 Mechagon - Blazing Chomp
 		{ id = 294929, dur = 0, stack = 0 },		
 		-- 8.2 Mechagon - Shrink

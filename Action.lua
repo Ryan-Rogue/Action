@@ -2189,6 +2189,20 @@ local GlobalFactory = {
 				return PlayerClass ~= "MAGE" ]] },
 			},
 			PurgeHigh = {
+				-- 8.2 Mechagon: Defensive Countermeasure
+				[297133] = { canStealOrPurge = true, byID = true },	
+				-- 8.2 Mechagon: Enlarge
+				[301629] = { canStealOrPurge = true, dur = 3, byID = true },	
+				-- 8.1 Dungeon: Bone Shield
+				[266201] = { canStealOrPurge = true, byID = true },	
+				-- 8.1 Dungeon: Swiftness
+				[276265] = { canStealOrPurge = true, stack = 3, byID = true },	
+				-- 8.0.1 Dungeon: Reanimated Bones
+				[274210] = { canStealOrPurge = true, byID = true },					
+				-- 8.0.1 Dungeon: Detect Thoughts
+				[268375] = { canStealOrPurge = true, byID = true },	
+				-- 8.0.1 Dungeon: Earth Shield
+				[268709] = { canStealOrPurge = true, byID = true },	
 				-- Gilded Claws
 				[255579] = { canStealOrPurge = true, dur = 7 },		
 				-- Gathered Souls
@@ -2243,6 +2257,8 @@ local GlobalFactory = {
 				[282098] = { canStealOrPurge = true, dur = 1 },					
 			},
 			PurgeLow = {
+				-- 8.0.1 Tol Dagor: Inner Flames
+				[258938] = { canStealOrPurge = true, byID = true },	
 				-- Dino Might
 				[256849] = { canStealOrPurge = true },
 				-- Induce Regeneration
@@ -2341,9 +2357,9 @@ local GlobalFactory = {
 				-- 8.3 Mind Flay
 				[314592] = { byID = true, dur = 1.49 },
 				-- 8.3 Cascading Terror
-				[314478] = { byID = true },
-				-- 8.3 Cascading Terror				
-				[314483] = { byID = true },
+				[314483] = { dur = 1.49  },
+				-- 8.3 Unleashed Insanity
+				[310361] = { byID = true, dur = 1.49 },
 				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
 				-- 8.2 Mechagon - Shrink
@@ -2661,6 +2677,8 @@ local GlobalFactoryErased = {
 				[315176] = true,
 				-- 8.3 Annihilation
 				[306982] = true,
+				-- 8.3 Cascading Terror
+				[314478] = true,
 			},
 		},
 	},
@@ -5234,8 +5252,9 @@ function Action.AuraIsBlackListed(unitID)
 	-- @return boolean 
 	local Aura, Filter = Action.AuraGetCategory("BlackList")
 	if Aura and next(Aura) then 
+		local _, Name, count, duration, expirationTime, canStealOrPurge, id
 		for i = 1, huge do 
-			local Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
+			Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
 			if Name then
 				if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Action.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Action.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 
 					local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
@@ -5256,8 +5275,9 @@ function Action.AuraIsValid(unitID, Toggle, Category)
 	if Category ~= "BlackList" and Action.AuraIsON(Toggle) then 
 		local Aura, Filter = Action.AuraGetCategory(Category)
 		if Aura and not Action.AuraIsBlackListed(unitID) then 
+			local _, Name, count, duration, expirationTime, canStealOrPurge, id
 			for i = 1, huge do			
-				local Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
+				Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
 				if Name then					
 					if Aura[Name] and Aura[Name].Enabled and (Aura[Name].Role == "ANY" or (Aura[Name].Role == "HEALER" and Action.IamHealer) or (Aura[Name].Role == "DAMAGER" and not Action.IamHealer)) and (not Aura[Name].byID or id == Aura[Name].ID) then 					
 						local Dur = expirationTime == 0 and huge or expirationTime - TMW.time
