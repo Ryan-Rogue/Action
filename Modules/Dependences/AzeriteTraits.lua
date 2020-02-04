@@ -5,7 +5,7 @@
 local TMW 								= TMW 
 local A 								= Action 
 local Listener							= A.Listener
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 6)
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 7)
 
 if not Lib or not A or not TMW then 
 	if A then 
@@ -583,7 +583,7 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 		-- @direct  
 		HealthDeficit	 	= A_Unit(unitID):HealthDeficit()
 		local desc 			= A_GetSpellDescription(spellID)
-		total 				= (desc[1] * variation) + Unit(unitID):GetIncomingHeals() + (HPS * desc[2]) - (DMG * desc[2])
+		total 				= (desc[1] * variation) + A_Unit(unitID):GetIncomingHeals() + (HPS * desc[2]) - (DMG * desc[2])
 	end 
 	
 	return HealthDeficit >= total, total
