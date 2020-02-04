@@ -198,7 +198,7 @@ local function PerformByProfileHP(member, memberhp, membermhp, DMG)
 				-- DISPEL PRIORITY
 				HealingEngineQueueOrder.Dispel = true 
 				-- if we will have lower unit than 50% then don't dispel it
-				memberhp = 50
+				memberhp = 34
 				if A_Unit(member):IsHealer() then 
 					memberhp = 25
 				end
