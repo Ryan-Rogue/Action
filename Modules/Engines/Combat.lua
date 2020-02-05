@@ -1141,13 +1141,7 @@ end)
 local function UnitHasCombat(unitID)
 	-- @return boolean 
 	-- Note: Special function supposed to make forced unit in combat if UnitAffectingCombat doesn't work for specific npcID
-	
-	-- 1580: Ny'alotha - Vision of Destiny
-	if A.ZoneID == 1580 and select(6, A_Unit(unitID):InfoGUID()) == 158327 then 
-		return true 
-	end 
-	
-	return false 
+	return A_Unit(unitID):IsCracklingShard() 
 end 
 
 A.CombatTracker									= {

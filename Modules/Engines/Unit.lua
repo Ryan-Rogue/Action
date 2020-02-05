@@ -2062,10 +2062,19 @@ A.Unit = PseudoClass({
 	end, "UnitID"),
 	IsExplosives							= Cache:Pass(function(self)	
 		-- @return boolean 		
+		-- Note: Legion+ dungeon 7+ key 
 		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then 
 			local unitID 					= self.UnitID
 			local Name 						= UnitName(unitID)
 			return Name and InfoExplosivesName[GameLocale] == Name 
+		end 
+	end, "UnitID"),
+	IsCracklingShard						= Cache:Pass(function(self)	
+		-- @return boolean 				
+		-- Note: 1580 is Ny'alotha - Vision of Destiny, patch 8.3
+		local unitID 						= self.UnitID		
+		if A.ZoneID == 1580 and select(6, self(unitID):InfoGUID()) == 158327 then 
+			return true 
 		end 
 	end, "UnitID"),
 	IsBoss 									= Cache:Pass(function(self)       

@@ -305,8 +305,8 @@ function A.Rotation(icon)
 				return A:Show(icon, ACTION_CONST_AUTOTARGET)			  				 
 			end 
 			
-			if  (not Unit(target):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and Unit(target):CombatTime() == 0 and Unit(target):IsEnemy())) 	-- No existed or switch target in PvE if we accidentally selected out of combat unit  			
-				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(nil, 1) >= 1) or A.Zone == "pvp") 												-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
+			if  (not Unit(target):IsExists() or (A.Zone ~= "none" and not A.IsInPvP and not Unit(target):IsCracklingShard() and Unit(target):CombatTime() == 0 and Unit(target):IsEnemy())) 	-- No existed or switch target in PvE if we accidentally selected out of combat unit  			
+				and ((not A.IsInPvP and MultiUnits:GetByRangeInCombat(nil, 1) >= 1) or A.Zone == "pvp") 																						-- If rotation mode is PvE and in 40 yards any in combat enemy (exception target) or we're on (R)BG 
 			then 
 				return A:Show(icon, ACTION_CONST_AUTOTARGET)
 			end 
