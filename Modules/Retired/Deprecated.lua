@@ -1199,11 +1199,13 @@ local types = {
 		-- 8.3 Lingering Nausea
 		{ id = 250372, dur = 0, stack = 0, byID = true },
 		-- 8.3 Crippling Pestilence
-		{ id = 314406, dur = 0, stack = 0, byID = true },
+		{ id = 314406, dur = 0, stack = 0, byID = true },		
 		-- 8.2 Mechagon - Consuming Slime
 		{ id = 300659, dur = 0, stack = 0},		
 		-- 8.2 Mechagon - Gooped
 		{ id = 298124, dur = 0, stack = 0},
+		-- 8.0.1 Severing Serpent
+		{ id = 264520, dur = 0, stack = 0, byID = true },
         -- Infected Wound
         { id = 258323, dur = 0, stack = 1},
         -- Plague Step
@@ -1239,9 +1241,9 @@ local types = {
 		-- 8.3 Wildfire
 		{ id = 253562, dur = 1.49, stack = 0, byID = true },
 		-- 8.3 Heart of Darkness
-		{ id = 310224, byID = true, dur = 1.49, stack = 0 },
+		{ id = 307645, byID = true, dur = 1.49, stack = 0 },
 		-- 8.3 Annihilation
-		{ id = 306982, dur = 0, stack = 9, byID = true },
+		{ id = 310224, dur = 0, stack = 7, byID = true },
 		-- 8.3 Recurring Nightmare
 		{ id = 312486, dur = 0, stack = 0, byID = true },	
 		-- 8.3 Corrupted Mind
@@ -1254,6 +1256,8 @@ local types = {
 		{ id = 314478, dur = 0, stack = 0, byID = true },
 		-- 8.3 Unleashed Insanity
 		{ id = 310361, dur = 0, stack = 0, byID = true },
+		-- 8.3 Psychic Scream
+		{ id = 308375, dur = 0, stack = 0, byID = true },
 		-- 8.2 Mechagon - Blazing Chomp
 		{ id = 294929, dur = 0, stack = 0 },		
 		-- 8.2 Mechagon - Shrink
@@ -1342,6 +1346,8 @@ local types = {
         { id = 264378, dur = 0, stack = 0},
         -- Putrid Waters
         { id = 275014, dur = 0, stack = 0},
+		-- Legion: Touch of Corruption
+		{ id = 209469, dur = 0, stack = 0, byID = true },		
     }, 
 }
 local UnitAuras = {

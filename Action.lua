@@ -2310,6 +2310,8 @@ local GlobalFactory = {
 				[300659] = {},
 				-- 8.2 Mechagon - Gooped
 				[298124] = {},
+				-- 8.0.1 Severing Serpent
+				[264520] = { byID = true },
 				-- Infected Wound
 				[258323] = { stack = 1 },
 				-- Plague Step
@@ -2347,9 +2349,9 @@ local GlobalFactory = {
 				-- 8.3 Wildfire
 				[253562] = { byID = true, dur = 1.49 },
 				-- 8.3 Heart of Darkness
-				[310224] = { byID = true, dur = 1.49 },
+				[307645] = { byID = true, dur = 1.49 },
 				-- 8.3 Annihilation
-				[310224] = { byID = true, stack = 10 },
+				[310224] = { byID = true, stack = 8 },
 				-- 8.3 Recurring Nightmare
 				[312486] = { byID = true, stack = 1 },
 				-- 8.3 Corrupted Mind
@@ -2360,6 +2362,8 @@ local GlobalFactory = {
 				[314483] = { dur = 1.49  },
 				-- 8.3 Unleashed Insanity
 				[310361] = { byID = true, dur = 1.49 },
+				-- 8.3 Psychic Scream
+				[308375] = { byID = true, dur = 1 },
 				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
 				-- 8.2 Mechagon - Shrink
@@ -2454,6 +2458,8 @@ local GlobalFactory = {
 				-- Putrid Waters
 				[275014] = { LUAVER = 2, LUA = [[ -- Don't dispel self
 				return not UnitIsUnit("player", thisunit) ]] },
+				-- Legion: Touch of Corruption
+				[209469] = { byID = true },				
 			}, 
 			MagicMovement = {
 			},
@@ -2672,13 +2678,15 @@ local GlobalFactoryErased = {
 		PvE = {
 			Magic = {
 				-- Reap Soul
-				[288388] = true,
+				[288388] = true, -- old 
 				-- 8.3 Grasping Tendrils
-				[315176] = true,
+				[315176] = true, -- wrong ID
 				-- 8.3 Annihilation
-				[306982] = true,
+				[306982] = true, -- wrong ID 				
 				-- 8.3 Cascading Terror
-				[314478] = true,
+				[314478] = true, -- wrong ID
+				-- 8.3 Heart of Darkness
+				[310224] = true, -- wrong ID 
 			},
 		},
 	},
