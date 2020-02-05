@@ -5,7 +5,7 @@
 local TMW 								= TMW 
 local A 								= Action 
 local Listener							= A.Listener
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 7)
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 8)
 
 if not Lib or not A or not TMW then 
 	if A then 
@@ -567,7 +567,7 @@ function Lib:EssencePredictHealing(MajorSpellNameENG, spellID, unitID, VARIATION
 		local totalMembers 	= 0 
 		if #A_HealingEngineMembersALL > 0 and validMembers >= 2 then 
 			for i = 1, #A_HealingEngineMembersALL do
-				if A_HealingEngineMembersALL[i].MHP - A_HealingEngineMembersALL[i].AHP >= total then
+				if A_Unit(A_HealingEngineMembersALL[i].Unit):HealthMax() - A_HealingEngineMembersALL[i].AHP >= total then
 					totalMembers = totalMembers + 1
 				end
 				if totalMembers >= validMembers then 
