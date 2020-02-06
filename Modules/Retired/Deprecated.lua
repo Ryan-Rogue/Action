@@ -1523,16 +1523,16 @@ function getAbsorb(UNIT, spellID)
     return Unit(UNIT):GetAbsorb(spellID)
 end 
 function TimeToDieX(UNIT, X)
-    return Unit(UNIT):TimeToDieX(X)
+    return Unit(UNIT or "target"):TimeToDieX(X or 25)
 end
 function TimeToDie(UNIT)
-    return Unit(UNIT):TimeToDie()
+    return Unit(UNIT or "target"):TimeToDie()
 end
 function TimeToDieMagicX(UNIT, X)
-    return Unit(UNIT):TimeToDieMagicX(X)
+    return Unit(UNIT or "target"):TimeToDieMagicX(X or 25)
 end
 function TimeToDieMagic(UNIT)
-    return Unit(UNIT):TimeToDieMagic()
+    return Unit(UNIT or "target"):TimeToDieMagic()
 end
 function SpellLastCast(UNIT, SPELL, byID)
 	local _, timestamp = Unit(UNIT):GetSpellLastCast(SPELL, byID)
