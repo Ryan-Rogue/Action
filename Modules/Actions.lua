@@ -1084,7 +1084,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 	else 
 		local isTable = type(self) == "table"
 		local isEnemy = Unit(unitID):IsEnemy()
-		local isStopAtBreakAble = GetToggle(1, "StopAtBreakAble")
+		local isStopAtBreakAble = A.IsInitialized and GetToggle(1, "StopAtBreakAble")
 		
 		-- Super trick for Queue System, it will save in cache imunBuffs on first entire call by APL and Queue will be allowed to handle cache to compare Imun 
 		if isTable and not self.AbsentImunQueueCache and imunBuffs then 
