@@ -7,8 +7,8 @@ local InstanceInfo									= A.InstanceInfo
 local TeamCacheFriendly								= A.TeamCache.Friendly
 local TeamCacheFriendlyUNITs						= TeamCacheFriendly.UNITs
 
-local _G, pairs, type, next, setmetatable, table, math	=
-	  _G, pairs, type, next, setmetatable, table, math
+local _G, pairs, type, next, setmetatable, table, math, tonumber, select =
+	  _G, pairs, type, next, setmetatable, table, math, tonumber, select 
 	  
 local wipe											= _G.wipe
 local round											= _G.round
@@ -21,6 +21,8 @@ local CombatLogGetCurrentEventInfo					= CombatLogGetCurrentEventInfo
 	  
 local UnitIsUnit, UnitGUID, UnitCanAttack 			= 
 	  UnitIsUnit, UnitGUID, UnitCanAttack
+	  
+local GameBuild 									= tonumber((select(2, _G.GetBuildInfo())))		  
 	  
 local player 										= "player"
 local function sortByHighest(x, y)
@@ -502,11 +504,19 @@ A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActi
 -- Explosives
 function A.IsExplosivesExists()
 	-- @return boolean
-	if not A.IamMelee then 
-		return next(MultiUnitsActiveExplosives)
+	if GameBuild < 33237 then 
+		if not A.IamMelee then 
+			return next(MultiUnitsActiveExplosives)
+		elseif next(MultiUnitsActiveExplosives) then 
+			for unitID in pairs(MultiUnitsActiveExplosives) do 
+				if A_Unit(unitID):GetRange() <= 10 then 
+					return true 
+				end 
+			end 
+		end 
 	elseif next(MultiUnitsActiveExplosives) then 
 		for unitID in pairs(MultiUnitsActiveExplosives) do 
-			if A_Unit(unitID):GetRange() <= 10 then 
+			if (not A.IamMelee or A_Unit(unitID):GetRange() <= 10) and (A_Unit(unitID):CombatTime() > 0 or A_Unit(unitID):HealthPercent() < 100) then 
 				return true 
 			end 
 		end 
