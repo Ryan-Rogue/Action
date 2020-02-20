@@ -20,7 +20,7 @@ local MultiUnits									= A.MultiUnits
 
 local LoC_GetExtra									= LoC.GetExtra
 
-local _G, math, type								= _G, math, type
+local _G, math, type, select, setmetatable			= _G, math, type, select, setmetatable
 local huge 											= math.huge
 
 local UnitBuff										= _G.UnitBuff
@@ -157,6 +157,12 @@ A.PauseChecks = A.MakeFunctionCachedStatic(A.PauseChecks)
 
 local A_PauseChecks = A.PauseChecks
 
+local GetMetaType = setmetatable({}, { __index = function(t, v)
+	local istype = type(v)
+	t[v] = istype	
+	return istype
+end })
+
 -------------------------------------------------------------------------------
 -- API
 -------------------------------------------------------------------------------
@@ -199,10 +205,11 @@ function A.Rotation(icon)
 	end 	
 	
 	local meta = icon.ID
+	local metatype = GetMetaType[A[A.PlayerSpec][meta] or "nill"]
 	
 	-- [1] CC / [2] Kick 
 	if meta <= 2 then 
-		if A[A.PlayerSpec][meta] and A[A.PlayerSpec][meta](icon) then 
+		if metatype == "function" and A[A.PlayerSpec][meta](icon) then 
 			return true
 		end 
 		return A_Hide(icon)
@@ -226,7 +233,7 @@ function A.Rotation(icon)
 		end	
 		
 		-- Use specialization spell trinkets
-		if type(A[A.PlayerSpec][meta]) == "function" and A[A.PlayerSpec][meta](icon) then  
+		if metatype == "function" and A[A.PlayerSpec][meta](icon) then  
 			return true 			
 		end 	
 
@@ -326,12 +333,12 @@ function A.Rotation(icon)
     end 
 	
 	-- Hide frames which are not used by profile
-	if not A[A.PlayerSpec][meta] then 
+	if metatype ~= "function" then 
 		return A_Hide(icon)
 	end 	
 	
 	-- [3] Single / [4] AoE / [6-8] Passive: @player-party1-2, @raid1-3, @arena1-3
-	if A[A.PlayerSpec][meta] and A[A.PlayerSpec][meta](icon) then 
+	if A[A.PlayerSpec][meta](icon) then 
 		return true 
 	end 
 	
