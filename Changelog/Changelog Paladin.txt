@@ -1,3 +1,7 @@
+[Paladin v21]
+Holy 				- Added LOTM toggle 
+Holy 				- Holy Shock now will be used on cd if 5 group M+
+
 [Paladin v20]
 Added Avenging Wrath buff check before use spell if another buff was recently applied (caused bug with Visions of Perfection)
 
