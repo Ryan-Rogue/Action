@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "08.02.2020"
+local DateTime 														= "20.02.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -2310,8 +2310,12 @@ local GlobalFactory = {
 				[300659] = {},
 				-- 8.2 Mechagon - Gooped
 				[298124] = {},
+				-- 8.2 Mechagon - Suffocating Smog
+				[300650] = {},
 				-- 8.0.1 Severing Serpent
 				[264520] = { byID = true },
+				-- 8.0.1 Infected Thorn
+				[264050] = { byID = true, dur = 1.49 },
 				-- Infected Wound
 				[258323] = { stack = 1 },
 				-- Plague Step
@@ -2364,6 +2368,8 @@ local GlobalFactory = {
 				[310361] = { byID = true, dur = 1.49 },
 				-- 8.3 Psychic Scream
 				[308375] = { byID = true, dur = 1 },
+				-- 8.3 Void Buffet
+				[297315] = { byID = true, dur = 1.49 },
 				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
 				-- 8.2 Mechagon - Shrink
@@ -2384,6 +2390,8 @@ local GlobalFactory = {
 				[295327] = { byID = true },
 				-- 8.2 Radiance of Azshara - Arcane Bomb
 				-- [296746] = { byID = true }, -- need predict unit position to dispel only when they are out of raid 
+				-- 8.0.1 Toad Blight
+				[265352] = { byID = true, dur = 0.5 },
 				-- The Restless Cabal - Promises of Power 
 				[282562] = { byID = true, stack = 3 },				
 				-- Jadefire Masters - Searing Embers
@@ -2684,9 +2692,7 @@ local GlobalFactoryErased = {
 				-- 8.3 Annihilation
 				[306982] = true, -- wrong ID 				
 				-- 8.3 Cascading Terror
-				[314478] = true, -- wrong ID
-				-- 8.3 Heart of Darkness
-				[310224] = true, -- wrong ID 
+				[314478] = true, -- wrong ID				
 			},
 		},
 	},
@@ -2795,7 +2801,9 @@ local function tEraseKeys(default, new)
 		for k, v in pairs(new) do 
 			if default[k] then 
 				if type(v) == "table" then 
-					tEraseKeys(default[k], v)
+					if not v.enabled then 
+						tEraseKeys(default[k], v)
+					end 
 				else 
 					default[k] = nil 
 					Action.Print(L.DEBUG .. L.TAB[5].HEADBUTTON .. " " .. GetSpellInfo(k) .. " " .. L.RESETED:lower())
@@ -5586,13 +5594,31 @@ function Action.SetToggle(arg, custom)
 		end
 		return 
 	else 
-		-- Usually only for Dropdown in multi. Logic is simply:
-		-- 1 Create (or refresh) cache of all instances in DB if any is ON (true or with value), then turn all OFF if anything was ON. 
-		-- 2 Or if all OFF then:
-		-- 2.1 If no cache (means all was OFF) then make ON all (next time it will repeat 1 step to create cache)
-		-- 2.2 If cache exist then turn ON from cache 
-		-- /run TMWdb.profile.ActionDB[1][Action.PlayerSpec].Trinkets.Cache = nil
-		if type(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]) == "table" then 
+		if custom ~= nil then 
+			if type(custom) == "table" then 
+				for k, v in pairs(custom) do
+					if TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] ~= nil and type(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k]) == type(v) then 
+						TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = v
+						
+						if not silence and text then 
+							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
+						end 
+					else
+						if not silence then 
+							Action.Print(L["DEBUG"] .. (n or "") .. " " .. (toggle or "") .. " " .. (k or "") .. " = " .. tostring(v) .. " " .. L["ISNOTFOUND"] .. ". Func: Action.SetToggle")
+						end
+					end 
+				end 
+			else 
+				TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle] = custom 	
+			end 
+		elseif type(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]) == "table" then 
+			-- Usually only for Dropdown in multi. Logic is simply:
+			-- 1 Create (or refresh) cache of all instances in DB if any is ON (true or with value), then turn all OFF if anything was ON. 
+			-- 2 Or if all OFF then:
+			-- 2.1 If no cache (means all was OFF) then make ON all (next time it will repeat 1 step to create cache)
+			-- 2.2 If cache exist then turn ON from cache 
+			-- /run TMWdb.profile.ActionDB[1][Action.PlayerSpec].Trinkets.Cache = nil		
 			local anyIsON = false
 			for k, v in pairs(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]) do 
 				if TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] and k ~= "Cache" and not anyIsON then 
@@ -5616,7 +5642,7 @@ function Action.SetToggle(arg, custom)
 							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
 						end 
 						
-						if text then 
+						if not silence and text then 
 							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end 
 					end 
@@ -5625,7 +5651,7 @@ function Action.SetToggle(arg, custom)
 				for k, v in pairs(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle].Cache) do	
 					if k ~= "Cache" then 
 						TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = v	
-						if text then 
+						if not silence and text then 
 							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end
 					end
@@ -5639,18 +5665,14 @@ function Action.SetToggle(arg, custom)
 							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
 						end 
 						
-						if text then 
+						if not silence and text then 
 							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
 						end		
 					end
 				end 				
 			end 
 		else 
-			if custom ~= nil then 
-				TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle] = custom 						
-			else 
-				TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle] = not TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]
-			end 			
+			TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle] = not TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]			 			
 		end
 		bool = TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle] 
 	end 
@@ -9457,6 +9479,7 @@ function OnInitialize()
 	Action.IsInitialized = nil	
 	Action.IsGGLprofile = profile:match("GGL") and true or false  	-- Don't remove it because this is validance for HealingEngine   
 	Action.IsBasicProfile = profile == "[GGL] Basic"
+	Action.CurrentProfile = profile
 	TMW:Fire("TMW_ACTION_DEPRECATED")								-- TODO: Remove 
 	
 	----------------------------------

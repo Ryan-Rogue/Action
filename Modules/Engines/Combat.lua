@@ -41,8 +41,8 @@ end)
 local DRData 									= LibStub("DRData-1.1") 
 --
 
-local _G, type, pairs, table, next, select, math, bit = 
-	  _G, type, pairs, table, next, select, math, bit
+local _G, type, pairs, table, next, math, bit = 
+	  _G, type, pairs, table, next, math, bit
 	  
 local tinsert	  								= table.insert -- Short inline expresson will never win here coz of how it does jumping through addresses
 local tremove	  								= table.remove

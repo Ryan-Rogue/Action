@@ -508,13 +508,11 @@ end
 function A:IsSpellLearned()
 	-- @usage A:IsSpellLearned() or A.IsSpellLearned(spellID)
 	-- @return boolean about selected or not (talent or pvptalent)	
-	local ID, Name
+	local Name
 	if type(self) == "table" then 
-		ID = self.ID 
 		Name = self:Info()
 	else 
-		ID = self 
-		Name = A_GetSpellInfo(ID)
+		Name = A_GetSpellInfo(self)
 	end	
 	local lowerName = strlowerCache[Name]
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
