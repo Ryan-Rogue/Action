@@ -517,7 +517,7 @@ local Race = {
 		DarkIronDwarf = 265221, 
 		HighmountainTauren = 255654, 
 		Nightborne = 260364,
-		Maghar = 274738,	
+		MagharOrc = 274738,	
 	},
 	DAMAGE = {
 		Orc = true, 
@@ -1204,8 +1204,12 @@ local types = {
 		{ id = 300659, dur = 0, stack = 0},		
 		-- 8.2 Mechagon - Gooped
 		{ id = 298124, dur = 0, stack = 0},
+		-- 8.2 Mechagon - Suffocating Smog
+		{ id = 300650, dur = 0, stack = 0, byID = true },
 		-- 8.0.1 Severing Serpent
 		{ id = 264520, dur = 0, stack = 0, byID = true },
+		-- 8.0.1 Infected Thorn
+		{ id = 264050, dur = 0, stack = 0, byID = true },
         -- Infected Wound
         { id = 258323, dur = 0, stack = 1},
         -- Plague Step
@@ -1251,13 +1255,13 @@ local types = {
 		-- 8.3 Mind Flay
 		{ id = 314592, dur = 1.49, stack = 0, byID = true },
 		-- 8.3 Cascading Terror
-		{ id = 314483, dur = 0, stack = 0, byID = true },
-		-- 8.3 Cascading Terror
-		{ id = 314478, dur = 0, stack = 0, byID = true },
+		{ id = 314483, dur = 0, stack = 0, byID = true },	
 		-- 8.3 Unleashed Insanity
 		{ id = 310361, dur = 0, stack = 0, byID = true },
 		-- 8.3 Psychic Scream
 		{ id = 308375, dur = 0, stack = 0, byID = true },
+		-- 8.3 Void Buffet
+		{ id = 297315, dur = 1.49, stack = 0, byID = true },
 		-- 8.2 Mechagon - Blazing Chomp
 		{ id = 294929, dur = 0, stack = 0 },		
 		-- 8.2 Mechagon - Shrink
@@ -1278,6 +1282,8 @@ local types = {
 		{ id = 295327, dur = 0, stack = 0 },		
 		-- 8.2 Radiance of Azshara - Arcane Bomb
 		-- { id = 296746, dur = 0, stack = 0 }, -- need predict unit position to dispel only when they are out of raid 
+		-- 8.0.1 Toad Blight
+		{ id = 265352, dur = 0.5, stack = 0, byID = true },	
 		-- The Restless Cabal - Promises of Power 
 		{ id = 282562, dur = 0, stack = 2 },
 		-- Jadefire Masters - Searing Embers

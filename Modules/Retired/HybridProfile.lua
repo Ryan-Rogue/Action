@@ -117,6 +117,7 @@ local ProfileToggle = {
         _G.BlindingLight_Toggle = _G.TellMeWhen_Group3_Icon43.Enabled
         _G.MasterAura_Toggle 	= _G.TellMeWhen_Group3_Icon45.Enabled
         _G.LayonHands_Toggle 	= _G.TellMeWhen_Group3_Icon47.Enabled
+		_G.LOTM_Toggle			= _G.TellMeWhen_Group3_Icon49.Enabled
     end,
     ["[GGL] Demon Hunter"] = function()
         _G.MouseOver_Toggle 	= _G.TellMeWhen_Group3_Icon1.Enabled
