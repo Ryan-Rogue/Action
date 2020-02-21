@@ -1,3 +1,6 @@
+[Paladin v22]
+Holy				- LOTM toggle fixed 
+
 [Paladin v21]
 Holy 				- Added LOTM toggle 
 Holy 				- Holy Shock now will be used on cd if 5 group M+
