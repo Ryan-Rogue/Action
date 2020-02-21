@@ -5650,11 +5650,11 @@ function Action.SetToggle(arg, custom)
 			if anyIsON then 
 				for k, v in pairs(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
 					if TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] and k ~= "Cache" then 
-						if custom ~= nil then	
-							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
-						else 
+						--if custom ~= nil then	
+							--TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
+						--else 
 							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
-						end 
+						--end 
 						
 						if not silence and text then 
 							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
@@ -5673,11 +5673,11 @@ function Action.SetToggle(arg, custom)
 			else 
 				for k, v in pairs(TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle]) do
 					if k ~= "Cache" then 
-						if custom ~= nil then 
-							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
-						else 
+						--if custom ~= nil then 
+							--TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = custom 
+						--else 
 							TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k] = not v
-						end 
+						--end 
 						
 						if not silence and text then 
 							Action.Print(text .. " " .. k .. ": ", TMWdb.profile.ActionDB[n][Action.PlayerSpec][toggle][k])
