@@ -21,8 +21,8 @@ local LibBossIDs							= LibStub("LibBossIDs-1.0").BossIDs
 
 local TeamCache								= A.TeamCache
 local TeamCacheFriendly 					= TeamCache.Friendly
---local TeamCacheFriendlyUNITs				= TeamCacheFriendly.UNITs
---local TeamCacheFriendlyGUIDs				= TeamCacheFriendly.GUIDs
+local TeamCacheFriendlyUNITs				= TeamCacheFriendly.UNITs
+local TeamCacheFriendlyGUIDs				= TeamCacheFriendly.GUIDs
 local TeamCacheFriendlyIndexToPLAYERs		= TeamCacheFriendly.IndexToPLAYERs
 local TeamCacheFriendlyIndexToPETs			= TeamCacheFriendly.IndexToPETs
 local TeamCacheFriendlyHEALER				= TeamCacheFriendly.HEALER
@@ -31,8 +31,8 @@ local TeamCacheFriendlyDAMAGER				= TeamCacheFriendly.DAMAGER
 local TeamCacheFriendlyDAMAGER_MELEE		= TeamCacheFriendly.DAMAGER_MELEE
 --local TeamCacheFriendlyDAMAGER_RANGE		= TeamCacheFriendly.DAMAGER_RANGE
 local TeamCacheEnemy 						= TeamCache.Enemy
---local TeamCacheEnemyUNITs					= TeamCacheEnemy.UNITs
---local TeamCacheEnemyGUIDs					= TeamCacheEnemy.GUIDs
+local TeamCacheEnemyUNITs					= TeamCacheEnemy.UNITs
+local TeamCacheEnemyGUIDs					= TeamCacheEnemy.GUIDs
 local TeamCacheEnemyIndexToPLAYERs			= TeamCacheEnemy.IndexToPLAYERs
 local TeamCacheEnemyIndexToPETs				= TeamCacheEnemy.IndexToPETs
 local TeamCacheEnemyHEALER					= TeamCacheEnemy.HEALER
@@ -85,6 +85,10 @@ Listener:Add("ACTION_EVENT_UNIT", "ADDON_LOADED", function(addonName)
 	end 
 end)
 -------------------------------------------------------------------------------	
+
+local function GetGUID(unitID)
+	return TeamCacheFriendlyUNITs[unitID] or TeamCacheEnemyUNITs[unitID] or UnitGUID(unitID)
+end 
 
 -------------------------------------------------------------------------------
 -- Cache
@@ -1579,10 +1583,15 @@ A.Unit = PseudoClass({
 		local unitID 						= self.UnitID
 		return UnitInLOS(unitID, unitGUID)
 	end, "UnitID"),
-	InGroup 								= Cache:Pass(function(self)  
+	InGroup 								= Cache:Pass(function(self, includeAnyGroups, unitGUID)  
 		-- @return boolean 
 		local unitID 						= self.UnitID
-		return UnitInAnyGroup(unitID)
+		if includeAnyGroups then 
+			return UnitInAnyGroup(unitID)
+		else
+			local GUID = unitGUID or GetGUID(unitID)
+			return GUID and (TeamCacheFriendlyGUIDs[GUID] or TeamCacheEnemyGUIDs[GUID])
+		end 
 	end, "UnitID"),
 	InParty									= Cache:Pass(function(self)  
 		-- @return boolean 
@@ -1697,7 +1706,12 @@ A.Unit = PseudoClass({
 	IsPet									= Cache:Pass(function(self)  
 		-- @return boolean
 		local unitID 						= self.UnitID
-		return UnitPlayerControlled(unitID)
+		return not UnitIsPlayer(unitID) and UnitPlayerControlled(unitID)
+	end, "UnitID"),
+	IsNPC									= Cache:Pass(function(self) 
+		-- @return boolean
+		local unitID 						= self.UnitID
+		return not UnitPlayerControlled(unitID)
 	end, "UnitID"),
 	IsVisible								= Cache:Pass(function(self)  
 		-- @return boolean
