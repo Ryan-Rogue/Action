@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "21.02.2020"
+local DateTime 														= "23.02.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -2696,9 +2696,7 @@ local GlobalFactoryErased = {
 				-- 8.3 Grasping Tendrils
 				[315176] = true, -- wrong ID
 				-- 8.3 Annihilation
-				[306982] = true, -- wrong ID 				
-				-- 8.3 Cascading Terror
-				[314478] = true, -- wrong ID				
+				[306982] = true, -- wrong ID 							
 			},
 		},
 	},

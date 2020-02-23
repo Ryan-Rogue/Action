@@ -1255,7 +1255,7 @@ local types = {
 		-- 8.3 Mind Flay
 		{ id = 314592, dur = 1.49, stack = 0, byID = true },
 		-- 8.3 Cascading Terror
-		{ id = 314483, dur = 0, stack = 0, byID = true },	
+		{ id = 314483, dur = 0, stack = 0 },	
 		-- 8.3 Unleashed Insanity
 		{ id = 310361, dur = 0, stack = 0, byID = true },
 		-- 8.3 Psychic Scream
