@@ -53,6 +53,7 @@ local 	 IsPlayerSpell,    IsUsableSpell 	=
 -------------------------------------------------------------------------------	  
 -- Temporary fix while Taste is away
 A.CastTime 			 				= A.GetSpellCastTime
+A.AzeriteEnabled					= A.IsAzeriteEnabled
 
 local HL         				 	= HeroLib
 if HL then 

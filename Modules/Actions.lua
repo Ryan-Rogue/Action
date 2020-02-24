@@ -608,6 +608,11 @@ end
 -------------------------------------------------------------------------------
 -- Azerite 
 -------------------------------------------------------------------------------
+function A:IsAzeriteEnabled()
+	-- @return boolean 
+	return Azerite:GetRank(self.ID) > 0
+end 
+
 function A:GetAzeriteRank()
 	-- @return number (0 - is not exists)
 	return Azerite:GetRank(self.ID)
