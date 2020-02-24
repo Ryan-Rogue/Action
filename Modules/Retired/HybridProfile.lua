@@ -359,9 +359,9 @@ TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
 	end        
 end)
 
-TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", 	UpdateAll, 		"TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")	
-TMW:RegisterCallback("TMW_ACTION_ENTERING", 	HybridProfileLaunch)	
-TMW:RegisterCallback("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE", UpdateAll)
+TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", 						UpdateAll, 	"TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED"	)	
+TMW:RegisterCallback("TMW_ACTION_ENTERING", 						UpdateAll												)	
+TMW:RegisterCallback("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE", 	UpdateAll												)
 
 -- Used for debug 
 function RunLocalToggles(profile)
