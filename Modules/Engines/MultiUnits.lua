@@ -504,7 +504,7 @@ A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActi
 -- Explosives
 function A.IsExplosivesExists()
 	-- @return boolean
-	if GameBuild < 33237 then 
+	if GameBuild < 33237 or GameBuild >= 33369 then 
 		if not A.IamMelee then 
 			return next(MultiUnitsActiveExplosives)
 		elseif next(MultiUnitsActiveExplosives) then 
