@@ -543,8 +543,6 @@ local function TrueScaleInit()
 end
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETUP_COMPLETE")    
 
-
-
 function A.BlackBackgroundIsShown()
 	-- @return boolean 
 	return BlackBackground:IsShown()
