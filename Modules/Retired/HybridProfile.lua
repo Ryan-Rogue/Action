@@ -353,14 +353,9 @@ local function UpdateAll()
 	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", UpdateAll, "TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")
 end 
 
-TMW:RegisterCallback("TMW_ON_PROFILE", function(event, profileEvent, arg2, arg3)
-	if profileEvent == "OnProfileChanged" or profileEvent == "OnProfileCopied" or profileEvent == "OnProfileReset" or profileEvent == "OnNewProfile" then
-		UpdateAll()
-	end        
-end)
-
+TMW:RegisterCallback("TMW_ACTION_ON_PROFILE_POST", 					UpdateAll      											)
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", 						UpdateAll, 	"TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED"	)	
-TMW:RegisterCallback("TMW_ACTION_ENTERING", 						UpdateAll												)	
+TMW:RegisterCallback("TMW_ACTION_ENTERING", 						LocalToggles											)	
 TMW:RegisterCallback("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE", 	UpdateAll												)
 
 -- Used for debug 
