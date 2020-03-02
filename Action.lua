@@ -2615,6 +2615,10 @@ local GlobalFactory = {
 				-- [296746] = { byID = true }, -- need predict unit position to dispel only when they are out of raid 
 				-- 8.0.1 Toad Blight
 				[265352] = { byID = true, dur = 0.5 },
+				-- 8.0.1 Freezing Trap
+				[278468] = { byID = true, dur = 1.5 },
+				-- 8.0.1 Frost Shock
+				[270499] = { byID = true, dur = 1.5 },
 				-- The Restless Cabal - Promises of Power 
 				[282562] = { byID = true, stack = 3 },				
 				-- Jadefire Masters - Searing Embers

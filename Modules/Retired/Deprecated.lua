@@ -1285,6 +1285,10 @@ local types = {
 		-- { id = 296746, dur = 0, stack = 0 }, -- need predict unit position to dispel only when they are out of raid 
 		-- 8.0.1 Toad Blight
 		{ id = 265352, dur = 0.5, stack = 0, byID = true },	
+		-- 8.0.1 Freezing Trap
+		{ id = 278468, dur = 0, stack = 0, byID = true },
+		-- 8.0.1 Frost Shock
+        { id = 270499, dur = 0, stack = 0, byID = true },
 		-- The Restless Cabal - Promises of Power 
 		{ id = 282562, dur = 0, stack = 2 },
 		-- Jadefire Masters - Searing Embers
