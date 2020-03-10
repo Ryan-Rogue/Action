@@ -43,7 +43,6 @@ end)
 local _G, type, pairs, table, math		= 
 	  _G, type, pairs, table, math
 	  
---local tinsert 						= table.insert	-- Short inline expressions can be faster than function calls. t[#t+1] = 0 is faster than table.insert(t, 0)
 local tremove							= table.remove 
 local tsort								= table.sort 
 local huge 								= math.huge
@@ -560,6 +559,15 @@ local function OnUpdate(MODE, useActualHP)
     end 
 end
 
+local function ClearHealingTarget()
+	if healingTarget ~= None or healingTargetGUID ~= None then
+		healingTarget 	  		= None
+		healingTargetGUID 		= None
+		--Default 
+		Frametexture:SetColorTexture(0, 0, 0, 1.0) 
+	end
+end 
+
 local function SetHealingTarget(MODE)
 	if #HealingEngineMembers[MODE] > 0 and HealingEngineMembers[MODE][1].HP < 99 then 
 		healingTarget 		= HealingEngineMembers[MODE][1].Unit
@@ -1039,6 +1047,7 @@ local function UpdateLOS()
 			GetLOS("target")
 		end 
 	end 
+	ClearHealingTarget()
 end
 
 local function WipeFrequencyActual()
@@ -1049,6 +1058,7 @@ local function HealingEngineInit()
 	if A.IamHealer then 
 		if not HealingEngine.IsRunning then 
 			Listener:Add("ACTION_EVENT_HEALINGENGINE", "PLAYER_TARGET_CHANGED", 	UpdateLOS			)
+			Listener:Add("ACTION_EVENT_HEALINGENGINE", "UPDATE_MOUSEOVER_UNIT", 	ClearHealingTarget	)
 			Listener:Add("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_ENABLED", 		WipeFrequencyActual	)
 			Listener:Add("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_DISABLED", 	WipeFrequencyActual	)
 			Frame:SetScript("OnUpdate", function(self, elapsed)
@@ -1077,6 +1087,7 @@ local function HealingEngineInit()
 		HealingEngineMembers:Wipe()
 		HealingEngineFrequency:Wipe()
 		Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_TARGET_CHANGED")
+		Listener:Remove("ACTION_EVENT_HEALINGENGINE", "UPDATE_MOUSEOVER_UNIT")
 		Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_ENABLED")
 		Listener:Remove("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_DISABLED")	
 		HealingEngine.IsRunning = false 
