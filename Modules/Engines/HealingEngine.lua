@@ -1034,7 +1034,7 @@ local function SetColorTarget(isForced)
     ]]
 end
 
-local function UpdateLOS()
+local function UpdateLOS(onUpdate)
 	if A_Unit("target"):IsExists() then
 		if A.IsInitialized then
 			-- New profiles 
@@ -1047,7 +1047,9 @@ local function UpdateLOS()
 			GetLOS("target")
 		end 
 	end 
-	ClearHealingTarget()
+	if not onUpdate then 
+		ClearHealingTarget()
+	end
 end
 
 local function WipeFrequencyActual()
@@ -1074,7 +1076,7 @@ local function HealingEngineInit()
 						SetColorTarget()   
 					end 
 					
-					UpdateLOS() 
+					UpdateLOS(true) 
 					
 					self.elapsed = 0
 				end			
