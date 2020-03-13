@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "11.03.2020"
+local DateTime 														= "13.03.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -4142,7 +4142,7 @@ end
 -------------------------------------------------------------------------------
 -- UI: Containers
 -------------------------------------------------------------------------------
-local tabFrame, strOnlyBuilder
+local tabFrame, strOnlyBuilder, macroFrame
 local function ConvertSpellNameToID(spellName)
 	local Name, _, _, _, _, _, ID = GetSpellInfo(spellName)
 	if not Name then 
@@ -4230,10 +4230,14 @@ local function CraftMacro(Name, Macro, perCharacter, QUESTIONMARK, leaveNewLine)
 		Action.Print(L["MACROINCOMBAT"])
 		return 
 	end 
-	
-	if MacroFrame then 
-		MacroFrame.CloseButton:Click()
+		
+	if not macroFrame then 
+		macroFrame = _G.MacroFrame		
 	end
+	
+	if macroFrame and macroFrame:IsVisible() then 
+		MacroFrame.CloseButton:Click()
+	end 
 	
 	local numglobal, numperchar = GetNumMacros()	
 	local NumMacros = perCharacter and numperchar or numglobal

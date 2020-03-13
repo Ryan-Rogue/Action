@@ -38,8 +38,9 @@ local ActiveUnitPlates 				= MultiUnits:GetActiveUnitPlates()
 local Azerite						= LibStub("AzeriteTraits")
 local Pet							= LibStub("PetLibrary")  
 
-local _G, type, pairs, ipairs, select, wipe, setmetatable, unpack =
-	  _G, type, pairs, ipairs, select, wipe, setmetatable, unpack
+local _G, type, pairs, ipairs, select, wipe, setmetatable, unpack, math =
+	  _G, type, pairs, ipairs, select, wipe, setmetatable, unpack, math
+local huge 							= math.huge	  
 
 local OriginalGetSpellInfo 			= _G.GetSpellInfo
 local GetInventoryItemCooldown 		= _G.GetInventoryItemCooldown
@@ -47,6 +48,10 @@ local GetItemCooldown 				= _G.GetItemCooldown
 local UnitIsUnit 					= _G.UnitIsUnit
 local 	 IsPlayerSpell,    IsUsableSpell 	= 
 	  _G.IsPlayerSpell, _G.IsUsableSpell
+	  
+local MACRO							-- nil 
+local BINDPAD 						= _G.BindPadFrame
+local WIM							= _G.WIM	  
 	  
 -------------------------------------------------------------------------------
 -- Some place to fix issues with Taste rotations 
@@ -352,8 +357,44 @@ function Env.ShouldStop() -- true
     return (GetGCD() - cGCD > 0.3 and cGCD >= ping + 0.5) or PlayerCastingPassToTrue() or (not PlayerCastingException() and PlayerCastingEnd() > ping) or false
 end
 
+local function MacroFrameIsVisible()
+	-- @return boolean 
+	if MACRO then 
+		return MACRO:IsVisible()
+	else 
+		MACRO = _G.MacroFrame
+	end 
+end 
+
+local function BindPadFrameIsVisible()
+	-- @return boolean 
+	return BINDPAD and BINDPAD:IsVisible()
+end 
+
+local WIM_ChatFrames = setmetatable({}, { __index = function(t, i)
+	local f = _G["WIM3_msgFrame" .. i .. "MsgBox"]
+	if f then 
+		t[i] = f
+	end 
+	return f
+end })
+
 function Env.chat()
-    return ACTIVE_CHAT_EDIT_BOX or (BindPadFrame and BindPadFrame:IsVisible()) or PlayerCastingPassToTrue() -- PlayerCastingPassToTrue is "crutch"
+	-- Chat, Macro, BindPad, TellMeWhen + Retired casts
+	if _G.ACTIVE_CHAT_EDIT_BOX or MacroFrameIsVisible() or BindPadFrameIsVisible() or not TMW.Locked or PlayerCastingPassToTrue() then 
+		return true
+	end 
+	
+	-- Wim Messanger
+	if WIM then 
+		for i = 1, huge do 
+			if not WIM_ChatFrames[i] then 
+				break 
+			elseif WIM_ChatFrames[i]:IsVisible() and WIM_ChatFrames[i]:HasFocus() then 
+				return true
+			end 
+		end 
+	end  
 end
 
 --- ======================= UnitAura ===========================
