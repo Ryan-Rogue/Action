@@ -1,3 +1,7 @@
+[Monk v14]
+WW			- ToD phase will be used only if FoF will become out of cd 
+WW 			- Fixed stucked rotation with highest haste rate
+
 [Monk v13]
 Fixed RU titles localization (second row titles remain to be on EN)
 Added new 8.3 essences
