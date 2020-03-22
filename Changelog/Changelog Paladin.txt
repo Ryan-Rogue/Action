@@ -1,3 +1,7 @@
+[Paladin v23]
+Holy 				- Added BoF on >=40 stacks of SpellID 307056 (Burning Madness) in Mythic NYA Raid on Wrathion Boss
+Holy 				- Added Holy Light and Flash Light toggles 
+
 [Paladin v22]
 Holy				- LOTM toggle fixed 
 
