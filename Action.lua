@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "20.03.2020"
+local DateTime 														= "22.03.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -2593,6 +2593,8 @@ local GlobalFactory = {
 				[308375] = { byID = true, dur = 1 },
 				-- 8.3 Void Buffet
 				[297315] = { byID = true, dur = 1.49 },
+				-- 8.3 Split Personality
+				[316510] = { byID = true, dur = 1.49 },
 				-- 8.2 Mechagon - Blazing Chomp
 				[294929] = { byID = true },
 				-- 8.2 Mechagon - Shrink

@@ -1304,6 +1304,8 @@ local types = {
 		{ id = 308375, dur = 0, stack = 0, byID = true },
 		-- 8.3 Void Buffet
 		{ id = 297315, dur = 1.49, stack = 0, byID = true },
+		-- 8.3 Split Personality
+		{ id = 316510, dur = 1.49, stack = 0, byID = true },
 		-- 8.2 Mechagon - Blazing Chomp
 		{ id = 294929, dur = 0, stack = 0 },		
 		-- 8.2 Mechagon - Shrink
