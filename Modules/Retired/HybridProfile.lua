@@ -15,6 +15,7 @@ local _G		 			= _G
 local strmatch				= _G.strmatch	
 local DEFAULT_CHAT_FRAME	= _G.DEFAULT_CHAT_FRAME 
 local ChatEdit_SendText		= _G.ChatEdit_SendText 
+local isCallbackInitiated 	= false
 _G.ptgroup 					= 3
 
 function SystemToggles()   
@@ -118,6 +119,8 @@ local ProfileToggle = {
         _G.MasterAura_Toggle 	= _G.TellMeWhen_Group3_Icon45.Enabled
         _G.LayonHands_Toggle 	= _G.TellMeWhen_Group3_Icon47.Enabled
 		_G.LOTM_Toggle			= _G.TellMeWhen_Group3_Icon49.Enabled
+		_G.HL_Toggle			= _G.TellMeWhen_Group3_Icon51.Enabled
+		_G.FoL_Toggle			= _G.TellMeWhen_Group3_Icon53.Enabled
     end,
     ["[GGL] Demon Hunter"] = function()
         _G.MouseOver_Toggle 	= _G.TellMeWhen_Group3_Icon1.Enabled
@@ -351,11 +354,14 @@ local function UpdateAll()
 	UpdateChesderGroups()
 	HybridProfileLaunch()
 	TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", UpdateAll, "TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED")
+	if not isCallbackInitiated then 
+		TMW:RegisterCallback("TMW_ACTION_ENTERING", 				LocalToggles											)
+		TMW:RegisterCallback("TMW_ACTION_ON_PROFILE_POST", 			UpdateAll      											)
+		isCallbackInitiated = true 
+	end 
 end 
 
-TMW:RegisterCallback("TMW_ACTION_ON_PROFILE_POST", 					UpdateAll      											)
 TMW:RegisterCallback("TMW_SAFESETUP_COMPLETE", 						UpdateAll, 	"TMW_SAFESETUP_COMPLETE_ACTION_DEPRECATED"	)	
-TMW:RegisterCallback("TMW_ACTION_ENTERING", 						LocalToggles											)	
 TMW:RegisterCallback("TMW_ACTION_DEPRECATED_UPDATE_AFTER_REMOVE", 	UpdateAll												)
 
 -- Used for debug 
