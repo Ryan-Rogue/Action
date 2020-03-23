@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "22.03.2020"
+local DateTime 														= "23.03.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -53,6 +53,7 @@ Env.Action 															= _G.Action
 local Action 														= _G.Action 
 Action.PlayerRace 													= select(2, UnitRace("player"))
 Action.PlayerClassName, Action.PlayerClass, Action.PlayerClassID  	= UnitClass("player")
+Action.StdUi 														= StdUi										-- Note: For custom lua snippets use 
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -4262,7 +4263,6 @@ local function CraftMacro(Name, Macro, perCharacter, QUESTIONMARK, leaveNewLine)
 	Action.Print(L["MACRO"] .. " " .. Name .. " " .. L["CREATED"] .. "!")
 	GameMenuButtonMacros:Click()
 end
-Action.CraftMacro = CraftMacro
 local function GetActionTableByKey(key)
 	-- @return table or nil 
 	-- Note: Returns table object which can be used to pass methods by specified key 
@@ -4272,6 +4272,14 @@ local function GetActionTableByKey(key)
 		return Action[key]
 	end 
 end 
+
+-- Note: For custom lua snippets use 
+Action.ConvertSpellNameToID 			= ConvertSpellNameToID
+Action.LayoutSpace						= LayoutSpace
+Action.GetWidthByColumn					= GetWidthByColumn
+Action.CreateResizer					= CreateResizer
+Action.CraftMacro 						= CraftMacro
+Action.GetActionTableByKey				= GetActionTableByKey
 
 -------------------------------------------------------------------------------
 -- UI: ColorPicker - Container
