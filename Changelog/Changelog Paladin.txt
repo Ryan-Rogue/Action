@@ -1,3 +1,7 @@
+[Paladin v24]
+Holy 				- Added use Holy Shock with higher priory if HL and FoL toggles turned off or unit will die in the next gcd*2.5 time 
+Holy 				- Added toggle to use Holy Shock on cooldown with skip old conditions on high priority
+
 [Paladin v23]
 Holy 				- Added BoF on >=40 stacks of SpellID 307056 (Burning Madness) in Mythic NYA Raid on Wrathion Boss
 Holy 				- Added Holy Light and Flash Light toggles 
