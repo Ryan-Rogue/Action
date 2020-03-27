@@ -121,6 +121,7 @@ local ProfileToggle = {
 		_G.LOTM_Toggle			= _G.TellMeWhen_Group3_Icon49.Enabled
 		_G.HL_Toggle			= _G.TellMeWhen_Group3_Icon51.Enabled
 		_G.FoL_Toggle			= _G.TellMeWhen_Group3_Icon53.Enabled
+		_G.HS_OnCD_Toggle		= _G.TellMeWhen_Group3_Icon55.Enabled
     end,
     ["[GGL] Demon Hunter"] = function()
         _G.MouseOver_Toggle 	= _G.TellMeWhen_Group3_Icon1.Enabled
