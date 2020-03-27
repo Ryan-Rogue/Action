@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "23.03.2020"
+local DateTime 														= "28.03.2020"
 ---
 local TMW 															= TMW
 local Env 															= TMW.CNDT.Env
@@ -8505,10 +8505,9 @@ function Action.ToggleMainUI()
 				["PLAYER_EQUIPMENT_CHANGED"]		= true,
 				["UI_INFO_MESSAGE"]					= true,
 			}
-			local function OnCallback()
-				local fspec = Action.PlayerSpec .. CL
-				if tab.childs[fspec].ScrollTable:IsVisible() and TMW.time ~= tab.childs[fspec].ScrollTable.ts and Action.GetToggle(tab.name, "AutoHidden") then 
-					tab.childs[fspec].ScrollTable.ts = TMW.time
+			tab.childs[spec].ScrollTable.OnCallback = function()
+				if tab.childs[spec] and tab.childs[spec].ScrollTable and tab.childs[spec].ScrollTable:IsVisible() and TMW.time ~= tab.childs[spec].ScrollTable.ts and Action.GetToggle(tab.name, "AutoHidden") then 
+					tab.childs[spec].ScrollTable.ts = TMW.time
 					ScrollTableUpdateData()
 					ScrollTableUpdateSelection()
 				end 
@@ -8522,7 +8521,7 @@ function Action.ToggleMainUI()
 					end 
 					
 					-- Registers callback (SpellLevel)
-					TMW:RegisterCallback("TMW_ACTION_SPELL_BOOK_CHANGED", OnCallback, "TMW_ACTION_SPELL_BOOK_CHANGED_ACTIONS_TAB")
+					TMW:RegisterCallback("TMW_ACTION_SPELL_BOOK_CHANGED", tab.childs[spec].ScrollTable.OnCallback, "TMW_ACTION_SPELL_BOOK_CHANGED_ACTIONS_TAB")
 				else 
 					-- Unregisters events 
 					for k in pairs(EVENTS) do 
@@ -8530,7 +8529,7 @@ function Action.ToggleMainUI()
 					end 
 					
 					-- Unregisters callback 
-					TMW:UnregisterCallback("TMW_ACTION_SPELL_BOOK_CHANGED", OnCallback, "TMW_ACTION_SPELL_BOOK_CHANGED_ACTIONS_TAB")
+					TMW:UnregisterCallback("TMW_ACTION_SPELL_BOOK_CHANGED", tab.childs[spec].ScrollTable.OnCallback, "TMW_ACTION_SPELL_BOOK_CHANGED_ACTIONS_TAB")
 				end 
 			end 	
 			EventsAndCallbacksInit() 
