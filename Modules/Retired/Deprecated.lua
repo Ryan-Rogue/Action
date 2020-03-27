@@ -1637,17 +1637,17 @@ end
 
 function CombatUnits(stop, range, upttd)
 	-- @return boolean if stop noted, otherwise number
-    return (stop and MultiUnits:GetByRangeInCombat(range or 40, stop, upttd) >= stop) or (not stop and MultiUnits:GetByRangeInCombat(range or 40, nil, upttd))
+    return (stop and MultiUnits:GetByRangeInCombat(range, stop, upttd) >= stop) or (not stop and MultiUnits:GetByRangeInCombat(range or 40, nil, upttd))
 end
 
 function CastingUnits(stop, range, kickAble)
 	-- @return boolean if stop noted, otherwise number
-	return (stop and MultiUnits:GetByRangeCasting(range or 40, stop, kickAble) >= stop) or (not stop and MultiUnits:GetByRangeCasting(range or 40, nil, kickAble))
+	return (stop and MultiUnits:GetByRangeCasting(range, stop, kickAble) >= stop) or (not stop and MultiUnits:GetByRangeCasting(range or 40, nil, kickAble))
 end 
 
 function MassTaunt(stop, range, ttd)
 	-- @return boolean if stop noted, otherwise number
-    return (stop and MultiUnits:GetByRangeTaunting(range or 40, stop, upttd or 10) >= stop) or (not stop and MultiUnits:GetByRangeTaunting(range or 40, nil, upttd or 10))
+    return (stop and MultiUnits:GetByRangeTaunting(range, stop, upttd or 10) >= stop) or (not stop and MultiUnits:GetByRangeTaunting(range or 40, nil, upttd or 10))
 end
 
 function PvPMassTaunt(stop, range, outrange)
