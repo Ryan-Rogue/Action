@@ -1,3 +1,7 @@
+[Priest v11]
+Fixed Auto Target	- Shared feature was missed to retarget unit if current target is empty, now added
+Shadow 				- Tweaked limits to use earlier Dispersion
+
 [Priest v10]
 Fixed stopcast texture
 
