@@ -151,9 +151,12 @@ end
 
 local LastEvent, counter
 local IsEventIsChallenge = {
+	-- Note: I haven't tested the queue order of the events so we will fire everything what we can to properly have updated InstanceInfo table
 	CHALLENGE_MODE_COMPLETED 		= true,
 	CHALLENGE_MODE_RESET			= true,
-	CHALLENGE_MODE_KEYSTONE_SLOTTED = true,
+	--CHALLENGE_MODE_KEYSTONE_SLOTTED = true, -- seems doesn't triggered enough well since map update theoricaly delayed
+	CHALLENGE_MODE_START			= true,
+	CHALLENGE_MODE_MAPS_UPDATE		= true,
 }
 local function OnEvent(event, ...)    
     -- Don't call it several times
