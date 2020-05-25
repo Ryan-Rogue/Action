@@ -1,3 +1,6 @@
+[Priest v12]
+Shadow 				- Fixed Dispersion conditions when didn't work in PvE
+
 [Priest v11]
 Fixed Auto Target	- Shared feature was missed to retarget unit if current target is empty, now added
 Shadow 				- Tweaked limits to use earlier Dispersion
