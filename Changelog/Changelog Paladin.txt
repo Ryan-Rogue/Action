@@ -1,3 +1,8 @@
+[Paladin v25]
+Holy 				- Added @focustarget supported damage through Crusader Strike and Judgement
+Holy 				- Added toggle for Holy Shock to switch use as damage rotation 
+Ret					- Fixed lua error :61 for self Flash of Light 
+
 [Paladin v24]
 Holy 				- Added use Holy Shock with higher priory if HL and FoL toggles turned off or unit will die in the next gcd*2.5 time 
 Holy 				- Added toggle to use Holy Shock on cooldown with skip old conditions on high priority
