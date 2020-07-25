@@ -1,3 +1,8 @@
+[Paladin v26]
+Fixed BoP in PvP 	- Will be used only if around physical damagers exist
+Holy 				- Added Holy Shock additional use with unit selection by HealingEngine, if in group and all members at full health with selected Glimmer of Light 
+Holy				- Fixed Consecration - now will be casted only if expired
+
 [Paladin v25]
 Holy 				- Added @focustarget supported damage through Crusader Strike and Judgement
 Holy 				- Added toggle for Holy Shock to switch use as damage rotation 
