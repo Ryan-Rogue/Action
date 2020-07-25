@@ -31,6 +31,7 @@ local GetAuraList					= A.GetAuraList
 local GetPing						= A.GetPing
 local GetGCD						= A.GetGCD
 local GetCurrentGCD					= A.GetCurrentGCD
+local BossMods						= A.BossMods
 
 local HealingEngineMembersALL		= HealingEngine.GetMembersAll()
 local ActiveUnitPlates 				= MultiUnits:GetActiveUnitPlates()
@@ -38,8 +39,10 @@ local ActiveUnitPlates 				= MultiUnits:GetActiveUnitPlates()
 local Azerite						= LibStub("AzeriteTraits")
 local Pet							= LibStub("PetLibrary")  
 
-local _G, type, pairs, ipairs, select, wipe, setmetatable, unpack, math =
-	  _G, type, pairs, ipairs, select, wipe, setmetatable, unpack, math
+local _G, type, pairs, ipairs, select, setmetatable, unpack, math =
+	  _G, type, pairs, ipairs, select, setmetatable, unpack, math
+
+local wipe							= _G.wipe
 local huge 							= math.huge	  
 
 local OriginalGetSpellInfo 			= _G.GetSpellInfo
@@ -51,7 +54,11 @@ local 	 IsPlayerSpell,    IsUsableSpell 	=
 	  
 local MACRO							-- nil 
 local BINDPAD 						= _G.BindPadFrame
-local WIM							= _G.WIM	  
+local WIM							= _G.WIM	 
+
+local ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE = _G.ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE
+local ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT 			= _G.ACTION_CONST_CACHE_DEFAULT_TIMER_UNIT
+local ACTION_CONST_CACHE_DISABLE						= _G.ACTION_CONST_CACHE_DISABLE
 	  
 -------------------------------------------------------------------------------
 -- Some place to fix issues with Taste rotations 
@@ -113,6 +120,25 @@ function fLastCall(obj)
     end
     return TMW.time >= oLastCall[obj]
 end
+
+-------------------------------------------------------------------------------
+-- API: BossMods Retired 
+-------------------------------------------------------------------------------
+function A.DBM_PullTimer()
+	return BossMods:GetPullTimer()
+end 
+
+function A.DBM_GetTimer(name)    
+	return BossMods:GetTimer(name)
+end 
+
+function A.DBM_IsEngage()
+	return BossMods:IsEngage()
+end 
+
+function A.BossMods_Pulling()
+	return BossMods:GetPullTimer()
+end 
 
 -------------------------------------------------------------------------------
 -- Reworked
@@ -179,7 +205,8 @@ TMW:RegisterCallback("TMW_ACTION_DEPRECATED", function()
 		Env.PvPCache["FriendlyMeleeCounter"] 			= 0	
 		for k in pairs(TeamCache.Friendly.DAMAGER_MELEE) do 
 			Env.PvPCache["FriendlyMeleeCounter"] 		= Env.PvPCache["FriendlyMeleeCounter"] + 1
-		end 		
+		end 
+		Action.BlackBackgroundSet(true)
 	end 
 end)
 
@@ -199,31 +226,17 @@ MouseHasFrame						= A.MouseHasFrame
 
 -- Env
 Env.GCD								= GetGCD
-Env.GetGCD							= GetGCD
 Env.CurrentTimeGCD					= GetCurrentGCD
-Env.GetCurrentGCD					= GetCurrentGCD
-Env.GetAuraList						= GetAuraList
 Env.CacheGetSpellPowerCost 			= A.GetSpellPowerCostCache
 Env.GetPowerCost 					= A.GetSpellPowerCost
 Env.GetDescription 					= A.GetSpellDescription
-Env.InstanceInfo					= InstanceInfo
-
-Env.UI_INFO_MESSAGE_IS_WARMODE 		= A.UI_INFO_MESSAGE_IS_WARMODE
-Env.BlackBackgroundSet 				= A.BlackBackgroundSet
 
 Env.InLOS 							= A.UnitInLOS
-Env.Unit							= Unit  
-Env.EnemyTeam						= EnemyTeam
-Env.FriendlyTeam					= FriendlyTeam
 
 Env.PvP 							= {}
 Env.PvP.Unit						= Unit  
 Env.PvP.EnemyTeam					= EnemyTeam
 Env.PvP.FriendlyTeam				= FriendlyTeam
-
-Env.DBM_PullTimer 					= A.DBM_PullTimer
-Env.DBM_GetTimer 					= A.DBM_GetTimer
-Env.DBM_IsEngage 					= A.DBM_IsEngage
 
 function Env.CheckInPvP()
     return A:CheckInPvP()
@@ -1125,7 +1138,7 @@ function AoEBuffsExist(ID, duration)
 	return HealingEngine.GetBuffsCount(ID, duration)
 end
 function AoEHP(pHP)
-    return HealingEngine.GetBelowHealthPercentercentUnits(pHP) 
+    return HealingEngine.GetBelowHealthPercentUnits(pHP) 
 end
 function AoEHealingByRange(range, predictName, isMelee)
 	return HealingEngine.HealingByRange(range, predictName, nil, isMelee)
@@ -1258,8 +1271,6 @@ local types = {
         { id = 257775, dur = 0, stack = 0},
         -- Wretched Discharge
         { id = 267763, dur = 0, stack = 0},
-        -- Plague 
-        { id = 269686, dur = 0, stack = 0},
         -- Festering Bite
         { id = 263074, dur = 0, stack = 0},
         -- Decaying Mind
@@ -1332,6 +1343,8 @@ local types = {
 		{ id = 278468, dur = 0, stack = 0, byID = true },
 		-- 8.0.1 Frost Shock
         { id = 270499, dur = 0, stack = 0, byID = true },
+		-- 8.0.1 Maddening Gaze
+		{ id = 272609, dur = 1, stack = 0, byID = true },
 		-- The Restless Cabal - Promises of Power 
 		{ id = 282562, dur = 0, stack = 2 },
 		-- Jadefire Masters - Searing Embers
@@ -1716,13 +1729,6 @@ end
 -------------------------------------------------------------------------------
 -- PetLib
 -------------------------------------------------------------------------------
-if A.PlayerClass == "DEATHKNIGHT" then 
-	Pet:Add(252, { -- Unholy Death Knight 
-		47482, -- Jump
-		47481, -- Gnaw
-	})
-end
-
 function Env.PetSpellInRange(spell, unitID)
 	return Pet:IsInRange(spell, unitID)
 end 

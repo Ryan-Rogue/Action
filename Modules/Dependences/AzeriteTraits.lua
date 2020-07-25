@@ -2,8 +2,9 @@
 -- AzeriteTraits is special written lib for The Action but can be used for any others
 -- addons if will be replaced "A." and "TMW." API by regular provided from game 
 -------------------------------------------------------------------------------------
-local TMW 								= TMW 
-local A 								= Action 
+local _G, print, pairs, ipairs			= _G, print, pairs, ipairs
+local TMW 								= _G.TMW 
+local A 								= _G.Action 
 local Listener							= A.Listener
 local Lib 								= LibStub:NewLibrary("AzeriteTraits", 8)
 
@@ -33,10 +34,7 @@ Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "ADDON_LOADED", function(addonName)
 		Listener:Remove("ACTION_EVENT_AZERITE_TRAITS", "ADDON_LOADED")	
 	end 
 end)
--------------------------------------------------------------------------------
-
-local _G, pairs, ipairs		 			= 
-	  _G, pairs, ipairs	 
+-------------------------------------------------------------------------------	 
 	  
 local wipe								= _G.wipe	  
 

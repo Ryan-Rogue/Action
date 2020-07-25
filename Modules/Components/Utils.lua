@@ -1,18 +1,21 @@
 -------------------------------------------------------------------------------
 -- TellMeWhen Utils
 -------------------------------------------------------------------------------
-local TMW 					= TMW
+local _G, assert, error, tostring, select, type, next, ipairs, table = 
+	  _G, assert, error, tostring, select, type, next, ipairs, table
+	  
+local TMW 					= _G.TMW
 local CNDT 					= TMW.CNDT
 local Env 					= CNDT.Env
 local strlowerCache  		= TMW.strlowerCache
 
-local A   					= Action
+local A   					= _G.Action
+local CONST 				= A.Const
 local Listener				= A.Listener
 local GetToggle				= A.GetToggle
 local toStr 				= A.toStr
 local toNum 				= A.toNum
 local Print 				= A.Print
-
 local ActionDataColor		= A.Data.C
 
 -------------------------------------------------------------------------------
@@ -21,7 +24,7 @@ local ActionDataColor		= A.Data.C
 local A_GetSpellInfo, TeamCacheEnemy, TeamCacheEnemyIndexToPLAYERs
 
 Listener:Add("ACTION_EVENT_UTILS", "ADDON_LOADED", function(addonName) 
-	if addonName == ACTION_CONST_ADDON_NAME then 
+	if addonName == CONST.ADDON_NAME then 
 		A_GetSpellInfo					= A.GetSpellInfo
 		TeamCacheEnemy					= A.TeamCache.Enemy
 		TeamCacheEnemyIndexToPLAYERs	= TeamCacheEnemy.IndexToPLAYERs
@@ -29,31 +32,27 @@ Listener:Add("ACTION_EVENT_UTILS", "ADDON_LOADED", function(addonName)
 	end 	
 end)
 -------------------------------------------------------------------------------
-
-local _G, assert, error, tostring, select, type, next, ipairs, table, wipe, hooksecurefunc, message = 
-	  _G, assert, error, tostring, select, type, next, ipairs, table, wipe, hooksecurefunc, message
 	  
-local ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE	= _G.ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE
-local ACTION_CONST_TMW_DEFAULT_STATE_HIDE 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_HIDE	  
-local ACTION_CONST_TMW_DEFAULT_STATE_SHOW 				= _G.ACTION_CONST_TMW_DEFAULT_STATE_SHOW	  
-	  
-local tremove				= table.remove	  
+local tremove				= table.remove	 
+local wipe					= _G.wipe
+local message				= _G.message
+local hooksecurefunc		= _G.hooksecurefunc 
 local strfind				= _G.strfind	  
 local strmatch				= _G.strmatch
 local UIParent				= _G.UIParent	
 local C_UI					= _G.C_UI  
 	  
-local CreateFrame, GetCVar, SetCVar =
-	  CreateFrame, GetCVar, SetCVar
+local 	 CreateFrame, 	 GetCVar, 	 SetCVar =
+	  _G.CreateFrame, _G.GetCVar, _G.SetCVar
 
-local GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale =
-	  GetScreenResolutions, GetPhysicalScreenSize, GetScreenDPIScale
+local 	 GetScreenResolutions, 	  GetPhysicalScreenSize, 	GetScreenDPIScale =
+	  _G.GetScreenResolutions, _G.GetPhysicalScreenSize, _G.GetScreenDPIScale
 	  
-local GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, 	 GetSpellTexture, GetSpellInfo, CombatLogGetCurrentEventInfo =
-	  GetNumClasses, GetClassInfo,  GetNumSpecializationsForClassID, GetSpecializationInfoForClassID, GetArenaOpponentSpec, GetBattlefieldScore, TMW.GetSpellTexture, GetSpellInfo, CombatLogGetCurrentEventInfo
+local 	 GetNumClasses,    GetClassInfo,  	GetNumSpecializationsForClassID, 	GetSpecializationInfoForClassID, 	GetArenaOpponentSpec, 	 GetBattlefieldScore, 	  GetSpellTexture, 	  GetSpellInfo,    CombatLogGetCurrentEventInfo =
+	  _G.GetNumClasses, _G.GetClassInfo, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfoForClassID, _G.GetArenaOpponentSpec, _G.GetBattlefieldScore, TMW.GetSpellTexture, _G.GetSpellInfo, _G.CombatLogGetCurrentEventInfo
 
-local UnitName, UnitGUID 	=
-	  UnitName, UnitGUID
+local 	 UnitName, 	  UnitGUID =
+	  _G.UnitName, _G.UnitGUID
 	
 -------------------------------------------------------------------------------
 -- DataBase
@@ -165,7 +164,7 @@ function SPECS:UpdateUnitSpecs()
 
 			if unit then 
 				local name, server = UnitName(unit)
-				if name and name ~= ACTION_CONST_UNKNOWN then
+				if name and name ~= CONST.UNKNOWN then
 					local specID = GetArenaOpponentSpec(i)
 					name = name .. (server and "-" .. server or "")
 					if Env.UnitSpecs then 
@@ -497,9 +496,9 @@ local function UpdateCVAR()
 	end
 	
 	local nameplateMaxDistance = GetCVar("nameplateMaxDistance")
-    if nameplateMaxDistance and toNum[nameplateMaxDistance] < ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
-		SetCVar("nameplateMaxDistance", ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
-		Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. ACTION_CONST_CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
+    if nameplateMaxDistance and toNum[nameplateMaxDistance] < CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
+		SetCVar("nameplateMaxDistance", CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
+		Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
 	end		
 	
     -- WM removal
@@ -593,7 +592,7 @@ local function TMWAPI(icon, ...)
         end 
         
         -- Hide if not hidden
-        if type(param) == "number" and (param == 0 or param == ACTION_CONST_TMW_DEFAULT_STATE_HIDE) then
+        if type(param) == "number" and (param == 0 or param == CONST.TMW_DEFAULT_STATE_HIDE) then
             if icon.attributes.realAlpha ~= 0 then 
                 icon:SetInfo(attributesString, param)
             end 
@@ -604,7 +603,7 @@ local function TMWAPI(icon, ...)
     if attributesString == "texture" and type(param) == "number" then         
         if (icon.attributes.calculatedState.Color ~= "ffffffff" or icon.attributes.realAlpha == 0) then 
             -- Show + Texture if hidden
-            icon:SetInfo("state; " .. attributesString, ACTION_CONST_TMW_DEFAULT_STATE_SHOW, param)
+            icon:SetInfo("state; " .. attributesString, CONST.TMW_DEFAULT_STATE_SHOW, param)
         elseif icon.attributes.texture ~= param then 
             -- Texture if not applied        
             icon:SetInfo(attributesString, param)
@@ -620,8 +619,8 @@ function A.Hide(icon)
 	if not icon then 
 		error("A.Hide tried to hide nil 'icon'", 2)
 	else 
-		if icon.attributes.state ~= ACTION_CONST_TMW_DEFAULT_STATE_HIDE then 
-			icon:SetInfo("state; texture", ACTION_CONST_TMW_DEFAULT_STATE_HIDE, "")
+		if icon.attributes.state ~= CONST.TMW_DEFAULT_STATE_HIDE then 
+			icon:SetInfo("state; texture", CONST.TMW_DEFAULT_STATE_HIDE, "")
 		end 
 	end 
 end 
@@ -677,7 +676,7 @@ end
 -- TMW Help Frame
 -------------------------------------------------------------------------------
 Listener:Add("ACTION_EVENT_UTILS_TMW_HELP", "ADDON_LOADED", function(addonName) 
-	if addonName == ACTION_CONST_ADDON_NAME_TMW_OPTIONS or addonName == ACTION_CONST_ADDON_NAME_TMW then 
+	if addonName == CONST.ADDON_NAME_TMW_OPTIONS or addonName == CONST.ADDON_NAME_TMW then 
 		_G.TellMeWhen_IconEditor.Pages.Help:HookScript("OnShow", function(self)
 			self:Hide()
 		end)
@@ -710,7 +709,7 @@ end
 -- TMW IconConfig.lua attempt to index field 'CurrentTabGroup' (nil value) fix
 -------------------------------------------------------------------------------
 Listener:Add("ACTION_EVENT_UTILS_TMW_OPTIONS", "ADDON_LOADED", function(addonName) 
-	if addonName == ACTION_CONST_ADDON_NAME_TMW_OPTIONS or addonName == ACTION_CONST_ADDON_NAME_TMW then 
+	if addonName == CONST.ADDON_NAME_TMW_OPTIONS or addonName == CONST.ADDON_NAME_TMW then 
 		local IE 			= TMW.IE
 		local CI 			= TMW.CI
 		local PlaySound 	= _G.PlaySound
@@ -761,6 +760,7 @@ local function LockToggle()
 	if not TMW.Locked and not TMW.ALLOW_LOCKDOWN_CONFIG and InCombatLockdown() then 
 		TMW.ALLOW_LOCKDOWN_CONFIG = true 
 		TMW:LockToggle()
+		TMW:UpdateNormally()
 		TMW.ALLOW_LOCKDOWN_CONFIG = false
 	end 
 end 

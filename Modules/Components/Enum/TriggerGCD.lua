@@ -1,6 +1,6 @@
 -- Used by A:IsRequiredGCD()
 -- Generated using WoW 8.2 client data
-Action.Enum.TriggerGCD = {
+_G.Action.Enum.TriggerGCD = {
 	-- 8.2 Azerite Essence's Spells
 	[295373] = 1500,
 	[299349] = 1500,

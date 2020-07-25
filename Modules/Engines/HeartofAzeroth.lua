@@ -1,5 +1,9 @@
-local TMW 								= TMW
-local A 								= Action
+local _G, pairs, next				=
+	  _G, pairs, next
+	  
+local TMW 								= _G.TMW
+local A 								= _G.Action
+local CONST 							= A.Const
 
 local Listener							= A.Listener
 local GetToggle							= A.GetToggle
@@ -17,7 +21,7 @@ local Azerite 							= LibStub("AzeriteTraits")
 local A_LoC, A_Unit, A_EnemyTeam, A_MultiUnits, A_HealingEngine, A_Player
 
 Listener:Add("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED", function(addonName)
-	if addonName == ACTION_CONST_ADDON_NAME then 
+	if addonName == CONST.ADDON_NAME then 
 		A_LoC						= A.LossOfControl
 		A_Unit						= A.Unit
 		A_EnemyTeam					= A.EnemyTeam
@@ -29,10 +33,8 @@ Listener:Add("ACTION_EVENT_HEARTOFAZEROTH", "ADDON_LOADED", function(addonName)
 	end 
 end)
 -------------------------------------------------------------------------------
-
-local _G, pairs, next				=
-	  _G, pairs, next
 	  
+local CopyTable						= _G.CopyTable 	  
 local UnitIsUnit					= _G.UnitIsUnit	  
 local GetSpecializationRoleByID 	= _G.GetSpecializationRoleByID
 local AzeriteEssence 				= _G.C_AzeriteEssence
@@ -96,11 +98,11 @@ local TempSilenceAndDisarm			= Temp.SilenceAndDisarm
 function A:CreateEssencesFor(specID) 
 	-- If game patch lower than 8.2 it will create empty objects which will be hidden in UI 
 	for k, v in pairs(AzeriteEssences.ALL) do 
-		self[specID][k] = self.Create(AzeriteEssence and v or nil)
+		self[specID][k] = self.Create(AzeriteEssence and CopyTable(v) or nil)
 	end 
 
 	for k, v in pairs(AzeriteEssences[GetSpecializationRoleByID(specID)]) do 
-		self[specID][k] = self.Create(AzeriteEssence and v or nil)
+		self[specID][k] = self.Create(AzeriteEssence and CopyTable(v) or nil)
 	end 	 
 end 
 
@@ -489,7 +491,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					(
 						skipAuto or 
 						(
-							A_HealingEngine.GetHealthFrequency(3) > 30 and 
+							A_HealingEngine.GetHealthFrequency(3) < -30 and 
 							A_Unit(unitID):TimeToDie() > 8 
 						)
 					)
@@ -577,7 +579,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 							(
 								A_HealingEngine.GetTimeToFullDie() < 12 or 
 								(
-									A_HealingEngine.GetHealthFrequency(3) > 25 and 
+									A_HealingEngine.GetHealthFrequency(3) < -25 and 
 									A_HealingEngine.GetIncomingDMGAVG() >= 15
 								)
 							)
@@ -652,7 +654,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 					A_LoC:Get("SCHOOL_INTERRUPT", "SHADOW") == 0 and 
 					A_Unit(unitID):IsEnemy() and 
 					A_Unit(unitID):GetRange() <= 12 and 
-					self:AbsentImun(unitID, TotalAndMagic) and 
+					self:AbsentImun(unitID, TempTotalAndMagic) and 
 					not A_Unit(unitID):IsTotem() and 
 					(
 						not A_Unit("player"):IsMelee() or 

@@ -273,7 +273,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 			if MajorSpellName == "Life-Binder's Invocation" then 
 				-- GCD 1.5 sec (this is long cast)
 				-- If during latest 3 sec group AHP went down to -30%
-				if LoC:IsMissed("SILENCE") and LoC:Get("SCHOOL_INTERRUPT", "HOLY") == 0 and not ShouldStop and not Unit(unitID):IsEnemy() and HealingEngine.GetHealthFrequency(3) > 30 and Unit("player"):GetCurrentSpeed() == 0 and (Unit("player"):TimeToDie() > 9 or not A.IsInPvP or (not Unit("player"):IsFocused() and Unit("player"):HealthPercent() > 20)) then 
+				if LoC:IsMissed("SILENCE") and LoC:Get("SCHOOL_INTERRUPT", "HOLY") == 0 and not ShouldStop and not Unit(unitID):IsEnemy() and HealingEngine.GetHealthFrequency(3) < -30 and Unit("player"):GetCurrentSpeed() == 0 and (Unit("player"):TimeToDie() > 9 or not A.IsInPvP or (not Unit("player"):IsFocused() and Unit("player"):HealthPercent() > 20)) then 
 					return A.HeartOfAzerothShow(icon)
 				end 
 			end  
@@ -322,7 +322,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 					(
 						HealingEngine.GetTimeToFullDie() < 12 or 
 						(
-							HealingEngine.GetHealthFrequency(3) > 25 and 
+							HealingEngine.GetHealthFrequency(3) < -25 and 
 							HealingEngine.GetIncomingDMGAVG() >= 15
 						)
 					)

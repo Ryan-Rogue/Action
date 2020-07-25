@@ -1,16 +1,16 @@
-## Interface: 80300
+## Interface: 80307
 ## Title: TellMeWhen |cff00ccff The Action|r
 ## Notes: (\/)O_O(\/)
 ## RequiredDeps: TellMeWhen
 ## DefaultState: enabled
 ## LoadWith: TellMeWhen
 
+Lib\DRList-1.0\DRList-1.0.xml
 Lib\LibSharedMedia-3.0\lib.xml
 Lib\ForAllIndentsAndPurposes.lua
 Lib\LibBossIDs-1.0.lua
 Lib\LibDBIcon-1.0.lua
 Lib\StdUI\StdUi.xml
-Lib\DRData-1.1.lua
 
 # First constans!
 Modules\Components\Const\Constans.lua
@@ -22,6 +22,7 @@ Modules\Components\Tools.lua
 Modules\Components\Utils.lua
 
 Modules\Dependences\AzeriteTraits.lua
+Modules\Dependences\MacroLibrary.lua
 Modules\Dependences\PetLibrary.lua
 
 Modules\Engines\Base.lua
@@ -36,6 +37,8 @@ Modules\Misc\BossMods.lua
 Modules\Misc\ElvUI.lua
 Modules\Misc\HeroLib.lua
 Modules\Misc\PMultiplier.lua
+Modules\Misc\PrevSpell.lua 
+Modules\Misc\DRList.lua
 
 Modules\Actions.lua
 Modules\Core.lua
@@ -44,6 +47,7 @@ Modules\Retired\Deprecated.lua
 Modules\Retired\HeartofAzeroth.lua
 Modules\Retired\HybridProfile.lua
 Modules\Retired\MessageEvents.lua
+Modules\Retired\PetLibrary.lua
 
 # Test
 # Modules\TestDev\StressTests.lua

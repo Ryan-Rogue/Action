@@ -10,13 +10,14 @@ local A 							= Action
 local GetGCD						= A.GetGCD
 local Listener						= A.Listener
 
-local pairs, select, _G 			= 
-	  pairs, select, _G 
+local pairs, select, string, _G 	= 
+	  pairs, select, string, _G 
 	  
 local CreateFrame					= _G.CreateFrame
 local UIParent						= _G.UIParent	
 local wipe							= _G.wipe  
 local strmatch						= _G.strmatch  
+local gsub							= string.gsub
 local UnitIsUnit					= _G.UnitIsUnit  
 	  
 local oMSG, starttime = {}, 0
