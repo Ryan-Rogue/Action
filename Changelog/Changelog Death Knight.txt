@@ -1,3 +1,6 @@
+[Death Knight v15] 
+Unholy 				- Bug fix with PetLibrary loading order (related to global API and this profile only)
+
 [Death Knight v14] 
 Unholy PvP 			- Dark Transformation will be used now if pet has > 20% hp or his ttd > 5 sec 
 Unholy PvE 			- Fixed issue with Abomination
