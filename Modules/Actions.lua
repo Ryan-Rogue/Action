@@ -997,7 +997,9 @@ A.GetItemDescription = A.MakeFunctionCachedDynamic(A.GetItemDescription)
 
 local itemspellcache = setmetatable({}, { __index = function(t, v)
     local a = { GetItemSpell(v) }
-    t[v] = a
+	if #a > 0 then 
+		t[v] = a
+	end 
     return a
 end })
 function A:GetItemSpell()
@@ -1390,7 +1392,9 @@ end
 -- Item
 local iteminfocache = setmetatable({}, { __index = function(t, v)	
     local a = { GetItemInfo(v) }
-    t[v] = a
+	if #a > 0 then 
+		t[v] = a
+	end 
     return a
 end })
 
@@ -1407,7 +1411,8 @@ function A:GetItemInfo(custom)
 		if #iteminfocache[ID] > 1 then 
 			return unpack(iteminfocache[ID]) 
 		elseif isTable then 
-			return self:GetKeyName()
+			local spellName = self:GetItemSpell()			
+			return spellName or self:GetKeyName()
 		end
 	end 
 end
