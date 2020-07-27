@@ -244,7 +244,7 @@ function Data.logCast(...)
 end 
 
 function Data.logBehind(...)
-	local message = ...
+	local _, message = ...
 	if message == SPELL_FAILED_NOT_BEHIND then 
 		Data.PlayerBehind = TMW.time
 	end 
