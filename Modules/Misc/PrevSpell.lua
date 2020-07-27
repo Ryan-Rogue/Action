@@ -197,6 +197,7 @@ Initialization = function()
 	Listener:Add("ACTION_EVENT_PREV_SPELLS", "COMBAT_LOG_EVENT_UNFILTERED",	 	COMBAT_LOG_EVENT_UNFILTERED)
 	Listener:Add("ACTION_EVENT_PREV_SPELLS", "UNIT_SPELLCAST_SUCCEEDED", 		UNIT_SPELLCAST_SUCCEEDED)
 	TMW:RegisterCallback("TMW_ACTION_ON_PROFILE_POST", 							CheckInitialization, "ACTION_CHECK_INITIALIZATION_PREV_SPELL")
+	return true -- Signal RegisterSelfDestructingCallback to unregister
 end 
 TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", 			Initialization)
 

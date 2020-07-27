@@ -757,10 +757,10 @@ end)
 -------------------------------------------------------------------------------
 local InCombatLockdown = _G.InCombatLockdown
 local function LockToggle()
-	if not TMW.Locked and not TMW.ALLOW_LOCKDOWN_CONFIG and InCombatLockdown() then 
+	if not TMW.Locked and not TMW.ALLOW_LOCKDOWN_CONFIG and (InCombatLockdown() or A.Zone == "pvp" or A.Zone == "arena") then 
 		TMW.ALLOW_LOCKDOWN_CONFIG = true 
 		TMW:LockToggle()
-		TMW:UpdateNormally()
+		TMW:Update()
 		TMW.ALLOW_LOCKDOWN_CONFIG = false
 	end 
 end 

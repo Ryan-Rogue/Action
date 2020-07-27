@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "26.07.2020"
+local DateTime 														= "27.07.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -7710,11 +7710,16 @@ local SpellLevel; SpellLevel 		= {
 	end,
 	Reset 							= function(self, manualFalseToggle)	
 		-- manualFalseToggle is 'true' when "PLAYER_LEVEL_UP" fires on max level
-		if manualFalseToggle or (A_GetToggle(3, "CheckSpellLevel") and self:GetLevel() >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]) then 
-			self.SetToggle[3] = L["TAB"][3]["CHECKSPELLLVL"] .. ": "
-			A_SetToggle(self.SetToggle, false)
-			A_SetToggle(self.SetName, UnitName("player"))
-		end 	
+		--if manualFalseToggle or (A_GetToggle(3, "CheckSpellLevel") and self:GetLevel() >= MAX_PLAYER_LEVEL_TABLE[GetExpansionLevel()]) then 
+		--	self.SetToggle[3] = L["TAB"][3]["CHECKSPELLLVL"] .. ": "
+		--	A_SetToggle(self.SetToggle, false)
+		--	A_SetToggle(self.SetName, UnitName("player"))
+		--end 	
+		
+		if pActionDB and pActionDB[3] then 
+			pActionDB[3].CheckSpellLevel = false 
+			pActionDB[3].LastDisableName = UnitName("player") or "" 
+		end 
 	
 		if self.Initialized then 
 			TMW:UnregisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", self.PLAYER_SPECIALIZATION_CHANGED)
@@ -15066,6 +15071,7 @@ TMW:RegisterSelfDestructingCallback("TMW_DB_INITIALIZED", function()
 	Action:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_SPECIALIZATION_CHANGED")
 	Action:PLAYER_SPECIALIZATION_CHANGED("PLAYER_LOGIN")
 	dbUpdate()
+	return true -- Signal RegisterSelfDestructingCallback to unregister
 end)
 
 local function OnInitialize()	
@@ -15134,7 +15140,7 @@ local function OnInitialize()
 					TMW:LockToggle()
 				end 
 				TMWdb:SetProfile(DefaultProfile[PlayerClass])
-				return
+				return true -- Signal RegisterSelfDestructingCallback to unregister
 			end		
 		
 			if AllProfiles[DefaultProfile["BASIC"]] then 
@@ -15142,7 +15148,7 @@ local function OnInitialize()
 					TMW:LockToggle()
 				end 
 				TMWdb:SetProfile(DefaultProfile["BASIC"])
-				return 
+				return true -- Signal RegisterSelfDestructingCallback to unregister 
 			end 	
 		end 
 	end 		
@@ -15169,7 +15175,7 @@ local function OnInitialize()
 		Queue.OnEventToReset()
 
 		ActionHasFinishedLoading = true 
-		return 
+		return true -- Signal RegisterSelfDestructingCallback to unregister 
 	end 	 
 	
 	-- ProfileUI > ProfileDB creates template to merge in Factory after
@@ -15477,6 +15483,7 @@ local function OnInitialize()
 	TMW:Fire("TMW_ACTION_IS_INITIALIZED_PRE", pActionDB, gActionDB)
 	Action.IsInitialized = true 
 	TMW:Fire("TMW_ACTION_IS_INITIALIZED", pActionDB, gActionDB)	
+	return true -- Signal RegisterSelfDestructingCallback to unregister
 end
 local function OnRemap()
 	MacroLibrary						= LibStub("MacroLibrary")	

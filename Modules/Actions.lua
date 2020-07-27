@@ -1451,7 +1451,7 @@ hooksecurefunc(TMW, "SortOrderedTables", function()
 	-- This function working only before RunSnippet
 	if #ItemIDs > 0 then 
 		for _, id in ipairs(ItemIDs) do 
-			A.GetItemInfo(id)
+			GetItemInfo(id)	
 		end 
 		wipe(ItemIDs)
 	end
