@@ -1,3 +1,6 @@
+[BFA][Monk v16]
+Minor fix miss typo with RegisterSelfDestructingCallback callbacks 
+
 [BFA][Monk v15]
 Re-written Prediction - now includes additionaly mastery, healing modifiers, sync with healing system predict settings on all specs
 Re-written ArenaRotation and PartyRotation on all specs, code now looks closer to each other 
