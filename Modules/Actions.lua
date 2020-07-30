@@ -1167,7 +1167,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 			MinDur = MinDur + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0)
 		end
 		
-		if Unit(unitID):DeBuffCyclone() > MinDur or (isEnemy and GetToggle(1, "StopAtBreakAble") and Unit(unitID):HasDeBuffs(IsBreakAbleDeBuff) > MinDur) then 
+		if Unit(unitID):DeBuffCyclone() > MinDur or (isEnemy and (not A.IsInitialized or GetToggle(1, "StopAtBreakAble")) and Unit(unitID):HasDeBuffs(IsBreakAbleDeBuff) > MinDur) then 
 			return false 
 			--[[
 			local debuffName, expirationTime, remainTime, _
