@@ -30,6 +30,7 @@ local UnitBuff										= _G.UnitBuff
 local UnitIsFriend									= _G.UnitIsFriend
 
 local GetSpellInfo									= _G.GetSpellInfo
+local GetCurrentKeyBoardFocus						= _G.GetCurrentKeyBoardFocus
 local SpellIsTargeting								= _G.SpellIsTargeting
 local IsMouseButtonDown								= _G.IsMouseButtonDown
 
@@ -129,7 +130,7 @@ end
 
 function A.PauseChecks()  	
 	-- Chat, Macro, BindPad, TellMeWhen
-	if _G.ACTIVE_CHAT_EDIT_BOX or MacroFrameIsVisible() or BindPadFrameIsVisible() or not TMW.Locked then 
+	if GetCurrentKeyBoardFocus() ~= nil or not TMW.Locked then 
 		return CONST.PAUSECHECKS_DISABLED
 	end 
 	

@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "30.07.2020"
+local DateTime 														= "25.08.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -95,6 +95,7 @@ do
 	end 
 	
 	GameLocale = Action.FormatGameLocale(GameLocale)
+	Action.FormatedGameLocale = GameLocale
 end 		
 
 -------------------------------------------------------------------------------

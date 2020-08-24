@@ -265,7 +265,7 @@ A.GetPing = A.MakeFunctionCachedStatic(A.GetPing, 0)
 function A.GetLatency()
 	-- @return number 
 	-- Returns summary delay caused by ping and interface respond time (usually not higher than 0.4 sec)
-	return toNum[GetCVar("SpellQueueWindow") or 100] / 1000 + (A_GetPing() / 2)
+	return toNum[GetCVar("SpellQueueWindow") or 400] / 1000 + (A_GetPing() / 2)
 end
 
 function A:ShouldStopByGCD()
