@@ -62,8 +62,11 @@ local 	 InCombatLockdown, 	  CombatLogGetCurrentEventInfo =
 local GetSpellInfo								= _G.GetSpellInfo	  
 	  
 local cLossOfControl 							= _G.C_LossOfControl
-local GetEventInfo 								= cLossOfControl.GetEventInfo
-local GetNumEvents 								= cLossOfControl.GetNumEvents	
+local GetEventInfo 								= cLossOfControl.GetEventInfo or cLossOfControl.GetActiveLossOfControlData 
+local GetNumEvents 								= cLossOfControl.GetNumEvents or cLossOfControl.GetActiveLossOfControlDataCount	
+-- >=9x API 
+--local GetActiveLossOfControlDataByUnit			= cLossOfControl.GetActiveLossOfControlDataByUnit 		-- FIX ME: When this triggers? -- TODO: Shadowlands needs summary
+--local GetActiveLossOfControlDataCountByUnit		= cLossOfControl.GetActiveLossOfControlDataCountByUnit 	-- FIX ME: When this triggers? -- TODO: Shadowlands needs summary
 
 local  CreateFrame,    UIParent					= 
 	_G.CreateFrame, _G.UIParent	  	  
@@ -925,6 +928,7 @@ local LossOfControl								= {
 		["STUN_MECHANIC"]						= "STUN",
 		["FEAR_MECHANIC"]						= "FEAR",
 		--["INTERRUPT"]							= "SCHOOL_INTERRUPT",
+		--["SCHOOL_INTERRUPT"]					= "INTERRUPT",
 	},
 	TextToName									= {},
 	["SCHOOL_INTERRUPT"]						= {
@@ -960,7 +964,7 @@ local LossOfControl								= {
 	["BANISH"] 									= 0,
 	["CHARM"] 									= 0,
 	["CYCLONE"]									= 0,
-	["DAZE"]									= 0,
+	["DAZE"]									= 0, -- "Confused" / "Slowed"
 	["DISARM"]									= 0,
 	["DISORIENT"]								= 0,
 	["DISTRACT"]								= 0,
@@ -968,20 +972,21 @@ local LossOfControl								= {
 	["HORROR"]									= 0,
 	["INCAPACITATE"]							= 0,
 	["INTERRUPT"]								= 0,
+	--["SCHOOL_INTERRUPT"]						= 0,
 	--["INVULNERABILITY"]						= 0,
 	--["MAGICAL_IMMUNITY"]						= 0,
 	["PACIFY"]									= 0,
 	["PACIFYSILENCE"]							= 0, -- "Disabled"
 	["POLYMORPH"]								= 0,
-	["POSSESS"]									= 0,
+	["POSSESS"]									= 0, -- Mind Control (?)
 	["SAP"]										= 0,
 	["SHACKLE_UNDEAD"]							= 0,
 	["SLEEP"]									= 0,
 	["SNARE"]									= 0, -- "Snared" slow usually example Concussive Shot
-	--["TURN_UNDEAD"]							= 0, -- "Feared Undead" currently not usable in BFA PvP 
+	["TURN_UNDEAD"]								= 0, -- "Feared Undead" currently not usable in BFA PvP but usable in Shadowlands now
 	--["LOSECONTROL_TYPE_SCHOOLLOCK"] 			= 0, -- HAS SPECIAL HANDLING (per spell school) as "SCHOOL_INTERRUPT"
 	["ROOT"]									= 0, -- "Rooted"
-	["CONFUSE"]									= 0, -- "Confused" 
+	["CONFUSE"]									= 0, -- "Confused" / "Slowed"
 	["STUN"]									= 0, -- "Stunned"
 	["SILENCE"]									= 0, -- "Silenced"
 	["FEAR"]									= 0, -- "Feared"	
@@ -1009,7 +1014,10 @@ LossOfControl.OnEvent							= function(...)
     
 	local isValidType = false
     for eventIndex = 1, GetNumEvents() do 
-        local locType, spellID, text, _, start, timeRemaining, duration, lockoutSchool = GetEventInfo(eventIndex)  	
+        local locType, _, text, _, start, _, duration, lockoutSchool = GetEventInfo(eventIndex)  	
+		if type(locType) == "table" then 
+			locType, text, start, duration, lockoutSchool = locType.locType, locType.displayText, locType.startTime, locType.duration, locType.lockoutSchool
+		end 
 
 		if locType == "SCHOOL_INTERRUPT" then
 			-- Check that the user has requested the schools that are locked out.
@@ -1017,7 +1025,7 @@ LossOfControl.OnEvent							= function(...)
 				for name, val in pairs(LossOfControl[locType]) do
 					if bitband(lockoutSchool, val.bit) ~= 0 then 						                 						
 						isValidType = true
-						LossOfControl[locType][name].result = (start or 0) + (duration or 0)											
+						LossOfControl[locType][name].result = (start or 0) + (duration or 0)	
 					end 
 				end 
 			end 
@@ -1026,7 +1034,7 @@ LossOfControl.OnEvent							= function(...)
 			if name then 
 				-- Check that the user has requested the category that is active on the player.
 				isValidType = true
-				LossOfControl[name] = (start or 0) + (duration or 0)				
+				LossOfControl[name] = (start or 0) + (duration or 0)		
 			end 
 		end		 
     end 
@@ -1035,7 +1043,7 @@ LossOfControl.OnEvent							= function(...)
     if not isValidType then 
         for _, name in pairs(LossOfControl.TextToName) do 
             if LossOfControl[name] > 0 then
-                LossOfControl[name] = 0
+                LossOfControl[name] = 0				
             end            
         end
     end
@@ -1122,6 +1130,8 @@ Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				functio
 end)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_UPDATE", 				LossOfControl.OnEvent		)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_ADDED", 				LossOfControl.OnEvent		)
+--Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_COMMENTATOR_ADDED", 					function(...) print("LOSS_OF_CONTROL_COMMENTATOR_ADDED: "); print(...) end)		-- TODO: Shadowlands needs summary 
+--Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_COMMENTATOR_UPDATE", 				function(...) print("LOSS_OF_CONTROL_COMMENTATOR_UPDATE: "); print(...) end)	-- TODO: Shadowlands needs summary
 
 -------------------------------------------------------------------------------
 -- OnUpdate
@@ -1759,7 +1769,8 @@ A.UnitCooldown:Register("arena", CONST.SPELLID_STORM_BOLT, 	 25, false, true, ni
 -- API: LossOfControl
 -------------------------------------------------------------------------------
 A.LossOfControl									= {
-	Get											= function(self,  locType, name)
+	-- All below methods are for PLAYER only
+	Get											= function(self, locType, name)
 		-- @return number (remain duration in seconds of LossOfControl)
 		local result = 0		
 		if name then 

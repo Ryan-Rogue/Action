@@ -1,5 +1,7 @@
-local _G, pairs, next				=
-	  _G, pairs, next
+local _G, pairs, next, math				=
+	  _G, pairs, next, math
+	  
+local math_max							= math.max	  
 	  
 local TMW 								= _G.TMW
 local A 								= _G.Action
@@ -13,7 +15,7 @@ local TeamCacheFriendly 				= TeamCache.Friendly
 local TeamCacheFriendlyHEALER			= TeamCacheFriendly.HEALER
 local TeamCacheFriendlyIndexToPLAYERs	= TeamCacheFriendly.IndexToPLAYERs
 
-local Azerite 							= LibStub("AzeriteTraits")
+local Azerite 							= _G.LibStub("AzeriteTraits")
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -267,7 +269,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							(
 								-- HP lose per sec >= 15
-								A_Unit(unitID):GetDMG() * 100 / A_Unit(unitID):HealthMax() >= 15 or 
+								A_Unit(unitID):GetDMG() * 100 / math_max(A_Unit(unitID):HealthMax(), 1) >= 15 or 
 								A_Unit(unitID):TimeToDieX(20) <= 6 or 
 								A_Unit(unitID):HealthPercent() < 70 or 
 								(
@@ -319,7 +321,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 						(
 							(
 								-- HP lose per sec taken from physical attacks >= 25
-								A_Unit(unitID):GetDMG(3) * 100 / A_Unit(unitID):HealthMax() >= 25 or 
+								A_Unit(unitID):GetDMG(3) * 100 / math_max(A_Unit(unitID):HealthMax(), 1) >= 25 or 
 								A_Unit(unitID):TimeToDieX(25) <= 4 or 
 								A_Unit(unitID):HealthPercent() < 30 or 
 								(
@@ -355,7 +357,7 @@ function A:AutoHeartOfAzeroth(unitID, skipShouldStop, skipAuto)
 								-- If can die to 25% from magic attacks in less than 6 sec
 								A_Unit(unitID):TimeToDieMagicX(25) < 6 or 
 								-- HP lose per sec >= 30 from magic attacks
-								A_Unit(unitID):GetDMG(4) * 100 / A_Unit(unitID):HealthMax() >= 30 or 
+								A_Unit(unitID):GetDMG(4) * 100 / math_max(A_Unit(unitID):HealthMax(), 1) >= 30 or 
 								-- HP < 40 and real time incoming damage from mage attacks more than 10%
 								(
 									A_Unit(unitID):HealthPercent() < 40 and 
@@ -783,4 +785,17 @@ function A:AutoHeartOfAzerothP(unitID, skipShouldStop)
 	-- @return boolean 
 	-- Note: No AUTO template 
 	return self:AutoHeartOfAzeroth(unitID, skipShouldStop, true)
+end 
+
+--------------------------------------
+-- Azerite 
+--------------------------------------
+function A:IsAzeriteEnabled()
+	-- @return boolean 
+	return Azerite:GetRank(self.ID) > 0
+end 
+
+function A:GetAzeriteRank()
+	-- @return number (0 - is not exists)
+	return Azerite:GetRank(self.ID)
 end 

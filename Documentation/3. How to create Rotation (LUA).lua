@@ -37,8 +37,10 @@ Action[PLAYERSPEC] = {			-- PLAYERSPEC is Constance (example: ACTION_CONST_MONK_
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
 			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
-			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth	
+			isTalent (@boolean) will check in :IsCastable method condition through :IsTalentLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth				
 			isReplacement (@boolean) will check in :IsCastable method condition through :IsExists(true), only if Type is Spell|SpellSingleColor|HeartOfAzeroth	
+			skipRange (@boolean) will skip check in :IsInRange method which is also used by Queue system, only if Type is Spell|SpellSingleColor|Item|ItemSingleColor|Trinket|TrinketBySlot|HeartOfAzeroth
+			covenantID (@number) will check in :IsCastable method condition through :IsCovenantAvailable(), only if Type is Spell|SpellSingleColor	
 			Equip1, Equip2 (@function) between which equipments do swap, used in :IsExists() method, only if Type is SwapEquip
 			... any custom key-value will be inserted also 
 	]]

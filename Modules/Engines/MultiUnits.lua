@@ -1,20 +1,21 @@
 local _G, pairs, type, next, setmetatable, table, math, tonumber, select =
 	  _G, pairs, type, next, setmetatable, table, math, tonumber, select 
 	  
-local TMW 											= _G.TMW
-local A 											= _G.Action
-local CONST 										= A.Const
-local Listener										= A.Listener
-local isEnemy										= A.Bit.isEnemy
-local InstanceInfo									= A.InstanceInfo
-local TeamCacheFriendly								= A.TeamCache.Friendly
-local TeamCacheFriendlyUNITs						= TeamCacheFriendly.UNITs
-	  
 local wipe											= _G.wipe
 local round											= _G.round
 local strsub										= _G.strsub	  
 local abs 											= math.abs	 
-local tsort											= table.sort
+local tsort											= table.sort	  
+	  
+local TMW 											= _G.TMW
+
+local A 											= _G.Action
+local CONST 										= A.Const
+local Listener										= A.Listener
+local isEnemy										= A.Bit.isEnemy
+local TeamCacheFriendly								= A.TeamCache.Friendly
+local TeamCacheFriendlyUNITs						= TeamCacheFriendly.UNITs
+local BuildToC										= A.BuildToC
 	  
 local CombatLogGetCurrentEventInfo					= _G.CombatLogGetCurrentEventInfo	  
 	  
@@ -53,6 +54,7 @@ local MultiUnits 									= {
 	activeUnitPlatesAny								= {},
 	--activeUnitPlatesGUID 							= {},
 	activeExplosives								= {},
+	activeCondemnedDemons							= {},
 	activeUnitCLEU 									= {},
 	tempEnemies										= {},
 	timeStampCLEU									= 0,
@@ -69,6 +71,7 @@ local MultiUnitsActiveUnitPlates					= MultiUnits.activeUnitPlates 		-- Only ene
 local MultiUnitsActiveUnitPlatesAny					= MultiUnits.activeUnitPlatesAny 	-- Enemies + Friendly
 --local MultiUnitsActiveUnitPlatesGUID				= MultiUnits.activeUnitPlatesGUID
 local MultiUnitsActiveExplosives					= MultiUnits.activeExplosives
+local MultiUnitsActiveCondemnedDemons				= MultiUnits.activeCondemnedDemons
 local MultiUnitsActiveUnitCLEU						= MultiUnits.activeUnitCLEU
 local MultiUnitsTempEnemies							= MultiUnits.tempEnemies
 local MultiUnitsOnEventWipeCLEU						= MultiUnits.onEventWipeCLEU
@@ -81,8 +84,12 @@ MultiUnits.AddNameplate								= function(unitID)
 		if A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup() then
 			MultiUnitsActiveUnitPlates[unitID] 		= unitID
 			MultiUnitsActiveUnitPlatesAny[unitID] 	= unitID
-			if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 and A_Unit(unitID):IsExplosives() then 
+			if A_Unit(unitID):IsExplosives() then 
 				MultiUnitsActiveExplosives[unitID] = unitID
+			end 
+			
+			if A_Unit(unitID):IsCondemnedDemon() then 
+				MultiUnitsActiveCondemnedDemons[unitID] = unitID
 			end 
 			--local GUID 								= UnitGUID(unitID)
 			--if GUID then 
@@ -98,20 +105,23 @@ MultiUnits.RemoveNameplate							= function(unitID)
     MultiUnitsActiveUnitPlates[unitID] 				= nil
     MultiUnitsActiveUnitPlatesAny[unitID] 			= nil
 	MultiUnitsActiveExplosives[unitID] 				= nil 
+	MultiUnitsActiveCondemnedDemons[unitID] 		= nil 
 	--local GUID 									= UnitGUID(unitID)
 	--if GUID then 
 		--MultiUnitsActiveUnitPlatesGUID[GUID] 		= nil
 	--end 
 end 
 
-MultiUnits.OnResetExplosives						= function()
+MultiUnits.OnResetSpecificUnits						= function()
 	wipe(MultiUnitsActiveExplosives)
+	wipe(MultiUnitsActiveCondemnedDemons)
 end 
 
 MultiUnits.OnResetNameplates						= function()
 	wipe(MultiUnitsActiveUnitPlates)
 	wipe(MultiUnitsActiveUnitPlatesAny)
 	wipe(MultiUnitsActiveExplosives)
+	wipe(MultiUnitsActiveCondemnedDemons)
 	--wipe(MultiUnitsActiveUnitPlatesGUID)
 end 
 
@@ -184,7 +194,7 @@ end
 Listener:Add("ACTION_EVENT_MULTI_UNITS_ALL", "PLAYER_ENTERING_WORLD",   			MultiUnits.OnResetAll) 
 Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "NAME_PLATE_UNIT_ADDED",	  	MultiUnits.AddNameplate)
 Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "NAME_PLATE_UNIT_REMOVED", 		MultiUnits.RemoveNameplate)
-Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "PLAYER_REGEN_ENABLED", 		MultiUnits.OnResetExplosives)
+Listener:Add("ACTION_EVENT_MULTI_UNITS_NAMEPLATES", "PLAYER_REGEN_ENABLED", 		MultiUnits.OnResetSpecificUnits)
 TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", 					MultiUnits.OnInitCLEU)
 
 -------------------------------------------------------------------------------
@@ -499,7 +509,7 @@ A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActi
 -- Explosives
 function A.IsExplosivesExists()
 	-- @return boolean
-	if GameBuild < 33237 or GameBuild >= 33369 then 
+	if BuildToC >= 90001 or (GameBuild < 33237 or GameBuild >= 33369) then 
 		if not A.IamMelee then 
 			return next(MultiUnitsActiveExplosives)
 		elseif next(MultiUnitsActiveExplosives) then 
@@ -513,6 +523,22 @@ function A.IsExplosivesExists()
 		for unitID in pairs(MultiUnitsActiveExplosives) do 
 			if (not A.IamMelee or A_Unit(unitID):GetRange() <= 10) and (A_Unit(unitID):CombatTime() > 0 or A_Unit(unitID):HealthPercent() < 100) then 
 				return true 
+			end 
+		end 
+	end 
+end 
+
+-- CondemnedDemons
+function A.IsCondemnedDemonsExists()
+	-- @return boolean
+	if BuildToC >= 90001 then 
+		if not A.IamMelee then 
+			return next(MultiUnitsActiveCondemnedDemons)
+		elseif next(MultiUnitsActiveCondemnedDemons) then 
+			for unitID in pairs(MultiUnitsActiveCondemnedDemons) do 
+				if A_Unit(unitID):GetRange() <= 10 then 
+					return true 
+				end 
 			end 
 		end 
 	end 

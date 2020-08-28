@@ -1,6 +1,15 @@
 local _G, type, pairs, ipairs, select, unpack, table, setmetatable, math, string, error = 	
 	  _G, type, pairs, ipairs, select, unpack, table, setmetatable, math, string, error 
 	  
+local tinsert 				= table.insert	  
+local tsort 				= table.sort	  
+local strgsub				= string.gsub
+local strgmatch				= string.gmatch
+local strlen				= string.len
+local huge 					= math.huge  
+local wipe 					= _G.wipe	
+local hooksecurefunc		= _G.hooksecurefunc	  
+	  
 local TMW 					= _G.TMW
 local CNDT 					= TMW.CNDT
 local Env 					= CNDT.Env
@@ -24,6 +33,17 @@ local BurstIsON				= A.BurstIsON
 local AuraIsValid			= A.AuraIsValid
 local InstanceInfo			= A.InstanceInfo
 
+local TRINKET1				= CONST.TRINKET1
+local TRINKET2				= CONST.TRINKET2
+local POTION				= CONST.POTION
+local HEARTOFAZEROTH		= CONST.HEARTOFAZEROTH
+local EQUIPMENT_MANAGER		= CONST.EQUIPMENT_MANAGER
+local CACHE_DEFAULT_TIMER	= CONST.CACHE_DEFAULT_TIMER
+local SPELLID_FREEZING_TRAP = CONST.SPELLID_FREEZING_TRAP
+local SPELLID_STORM_BOLT	= CONST.SPELLID_STORM_BOLT
+
+local LibStub				= _G.LibStub
+
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -40,9 +60,10 @@ Listener:Add("ACTION_EVENT_ACTIONS", "ADDON_LOADED", function(addonName)
 		Listener:Remove("ACTION_EVENT_ACTIONS", "ADDON_LOADED")	
 	end 	
 end)
--------------------------------------------------------------------------------
-	  
+
+-------------------------------------------------------------------------------  
 local Azerite 				= LibStub("AzeriteTraits")
+local LegendaryCrafting		= LibStub("LegendaryCrafting")
 local Pet					= LibStub("PetLibrary")
 local SpellRange			= LibStub("SpellRange-1.0")
 local IsSpellInRange 		= SpellRange.IsSpellInRange	  
@@ -124,20 +145,11 @@ local itemCategory 			= {
 	[165056] = "DEFF", 	-- Sinister Gladiator's Emblem
 	[161675] = "DEFF", 	-- Dread Gladiator's Emblem
 	[159618] = "DEFF", 	-- Mchimba's Ritual Bandages (Tank Item)
-}
-	   
-local tinsert 				= table.insert	  
-local tsort 				= table.sort	  
-local huge 					= math.huge  
-local wipe 					= _G.wipe	
-local hooksecurefunc		= _G.hooksecurefunc
-local strgsub				= string.gsub
-local strgmatch				= string.gmatch
-local strlen				= string.len
+}	  	 
 
 local GetNetStats 			= _G.GetNetStats	  
 local GameLocale 			= _G.GetLocale()
-local GetCVar				= _G.C_CVar.GetCVar
+local GetCVar				= _G.GetCVar or _G.C_CVar.GetCVar
 
 -- Spell 
 local Spell					= _G.Spell
@@ -168,7 +180,7 @@ local  GetNumSpecializationsForClassID,    GetSpecializationInfo =
 	_G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo	
 
 -- Empty 
-local nullDescription 		= { 0, 0, 0, 0, 0, 0, 0, 0 } 
+local nullDescription 		= A.MakeTableReadOnly({ 0, 0, 0, 0, 0, 0, 0, 0 })
 
 -- Auras
 local IsBreakAbleDeBuff 	= {}
@@ -387,7 +399,7 @@ function A.GetSpellDescription(self)
 		return descriptiontemp[spellID]
 	end
 	
-	return nullDescription 
+	return nullDescription -- can not be used for 'next', 'unpack', 'pairs', 'ipairs'
 end
 A.GetSpellDescription = A.MakeFunctionCachedDynamic(A.GetSpellDescription)
 
@@ -409,7 +421,7 @@ end
 
 function A:GetSpellCharges()
 	-- @return number
-	local charges = GetSpellCharges(self:Info())
+	local charges = GetSpellCharges((self:Info()))
 	if not charges then 
 		charges = 0
 	end 
@@ -419,7 +431,7 @@ end
 
 function A:GetSpellChargesMax()
 	-- @return number
-	local _, max_charges = GetSpellCharges(self:Info())
+	local _, max_charges = GetSpellCharges((self:Info()))
 	if not max_charges then 
 		max_charges = 0
 	end 
@@ -429,7 +441,7 @@ end
 
 function A:GetSpellChargesFrac()
 	-- @return number	
-	local charges, maxCharges, start, duration = GetSpellCharges(self:Info())
+	local charges, maxCharges, start, duration = GetSpellCharges((self:Info()))
 	if charges == maxCharges then 
 		return maxCharges
 	end
@@ -439,7 +451,7 @@ end
 
 function A:GetSpellChargesFullRechargeTime()
 	-- @return number
-	local _, _, _, duration = GetSpellCharges(self:Info())
+	local _, _, _, duration = GetSpellCharges((self:Info()))
 	if duration then 
 		return (self:GetSpellChargesMax() - self:GetSpellChargesFrac()) * duration
 	else 
@@ -449,33 +461,33 @@ end
 
 function A:GetSpellTimeSinceLastCast()
 	-- @return number (seconds after last time casted - during fight)
-	return CombatTracker:GetSpellLastCast("player", self:Info())
+	return CombatTracker:GetSpellLastCast("player", (self:Info()))
 end 
 
 function A:GetSpellCounter()
 	-- @return number (total count casted of the spell - during fight)
-	return CombatTracker:GetSpellCounter("player", self:Info())
+	return CombatTracker:GetSpellCounter("player", (self:Info()))
 end 
 
 function A:GetSpellAmount(unitID, X)
 	-- @return number (taken summary amount of the spell - during fight)
 	-- X during which lasts seconds 
 	if X then 
-		return CombatTracker:GetSpellAmountX(unitID or "player", self:Info(), X)
+		return CombatTracker:GetSpellAmountX(unitID or "player", (self:Info()), X)
 	else 
-		return CombatTracker:GetSpellAmount(unitID or "player", self:Info())
+		return CombatTracker:GetSpellAmount(unitID or "player", (self:Info()))
 	end 
 end 
 
 function A:GetSpellAbsorb(unitID)
 	-- @return number (taken current absort amount of the spell - during fight)
-	return CombatTracker:GetAbsorb(unitID or "player", self:Info())
+	return CombatTracker:GetAbsorb(unitID or "player", (self:Info()))
 end 
 
 function A:GetSpellAutocast()
 	-- @return boolean, boolean 
 	-- Returns autocastable, autostate 
-	return GetSpellAutocast(self:Info())
+	return GetSpellAutocast((self:Info()))
 end 
 
 function A:IsSpellLastGCD(byID)
@@ -514,7 +526,7 @@ end
 
 function A:IsSpellCurrent()
 	-- @return boolean
-	return IsCurrentSpell(self:Info())
+	return IsCurrentSpell((self:Info()))
 end 
 
 function A:CanSafetyCastHeal(unitID, offset)
@@ -526,8 +538,8 @@ end
 -------------------------------------------------------------------------------
 -- Talent 
 -------------------------------------------------------------------------------
-function A:IsSpellLearned()
-	-- @usage A:IsSpellLearned() or A.IsSpellLearned(spellID)
+function A:IsTalentLearned()
+	-- @usage A:IsTalentLearned() or A.IsTalentLearned(spellID)
 	-- @return boolean about selected or not (talent or pvptalent)	
 	local Name
 	if type(self) == "table" then 
@@ -536,108 +548,12 @@ function A:IsSpellLearned()
 		Name = A_GetSpellInfo(self)
 	end	
 	local lowerName = strlowerCache[Name]
-	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name) or false 
+	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name)
 end
 
--------------------------------------------------------------------------------
--- Determine
--------------------------------------------------------------------------------
-function A.DetermineHealObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
-	-- @return object or nil 
-	-- Note: :PredictHeal(unitID) must be only ! Use 'self' inside to determine by that which spell is it 
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) and object:PredictHeal(unitID) then 
-			return object
-		end 
-	end 
-end 
-
-function A.DetermineUsableObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
-	-- @return object or nil 
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) then 
-			return object
-		end 
-	end 
-end 
-
-function A.DetermineIsCurrentObject(...)
-	-- @return object or nil 
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object:IsCurrent() then 
-			return object
-		end 
-	end 
-end 
-
-function A.DetermineCountGCDs(...)
-	-- @return number, count of required summary GCD times to use all in vararg
-	local count = 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)		
-		if (not object.isStance or A.PlayerClass ~= "WARRIOR") and object:IsRequiredGCD() and not object:IsBlocked() and not object:IsBlockedBySpellLevel() and (not object.isTalent or object:IsSpellLearned()) and object:GetCooldown() <= A_GetPing() + CONST.CACHE_DEFAULT_TIMER + A_GetCurrentGCD() then 
-			count = count + 1
-		end 
-	end 	
-	return count
-end 
-
-function A.DeterminePowerCost(...)
-	-- @return number (required power to use all varargs actions)
-	local total = 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object and object:IsReadyToUse(nil, true, true) then 
-			total = total + object:GetSpellPowerCostCache()
-		end 
-	end 
-	return total
-end 
-
-function A.DetermineCooldown(...)
-	-- @return number (required summary cooldown time to use all varargs actions)
-	local total = 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object then 
-			total = total + object:GetCooldown()
-		end 
-	end 
-	return total
-end 
-
-function A.DetermineCooldownAVG(...)
-	-- @return number (required AVG cooldown to use all varargs actions)
-	local total, count = 0, 0
-	for i = 1, select("#", ...) do 
-		local object = select(i, ...)
-		if object then 
-			total = total + object:GetCooldown()
-			count = count + 1
-		end 
-	end 
-	if count > 0 then 
-		return total / count
-	else 
-		return 0 
-	end 
-end 
-
--------------------------------------------------------------------------------
--- Azerite 
--------------------------------------------------------------------------------
-function A:IsAzeriteEnabled()
-	-- @return boolean 
-	return Azerite:GetRank(self.ID) > 0
-end 
-
-function A:GetAzeriteRank()
-	-- @return number (0 - is not exists)
-	return Azerite:GetRank(self.ID)
-end 
+-- Remap to keep old code working for it 
+-- TODO: Remove in the future
+A.IsSpellLearned = A.IsTalentLearned
 
 -------------------------------------------------------------------------------
 -- Racial (template)
@@ -809,9 +725,14 @@ local Racial 												= {
 	end,
 	CanAuto													= function(this, self, unitID)
 		-- Loss Of Control 
+		-- "Gnome", "Scourge", "Dwarf", "Human"
 		local LOC = LoC.GetExtra[A.PlayerRace]
-		if LOC and LoC:IsValid(LOC.Applied, LOC.Missed) then 
-			return true 
+		if LOC then 
+			if LoC:IsValid(LOC.Applied, LOC.Missed) then 
+				return true 
+			else 
+				return false 
+			end 
 		end 	
 	
 		-- Damaging   
@@ -880,6 +801,8 @@ local Racial 												= {
 				
 				return Unit(unitID):HealthDeficit() >= Unit("player"):HealthMax() * 0.2 + incHeal - incDMG + HoTs - absorbPossitive
 			end 
+			
+			return false 
 		end 
 
 		if A.PlayerRace == "ZandalariTroll" then 
@@ -925,26 +848,28 @@ local Racial 												= {
 		-- Control Avoid 
 		if A.PlayerRace == "NightElf" then 
 			-- Check Freezing Trap 
-			if 	UnitCooldown:GetCooldown("arena", CONST.SPELLID_FREEZING_TRAP) > UnitCooldown:GetMaxDuration("arena", CONST.SPELLID_FREEZING_TRAP) - 2 and 
-				UnitCooldown:IsSpellInFly("arena", CONST.SPELLID_FREEZING_TRAP) and 
+			if 	UnitCooldown:GetCooldown("arena", SPELLID_FREEZING_TRAP) > UnitCooldown:GetMaxDuration("arena", SPELLID_FREEZING_TRAP) - 2 and 
+				UnitCooldown:IsSpellInFly("arena", SPELLID_FREEZING_TRAP) and 
 				Unit("player"):GetDR("incapacitate") > 0 
 			then 
-				local Caster = UnitCooldown:GetUnitID("arena", CONST.SPELLID_FREEZING_TRAP)
+				local Caster = UnitCooldown:GetUnitID("arena", SPELLID_FREEZING_TRAP)
 				if Caster and not Player:IsStealthed() and Unit(Caster):GetRange() <= 40 and (Unit("player"):GetDMG() == 0 or not Unit("player"):IsFocused("DAMAGER")) then 
 					return true 
 				end 
 			end 
 				
 			-- Check Storm Bolt 
-			if 	UnitCooldown:GetCooldown("arena", CONST.SPELLID_STORM_BOLT) > UnitCooldown:GetMaxDuration("arena", CONST.SPELLID_STORM_BOLT) - 2 and 
-				UnitCooldown:IsSpellInFly("arena", CONST.SPELLID_STORM_BOLT) and 
+			if 	UnitCooldown:GetCooldown("arena", SPELLID_STORM_BOLT) > UnitCooldown:GetMaxDuration("arena", SPELLID_STORM_BOLT) - 2 and 
+				UnitCooldown:IsSpellInFly("arena", SPELLID_STORM_BOLT) and 
 				Unit("player"):GetDR("stun") > 25 -- don't waste on short durations by diminishing
 			then 
-				local Caster = UnitCooldown:GetUnitID("arena", CONST.SPELLID_STORM_BOLT)
+				local Caster = UnitCooldown:GetUnitID("arena", SPELLID_STORM_BOLT)
 				if Caster and not Player:IsStealthed() and Unit(Caster):GetRange() <= 20 then 
 					return true 
 				end 
 			end 
+			
+			return false 
 		end 			
 		
 		-- Sprint
@@ -956,8 +881,8 @@ local Racial 												= {
 		if ( A.PlayerRace == "DarkIronDwarf" or A.PlayerRace == "Troll" or A.PlayerRace == "Orc" or A.PlayerRace == "MagharOrc" ) then 
 			return BurstIsON(unitID)
 		end 	
-		
-		-- [NO LOGIC - ALWAYS FALSE] 
+				
+		-- [NO LOGIC - ALWAYS TRUE] 
 		return true 
 	end, 
 }
@@ -991,7 +916,7 @@ function A.GetItemDescription(self)
 		return A_GetSpellDescription(spellID)
 	end 
 	
-	return nullDescription
+	return nullDescription -- can not be used for 'next', 'unpack', 'pairs', 'ipairs'
 end
 A.GetItemDescription = A.MakeFunctionCachedDynamic(A.GetItemDescription)
 
@@ -1022,7 +947,7 @@ end
 
 function A:IsItemCurrent()
 	-- @return boolean
-	return IsCurrentItem(self:Info())
+	return IsCurrentItem((self:Info()))
 end 
 
 -- Next works by TMW components
@@ -1037,13 +962,120 @@ end
 -- A:HasUseEffect() 
 
 -------------------------------------------------------------------------------
+-- Item (provided by Lib LegendaryCrafting)
+-------------------------------------------------------------------------------	
+function A:IsItemLegendaryCrafting()
+	-- @return boolean 
+	return LegendaryCrafting:IsEquipped(self.ID)
+end
+
+function A:GetLegendaryCraftingItem()
+	-- @return table or nil 
+	-- Look description of the returned methods in Player.lua
+	return Player:GetLegendaryCraftingItem(self.ID)
+end 
+
+function A:HasLegendaryCraftingPower()
+	-- @return boolean 
+	-- Look description of the returned methods in Player.lua
+	return Player:HasLegendaryCraftingPower((self:Info()))
+end 
+
+-------------------------------------------------------------------------------
+-- Determine
+-------------------------------------------------------------------------------
+function A.DetermineHealObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
+	-- @return object or nil 
+	-- Note: :PredictHeal(unitID) must be only ! Use 'self' inside to determine by that which spell is it 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) and object:PredictHeal(unitID) then 
+			return object
+		end 
+	end 
+end 
+
+function A.DetermineUsableObject(unitID, skipRange, skipLua, skipShouldStop, skipUsable, ...)
+	-- @return object or nil 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsReady(unitID, skipRange, skipLua, skipShouldStop, skipUsable) then 
+			return object
+		end 
+	end 
+end 
+
+function A.DetermineIsCurrentObject(...)
+	-- @return object or nil 
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object:IsCurrent() then 
+			return object
+		end 
+	end 
+end 
+
+function A.DetermineCountGCDs(...)
+	-- @return number, count of required summary GCD times to use all in vararg
+	local count = 0
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)		
+		if (not object.isStance or A.PlayerClass ~= "WARRIOR") and object:IsRequiredGCD() and not object:IsBlocked() and not object:IsBlockedBySpellLevel() and (not object.isTalent or object:IsTalentLearned()) and object:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + A_GetCurrentGCD() then 
+			count = count + 1
+		end 
+	end 	
+	return count
+end 
+
+function A.DeterminePowerCost(...)
+	-- @return number (required power to use all varargs actions)
+	local total = 0
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object and object:IsReadyToUse(nil, true, true) then 
+			total = total + object:GetSpellPowerCostCache()
+		end 
+	end 
+	return total
+end 
+
+function A.DetermineCooldown(...)
+	-- @return number (required summary cooldown time to use all varargs actions)
+	local total = 0
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object then 
+			total = total + object:GetCooldown()
+		end 
+	end 
+	return total
+end 
+
+function A.DetermineCooldownAVG(...)
+	-- @return number (required AVG cooldown to use all varargs actions)
+	local total, count = 0, 0
+	for i = 1, select("#", ...) do 
+		local object = select(i, ...)
+		if object then 
+			total = total + object:GetCooldown()
+			count = count + 1
+		end 
+	end 
+	if count > 0 then 
+		return total / count
+	else 
+		return 0 
+	end 
+end 
+
+-------------------------------------------------------------------------------
 -- Shared
 -------------------------------------------------------------------------------	  
 function A:IsExists(replacementByPass)   
 	-- @return boolean
 	if self.Type == "Spell" then 
 		-- DON'T USE HERE A.GetSpellInfo COZ IT'S CACHE WHICH WILL WORK WRONG DUE RACE CHANGES
-		local spellName, _, _, _, _, _, spellID = GetSpellInfo(self:Info()) 
+		local spellName, _, _, _, _, _, spellID = GetSpellInfo((self:Info())) 
 		-- spellID will be nil in case of if it's not a player's spell 
 		-- spellName will not be equal to self:Info() if it's replacement spell like "Chi-Torpedo" and "Roll"
 		return (not replacementByPass or spellName == self:Info()) and type(spellID) == "number" and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)))
@@ -1062,35 +1094,39 @@ function A:IsUsable(extraCD, skipUsable)
 	
 	if self.Type == "Spell" then 
 		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self:Info())) and self:GetCooldown() <= A_GetPing() + CONST.CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
+		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell((self:Info()))) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
 	end 
 	
-	return not isItemUseException[self.ID] and (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem(self:Info())) and self:GetItemCooldown() <= A_GetPing() + CONST.CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
+	return not isItemUseException[self.ID] and (skipUsable == true or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem((self:Info()))) and self:GetItemCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
 end
 
 function A:IsHarmful()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return IsHarmfulSpell(self:Info()) or IsAttackSpell(self:Info())
+		return IsHarmfulSpell((self:Info())) or IsAttackSpell((self:Info()))
 	end 
 	
-	return IsHarmfulItem(self:Info())
+	return IsHarmfulItem((self:Info()))
 end 
 
 function A:IsHelpful()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return IsHelpfulSpell(self:Info())
+		return IsHelpfulSpell((self:Info()))
 	end 
 	
-	return IsHelpfulItem(self:Info())
+	return IsHelpfulItem((self:Info()))
 end 
 
 function A:IsInRange(unitID)
 	-- @return boolean
+	if self.skipRange then 
+		return true 
+	end 
+	
 	local unitID = unitID or "target"
 	
-	if UnitIsUnit("player", unitID) then 
+	if self.Type == "SwapEquip" or UnitIsUnit("player", unitID) then 
 		return true 
 	end 
 	
@@ -1110,10 +1146,14 @@ end
 function A:HasRange()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return not isSpellRangeException[self.ID] and SpellHasRange(self:Info())
+		return not isSpellRangeException[self.ID] and SpellHasRange((self:Info()))
 	end 
 	
-	return not isItemRangeException[self:GetID()] and ItemHasRange(self:Info())
+	if self.Type == "SwapEquip" then
+		return false 
+	end 
+	
+	return not isItemRangeException[self:GetID()] and ItemHasRange((self:Info()))
 end 
 
 function A:GetCooldown()
@@ -1131,7 +1171,7 @@ function A:GetCooldown()
 			
 			return 0
 		else 
-			return CooldownDuration(self:Info())
+			return CooldownDuration((self:Info()))
 		end 
 	end 
 	
@@ -1184,7 +1224,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 			end	]]
 		end 		
 		
-		if A.IsInPvP and imunBuffs and Unit(unitID):IsPlayer() then  
+		if isEnemy and imunBuffs and A.IsInPvP and Unit(unitID):IsPlayer() then  
 			-- Light and faster check Fury Warriors
 			if type(imunBuffs) == "table" then 				
 				for i = 1, #imunBuffs do 
@@ -1212,7 +1252,10 @@ end
 
 function A:IsBlockedByAny()
 	-- @return boolean
-	return self:IsBlocked() or self:IsBlockedByQueue() or (self.Type == "Spell" and (self:IsBlockedBySpellLevel() or (self.isTalent and not self:IsSpellLearned()))) or (self.Type ~= "Spell" and self.Type ~= "SwapEquip" and self:GetCount() == 0 and not self:GetEquipped())
+	return 	   self:IsBlocked() 
+			or self:IsBlockedByQueue() 
+			or (self.Type == "Spell" and (self:IsBlockedBySpellLevel() or (self.isTalent and not self:IsTalentLearned()) or (self.isCovenant and not self:IsCovenantAvailable()))) 
+			or (self.Type ~= "Spell" and self.Type ~= "SwapEquip" and self:GetCount() == 0 and not self:GetEquipped())
 end 
 
 function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
@@ -1222,10 +1265,11 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 	if isMsg or ((skipShouldStop or not self.ShouldStop()) and not self:ShouldStopByGCD()) then 
 		if 	self.Type == "Spell" and 
 			not self:IsBlockedBySpellLevel() and 	
-			( not self.isTalent or self:IsSpellLearned() ) and 
-			--( not self.isReplacement or self:IsExists(true) ) and 
-			self:IsUsable(nil, skipUsable) and 
+			( not self.isTalent or self:IsTalentLearned() ) and 
+			( not self.isCovenant or self:IsCovenantAvailable() ) and 
+		--	( not self.isReplacement or self:IsExists(true) ) and 			
 			( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) ) and 
+			self:IsUsable(nil, skipUsable) and 
 			-- Patch 8.2
 			-- 1518 is The Eternal Palace - The Queen's Court 
 			-- 301244 is Repeat Performance (DeBuff)
@@ -1267,6 +1311,11 @@ function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 		end 
 		
 		if  self.Type == "Item" and 
+			A.Zone ~= "arena" and
+			(
+				A.Zone ~= "pvp" or 
+				not InstanceInfo.isRated
+			) and
 			( self:GetCount() > 0 or self:GetEquipped() ) and 
 			self:GetItemCooldown() == 0 and 
 			( skipRange or not unitID or not self:HasRange() or self:IsInRange(unitID) )
@@ -1374,12 +1423,12 @@ end
 
 function A:GetSpellTexture(custom)
 	if self.SubType == "HeartOfAzeroth" then 
-		return "texture", CONST.HEARTOFAZEROTH
+		return "texture", HEARTOFAZEROTH
 	end
     return "texture", GetSpellTexture(custom or self.ID)
 end 
 
---- Spell Colored Texturre
+-- Spell Colored Texturre
 function A:GetColoredSpellTexture(custom)
     return "state; texture", {Color = A.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, GetSpellTexture(custom or self.ID)
 end 
@@ -1429,12 +1478,12 @@ function A:GetItemTexture(custom)
 	local texture
 	if self.Type == "Trinket" then 
 		if A.Trinket1.ID == self.ID then 
-			texture = CONST.TRINKET1
+			texture = TRINKET1
 		else 
-			texture = CONST.TRINKET2
+			texture = TRINKET2
 		end
 	elseif self.Type == "Potion" then 
-		texture = CONST.POTION
+		texture = POTION
 	else 
 		texture = self:GetItemIcon(custom)
 	end
@@ -1504,8 +1553,10 @@ function A.Create(args)
 			MetaSlot (@number) allows set fixed meta slot use for action whenever it will be tried to set in queue 
 			Hidden (@boolean) allows to hide from UI this action 
 			isStance (@number) will check in :GetCooldown cooldown timer by GetShapeshiftFormCooldown function instead of default
-			isTalent (@boolean) will check in :IsCastable method condition through :IsSpellLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth	
+			isTalent (@boolean) will check in :IsCastable method condition through :IsTalentLearned(), only if Type is Spell|SpellSingleColor|HeartOfAzeroth				
 			isReplacement (@boolean) will check in :IsCastable method condition through :IsExists(true), only if Type is Spell|SpellSingleColor|HeartOfAzeroth	
+			skipRange (@boolean) will skip check in :IsInRange method which is also used by Queue system, only if Type is Spell|SpellSingleColor|Item|ItemSingleColor|Trinket|TrinketBySlot|HeartOfAzeroth
+			covenantID (@number) will check in :IsCastable method condition through :IsCovenantAvailable(), only if Type is Spell|SpellSingleColor			
 			Equip1, Equip2 (@function) between which equipments do swap, used in :IsExists() method, only if Type is SwapEquip
 			... any custom key-value will be inserted also 
 	]]
@@ -1690,7 +1741,7 @@ function A.Create(args)
 	if arg.Type == "SwapEquip" then 		
 		-- Methods Remap
 		arg.Info = function()
-			return CONST.EQUIPMENT_MANAGER
+			return EQUIPMENT_MANAGER
 		end 
 		arg.Link = arg.Info		
 		arg.Icon = function()

@@ -1,6 +1,14 @@
 local _G, setmetatable, unpack, select, next, type, pairs, ipairs, math, error =
 	  _G, setmetatable, unpack, select, next, type, pairs, ipairs, math, error
 	  
+local huge 									= math.huge	 
+local math_max								= math.max  
+local math_floor							= math.floor
+local math_random							= math.random
+local wipe									= _G.wipe
+local strsplit								= _G.strsplit	 
+local debugstack							= _G.debugstack 	  
+	  
 local TMW 									= _G.TMW
 local CNDT 									= TMW.CNDT
 local Env 									= CNDT.Env
@@ -20,6 +28,9 @@ local MultiUnits							= A.MultiUnits
 local GetToggle								= A.GetToggle
 local MouseHasFrame							= A.MouseHasFrame
 local UnitInLOS								= A.UnitInLOS
+local BuildToC								= A.BuildToC
+
+local LibStub								= _G.LibStub
 local LibRangeCheck  						= LibStub("LibRangeCheck-2.0")
 local LibBossIDs							= LibStub("LibBossIDs-1.0").BossIDs
 
@@ -49,14 +60,6 @@ local ActiveUnitPlatesAny					= MultiUnits:GetActiveUnitPlatesAny()
 
 local CACHE_DEFAULT_TIMER_UNIT				= CONST.CACHE_DEFAULT_TIMER_UNIT
 	  
-local huge 									= math.huge	 
-local math_max								= math.max  
-local math_floor							= math.floor
-local math_random							= math.random
-local wipe									= _G.wipe
-local strsplit								= _G.strsplit	 
-local debugstack							= _G.debugstack 
-	  
 local GameLocale 							= A.FormatGameLocale(_G.GetLocale())
 local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo	  
 local GetUnitSpeed							= _G.GetUnitSpeed
@@ -68,7 +71,7 @@ local UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty,
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
-local A_Unit, A_GetSpellInfo, A_GetGCD, A_GetCurrentGCD, A_IsSpellLearned, A_IsSpellInRange, A_EnemyTeam
+local A_Unit, A_GetSpellInfo, A_GetGCD, A_GetCurrentGCD, A_IsTalentLearned, A_IsSpellInRange, A_EnemyTeam
 
 Listener:Add("ACTION_EVENT_UNIT", "ADDON_LOADED", function(addonName)
 	if addonName == CONST.ADDON_NAME then 
@@ -76,7 +79,7 @@ Listener:Add("ACTION_EVENT_UNIT", "ADDON_LOADED", function(addonName)
 		A_GetSpellInfo				= A.GetSpellInfo	
 		A_GetGCD					= A.GetGCD
 		A_GetCurrentGCD				= A.GetCurrentGCD
-		A_IsSpellLearned			= A.IsSpellLearned
+		A_IsTalentLearned			= A.IsTalentLearned
 		A_IsSpellInRange			= A.IsSpellInRange
 		A_EnemyTeam					= A.EnemyTeam		
 		
@@ -2420,6 +2423,16 @@ local Info = {
 		[114832] = true,
 		[131997] = true,
 	},
+	IsCondemnedDemon			= {
+		[169428]				= "Wrathguard",
+		[169421]				= "Felguard",
+		[169426]				= "Infernal",
+		[169429]				= "Shivarra",
+		[168932]				= "Doomguard",
+		[169304]				= "Condemned Demon",
+		[169425]				= "Felhound",
+		[169430]				= "Ur'zul",
+	},
 	ExplosivesName				= {
 		[GameLocale] 			= "Explosives",
 		ruRU					= "Взрывчатка",
@@ -2435,7 +2448,7 @@ local Info = {
 		koKR					= "폭발물",
 		zhCN					= "爆炸物",
 		zhTW					= "爆炸物",
-	},
+	},	
 	IsBoss 						= {
 		-- City (SW, Orgri, ...)
 		[31146] = true, -- Raider's Training Dummy
@@ -2521,6 +2534,7 @@ local InfoCreatureType 						= Info.CreatureType
 local InfoCreatureFamily					= Info.CreatureFamily
 local InfoIsDummy							= Info.IsDummy
 local InfoIsDummyPvP						= Info.IsDummyPvP
+local InfoIsCondemnedDemon					= Info.IsCondemnedDemon
 local InfoExplosivesName 					= Info.ExplosivesName
 
 local InfoIsBoss 							= Info.IsBoss
@@ -3233,6 +3247,18 @@ A.Unit = PseudoClass({
 		local _, _, _, _, _, npc_id 		= self(unitID):InfoGUID()
 		return npc_id and InfoIsDummyPvP[npc_id]
 	end, "UnitID"),
+	IsCondemnedDemon						= Cache:Pass(function(self)	
+		-- @return string 
+		-- Returns english name of the Condemned Demon 
+		-- Note: Shadowlands+ "Fodder to the Flame" summoned NPC by Demon Hunter's Necrolord Covenant
+		if BuildToC >= 90001 then 
+			local unitID 					= self.UnitID
+			if self(unitID):IsNPC() and self(unitID):IsDemon() then 
+				local npc_id				= select(6, self(unitID):InfoGUID())
+				return npc_id and InfoIsCondemnedDemon[npc_id]
+			end 
+		end 
+	end, "UnitID"),
 	IsExplosives							= Cache:Pass(function(self)	
 		-- @return boolean 		
 		-- Note: Legion+ dungeon 7+ key 
@@ -3327,7 +3353,12 @@ A.Unit = PseudoClass({
 	GetTotalHealAbsorbsPercent				= Cache:Pass(function(self) 
 		-- @return number 
 		local unitID 						= self.UnitID
-		return self(unitID):GetTotalHealAbsorbs() * 100 / self(unitID):HealthMax()
+		local maxHP							= self(unitID):HealthMax()
+		if maxHP == 0 then 
+			return 0
+		else 
+			return self(unitID):GetTotalHealAbsorbs() * 100 / maxHP
+		end 
 	end, "UnitID"),
 	-- Combat: Diminishing
 	GetDR 									= Cache:Pass(function(self, drCat) 
@@ -3541,11 +3572,11 @@ A.Unit = PseudoClass({
 			range = range * 1.5 
 		end
 		-- Moonkin and Restor +5 yards
-		if self("player"):HasSpec(InfoSpecsMoonkinRestor) and A_IsSpellLearned(197488) then 
+		if self("player"):HasSpec(InfoSpecsMoonkinRestor) and A_IsTalentLearned(197488) then 
 			range = range + 5 
 		end  
 		-- Feral and Guardian +3 yards
-		if self("player"):HasSpec(InfoSpecsFeralGuardian) and A_IsSpellLearned(197488) then 
+		if self("player"):HasSpec(InfoSpecsFeralGuardian) and A_IsTalentLearned(197488) then 
 			range = range + 3 
 		end
 		
@@ -3640,22 +3671,42 @@ A.Unit = PseudoClass({
 	HealthDeficitPercent					= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
-	    return self(unitID):HealthDeficit() * 100 / self(unitID):HealthMax()
+		local maxHP							= self(unitID):HealthMax()
+		if maxHP == 0 then 
+			return 0 						-- Fix beta / ptr "Division by zero"
+		else 
+			return self(unitID):HealthDeficit() * 100 / maxHP
+		end 
 	end, "UnitID"),
 	HealthPercent							= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
-	    return self(unitID):Health() * 100 / self(unitID):HealthMax()
+		local maxHP							= self(unitID):HealthMax()
+		if maxHP == 0 then 
+			return 0 						-- Fix beta / ptr "Division by zero"
+		else
+			return self(unitID):Health() * 100 / maxHP
+		end 
 	end, "UnitID"),
 	HealthPercentLosePerSecond				= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
-		return math_max((self(unitID):GetDMG() * 100 / self(unitID):HealthMax()) - (self(unitID):GetHEAL() * 100 / self(unitID):HealthMax()), 0)
+		local maxHP							= self(unitID):HealthMax()
+		if maxHP == 0 then 
+			return 0 						-- Fix beta / ptr "Division by zero"
+		else 
+			return math_max((self(unitID):GetDMG() * 100 / maxHP) - (self(unitID):GetHEAL() * 100 / maxHP), 0)
+		end
 	end, "UnitID"),
 	HealthPercentGainPerSecond				= Cache:Pass(function(self)
 		-- @return number 
 		local unitID 						= self.UnitID
-		return math_max((self(unitID):GetHEAL() * 100 / self(unitID):HealthMax()) - (self(unitID):GetDMG() * 100 / self(unitID):HealthMax()), 0)
+		local maxHP							= self(unitID):HealthMax()
+		if maxHP == 0 then 
+			return 0 						-- Fix beta / ptr "Division by zero"
+		else 
+			return math_max((self(unitID):GetHEAL() * 100 / maxHP) - (self(unitID):GetDMG() * 100 / maxHP), 0)
+		end
 	end, "UnitID"),
 	Power									= Cache:Pass(function(self)
 		-- @return number 

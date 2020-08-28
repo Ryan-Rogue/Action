@@ -133,7 +133,9 @@ local healingTargetDelay 				= 0
 local healingTargetDelayByEvent			= false 
 
 local frame 							= _G.CreateFrame("Frame", "TargetColor", _G.UIParent)
-frame:SetBackdrop(nil)
+if _G.BackdropTemplateMixin == nil then -- Only expac less than Shadowlands
+	frame:SetBackdrop(nil)
+end 
 frame:SetFrameStrata("TOOLTIP")
 frame:SetToplevel(true)
 frame:SetSize(1, 1)
@@ -809,7 +811,11 @@ do
 			self.isPlayer 				= isPlayer	
 			self.isSelf					= TeamCacheFriendlyUNITs.player == unitGUID						
 			self.realAHP, self.MHP 		= A_Unit(unitID):Health(), A_Unit(unitID):HealthMax()
-			self.realHP 				= 100 * self.realAHP / self.MHP
+			if self.MHP == 0 then 
+				self.realHP 			= 0 -- Fix beta / ptr "Division by zero"
+			else				
+				self.realHP 			= 100 * self.realAHP / self.MHP
+			end 
 			if self.Role == "AUTO" then 
 				if not isPlayer then 
 					self.Role = "DAMAGER"
@@ -826,7 +832,11 @@ do
 				
 				-- Prediction 
 				self.incDMG				= incomingDMG
-				self.HP					= 100 * (self.realAHP + incomingHeals + absorbPossitive - absorbNegative) / self.MHP -- HoTs and Inc. Damage must be calculated by PerformByProfileHP or by callback "TMW_ACTION_HEALINGENGINE_UNIT_UPDATE"
+				if self.MHP == 0 then 
+					self.HP 			= 0 -- Fix beta / ptr "Division by zero"
+				else
+					self.HP				= 100 * (self.realAHP + incomingHeals + absorbPossitive - absorbNegative) / self.MHP -- HoTs and Inc. Damage must be calculated by PerformByProfileHP or by callback "TMW_ACTION_HEALINGENGINE_UNIT_UPDATE"
+				end 
 
 				-- Multiplier - Incoming Damage 					
 				self.incOffsetDMG		= self.MHP * db.MultiplierIncomingDamageLimit

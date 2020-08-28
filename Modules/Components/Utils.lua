@@ -4,19 +4,20 @@
 local _G, assert, error, tostring, select, type, next, ipairs, table = 
 	  _G, assert, error, tostring, select, type, next, ipairs, table
 	  
-local TMW 					= _G.TMW
-local CNDT 					= TMW.CNDT
-local Env 					= CNDT.Env
-local strlowerCache  		= TMW.strlowerCache
-
-local A   					= _G.Action
-local CONST 				= A.Const
-local Listener				= A.Listener
-local GetToggle				= A.GetToggle
-local toStr 				= A.toStr
-local toNum 				= A.toNum
-local Print 				= A.Print
-local ActionDataColor		= A.Data.C
+local TMW 						= _G.TMW
+local CNDT 						= TMW.CNDT
+local Env 						= CNDT.Env
+local strlowerCache  			= TMW.strlowerCache
+	
+local A   						= _G.Action
+local CONST 					= A.Const
+local Listener					= A.Listener
+local GetToggle					= A.GetToggle
+local toStr 					= A.toStr
+local toNum 					= A.toNum
+local Print 					= A.Print
+local ActionDataColor			= A.Data.C
+local BuildToC					= A.BuildToC
 
 -------------------------------------------------------------------------------
 -- Remap
@@ -41,9 +42,10 @@ local strfind				= _G.strfind
 local strmatch				= _G.strmatch
 local UIParent				= _G.UIParent	
 local C_UI					= _G.C_UI  
+local C_CVar				= _G.C_CVar
 	  
-local 	 CreateFrame, 	 GetCVar, 	 SetCVar =
-	  _G.CreateFrame, _G.GetCVar, _G.SetCVar
+local 	 CreateFrame, 	 GetCVar, 	 				   SetCVar =
+	  _G.CreateFrame, _G.GetCVar or C_CVar.GetCVar, _G.SetCVar or C_CVar.SetCVar
 
 local 	 GetScreenResolutions, 	  GetPhysicalScreenSize, 	GetScreenDPIScale =
 	  _G.GetScreenResolutions, _G.GetPhysicalScreenSize, _G.GetScreenDPIScale
@@ -128,6 +130,10 @@ CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
 CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
 --CNDT:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
 --CNDT:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_TALENT_UPDATE")
+if BuildToC >= 90001 then 
+	-- Registers events for Torghast 
+	CNDT:RegisterEvent("ANIMA_DIVERSION_TALENT_UPDATED", "PLAYER_TALENT_UPDATE")	
+end 
 CNDT:PLAYER_TALENT_UPDATE()
 
 -------------------------------------------------------------------------------
@@ -374,7 +380,9 @@ end
 -- Scales
 -------------------------------------------------------------------------------
 local BlackBackground = CreateFrame("Frame", nil, UIParent)
-BlackBackground:SetBackdrop(nil)
+if _G.BackdropTemplateMixin == nil then -- Only expac less than Shadowlands
+	BlackBackground:SetBackdrop(nil)
+end 
 BlackBackground:SetFrameStrata("HIGH")
 BlackBackground:SetSize(736, 30)
 BlackBackground:SetPoint("TOPLEFT", 0, 12) 
@@ -472,6 +480,10 @@ local function UpdateCVAR()
 	
     if GetCVar("colorblindsimulator") ~= "0" then 
 		SetCVar("colorblindsimulator", 0) 
+	end 
+	
+	if toNum[GetCVar("SpellQueueWindow") or 400] == nil then 
+		SetCVar("SpellQueueWindow", 400) 
 	end 
 	
 	--[[

@@ -1,15 +1,16 @@
--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 -- AzeriteTraits is special written lib for The Action but can be used for any others
 -- addons if will be replaced "A." and "TMW." API by regular provided from game 
--------------------------------------------------------------------------------------
+-- This library does nothing if not exist required API and all returns will be unvalid
+--------------------------------------------------------------------------------------
 local _G, print, pairs, ipairs			= _G, print, pairs, ipairs
 local TMW 								= _G.TMW 
 local A 								= _G.Action 
 local Listener							= A.Listener
-local Lib 								= LibStub:NewLibrary("AzeriteTraits", 8)
+local Lib 								= LibStub:NewLibrary("AzeriteTraits", 9)
 
 if not Lib or not A or not TMW then 
-	if A then 
+	if A and A.BuildToC < 90001 then 
 		A.Print("[Error] AzeriteTraits - Library wasn't initialized")
 	else
 		print("[Error] AzeriteTraits - wasn't initialized by Action (or TMW) and Library")
@@ -45,8 +46,7 @@ local FindSpellOverrideByID 			= _G.FindSpellOverrideByID
 local AzeriteEmpoweredItem 				= _G.C_AzeriteEmpoweredItem
 local AzeriteEssence 					= _G.C_AzeriteEssence
 local GetSpellInfo						= _G.GetSpellInfo
-local _, _, _, tocversion 				= _G.GetBuildInfo()
-Lib.has_8_3_0							= tocversion > 80205
+Lib.has_8_3_0							= A.BuildToC > 80205
 
 local Data 								= {
 	InventorySlots 						= { 1, 2, 3, 5 },
@@ -395,11 +395,13 @@ function Data.OnEvent()
 end
 
 -- Azerite Empower
-Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_ENTERING_WORLD", 					Data.OnEvent)
-Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_EQUIPMENT_CHANGED", 				Data.OnEvent)
-Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_SPECIALIZATION_CHANGED", 			Data.OnEvent)
-Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "SPELLS_CHANGED", 							Data.OnEvent)
-Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN", 							Data.OnEvent)
+if AzeriteEmpoweredItem then 
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_ENTERING_WORLD", 					Data.OnEvent)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_EQUIPMENT_CHANGED", 				Data.OnEvent)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_SPECIALIZATION_CHANGED", 			Data.OnEvent)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "SPELLS_CHANGED", 							Data.OnEvent)
+	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "PLAYER_LOGIN", 							Data.OnEvent)
+end 
 
 -- Azerite Essence
 if AzeriteEssence then	
@@ -412,6 +414,10 @@ end
 -------------------------------------------------------------------------------
 -- API
 -------------------------------------------------------------------------------
+function Lib:IsLoaded()
+	return AzeriteEmpoweredItem and AzeriteEssence and true
+end 
+
 function Lib:GetRank(spellID)
 	-- @return number (0 - not existed or not selected)
 	-- Note: Shared for both Azerite Empower and Azerite Essence

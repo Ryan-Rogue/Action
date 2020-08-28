@@ -4,11 +4,16 @@
 -- PROVIDE SUPPORT FOR OLD PROFILES
 --
 -------------------------------------------------------------------------------
-local TMW 								= TMW
+local _G, pairs, next, math				=
+	  _G, pairs, next, math
+	  
+local math_max							= math.max	 
+
+local TMW 								= _G.TMW
 local CNDT 								= TMW.CNDT
 local Env 								= CNDT.Env
 
-local A 								= Action
+local A 								= _G.Action
 local Unit 								= A.Unit
 local MultiUnits						= A.MultiUnits
 local EnemyTeam							= A.EnemyTeam
@@ -23,10 +28,7 @@ local TeamCacheFriendly 				= TeamCache.Friendly
 local TeamCacheFriendlyHEALER			= TeamCacheFriendly.HEALER
 local TeamCacheFriendlyIndexToPLAYERs	= TeamCacheFriendly.IndexToPLAYERs
 
-local Azerite 							= LibStub("AzeriteTraits")	
-
-local _G, pairs, next					=
-	  _G, pairs, next
+local Azerite 							= _G.LibStub("AzeriteTraits")	 
 
 local UnitIsUnit						= _G.UnitIsUnit	  
 local ACTION_CONST_HEARTOFAZEROTH		= _G.ACTION_CONST_HEARTOFAZEROTH  
@@ -131,7 +133,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 				-- GCD 0 sec
 				if 	(
 						-- HP lose per sec >= 15
-						Unit("player"):GetDMG() * 100 / Unit("player"):HealthMax() >= 15 or 
+						Unit("player"):GetDMG() * 100 / math_max(Unit("player"):HealthMax(), 1) >= 15 or 
 						Unit("player"):TimeToDieX(20) <= 6 or 
 						Unit("player"):HealthPercent() < 70 or 
 						(
@@ -167,7 +169,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 				if 	not ShouldStop and 
 					(
 						-- HP lose per sec taken from physical attacks >= 25
-						Unit("player"):GetDMG(3) * 100 / Unit("player"):HealthMax() >= 25 or 
+						Unit("player"):GetDMG(3) * 100 / math_max(Unit("player"):HealthMax(), 1) >= 25 or 
 						Unit("player"):TimeToDieX(25) <= 4 or 
 						Unit("player"):HealthPercent() < 30 or 
 						(
@@ -197,7 +199,7 @@ function A.LazyHeartOfAzeroth(icon, unit)
 						-- If can die to 25% from magic attacks in less than 6 sec
 						Unit("player"):TimeToDieMagicX(25) < 6 or 
 						-- HP lose per sec >= 30 from magic attacks
-						Unit("player"):GetDMG(4) * 100 / Unit("player"):HealthMax() >= 30 or 
+						Unit("player"):GetDMG(4) * 100 / math_max(Unit("player"):HealthMax(), 1) >= 30 or 
 						-- HP < 40 and real time incoming damage from mage attacks more than 10%
 						(
 							Unit("player"):HealthPercent() < 40 and 
