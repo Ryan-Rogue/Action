@@ -5,6 +5,22 @@
 ## DefaultState: enabled
 ## LoadWith: TellMeWhen
 
+# Toaster
+## SavedVariables: ToasterSettings
+Lib\Toaster\embeds.xml
+Lib\Toaster\Localization\enUS.lua
+Lib\Toaster\Localization\deDE.lua
+Lib\Toaster\Localization\esES.lua
+Lib\Toaster\Localization\esMX.lua
+Lib\Toaster\Localization\frFR.lua
+Lib\Toaster\Localization\koKR.lua
+Lib\Toaster\Localization\ptBR.lua
+Lib\Toaster\Localization\ruRU.lua
+Lib\Toaster\Localization\zhCN.lua
+Lib\Toaster\Localization\zhTW.lua
+Lib\Toaster\Core.lua
+Lib\Toaster\Config.lua
+
 Lib\DRList-1.0\DRList-1.0.xml
 Lib\LibSharedMedia-3.0\lib.xml
 Lib\ForAllIndentsAndPurposes.lua
@@ -43,6 +59,7 @@ Modules\Misc\PMultiplier.lua
 Modules\Misc\PrevSpell.lua 
 Modules\Misc\DRList.lua
 Modules\Misc\StdUi.lua
+Modules\Misc\Toaster.lua
 
 Modules\Actions.lua
 Modules\Core.lua
