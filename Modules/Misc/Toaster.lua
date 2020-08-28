@@ -3,7 +3,7 @@
 -------------------------------------------------------------------------------------
 local _G, unpack 			= _G, unpack 
 local Toaster				= _G.Toaster
-local AceDB 				= _G.LibStub("AceDB-3.0")
+local AceDB 				= _G.LibStub("AceDB-3.0", true)
 
 if Toaster and AceDB then 
 	local A 				= _G.Action
