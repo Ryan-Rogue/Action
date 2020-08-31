@@ -87,7 +87,7 @@ end
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
-local 	A_Unit, A_IsUnitFriendly, A_IsUnitEnemy,
+local 	A_Unit, A_IsUnitFriendly, A_IsUnitEnemy, A_PauseChecks,
 		-- [[ Retail ]]
 		A_GetLatency, A_GetCurrentGCD, A_GetGCD, A_GetSpellDescription
 		--
@@ -97,6 +97,7 @@ Listener:Add("ACTION_EVENT_HEALINGENGINE", "ADDON_LOADED", function(addonName)
 		A_Unit 							= A.Unit 
 		A_IsUnitFriendly 				= A.IsUnitFriendly
 		A_IsUnitEnemy					= A.IsUnitEnemy
+		A_PauseChecks					= A.PauseChecks
 		
 		-- [[ Retail ]] 
 		A_GetLatency					= A.GetLatency
@@ -1116,6 +1117,11 @@ local function SetColorTarget()
 	if SelectStopOptions[5] and A_Unit(player):IsDead() then
 		return frame:SetColor(none)
 	end  
+	
+	-- [6] sync-up "Rotation doesn't work if"
+	if SelectStopOptions[6] and A_PauseChecks() then 
+		return frame:SetColor(none)
+	end 
 	
 	-- Mistweaver Monk
 	if A.CurrentProfile:match("[GGL] Monk") then 

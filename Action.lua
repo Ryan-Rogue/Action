@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "28.08.2020"
+local DateTime 														= "31.08.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -130,7 +130,8 @@ local Localization = {
 		UPGRADEDTO = " to ",		
 		SLASH = {
 			LIST = "List of slash commands:",
-			OPENCONFIGMENU = "shows config menu",
+			OPENCONFIGMENU = "shows config menu of the Action",
+			OPENCONFIGMENUTOASTER = "shows config menu of the Toaster",
 			HELP = "shows help info",
 			QUEUEHOWTO = "macro (toggle) for sequence system (Queue), the TABLENAME is a label reference for SpellName|ItemName (in english)",
 			QUEUEEXAMPLE = "example of Queue usage",
@@ -499,6 +500,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target enemy",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player dead",
+				SELECTSTOPOPTIONS6 = "sync-up 'Rotation doesn't work if'",
 				SELECTSORTMETHOD = "Target Sort Method",
 				SELECTSORTMETHODTOOLTIP = "Supported: 'Healing Engine'\n\n'Health Percent' sorts @target selection with the least health in the percent ratio\n'Health Actual' sorts @target selection with the least health in the exact ratio\n\nRight click: Create macro",
 				SORTHP = "Health Percent",
@@ -672,7 +674,8 @@ local Localization = {
 		UPGRADEDTO = " до ",		
 		SLASH = {
 			LIST = "Список слеш команд:",
-			OPENCONFIGMENU = "открыть конфиг меню",
+			OPENCONFIGMENU = "открыть конфиг меню Action",
+			OPENCONFIGMENUTOASTER = "открыть конфиг меню Toaster",
 			HELP = "помощь и информация",
 			QUEUEHOWTO = "макрос (переключатель) для системы очередности (Очередь), там где TABLENAME это метка для ИмениСпособности|ИмениПредмета (на английском)",
 			QUEUEEXAMPLE = "пример использования Очереди",
@@ -1041,6 +1044,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target противник",
 				SELECTSTOPOPTIONS4 = "@target босс",
 				SELECTSTOPOPTIONS5 = "@player мертв",
+				SELECTSTOPOPTIONS6 = "синхр. 'Ротация не работает если'",
 				SELECTSORTMETHOD = "Цель Метод Сортировки",
 				SELECTSORTMETHODTOOLTIP = "Поддерживает: 'Healing Engine'\n\n'Процентное Здоровье' сортирует выбор @target по наименьшему здоровью в процентном соотношении\n'Актуальное Здоровье' сортирует выбор @target по наименьшему здоровью в точном соотношении\n\nПравая кнопка мышки: Создать макрос",
 				SORTHP = "Процентное Здоровье",
@@ -1216,7 +1220,8 @@ local Localization = {
 		UPGRADEDTO = " zu ",		
 		SLASH = {
 			LIST = "Liste der Slash-Befehle:",
-			OPENCONFIGMENU = "Menü Öffnen",
+			OPENCONFIGMENU = "Menü Öffnen Action",
+			OPENCONFIGMENUTOASTER = "Menü Öffnen Toaster",
 			HELP = "Zeigt dir die Hilfe an",
 			QUEUEHOWTO = "Makro (Toggle) für Sequenzsystem (Queue), TABLENAME ist eine Bezeichnung für SpellName | ItemName (auf Englisch)",
 			QUEUEEXAMPLE = "Beispiel für das Sequenzsystem",
@@ -1585,6 +1590,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target gegner",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player tot",
+				SELECTSTOPOPTIONS6 = "synchro-en 'Rota funktioniert nicht wenn'",
 				SELECTSORTMETHOD = "Ziel Sortiermethode",
 				SELECTSORTMETHODTOOLTIP = "Unterstützt: 'Healing Engine'\n\n'Gesundheit Prozent' sortiert die @target auswahl mit der geringsten Gesundheit im Prozentverhältnis\n'Wirkliche Gesundheit' sortiert die @targetauswahl mit dem geringsten Zustand im genauen Verhältnis\n\nKlick: Makro erstellen",
 				SORTHP = "Gesundheit Prozent",
@@ -1761,7 +1767,8 @@ local Localization = {
 		UPGRADEDTO = " à ",		
 		SLASH = {
 			LIST = "Liste des commandes slash:",
-			OPENCONFIGMENU = "Voir le menu de configuration",
+			OPENCONFIGMENU = "Voir le menu de configuration Action",
+			OPENCONFIGMENUTOASTER = "Voir le menu de configuration Toaster",
 			HELP = "Voir le menu d'aide",
 			QUEUEHOWTO = "macro (toggle) pour la séquence système (Queue), la TABLENAME est la table de référence pour les noms de sort et d'objet SpellName|ItemName (on english)",
 			QUEUEEXAMPLE = "exemple d'utilisation de Queue(file d'attende)",
@@ -2130,6 +2137,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target ennemi",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player mort",
+				SELECTSTOPOPTIONS6 = "synchroniser 'La rotation ne fonction pas, si'",
 				SELECTSORTMETHOD = "Méthode de tri des cibles",
 				SELECTSORTMETHODTOOLTIP = "Supporté: 'Healing Engine'\n\n'Pourcentage de santé' classe les @target selon le plus faible ratio de Pourcentage de santé\n'Santé réelle' classe les @target leur ratio de vie réelle\n\nClic droit: Créer la macro",
 				SORTHP = "Pourcentage de santé",
@@ -2303,7 +2311,8 @@ local Localization = {
 		UPGRADEDTO = " per ",		
 		SLASH = {
 			LIST = "Lista comandi:",
-			OPENCONFIGMENU = "mostra il menu di configurazione",
+			OPENCONFIGMENU = "mostra il menu di configurazione Action",
+			OPENCONFIGMENUTOASTER = "mostra il menu di configurazione Toaster",
 			HELP = "mostra info di aiuto",
 			QUEUEHOWTO = "macro (toggle) per il sistema di coda (Coda), la TABLENAME é etichetta di riferimento per incantesimo|oggetto (in inglese)",
 			QUEUEEXAMPLE = "esempio per uso della Coda",
@@ -2411,7 +2420,7 @@ local Localization = {
 				THEMEHOLDER = "scegli il tema",
 				BLOODYBLUE = "Sanguinoso Blu",
 				ICE = "Ghiaccio",
-				PAUSECHECKS = "[All specs]\nRotation doesn't work if:",
+				PAUSECHECKS = "[All specs]\nLa rotazione non funziona, se:",
 				VEHICLE = "NelVeicolo",
 				VEHICLETOOLTIP = "Esempio: Catapulta, Cannone",
 				DEADOFGHOSTPLAYER = "Sei Morto",
@@ -2672,6 +2681,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target nemico",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player morto",
+				SELECTSTOPOPTIONS6 = "sincronizzare 'La rotazione non funziona, se'",
 				SELECTSORTMETHOD = "Metodo di ordinamento target",
 				SELECTSORTMETHODTOOLTIP = "Supportato: 'Healing Engine'\n\n'Percentuale di salute' ordina la selezione @target con il minor livello di integrità nel rapporto percentuale\n'Salute reale' ordina la selezione di @target con la minima salute nel rapporto esatto\n\nPulsanmte destro: Crea macro",
 				SORTHP = "Percentuale di salute",
@@ -2847,7 +2857,8 @@ local Localization = {
 		UPGRADEDTO = " a ",		
 		SLASH = {
 			LIST = "Lista de comandos:",
-			OPENCONFIGMENU = "Mostrar menú de configuración",
+			OPENCONFIGMENU = "Mostrar menú de configuración Action",
+			OPENCONFIGMENUTOASTER = "Mostrar menú de configuración Toaster",
 			HELP = "Mostrar ayuda",
 			QUEUEHOWTO = "macro (toggle) para sistema de secuencia (Cola), TABLENAME es una etiqueta de referencia para SpellName|ItemName (en inglés)",
 			QUEUEEXAMPLE = "ejemplo de uso de Cola",
@@ -3216,6 +3227,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target enemigo",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player muerto",
+				SELECTSTOPOPTIONS6 = "sincronizar 'La rotación no funciona si'",
 				SELECTSORTMETHOD = "Método de orden de target",
 				SELECTSORTMETHODTOOLTIP = "Soportado: 'Healing Engine'\n\n'Porcentaje de Vida' ordena la selección del @target con el último ratio deporcentage de vida\n'Vida Actual' ordena la selección del @target con el ratio exacto de vida\n\Botón derecho: Crear macro",
 				SORTHP = "Porcentaje de Vida",
@@ -3389,7 +3401,8 @@ local Localization = {
 		UPGRADEDTO = " para ",		
 		SLASH = {
 			LIST = "Lista de comandos:",
-			OPENCONFIGMENU = "exibe o menu de configurações",
+			OPENCONFIGMENU = "exibe o menu de configurações Action",
+			OPENCONFIGMENUTOASTER = "exibe o menu de configurações Toaster",
 			HELP = "exibe informações de ajuda",
 			QUEUEHOWTO = "macro (ativável) para o sistema de sequência (Queue), o TABLENAME é uma referência para o SpellName|ItemName (em Inglês)",
 			QUEUEEXAMPLE = "exemplo de uso da Queue",
@@ -3766,6 +3779,7 @@ local Localization = {
 				SELECTSTOPOPTIONS3 = "@target inimigo",
 				SELECTSTOPOPTIONS4 = "@target boss",
 				SELECTSTOPOPTIONS5 = "@player morto",
+				SELECTSTOPOPTIONS6 = "sincronizar 'Rotação não funciona se'",
 				SELECTSORTMETHOD = "Método de classificação do alvo",
 				SELECTSORTMETHODTOOLTIP = "Suportados: 'Healing Engine'\n\n'Porcentagem de Vida' escolhe o @target com a menor porcentagem de vida\n'Vida Atual' escolhe o @target com menos vida especificada\n\nClique direito: Criar macro",
 				SORTHP = "Porcentagem de Vida",
@@ -4373,11 +4387,12 @@ local Factory = {
 				[6] = true, 	-- Absorb Negative				
 			},
 			SelectStopOptions = {
-				[1] = true, -- @mouseover friendly 
-				[2] = true, -- @mouseover enemy 
-				[3] = true, -- @target enemy 
-				[4] = true, -- @target boss 
-				[5] = true, -- @player dead 
+				[1] = true,  -- @mouseover friendly 
+				[2] = true,  -- @mouseover enemy 
+				[3] = true,  -- @target enemy 
+				[4] = true,  -- @target boss 
+				[5] = true,  -- @player dead 
+				[6]	= false, -- sync-up "Rotation doesn't work if"
 			},
 			SelectSortMethod = "HP",	
 			AfterTargetEnemyOrBossDelay = 0,	-- SelectStopOptions must be off for: [3] @target enemy or [4] @target boss
@@ -14409,6 +14424,7 @@ function Action.ToggleMainUI()
 				{ text = L["TAB"][tabName]["SELECTSTOPOPTIONS3"], 		value = 3 },
 				{ text = L["TAB"][tabName]["SELECTSTOPOPTIONS4"], 		value = 4 },
 				{ text = L["TAB"][tabName]["SELECTSTOPOPTIONS5"], 		value = 5 },
+				{ text = L["TAB"][tabName]["SELECTSTOPOPTIONS6"], 		value = 6 },
 			}, nil, true, true)
 			SelectStopOptions:SetPlaceholder(L["TAB"][tabName]["SELECTOPTIONS"]) 				
 			for i, v in ipairs(SelectStopOptions.optsFrame.scrollChild.items) do 
@@ -15886,14 +15902,19 @@ local function OnInitialize()
 	-- Initialization MSG System
 	MSG:Initialize()
 	
-	-- Minimap 
+	-- Minimap
 	if not Action.Minimap and LibDBIcon then 
+		local Toaster 	= _G.Toaster
 		local ldbObject = {
 			type = "launcher",
 			icon = ActionConst.AUTOTARGET, 
 			label = "ActionUI",
 			OnClick = function(self, button)
-				A_ToggleMainUI()
+				if button == "RightButton" and Action.Toaster then 
+					Action.Toaster:Toggle()
+				else 
+					A_ToggleMainUI()
+				end 
 			end,
 			OnTooltipShow = function(tooltip)
 				tooltip:AddLine("ActionUI")
@@ -16131,7 +16152,7 @@ function Action:ADDON_LOADED(event, addonName)
 	----------------------------------
 	if addonName ~= ActionConst.ADDON_NAME then return end  
 	self:UnregisterEvent(event)
-	self.baseName 						= addonName
+	self.baseName = addonName
 	----------------------------------
 	-- Remap
 	----------------------------------
@@ -16139,32 +16160,35 @@ function Action:ADDON_LOADED(event, addonName)
 	----------------------------------
 	-- Register Slash Commands
 	----------------------------------
-	local function SlashCommands(input) 
+	_G.SLASH_ACTION1 = "/action"
+	_G.SlashCmdList.ACTION = function(input) 
 		if not L then return end -- If we trying show UI before DB finished load locales 
 		if not ActionData.ProfileEnabled[Action.CurrentProfile] then 
 			A_Print(Action.CurrentProfile .. " " .. L["NOSUPPORT"])
 			return 
 		end 
 		if not input or #input > 0 then 
-			-- without checks for another options for /action since right now only "help" enough even if user did wrong input 
-			A_Print(L["SLASH"]["LIST"])
-			A_Print("|cff00cc66/action|r - " .. L["SLASH"]["OPENCONFIGMENU"])
-			A_Print('|cff00cc66/run Action.MacroQueue("TABLE_NAME")|r - ' .. L["SLASH"]["QUEUEHOWTO"])
-			A_Print('|cff00cc66/run Action.MacroQueue("WordofGlory")|r - ' .. L["SLASH"]["QUEUEEXAMPLE"])		
-			A_Print('|cff00cc66/run Action.MacroBlocker("TABLE_NAME")|r - ' .. L["SLASH"]["BLOCKHOWTO"])
-			A_Print('|cff00cc66/run Action.MacroBlocker("FelRush")|r - ' .. L["SLASH"]["BLOCKEXAMPLE"])	
-			A_Print(L["SLASH"]["RIGHTCLICKGUIDANCE"])
-			A_Print(L["SLASH"]["INTERFACEGUIDANCE"])
-			A_Print(L["SLASH"]["INTERFACEGUIDANCEEACHSPEC"])
-			A_Print(L["SLASH"]["INTERFACEGUIDANCEALLSPECS"])
-			A_Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
-			A_Print(L["SLASH"]["ATTENTION"])
+			if input:lower() == "toaster" and Action.Toaster then 
+				Action.Toaster:Toggle()
+			else 
+				A_Print(L["SLASH"]["LIST"])
+				A_Print("|cff00cc66/action|r - " .. L["SLASH"]["OPENCONFIGMENU"])
+				A_Print("|cff00cc66/action toaster|r - " .. L["SLASH"]["OPENCONFIGMENUTOASTER"])
+				A_Print('|cff00cc66/run Action.MacroQueue("TABLE_NAME")|r - ' .. L["SLASH"]["QUEUEHOWTO"])
+				A_Print('|cff00cc66/run Action.MacroQueue("WordofGlory")|r - ' .. L["SLASH"]["QUEUEEXAMPLE"])		
+				A_Print('|cff00cc66/run Action.MacroBlocker("TABLE_NAME")|r - ' .. L["SLASH"]["BLOCKHOWTO"])
+				A_Print('|cff00cc66/run Action.MacroBlocker("FelRush")|r - ' .. L["SLASH"]["BLOCKEXAMPLE"])	
+				A_Print(L["SLASH"]["RIGHTCLICKGUIDANCE"])
+				A_Print(L["SLASH"]["INTERFACEGUIDANCE"])
+				A_Print(L["SLASH"]["INTERFACEGUIDANCEEACHSPEC"])
+				A_Print(L["SLASH"]["INTERFACEGUIDANCEALLSPECS"])
+				A_Print(L["SLASH"]["INTERFACEGUIDANCEGLOBAL"])
+				A_Print(L["SLASH"]["ATTENTION"])
+			end 
 		else 
 			A_ToggleMainUI()
 		end 
 	end 	
-	SLASH_ACTION1 = "/action"
-	SlashCmdList.ACTION = SlashCommands	
 	----------------------------------
 	-- Register ActionDB defaults
 	----------------------------------	
