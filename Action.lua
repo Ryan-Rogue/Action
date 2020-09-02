@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "31.08.2020"
+local DateTime 														= "02.09.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -15875,8 +15875,9 @@ local function OnInitialize()
 	-- Welcome Notification
 	----------------------------------	
     A_Print(L["SLASH"]["LIST"])
-	A_Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])
+	A_Print("|cff00cc66/action|r - "  .. L["SLASH"]["OPENCONFIGMENU"])		
 	A_Print("|cff00cc66/action help|r - " .. L["SLASH"]["HELP"])			
+	A_Print("|cff00cc66/action toaster|r - " .. L["SLASH"]["OPENCONFIGMENUTOASTER"])	
 
 	----------------------------------	
 	-- Initialization

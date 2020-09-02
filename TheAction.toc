@@ -4,9 +4,9 @@
 ## RequiredDeps: TellMeWhen
 ## DefaultState: enabled
 ## LoadWith: TellMeWhen
+## SavedVariables: ToasterSavedVariables
 
 # Toaster
-## SavedVariables: ToasterSettings
 Lib\Toaster\embeds.xml
 Lib\Toaster\Localization\enUS.lua
 Lib\Toaster\Localization\deDE.lua
