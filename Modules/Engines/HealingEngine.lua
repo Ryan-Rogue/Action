@@ -759,7 +759,7 @@ do
 		end,
 		CanRessurect					= function(self)
 			local unitID 				= self.Unit 
-			return not inCombat and not self.isSelf and self.isPlayer and db.SelectResurrects and not A_Unit(unitID):GetIncomingResurrection() and (not isClassic or A.PlayerClass ~= "DRUID")
+			return not inCombat and not self.isSelf and self.isPlayer and db.SelectResurrects and not A_Unit(unitID):IsGhost() and not A_Unit(unitID):GetIncomingResurrection() and (not isClassic or A.PlayerClass ~= "DRUID")
 		end,
 		SetupOffsets 					= function(self, manualOffset, autoOffset)
 			if manualOffset == 0 then 
