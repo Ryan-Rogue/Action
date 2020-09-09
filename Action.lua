@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "02.09.2020"
+local DateTime 														= "09.09.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -15905,13 +15905,12 @@ local function OnInitialize()
 	
 	-- Minimap
 	if not Action.Minimap and LibDBIcon then 
-		local Toaster 	= _G.Toaster
 		local ldbObject = {
 			type = "launcher",
 			icon = ActionConst.AUTOTARGET, 
 			label = "ActionUI",
 			OnClick = function(self, button)
-				if button == "RightButton" and Action.Toaster then 
+				if button == "RightButton" and Action.Toaster.IsInitialized then 
 					Action.Toaster:Toggle()
 				else 
 					A_ToggleMainUI()
@@ -16169,7 +16168,7 @@ function Action:ADDON_LOADED(event, addonName)
 			return 
 		end 
 		if not input or #input > 0 then 
-			if input:lower() == "toaster" and Action.Toaster then 
+			if input:lower() == "toaster" and Action.Toaster.IsInitialized then 
 				Action.Toaster:Toggle()
 			else 
 				A_Print(L["SLASH"]["LIST"])
