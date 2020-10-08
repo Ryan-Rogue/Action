@@ -4,9 +4,11 @@
 local _G, pairs					= _G, pairs
 local A 						= _G.Action
 local BackdropTemplateMixin 	= _G.BackdropTemplateMixin
+local LibStub					= _G.LibStub
 
--- do nothing if its not 9.x+ API 
-if BackdropTemplateMixin == nil then 
+-- Do nothing if its not 9.x+ API or StdUi has been updated
+if BackdropTemplateMixin == nil or (LibStub.minors["StdUi"] and LibStub.minors["StdUi"] >= 5) then 
+print("No need custom stdui")
 	return 
 end 
 
@@ -59,7 +61,7 @@ end
 -------------------------------------------------------------------------------------
 -- Need for ColorPicker since there are a bug in lib with buttons, they inherits global instance instead of local
 -- The good thing is what it will also spreads on other addons that use same lib on global instance 
-local _StdUi					= _G.LibStub("StdUi")
+local _StdUi					= LibStub("StdUi")
 _StdUi.AddBackdropTemplateMixin = StdUi.AddBackdropTemplateMixin
 
 _StdUi.originalApplyBackdrop = _StdUi.ApplyBackdrop
