@@ -32,6 +32,7 @@ local GetToggle				= A.GetToggle
 local BurstIsON				= A.BurstIsON
 local AuraIsValid			= A.AuraIsValid
 local InstanceInfo			= A.InstanceInfo
+local BuildToC				= A.BuildToC
 
 local TRINKET1				= CONST.TRINKET1
 local TRINKET2				= CONST.TRINKET2
@@ -548,7 +549,7 @@ function A:IsTalentLearned()
 		Name = A_GetSpellInfo(self)
 	end	
 	local lowerName = strlowerCache[Name]
-	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or Azerite:IsLearnedByConflictandStrife(Name)
+	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
 end
 
 -- Remap to keep old code working for it 
@@ -962,8 +963,9 @@ end
 -- A:HasUseEffect() 
 
 -------------------------------------------------------------------------------
--- Item (provided by Lib LegendaryCrafting)
+-- Item|Spell (provided by Lib LegendaryCrafting)
 -------------------------------------------------------------------------------	
+-- Item Object 
 function A:IsItemLegendaryCrafting()
 	-- @return boolean 
 	return LegendaryCrafting:IsEquipped(self.ID)
@@ -975,9 +977,11 @@ function A:GetLegendaryCraftingItem()
 	return Player:GetLegendaryCraftingItem(self.ID)
 end 
 
+-- Spell Object
 function A:HasLegendaryCraftingPower()
 	-- @return boolean 
 	-- Look description of the returned methods in Player.lua
+	-- Note: Object must be a spell !
 	return Player:HasLegendaryCraftingPower((self:Info()))
 end 
 
