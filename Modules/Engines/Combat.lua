@@ -7,6 +7,7 @@ local CONST 									= A.Const
 local Listener									= A.Listener
 local isEnemy									= A.Bit.isEnemy
 local isPlayer									= A.Bit.isPlayer
+local BuildToC									= A.BuildToC
 local TeamCache									= A.TeamCache
 local TeamCacheFriendly							= TeamCache.Friendly
 local TeamCacheFriendlyUNITs					= TeamCacheFriendly.UNITs
@@ -47,6 +48,7 @@ local DRData 									= LibStub("DRList-1.0")
 local tinsert	  								= table.insert 
 local tremove	  								= table.remove
 local huge 										= math.huge
+local abs										= math.abs
 local math_max									= math.max
 local bit										= _G.bit
 local bitband									= bit.band
@@ -64,9 +66,6 @@ local GetSpellInfo								= _G.GetSpellInfo
 local cLossOfControl 							= _G.C_LossOfControl
 local GetEventInfo 								= cLossOfControl.GetEventInfo or cLossOfControl.GetActiveLossOfControlData 
 local GetNumEvents 								= cLossOfControl.GetNumEvents or cLossOfControl.GetActiveLossOfControlDataCount	
--- >=9x API 
---local GetActiveLossOfControlDataByUnit			= cLossOfControl.GetActiveLossOfControlDataByUnit 		-- FIX ME: When this triggers? -- TODO: Shadowlands needs summary
---local GetActiveLossOfControlDataCountByUnit		= cLossOfControl.GetActiveLossOfControlDataCountByUnit 	-- FIX ME: When this triggers? -- TODO: Shadowlands needs summary
 
 local  CreateFrame,    UIParent					= 
 	_G.CreateFrame, _G.UIParent	  	  
@@ -619,19 +618,36 @@ end
 
 --[[ This Logs the shields for every player or controlled by player unit ]]
 CombatTracker.logAbsorb 						= function(...) 
-	local _,_,_, SourceGUID,_,_,_, DestGUID,_, destFlags,_, spellID, spellName,_, auraType, Amount = ... -- CombatLogGetCurrentEventInfo()    
+	local _,_,_, SourceGUID,_,_,_, DestGUID,_, destFlags,_, spellID, spellName,_, auraType, Amount = ... -- CombatLogGetCurrentEventInfo() 
 	if auraType == "BUFF" and Amount and spellID and isPlayer(destFlags) then
 		if not CombatTrackerData[DestGUID].absorb_spells then 
 			CombatTrackerData[DestGUID].absorb_spells = {}
 		end 
 		
 		CombatTrackerData[DestGUID].absorb_spells[spellID] = (CombatTrackerData[DestGUID].absorb_spells[spellID] or 0) + Amount 
-		 
-		if spellName and not CombatTrackerData[DestGUID].absorb_spells[spellName] then 
-			CombatTrackerData[DestGUID].absorb_spells[spellName] = CombatTrackerData[DestGUID].absorb_spells[spellID]     
-		end 
+		CombatTrackerData[DestGUID].absorb_spells[spellName] = CombatTrackerData[DestGUID].absorb_spells[spellID]     
 	end    
 end
+
+CombatTracker.update_logAbsorb					= function(...)
+	local timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, srcSpellId, srcSpellName, srcSpellSchool, casterGUID, casterName, casterFlags, casterRaidFlags, spellId, spellName, spellSchool, absorbed
+	if type(srcSpellId) == "number" then 
+		-- Spell
+        timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, srcSpellId, srcSpellName, srcSpellSchool, casterGUID, casterName, casterFlags, casterRaidFlags, spellId, spellName, spellSchool, absorbed = ... -- CombatLogGetCurrentEventInfo()	
+	else 
+		-- Melee/Ranged
+        timestamp, eventtype, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, casterGUID, casterName, casterFlags, casterRaidFlags, spellId, spellName, spellSchool, absorbed = ... -- CombatLogGetCurrentEventInfo()
+	end 
+
+	-- 'src' params is who caused absorb change 
+	-- 'dts' params is who got changed absorb 
+	-- 'caster' params is who and what applied 
+	-- 'absorbed' param is amount of absorb change 
+	if type(absorbed) == "number" and type(dstGUID) == "string" and spellId and CombatTrackerData[dstGUID].absorb_spells and CombatTrackerData[dstGUID].absorb_spells[spellId] then 		
+		CombatTrackerData[dstGUID].absorb_spells[spellId] = (CombatTrackerData[dstGUID].absorb_spells[spellId] or 0) - absorbed 
+		CombatTrackerData[dstGUID].absorb_spells[spellName] = CombatTrackerData[dstGUID].absorb_spells[spellId]     
+	end 
+end 
 
 CombatTracker.remove_logAbsorb 					= function(...) 
 	local _,_,_, SourceGUID,_,_,_, DestGUID,_,_,_, spellID, spellName,_, spellType,_, amountMissed = ... -- CombatLogGetCurrentEventInfo()
@@ -752,7 +768,8 @@ CombatTracker.OnEventCLEU 						= {
 	["SPELL_HEAL"] 							= CombatTracker.logHealing,
 	["SPELL_PERIODIC_HEAL"] 				= CombatTracker.logHealing,
 	["SPELL_AURA_APPLIED"] 					= CombatTracker.logAbsorb,   
-	["SPELL_AURA_REFRESH"] 					= CombatTracker.logAbsorb,  
+	["SPELL_AURA_REFRESH"] 					= CombatTracker.logAbsorb, 
+	["SPELL_ABSORBED"]						= CombatTracker.update_logAbsorb,
 	["SPELL_AURA_REMOVED"] 					= CombatTracker.remove_logAbsorb,  
 	["SPELL_MISSED"] 						= CombatTracker.remove_logAbsorb,
 	["SPELL_CAST_SUCCESS"] 					= CombatTracker.logLastCast,
@@ -1056,6 +1073,21 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 	local timestamp = TMW.time 
 	local _, EVENT, _, SourceGUID, _, sourceFlags, _, DestGUID, _, destFlags, _, spellID, spellName, spellSchool, auraType, a16, a17, a18, a19, a20, a21, a22, a23, a24 = CombatLogGetCurrentEventInfo()	
 	
+	--[[ For Test 
+	if EVENT:match("SPELL_AURA") then 		
+		local te = {CombatLogGetCurrentEventInfo()}
+		local str
+		for i = 1, #te do 			
+			str = tostring(te[i]) 
+			if str == GetSpellInfo(322507) or te[i] == 322507 or str == GetSpellInfo(325092) or te[i] == 325092 then 
+				--print("[" .. i .. "] " .. tostring(te[i]))
+				print(unpack(te))
+				break 
+			end 
+		end 
+	end 	
+	]]
+	
 	-- Add the unit to our data if we dont have it
 	CombatTracker:AddToData(SourceGUID, timestamp)
 	CombatTracker:AddToData(DestGUID, timestamp) 
@@ -1130,8 +1162,6 @@ Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				functio
 end)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_UPDATE", 				LossOfControl.OnEvent		)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_ADDED", 				LossOfControl.OnEvent		)
---Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_COMMENTATOR_ADDED", 					function(...) print("LOSS_OF_CONTROL_COMMENTATOR_ADDED: "); print(...) end)		-- TODO: Shadowlands needs summary 
---Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_COMMENTATOR_UPDATE", 				function(...) print("LOSS_OF_CONTROL_COMMENTATOR_UPDATE: "); print(...) end)	-- TODO: Shadowlands needs summary
 
 -------------------------------------------------------------------------------
 -- OnUpdate
@@ -1348,6 +1378,7 @@ A.CombatTracker									= {
 	--[[ Get Count Spell of total used during fight ]]
 	-- Note: Only @player self and in PvP any players 
 	GetSpellCounter								= function(self, unitID, spell)
+		-- @return number
 		local GUID 								= GetGUID(unitID)
 
 		if CombatTrackerData[GUID] and CombatTrackerData[GUID].spell_counter then
@@ -1358,13 +1389,19 @@ A.CombatTracker									= {
 	--[[ Get Absorb Taken ]]
 	-- Note: Only players or controlled by players (pets)
 	GetAbsorb									= function(self, unitID, spell)
+		-- @return number 
 		if not spell then 
 			return UnitGetTotalAbsorbs(unitID)
 		else 
-			local GUID	 							= GetGUID(unitID)
+			local GUID	 						= GetGUID(unitID)
 			
 			if GUID and CombatTrackerData[GUID] and CombatTrackerData[GUID].absorb_spells then 		
-				return CombatTrackerData[GUID].absorb_spells[spell] or 0
+				local absorb = CombatTrackerData[GUID].absorb_spells[spell] or 0
+				if absorb < 0 then 
+					absorb = abs(A_Unit(unitID):AuraVariableNumber(spell, "HELPFUL"))
+				end 
+				
+				return absorb
 			end 
 		end
 		
