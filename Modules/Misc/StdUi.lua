@@ -8,7 +8,6 @@ local LibStub					= _G.LibStub
 
 -- Do nothing if its not 9.x+ API or StdUi has been updated
 if BackdropTemplateMixin == nil or (LibStub.minors["StdUi"] and LibStub.minors["StdUi"] >= 5) then 
-print("No need custom stdui")
 	return 
 end 
 
