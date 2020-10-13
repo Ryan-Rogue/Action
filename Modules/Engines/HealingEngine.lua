@@ -377,7 +377,7 @@ local BossIDs							= Data.BossIDs
 local function PerformByProfileHP(self)
 	-- Enable specific instructions by profile 
 	-- Note: Here is only players! This function doesn't perform pets anyhow!
-	if not A.IsBasicProfile and A.IsGGLprofile then 
+	if not A.IsBasicProfile and A.IsGGLprofile and A.CurrentProfile ~= "[GGL] Template" then 
 		local HP			= self.HP
 		local MHP			= self.MHP
 		local DMG 			= self.incOffsetDMG
