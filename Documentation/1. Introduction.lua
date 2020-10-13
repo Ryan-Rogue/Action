@@ -37,9 +37,9 @@ That specific group must be named "Shown Main" without quotes, it must contain 8
 * [3] is Rotation (old launcher called it Single, supports all actions)
 * [4] is Secondary (old launcher called it AoE) rotation (supports all actions)
 * [5] is Trinket rotation (racial, specialization's spells which can remove CC)
-* [6] is Passive rotation (limited actions, usually @player, @raid1, @arena1)
-* [7] is Passive rotation (limited actions, usually @party1, @raid2, @arena2)
-* [8] is Passive rotation (limited actions, usually @party2, @raid3, @arena3)
+* [6] is Passive rotation (limited actions, usually @raid1, @party1, @arena1 and additional binds - for more info look notes in the launcher)
+* [7] is Passive rotation (limited actions, usually @raid2, @party2, @arena2)
+* [8] is Passive rotation (limited actions, usually @raid3, @party3, @arena3)
 Passive rotation doesn't require START button use like it does [1] -> [5] rotations 
 "Shown Main" in group settings must have x-29, y12, scale 60% and both padding to the left upper corner 
 
