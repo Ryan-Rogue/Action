@@ -1,3 +1,17 @@
+[SL][Monk v17]
+Compatible update for Shadowlands (it'll working on 9x+ API):
+Added LegendaryPowers
+Removed LightsJudgment
+Fixed movement miss typo for condition of moving in to current target and also added delay after use
+Creation of the actions is updated to latest Action API
+BM MW WW 	- Increased range of LegSweep from 5 to 6
+BM 			- LegSweep now calculates additional 2 yards if talent TigerTailSweep selected 
+BM 			- Added Toaster announcement of ZenMeditation if its rank lower than 2 
+BM 			- Fixed Purify for stagger level, was miss typo with toggle "==" now ">=" for non-automatic select
+
+[BFA][Monk v17]
+MW 			- Fixed EssenceFont prediction on Portugal language 
+
 [BFA][Monk v16]
 Minor fix miss typo with RegisterSelfDestructingCallback callbacks 
 
