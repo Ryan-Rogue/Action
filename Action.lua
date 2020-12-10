@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "14.10.2020"
+local DateTime 														= "10.12.2020"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -4763,6 +4763,32 @@ local GlobalFactory = {
 				[265081] = {},
 				-- Wicked Frenzy
 				[266209] = {},
+				-- Enrage
+				[324085] = {},
+				-- Seething Rage
+				[320703] = { stack = 5 },
+				-- Raging Tantrum
+				[333241] = {},
+				-- Battle Trance
+				[342139] = {},
+				-- Vengeful Rage
+				[327155] = {},
+				-- Enraged
+				[324737] = { stack = 1 },
+				-- Angering Shriek
+				[334967] = {},
+				-- Death Wish
+				[331510] = {},
+				-- Frenzy
+				[321220] = {},
+				-- Unstoppable Frenzy
+				[331347] = {},
+				-- Motivated
+				[334470] = {},
+				-- Unravel Flesh				
+				[322888] = {},
+				-- Enraging Anguish
+				[340117] = {},
 			},
 			Bleeds = {
 			},
