@@ -2491,8 +2491,8 @@ local Info = {
 		["minus"] 				= true,
 		["normal"] 				= true,
 		["rare"] 				= true,
-		["rareelite"] 			= false,
-		["elite"] 				= false,
+		["rareelite"] 			= true,
+		["elite"] 				= true,
 		["worldboss"] 			= false,
 		[""] 					= true,
 	},
@@ -2505,7 +2505,10 @@ local Info = {
 		[GetSpellInfo(34976)] 	= true,
 	},
 	Cyclone 					= {
-		SpellName 				= GetSpellInfo(33786),
+		SpellName 				= {
+			[GetSpellInfo(33786)] = true, 	-- Cyclone 
+			[GetSpellInfo(710)] = true,		-- Banish 
+		},
 		OnEvent					= {
 			["SPELL_AURA_APPLIED"] = "Add",
 			["SPELL_AURA_REFRESH"] = "Add",
@@ -3789,6 +3792,7 @@ A.Unit = PseudoClass({
 	end, "UnitGUID"),
 	DeBuffCyclone 							= Cache:Pass(function(self, customGUID)
 		-- @return number 
+		-- Note: Supports Banish
 		local unitID 						= self.UnitID
 		local unitGUID 						= customGUID or UnitGUID(unitID)
 		
@@ -3798,7 +3802,7 @@ A.Unit = PseudoClass({
 				spellName, _, _, _, _, spellExpirationTime = UnitAura(unitID, i, "HARMFUL")
 				if not spellName then 
 					break 			
-				elseif spellName == InfoCycloneSpellName then 
+				elseif InfoCycloneSpellName[spellName] then 
 					return spellExpirationTime == 0 and huge or spellExpirationTime - TMW.time
 				end 
 			end 
@@ -4941,7 +4945,8 @@ Listener:Add("ACTION_EVENT_UNIT", "COMBAT_LOG_EVENT_UNFILTERED", 		function(...)
 		InfoCycloneGUIDs[DestGUID]		= nil 
 	end 
 	
-	if spellName == InfoCycloneSpellName then 
+	if spellName and InfoCycloneSpellName[spellName] then 
+		-- Cyclone and Banish can not be both applied at the same time, so why not
 		if InfoCycloneOnEvent[EVENT] == "Add" then 
 			InfoCycloneGUIDs[DestGUID] 	= true 
 		elseif InfoCycloneOnEvent[EVENT] == "Remove" then 
