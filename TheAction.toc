@@ -1,10 +1,10 @@
-## Interface: 90001
+## Interface: 90002
 ## Title: TellMeWhen |cff00ccff The Action|r
 ## Notes: (\/)O_O(\/)
 ## RequiredDeps: TellMeWhen
 ## DefaultState: enabled
 ## LoadWith: TellMeWhen
-## SavedVariables: ToasterSavedVariables
+## SavedVariables: TheActionSettings
 
 # Toaster
 Lib\Toaster\embeds.xml

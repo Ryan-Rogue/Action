@@ -18,6 +18,7 @@ local AceConfigRegistry 														= LibStub("AceConfigRegistry-3.0", true)
 local AceConfigDialog 															= LibStub("AceConfigDialog-3.0", true)	
 local AceLocale																	= LibStub("AceLocale-3.0", true)
 local LibWindow 																= LibStub("LibWindow-1.1", true)
+local LDBIcon 																	= LibStub("LibDBIcon-1.0", true)
 local LibToast 																	= LibStub("LibToast-1.0", true)
 local templates																	= LibToast and LibToast.templates
 local unique_templates															= LibToast and LibToast.unique_templates
@@ -54,7 +55,7 @@ local expirationToasts = setmetatable({}, {
 	end, 
 }); Toaster.expirationToasts = expirationToasts
 
-if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and LibWindow and LibToast then 
+if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and LibWindow and LDBIcon and LibToast then 
 	local TOASTER_NAME = "The Action Toaster"
 	
 	-- Locales	
@@ -242,7 +243,7 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 		local dbName = ...
 		if dbName == wrongName then 
 			local vararg = { ... }
-			vararg[1] = "ToasterSavedVariables"
+			vararg[1] = wrongName:gsub("%s+", "") -- "ToasterSavedVariables"
 			push_DATABASE_DEFAULTS(vararg[2])
 			local db = AceDBNew_Original(self, unpack(vararg)) -- traversed into private.db			
 			if not db.global.addons[ADDON_NAME] then
@@ -263,10 +264,7 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 				-- Unregister The Action Toaster db and use original Toaster db
 				-- In the Toaster private.db never changes only used as pointer to other tables inside which will be reallocated
 				push_DATABASE_DEFAULTS((select(2, ...)))
-				db = AceDBNew_Original(self, ...)			
-				--[[for k, v in pairs(db) do 
-					private.db[k] = v
-				end]]				
+				db = AceDBNew_Original(self, ...)					
 			end 
 			
 			if db.global.addons[ADDON_NAME] then 
@@ -578,7 +576,8 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 			defaultOptions.args.minimap_icon = nil
 			defaultOptions.args.reset.func = function()
 				-- This is fix for original code 
-				resetTableFromTable(private.db.global.display.anchor, private.DATABASE_DEFAULTS.global.display.anchor)
+				resetTableFromTable(private.db.global.display, private.DATABASE_DEFAULTS.global.display)
+				resetTableFromTable(private.db.global.general, private.DATABASE_DEFAULTS.global.general)
                 LibWindow.RestorePosition(anchorFrame)
 			end	
 			push_DefautOptions(defaultOptions, private.db, ADDON_NAME)
@@ -627,7 +626,9 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 			local defaultOptions = options.args.defaultOptions
 			defaultOptions.args.reset.func = function()
 				-- This is fix for original code 
-				resetTableFromTable(_G.Toaster.db.global.display.anchor, private.DATABASE_DEFAULTS.global.display.anchor)				
+				resetTableFromTable(_G.Toaster.db.global.display, private.DATABASE_DEFAULTS.global.display)				
+				resetTableFromTable(_G.Toaster.db.global.general, private.DATABASE_DEFAULTS.global.general)		
+				LDBIcon:Show("Toaster")
 				GetAnchorFrameAndStorage()				
 				if anchorFrame then 
 					LibWindow.RestorePosition(anchorFrame)
@@ -696,12 +697,11 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 		
 		-- Turns off minimap
 		local LibDBIcon = LibStub("LibDBIcon-1.0")
-		private.db.global.general.minimap_icon.hide = true
 		if LibDBIcon.objects[ADDON_NAME] then 
 			LibDBIcon:Hide(ADDON_NAME)
 			wipe(LibDBIcon.objects[ADDON_NAME])
 			LibDBIcon.objects[ADDON_NAME] = nil 
-		end 
+		end
 		
 		-- Turns off slash command
 		Toaster:UnregisterChatCommand("toaster")

@@ -1,22 +1,24 @@
-tag a2afec15aeb66773918ef40f10f11a27726bde0b 8.0.1.1
-Author:	James D. Callahan III <jcallahan@curse.com>
-Date:	Sat Jul 21 04:06:19 2018 -0500
+tag 84ac94987917e59c8c8eef3608343d821a077728 9.0.1.1
+Author:	James D. Callahan III <darkenelf@gmail.com>
+Date:	Mon Oct 26 00:02:21 2020 -0500
 
-commit dd061147c5e86b981d4046adb184c821beebc98c
-Author: James D. Callahan III <jcallahan@curse.com>
-Date:   Sat Jul 21 04:05:49 2018 -0500
+Shadowlands update.
 
-    Update ToC Interface to 80000.
+commit 3a184bb8b4a2974996c01961e3bd399588206a76
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Oct 25 23:40:20 2020 -0500
 
-commit 7e81d9d1a3a6b06264196128edd672c3cf0ede03
-Author: James D. Callahan III <jcallahan@curse.com>
-Date:   Sat Jul 21 04:05:33 2018 -0500
+    Update the repository URI for LibToast-1.0.
 
-    Disable loading of libraries during development, since these won't exist at that point and the WoW 8.x client now complains about this.
+commit 5bdc278293138fc7fde005582d4eba1a15d44cb9
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Oct 25 23:36:37 2020 -0500
 
-commit 72c750e87937eb71641222381eb5feb3bf667e97
-Author: James D. Callahan III <jcallahan@curse.com>
-Date:   Sat Jul 21 04:04:49 2018 -0500
+    Use BackdropTemplateMixin for the anchorFrame.
 
-    Disable -nolib creation.
+commit 3a5add0c883d5deaee7859e380bfbb69336fc4e8
+Author: James D. Callahan III <darkenelf@gmail.com>
+Date:   Sun Oct 25 23:31:15 2020 -0500
+
+    Update ToC Interface for the WoW 9.0.1 version.
 
