@@ -15,7 +15,6 @@ local CreateFrame						= _G.CreateFrame
 
 local CONST 							= A.Const
 local Print								= A.Print 
-local Create 							= A.Create
 local GetToggle							= A.GetToggle
 local Listener							= A.Listener
 local LoC								= A.LossOfControl
@@ -26,7 +25,7 @@ local playerClass						= A.PlayerClass
 
 local useDebug							= false 
 
-local MultiUnits, Unit, Player, HealingEngine, EnemyTeam, FriendlyTeam, GetGCD, GetCurrentGCD, GetLatency, GetSpellInfo
+local MultiUnits, Unit, Player, HealingEngine, EnemyTeam, FriendlyTeam, GetGCD, GetCurrentGCD, GetLatency, GetSpellInfo, Create
 Listener:Add("ACTION_EVENT_COVENANT", "ADDON_LOADED", function(addonName)
 	if addonName == CONST.ADDON_NAME then 
 		MultiUnits						= A.MultiUnits	
@@ -39,6 +38,7 @@ Listener:Add("ACTION_EVENT_COVENANT", "ADDON_LOADED", function(addonName)
 		GetCurrentGCD					= A.GetCurrentGCD
 		GetLatency						= A.GetLatency
 		GetSpellInfo					= A.GetSpellInfo
+		Create							= A.Create
 		
 		Listener:Remove("ACTION_EVENT_COVENANT", "ADDON_LOADED")	
 	end 
