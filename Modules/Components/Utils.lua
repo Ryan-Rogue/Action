@@ -384,7 +384,7 @@ if _G.BackdropTemplateMixin == nil then -- Only expac less than Shadowlands
 	BlackBackground:SetBackdrop(nil)
 end 
 BlackBackground:SetFrameStrata("HIGH")
-BlackBackground:SetSize(736, 30)
+BlackBackground:SetSize(273, 30)
 BlackBackground:SetPoint("TOPLEFT", 0, 12) 
 BlackBackground:SetShown(false)
 BlackBackground.IsEnable = true
@@ -424,12 +424,8 @@ local function UpdateFrames()
 		end 
 	end 
 	
-    local myscale1 = 0.42666670680046 * (1080 / myheight)
-    local myscale2 = 0.17777778208256 * (1080 / myheight)    
-    local group1, group2 = TellMeWhen_Group1:GetEffectiveScale()
-    if TellMeWhen_Group2 and TellMeWhen_Group2.Enabled then
-        group2 = TellMeWhen_Group2:GetEffectiveScale()   
-    end    
+    local myscale1 = 0.42666670680046 * (1080 / myheight)   
+    local group1 = TellMeWhen_Group1:GetEffectiveScale()
 	
 	-- "Shown Main"
     if group1 ~= nil and group1 ~= myscale1 then
@@ -444,14 +440,6 @@ local function UpdateFrames()
             BlackBackground:SetScale(myscale1 / (BlackBackground:GetParent() and BlackBackground:GetParent():GetEffectiveScale() or 1))      
         end 
     end
-	
-	-- "Shown Cast Bars"
-    if group2 ~= nil and group2 ~= myscale2 then        
-        TellMeWhen_Group2:SetParent(nil)        
-        TellMeWhen_Group2:SetScale(myscale2) 
-        TellMeWhen_Group2:SetFrameStrata("TOOLTIP")
-        TellMeWhen_Group2:SetToplevel(true)
-    end   
 	
 	-- HealingEngine
     if TargetColor then
@@ -536,7 +524,7 @@ end
 local function TrueScaleInit()
     TMW:RegisterCallback("TMW_GROUP_SETUP_POST", function(_, frame)
             local str_group = toStr[frame]
-            if strfind(str_group, "TellMeWhen_Group2") then                
+            if strfind(str_group, "TellMeWhen_Group1") then                
                 UpdateFrames()  
             end
     end)
@@ -547,7 +535,7 @@ local function TrueScaleInit()
 	--Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",				UpdateCVAR		)
 	VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
 	InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)
-	--TMW:RegisterCallback("TMW_ACTION_IS_INITIALIZED", 			UpdateCVAR		) -- For GetToggle things we have to make post call
+	--TMW:RegisterCallback("TMW_ACTION_IS_INITIALIZED", 			UpdateCVAR		) -- ONLY CLASSIC: For GetToggle things we have to make post call
     ConsoleUpdate()
 	
     TMW:UnregisterCallback("TMW_SAFESETUP_COMPLETE", TrueScaleInit, "TMW_TEMP_SAFESETUP_COMPLETE")
