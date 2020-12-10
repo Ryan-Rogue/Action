@@ -176,15 +176,16 @@ local Medallion 			= LoC_GetExtra["GladiatorMedallion"] -- BFA, Legion, WoD
 -------------------------------------------------------------------------------
 -- API
 -------------------------------------------------------------------------------
-A.Trinket1 					= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET1,	 				BlockForbidden = true, Desc = "Upper Trinket (/use 13)" 													})
-A.Trinket2 					= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET2, 					BlockForbidden = true, Desc = "Lower Trinket (/use 14)"														})
-A.HS						= Create({ Type = "Item", 			ID = 5512, 										QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true						})
-A.AbyssalHealingPotion		= Create({ Type = "Item", 			ID = 169451, 									QueueForbidden = true, Desc = "[6] HealingPotion", 					skipRange = true						})
+A.Trinket1 						= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET1,	 				BlockForbidden = true, Desc = "Upper Trinket (/use 13)" 													})
+A.Trinket2 						= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET2, 					BlockForbidden = true, Desc = "Lower Trinket (/use 14)"														})
+A.HS							= Create({ Type = "Item", 			ID = 5512, 										QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true						})
+A.AbyssalHealingPotion			= Create({ Type = "Item", 			ID = 169451, 									QueueForbidden = true, Desc = "[6] HealingPotion", 					skipRange = true						})
 if BuildToC < 90001 then 
-	A.GladiatorMedallion	= Create({ Type = "Spell", 			ID = CONST.SPELLID_GLADIATORS_MEDALLION, 		QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isTalent = true 		})
-	A.HonorMedallion		= Create({ Type = "Spell", 			ID = CONST.SPELLID_HONOR_MEDALLION, 			QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isReplacement = true	})
-else 
-	A.PhialofSerenity		= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
+	A.GladiatorMedallion		= Create({ Type = "Spell", 			ID = CONST.SPELLID_GLADIATORS_MEDALLION, 		QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isTalent = true 		})
+	A.HonorMedallion			= Create({ Type = "Spell", 			ID = CONST.SPELLID_HONOR_MEDALLION, 			QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isReplacement = true	})
+else 	
+	A.PhialofSerenity			= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
+	A.SpiritualHealingPotion	= Create({ Type = "Item",  			ID = 171267,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
 end 
 
 function A.CanUseHealthstoneOrHealingPotion()
@@ -201,14 +202,24 @@ function A.CanUseHealthstoneOrHealingPotion()
 				elseif Unit(player):HealthPercent() <= Healthstone then 
 					return A.HS							 
 				end
-			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.AbyssalHealingPotion:IsReady(player) then 
-				if Healthstone >= 100 then -- AUTO 
-					if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.AbyssalHealingPotion:GetItemDescription()[1] then 
-						return A.AbyssalHealingPotion
-					end 
-				elseif Unit(player):HealthPercent() <= Healthstone then 
-					return A.AbyssalHealingPotion						 
-				end				
+			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) then 
+				if BuildToC >= 90001 and A.SpiritualHealingPotion:IsReady(player) then 
+					if Healthstone >= 100 then -- AUTO 
+						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.SpiritualHealingPotion:GetItemDescription()[1] then 
+							return A.SpiritualHealingPotion
+						end 
+					elseif Unit(player):HealthPercent() <= Healthstone then 
+						return A.SpiritualHealingPotion						 
+					end	
+				elseif A.AbyssalHealingPotion:IsReady(player) then 
+					if Healthstone >= 100 then -- AUTO 
+						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.AbyssalHealingPotion:GetItemDescription()[1] then 
+							return A.AbyssalHealingPotion
+						end 
+					elseif Unit(player):HealthPercent() <= Healthstone then 
+						return A.AbyssalHealingPotion						 
+					end	
+				end 
 			end 
 		end
 		
