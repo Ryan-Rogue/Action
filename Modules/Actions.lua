@@ -153,7 +153,7 @@ local GameLocale 			= _G.GetLocale()
 local GetCVar				= _G.GetCVar or _G.C_CVar.GetCVar
 
 -- Spell 
-local Spell					= _G.Spell
+local FindSpellBookSlotBySpellID = _G.FindSpellBookSlotBySpellID
 
 local 	 IsPlayerSpell,    IsUsableSpell, 	 IsHelpfulSpell, 	IsHarmfulSpell,    IsAttackSpell, 	 IsCurrentSpell =
 	  _G.IsPlayerSpell, _G.IsUsableSpell, _G.IsHelpfulSpell, _G.IsHarmfulSpell, _G.IsAttackSpell, _G.IsCurrentSpell
@@ -443,6 +443,10 @@ end
 function A:GetSpellChargesFrac()
 	-- @return number	
 	local charges, maxCharges, start, duration = GetSpellCharges((self:Info()))
+	if not max_charges then 
+		return 0
+	end 
+	
 	if charges == maxCharges then 
 		return maxCharges
 	end
@@ -517,7 +521,7 @@ function A:IsSpellInRange(unitID)
 		ID = self 
 		Name = A_GetSpellInfo(ID)
 	end		
-	return IsSpellInRange(Name, unitID) == 1 or (Pet:IsActive() and Pet:IsInRange(ID, unitID))  
+	return Name and (IsSpellInRange(Name, unitID) == 1 or (Pet:IsActive() and Pet:IsInRange(ID, unitID))) 
 end 
 
 function A:IsSpellInCasting()
@@ -1082,7 +1086,7 @@ function A:IsExists(replacementByPass)
 		local spellName, _, _, _, _, _, spellID = GetSpellInfo((self:Info())) 
 		-- spellID will be nil in case of if it's not a player's spell 
 		-- spellName will not be equal to self:Info() if it's replacement spell like "Chi-Torpedo" and "Roll"
-		return (not replacementByPass or spellName == self:Info()) and type(spellID) == "number" and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)))
+		return (not replacementByPass or spellName == self:Info()) and type(spellID) == "number" and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)) or FindSpellBookSlotBySpellID(spellID, false))
 	end 
 	
 	if self.Type == "SwapEquip" then 
@@ -1150,7 +1154,8 @@ end
 function A:HasRange()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return not isSpellRangeException[self.ID] and SpellHasRange((self:Info()))
+		local Name = self:Info()
+		return Name and not isSpellRangeException[self.ID] and SpellHasRange(Name)
 	end 
 	
 	if self.Type == "SwapEquip" then
@@ -1261,6 +1266,16 @@ function A:IsBlockedByAny()
 			or (self.Type == "Spell" and (self:IsBlockedBySpellLevel() or (self.isTalent and not self:IsTalentLearned()) or (self.isCovenant and not self:IsCovenantAvailable()))) 
 			or (self.Type ~= "Spell" and self.Type ~= "SwapEquip" and self:GetCount() == 0 and not self:GetEquipped())
 end 
+
+function A:IsSuspended(delay, reset)
+	-- @return boolean
+	-- Returns true if action should be delayed before use, reset argument is a internal refresh cycle of expiration future time
+	if (self.expirationSuspend or 0) + reset <= TMW.time then
+		self.expirationSuspend = TMW.time + delay
+	end 
+
+	return self.expirationSuspend > TMW.time
+end
 
 function A:IsCastable(unitID, skipRange, skipShouldStop, isMsg, skipUsable)
 	-- @return boolean
