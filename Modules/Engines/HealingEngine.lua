@@ -32,7 +32,7 @@ end)
 --]]
 
 local _G, type, pairs, ipairs, setmetatable, table, unpack, math, error = 
-	  _G, type, pairs, ipairs, setmetatable, table, unpack, math, error
+	  _G, type, pairs, ipairs, setmetatable, table, unpack, math, error	  
 	  
 local TMW 								= _G.TMW
 local CNDT 								= TMW.CNDT							-- TODO: Remove (old profiles)
@@ -54,8 +54,10 @@ local StdUi								= A.StdUi
 local RunLua							= StdUi.RunLua
 local isClassic							= StdUi.isClassic 
 
+local GetLOS							= _G.GetLOS
+
 -- [[ Retail ]]	
-local Azerite 							= LibStub("AzeriteTraits")
+local Azerite 							= LibStub("AzeriteTraits")			-- TODO: Remove 
 --
 
 -- [[ Retired ]]
@@ -287,6 +289,7 @@ local Data; Data 						= {
 		SmokeBomb 						= 76577,			-- PvP Rogue
 		DarkestDepths 					= 292127, 			-- 8.2 "The Eternal Palace: Darkest Depths"
 		CorruptedExistence				= 316065,			-- 8.3 "Ny'alotha - Ny'alotha" (Ny'alotha, the Waking City)
+		GluttonousMiasma				= 329298,			-- 9.0 Gluttonous Miasma, "Hungering Destroyer" boss (Castle Nathria - The Grand Walk)
 		Beacons 						= {156910, 53563}, 	-- TODO: Remove (old profiles)
 		SumDMG							= {},				-- TODO: Remove (old profiles)
 	},
@@ -729,6 +732,7 @@ do
 			-- @return boolean 
 			local unitID 				= self.Unit or unitID
 			local unitGUID 				= self.GUID
+			local ZoneID				= A.ZoneID
 			
 			return 
 				A_Unit(unitID):InRange()
@@ -752,10 +756,13 @@ do
 				) 
 				-- Patch 8.2
 				-- 1514 is "The Eternal Palace: Darkest Depths"
-				and ( A.ZoneID ~= 1514 or A_Unit(unitID):HasDeBuffs(Aura.DarkestDepths) == 0 )	
+				and ( ZoneID ~= 1514 or A_Unit(unitID):HasDeBuffs(Aura.DarkestDepths) == 0 )	
 				-- Patch 8.3
 				-- 1582 is "Ny'alotha - Ny'alotha" (Ny'alotha, the Waking City)
-				and ( A.ZoneID ~= 1582 or A_Unit(unitID):HasDeBuffs(Aura.CorruptedExistence) == 0 or self.realHP <= 70 )
+				and ( ZoneID ~= 1582 or A_Unit(unitID):HasDeBuffs(Aura.CorruptedExistence) == 0 or self.realHP <= 70 )
+				-- Patch 9.0
+				-- 1735 is "Castle Nathria - The Grand Walk"
+				and ( ZoneID ~= 1735 or A_Unit(unitID):HasDeBuffs(Aura.GluttonousMiasma) == 0 )
 		end,
 		CanRessurect					= function(self)
 			local unitID 				= self.Unit 
@@ -1144,6 +1151,21 @@ local function SetColorTarget()
 	return frame:SetColor(healingTarget)
 end
 
+local function UpdateTargetLOS()
+	if A_Unit(target):IsExists() and not A_Unit(target):IsEnemy() then
+		if A.IsInitialized then
+			-- New profiles 
+			if not A_IsUnitFriendly(mouseover) then 
+				GetLOS(target)
+			end 		
+		elseif A.IsGGLprofile and (not _G.MouseOver_Toggle or A_Unit(mouseover):IsEnemy() or not A.MouseHasFrame()) then 
+			-- TODO: Remove on old profiles until June 2019
+			-- Old profiles 
+			GetLOS(target)
+		end 
+	end 
+end
+
 local function PLAYER_TARGET_CHANGED()
 	ClearHealingTarget()
 	-- [3] @target enemy or [4] @target boss
@@ -1156,6 +1178,9 @@ local function PLAYER_TARGET_CHANGED()
 			healingTargetDelayByEvent = false 
 		end 
 	end 
+	
+	-- Update Line of Sight
+	UpdateTargetLOS()
 end 
 
 local function UPDATE_MOUSEOVER_UNIT()
@@ -1224,6 +1249,11 @@ local function Initialize()
 					if TMW.time > healingTargetDelay then 
 						SetHealingTarget() 
 						SetColorTarget()   
+					end 
+					
+					-- Update Line of Sight
+					if self.unit == none then 
+						UpdateTargetLOS()
 					end 
 					
 					self.elapsed = 0
