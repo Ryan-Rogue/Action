@@ -3562,7 +3562,7 @@ A.Unit = PseudoClass({
 			return huge, min_range or huge 
 		end 
 		
-		-- Limit range to 20 if unitID is nameplated and max range over normal behaivor 
+		-- Limit range to 60 if unitID is nameplated and max range over normal behavior 
 		if max_range > CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE and self(unitID):IsNameplateAny() then 
 			if min_range > CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE then 
 				min_range = CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE

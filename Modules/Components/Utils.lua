@@ -217,7 +217,8 @@ do
         assert(pGUID, "pGUID was null when func string was generated!")
         
         local blacklist = {
-            [204255] = true -- Soul Fragment (happens after casting Sheer for DH tanks)
+            [204255] = true, 				-- Soul Fragment (happens after casting Sheer for DH tanks)
+			[75] = true, 					-- Hunter's Auto Shot
         }
         
         module:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED",
@@ -380,7 +381,7 @@ end
 -- Scales
 -------------------------------------------------------------------------------
 local BlackBackground = CreateFrame("Frame", nil, UIParent)
-if _G.BackdropTemplateMixin == nil then -- Only expac less than Shadowlands
+if _G.BackdropTemplateMixin == nil and BlackBackground.SetBackdrop then -- Only expac less than Shadowlands
 	BlackBackground:SetBackdrop(nil)
 end 
 BlackBackground:SetFrameStrata("HIGH")
@@ -466,9 +467,20 @@ local function UpdateCVAR()
 		Print("Gamma should be 1")	
 	end
 	
-    if GetCVar("colorblindsimulator") ~= "0" then 
+	local colorblindsimulator = GetCVar("colorblindsimulator") -- Renamed to colorblindSimulator on some versions (?)
+    if colorblindsimulator ~= nil and colorblindsimulator ~= "0" then 
 		SetCVar("colorblindsimulator", 0) 
 	end 
+	
+	local colorblindSimulator = GetCVar("colorblindSimulator")
+	if colorblindSimulator ~= nil and colorblindSimulator ~= "0" then 
+		SetCVar("colorblindSimulator", 0) 
+	end 
+	
+	local colorblindWeaknessFactor = GetCVar("colorblindWeaknessFactor")
+	if colorblindWeaknessFactor ~= nil and colorblindWeaknessFactor ~= "0.5"  then 
+		SetCVar("colorblindWeaknessFactor", 0.5) 
+	end
 	
 	if toNum[GetCVar("SpellQueueWindow") or 400] == nil then 
 		SetCVar("SpellQueueWindow", 400) 

@@ -152,7 +152,10 @@ local Data = {
 	-- Shoot 
 	AutoShootActive = false, 
 	AutoShootNextTick = 0,
-	IsShoot = GetSpellInfo(5019),
+	IsShoot = { 
+		[GetSpellInfo(5019)] = true, 	-- Shoot 
+		[GetSpellInfo(75)] = true, 		-- Hunter's Auto Shot 
+	},
 	-- Attack
 	AttackActive = false,	
 	-- Behind
@@ -234,7 +237,7 @@ end
 
 function Data.updateAutoShoot(...)
 	local unitID, _, spellID = ... 
-	if unitID == "player" and A.IamRanger and A_GetSpellInfo(spellID) == Data.IsShoot then 
+	if unitID == "player" and A.IamRanger and Data.IsShoot[A_GetSpellInfo(spellID)] then 
 		Data.AutoShootNextTick = TMW.time + UnitRangedDamage("player")
 	end 
 end 
@@ -1543,7 +1546,7 @@ local function ComputeRuneCooldown(Slot, BypassRecovery)
 	-- Get rune cooldown infos
 	local CDTime, CDValue = GetRuneCooldown(Slot)
 	-- Return 0 if the rune isn't in CD.
-	if CDTime == 0 then return 0 end
+	if CDTime == 0 or not CDTime then return 0 end
 	-- Compute the CD.
 	local CD = CDTime + CDValue - TMW.time - (BypassRecovery and 0 or RecoveryOffset())
 	-- Return the Rune CD

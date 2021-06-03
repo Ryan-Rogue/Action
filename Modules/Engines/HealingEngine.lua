@@ -136,7 +136,7 @@ local healingTargetDelay 				= 0
 local healingTargetDelayByEvent			= false 
 
 local frame 							= _G.CreateFrame("Frame", "TargetColor", _G.UIParent)
-if _G.BackdropTemplateMixin == nil then -- Only expac less than Shadowlands
+if _G.BackdropTemplateMixin == nil and frame.SetBackdrop then -- Only expac less than Shadowlands
 	frame:SetBackdrop(nil)
 end 
 frame:SetFrameStrata("TOOLTIP")
@@ -290,6 +290,7 @@ local Data; Data 						= {
 		DarkestDepths 					= 292127, 			-- 8.2 "The Eternal Palace: Darkest Depths"
 		CorruptedExistence				= 316065,			-- 8.3 "Ny'alotha - Ny'alotha" (Ny'alotha, the Waking City)
 		GluttonousMiasma				= 329298,			-- 9.0 Gluttonous Miasma, "Hungering Destroyer" boss (Castle Nathria - The Grand Walk)
+		ForgeborneReveries 				= 327140,			-- 9.0 Forgeborne Reveries (Necrolords)
 		Beacons 						= {156910, 53563}, 	-- TODO: Remove (old profiles)
 		SumDMG							= {},				-- TODO: Remove (old profiles)
 	},
@@ -763,6 +764,9 @@ do
 				-- Patch 9.0
 				-- 1735 is "Castle Nathria - The Grand Walk"
 				and ( ZoneID ~= 1735 or A_Unit(unitID):HasDeBuffs(Aura.GluttonousMiasma) == 0 )
+				-- 9.0 Forgeborne Reveries (Necrolords)
+				-- TODO: Add check that player is Necrolod (?)
+				and self.isPlayer and A_Unit(unitID):HasBuffs(Aura.ForgeborneReveries) == 0
 		end,
 		CanRessurect					= function(self)
 			local unitID 				= self.Unit 
@@ -877,8 +881,8 @@ do
 					if role == "TANK" then 
 						self:SetupOffsets(db.OffsetTanks, self.HP - 2)
 					elseif role == "HEALER" then
-						if self.isSelf then 
-							if A.IsInPvP and ((not isClassic and A_Unit(player):IsFocused(nil, true)) or (isClassic and A_Unit(player):IsFocused(0))) then 
+						if self.isSelf and A.IsInPvP then 
+							if (not isClassic and A_Unit(player):IsFocused(nil, true)) or (isClassic and A_Unit(player):IsFocused(0)) then 
 								self:SetupOffsets(db.OffsetSelfFocused, math_max(self.HP - 20, self.HP)) -- Can not be lower than current modified HP
 							else 
 								self:SetupOffsets(db.OffsetSelfUnfocused, self.HP - 2)
