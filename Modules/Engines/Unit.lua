@@ -2418,6 +2418,54 @@ local Info = {
 		[113864] = true, -- Lvl ?? (Trueshot Lodge) - Damage
 		[70245]  = true, -- Lvl ?? (Throne of Thunder)
 		[131983] = true, -- Lvl ?? (Boralus) - Damage	
+		  -- Shadowlands Kyrian
+		[154586] = true, -- Stalwart Phalanx
+		[154585] = true, -- Valiant's Resolve
+		[154583] = true, -- Starlwart Guardian
+		[154580] = true, -- Reinforced Guardian
+		[160325] = true, -- Humility's Obedience
+		[154564] = true, -- Valiant's Humility
+		[154567] = true, -- Purity's Cleaning
+		[160435] = true, --?? Kyrian Combat Trainer Raider's Training Dummy
+		[160432] = true, --60 Kyrian Combat Trainer Training Dummy
+		[160434] = true, --62 Kyrian Combat Trainer Dungeoneer's Training Dummy
+		-- Shadowlands Venthyr
+		[173942] = true, -- Training Dummy
+		[175449] = true, -- Raider's Training Dummy
+		[175450] = true, -- Dungeoneer's Training Dummy
+		[175451] = true, -- Dungeoneer's Tanking Dummy
+		[175452] = true, -- Raider's Tanking Dummy
+		[175455] = true, -- Cleave Training Dummy
+		[175456] = true, -- Swarm Training Dummy
+		[175462] = true, -- Sinfall Fiend
+		[173072] = true, --60 Training Dummy
+		-- Shadowlands Night Fae
+		[174565] = true, -- Dungeoneer's Tanking Dummy
+		[174566] = true, -- Raider's Tanking Dummy
+		[174567] = true, -- Raider's Training Dummy
+		[174568] = true, -- Dungeoneer's Training Dummy
+		[174569] = true, -- Training Dummy
+		[174570] = true, -- Swarm Training Dummy
+		[175471] = true, -- Cleave Training Dummy
+		[174571] = true, --60 Cleave Training Dummy
+		-- Shadowlands Necrolord
+		[174491] = true, -- Tanking Dummy
+		[174488] = true, -- Raider's Training Dummy
+		[174484] = true, -- Dungeoneer's Training Dummy
+		[174487] = true, -- Training Dummy
+		[174489] = true, --60 Necromantic Guide Healing Dummy
+		-- Other
+		[65310] = true, -- Turnip Punching Bag
+		[173877] = true, -- Reinforced Target Dungeoneer's Training Dummy
+		[173867] = true, -- Stalwart Totem Raider's Training Dummy
+		[151022] = true, -- Training Dummy
+		[171961] = true, -- Damaged Kyrian Combat Trainer Training Dummy
+		[173873] = true, -- Reinforced Death Elemental Dungeoneer's Training Dummy
+		[173866] = true, -- Reinforced Totem Dungeoneer's Training Dummy
+		[173870] = true, -- Stalwart Death Elemental Raider's Training Dummy
+		[173879] = true, -- Stalwart Target Raider's Training Dummy
+		[149860] = true, -- Training Dummy
+		[174435] = true, -- Training Dummy
 	},
 	IsDummyPvP 					= {
 		-- City (SW, Orgri, ...)
