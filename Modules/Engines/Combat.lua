@@ -1140,12 +1140,13 @@ Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_ENABLED", 				function
 	if A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A_Player:IsStealthed() then 
 		wipe(UnitTrackerData)
 		wipe(CombatTrackerData)
-	else 
-		local GUID = GetGUID("player")
-		if CombatTrackerData[GUID] then 
-			CombatTrackerData[GUID].combat_time = 0
-		end 
 	end 
+	
+	local GUID = GetGUID("player")
+	CombatTracker:AddToData(GUID, TMW.time)
+	if CombatTrackerData[GUID] then 
+		CombatTrackerData[GUID].combat_time = 0
+	end  
 end)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				function()
 	-- Need leave slow delay to prevent reset Data which was recorded before combat began for flyout spells, otherwise it will cause a bug
@@ -1153,12 +1154,13 @@ Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "PLAYER_REGEN_DISABLED", 				functio
 	if (SpellLastCast == 0 or SpellLastCast > 1.5) and A.Zone ~= "arena" and A.Zone ~= "pvp" and not A.IsInDuel and not A_Player:IsStealthed() and A_Player:CastTimeSinceStart() > 5 then 
 		wipe(UnitTrackerData)   	
 		wipe(CombatTrackerData)
-	else 
-		local GUID = GetGUID("player")
-		if CombatTrackerData[GUID] then 
-			CombatTrackerData[GUID].combat_time = TMW.time 
-		end 		
 	end 
+	
+	local GUID = GetGUID("player")
+	CombatTracker:AddToData(GUID, TMW.time)
+	if CombatTrackerData[GUID] then 
+		CombatTrackerData[GUID].combat_time = TMW.time 
+	end 		 
 end)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_UPDATE", 				LossOfControl.OnEvent		)
 Listener:Add("ACTION_EVENT_COMBAT_TRACKER", "LOSS_OF_CONTROL_ADDED", 				LossOfControl.OnEvent		)
