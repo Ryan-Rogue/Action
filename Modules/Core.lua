@@ -104,6 +104,10 @@ local arena 										= "arena"
 local FoodAndDrink 									= {
 	[GetSpellInfo(43180)] 							= true, -- Food 
 	[GetSpellInfo(27089)] 							= true, -- Drink
+	[GetSpellInfo(18233) or ""]						= true,	-- Food
+	[GetSpellInfo(1131) or ""] 						= true,	-- Food
+	[GetSpellInfo(22734) or ""]						= true, -- Drink
+	[GetSpellInfo(34291) or ""]						= true, -- Drink	
 	[GetSpellInfo(257427)] 							= true, -- FoodDrink
 	[GetSpellInfo(167152)] 							= true, -- Mage's eat
 }
