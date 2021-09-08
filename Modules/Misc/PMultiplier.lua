@@ -14,7 +14,7 @@ local CombatLogGetCurrentEventInfo 	= _G.CombatLogGetCurrentEventInfo
 local 	 UnitGUID, 	  GetSpellInfo 	= 
 	  _G.UnitGUID, _G.GetSpellInfo
 	
-local ListenedSpells 				= {}
+ListenedSpells 				= {}
 local ListenedAuras 				= {}
 local ListenedLastCast 				= {}	
 
@@ -49,8 +49,8 @@ local function ComputePMultiplier(ListenedSpell)
 end
 
 local function PMultiplierLaunch(...)
-	-- Feral 
-	if Unit("player"):HasSpec(103) then 
+	-- Feral or Assassination
+	if Unit("player"):HasSpec(103) or Unit("player"):HasSpec(259) then 
 		Listener:Add("ACTION_EVENT_PMULTIPLIER", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
 			local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _, _, _, SpellID  = CombatLogGetCurrentEventInfo()
 			
@@ -199,4 +199,7 @@ if not isClassic and A.PlayerClass == "DRUID" then
 		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}
 	)
 end 
-
+if not isClassic and A.PlayerClass == "ROGUE" then 
+	Listener:Add("ACTION_EVENT_PMULTIPLIER", "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
+	PMultiplierLaunch()
+end
