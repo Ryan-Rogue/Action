@@ -9943,7 +9943,6 @@ function Action.ToggleMainUI()
 		end)
 		
 		MainUI.Session = StdUi:Subtitle(MainUI, L["TAB"]["SESSION"])
-		MainUI.Session.fontHeight = select(2, MainUI.Session:GetFont())
 		MainUI.Session.OnTimerTick = function()		
 			local remain, isStop = Action.GetSession()
 			local remain_profile, remain_profile_secs, userStatus, profileName, locales = Action.ProfileSession:GetSession()
