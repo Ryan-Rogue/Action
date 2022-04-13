@@ -36,6 +36,7 @@ Action.lua
 Modules\Components\Enum\TriggerGCD.lua
 Modules\Components\Tools.lua
 Modules\Components\Utils.lua
+Modules\Components\Cryptography.lua
 
 Modules\Dependences\MacroLibrary.lua
 Modules\Dependences\PetLibrary.lua
@@ -60,6 +61,7 @@ Modules\Misc\PrevSpell.lua
 Modules\Misc\DRList.lua
 Modules\Misc\StdUi.lua
 Modules\Misc\Toaster.lua
+Modules\Misc\ProfileSession.lua
 
 Modules\Actions.lua
 Modules\Core.lua
