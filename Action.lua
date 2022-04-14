@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "13.04.2022"
+local DateTime 														= "14.04.2022"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -4372,7 +4372,6 @@ local Factory = {
 				[596] = "Prayer of Healing",
 				[2060] = "Heal",
 				[2061] = "Flash Heal",
-				[32546] = "Binding Heal",
 				[33076] = "Prayer of Mending",
 				[64843] = "Divine Hymn",
 				[120517] = "Halo",
@@ -5367,6 +5366,15 @@ local Upgrade 					= {
 			
 			pActionDB[3].CheckSpellLevel = true 
 		end, 
+		[3]						= function()
+			tEraseKeys(pActionDB[4], { 
+				Heal = {
+					["GameLocale"] = {
+						[32546] = true,
+					},
+				},
+			}, "pActionDB[4]")
+		end,
 	},
 	gUpgrades					= {
 		[1]						= function()
