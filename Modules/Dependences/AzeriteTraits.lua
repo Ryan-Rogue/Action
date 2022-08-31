@@ -403,7 +403,7 @@ if AzeriteEmpoweredItem then
 end 
 
 -- Azerite Essence
-if AzeriteEssence then	
+if AzeriteEssence and EnumAzeriteEssence then	
 	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_CHANGED", 				DataEssences.Update)
 	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_UPDATE", 				DataEssences.Update) 
 	Listener:Add("ACTION_EVENT_AZERITE_TRAITS", "AZERITE_ESSENCE_ACTIVATED", 			DataEssences.Update)
