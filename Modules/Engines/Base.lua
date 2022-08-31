@@ -101,8 +101,8 @@ local 	 IsInRaid, 	  IsInGroup, 	IsInInstance, 	 IsActiveBattlefieldArena, 	  Re
 local 	 UnitIsUnit, 	UnitInBattleground,    UnitGUID = 
 	  _G.UnitIsUnit, _G.UnitInBattleground, _G.UnitGUID
 
-local 	 GetInstanceInfo, 	 GetNumArenaOpponents, 	  GetNumBattlefieldScores, 	  GetNumGroupMembers =
-	  _G.GetInstanceInfo, _G.GetNumArenaOpponents, _G.GetNumBattlefieldScores, _G.GetNumGroupMembers
+local 	 GetInstanceInfo, 	 GetNumArenaOpponents, 	  GetNumArenaOpponentSpecs,    GetNumBattlefieldScores,    GetNumGroupMembers =
+	  _G.GetInstanceInfo, _G.GetNumArenaOpponents, _G.GetNumArenaOpponentSpecs, _G.GetNumBattlefieldScores, _G.GetNumGroupMembers
 
 local IsWarModeDesired							= C_PvP.IsWarModeDesired
 local IsRatedMap								= C_PvP.IsRatedMap	  
@@ -263,7 +263,9 @@ local function OnEvent(event, ...)
 		
 		-- Enemy  		
 		if A.Zone == "arena" then 
-			TeamCacheEnemy.Size = GetNumArenaOpponents() -- GetNumArenaOpponentSpecs()    
+			-- GetNumArenaOpponentSpecs  (only retail) and can track enemies before arena start
+			-- GetNumArenaOpponents after gates open 
+			TeamCacheEnemy.Size = GetNumArenaOpponentSpecs and GetNumArenaOpponentSpecs() or GetNumArenaOpponents()    
 			TeamCacheEnemy.Type = "arena"
 			TeamCacheEnemy.MaxSize = 5
 		elseif A.Zone == "pvp" then

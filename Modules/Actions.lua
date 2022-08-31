@@ -1235,15 +1235,15 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 		
 		if isEnemy and imunBuffs and A.IsInPvP and Unit(unitID):IsPlayer() then  
 			-- Light and faster check Fury Warriors
-			if type(imunBuffs) == "table" then 				
-				for i = 1, #imunBuffs do 
-					if imunBuffs[i] == "Freedom" and Unit(unitID):HasSpec(CONST.WARRIOR_FURY) then 
-						return false 
-					end 
-				end 
-			elseif imunBuffs == "Freedom" and Unit(unitID):HasSpec(CONST.WARRIOR_FURY) then
-				return false  								
-			end 
+			--if type(imunBuffs) == "table" then 				
+			--	for i = 1, #imunBuffs do 
+			--		if imunBuffs[i] == "Freedom" and Unit(unitID):HasSpec(CONST.WARRIOR_FURY) then 
+			--			return false 
+			--		end 
+			--	end 
+			--elseif imunBuffs == "Freedom" and Unit(unitID):HasSpec(CONST.WARRIOR_FURY) then
+			--	return false  								
+			--end 
 			
 			-- Check remain things
 			 if Unit(unitID):HasBuffs(imunBuffs) > MinDur then 
