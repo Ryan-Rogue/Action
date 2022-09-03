@@ -1,4 +1,4 @@
-local DateTime 														= "31.08.2022"
+local DateTime 														= "03.09.2022"
 
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -8805,7 +8805,13 @@ function Action:SetQueue(args)
 	if args.ExtraCD then
 		ActionDataQ[priority].ExtraCD = args.ExtraCD 
 	end 	
-		
+	
+	-- Ryan's fix Action:SetQueue() is missing CP passing to IsQueueReady logic
+	if args.CP then
+		ActionDataQ[priority].CP = args.CP 
+		ActionDataQ[priority].isCP = true
+	end		
+	
     A_Listener:Add("ACTION_EVENT_QUEUE", "UNIT_SPELLCAST_SUCCEEDED", 		Queue.UNIT_SPELLCAST_SUCCEEDED										)
 	A_Listener:Add("ACTION_EVENT_QUEUE", "BAG_UPDATE_COOLDOWN", 			Queue.BAG_UPDATE_COOLDOWN											)	
 	A_Listener:Add("ACTION_EVENT_QUEUE", "ITEM_UNLOCKED",					Queue.ITEM_UNLOCKED													)
