@@ -386,7 +386,7 @@ function Data.OnEvent()
 			end
 			
 			-- Azerite Essence
-			if slot == 2 then 
+			if slot == 2 and EnumAzeriteEssence then 
 				DataEssences.Update() 
 			end 
 		end
