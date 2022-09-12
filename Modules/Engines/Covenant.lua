@@ -67,8 +67,8 @@ local CovenantActions					= {
 	{ Type = "Spell", ID = 312202, isCovenant = true, covenantID = 1, covenantKey = "ShackletheUnworthy", 	covenantClass = "DEATHKNIGHT" 													 																	}, 
 	-- [[ Venthyr ]] 
 	{ Type = "Spell", ID = 300728, isCovenant = true, covenantID = 2, covenantKey = "DoorofShadows", 																		skipRange = true, covenantArea = true												}, -- ground click 
-	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }, Texture = 135358					 					}, -- replaced Execute!
-	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }							 , Texture = 135358										}, -- replaced Execute!
+	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }, Texture = 163201					 					}, -- replaced Execute!
+	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }							 , Texture = 163201										}, -- replaced Execute!
 	{ Type = "Spell", ID = 321792, isCovenant = true, covenantID = 2, covenantKey = "ImpendingCatastrophe", covenantClass = "WARLOCK" 													 																		}, -- casting
 	{ Type = "Spell", ID = 320674, isCovenant = true, covenantID = 2, covenantKey = "ChainHarvest", 		covenantClass = "SHAMAN" 													 																		}, -- casting
 	{ Type = "Spell", ID = 323654, isCovenant = true, covenantID = 2, covenantKey = "Slaughter", 			covenantClass = "ROGUE" 													 																		}, -- stealthed
@@ -87,7 +87,7 @@ local CovenantActions					= {
 	{ Type = "Spell", ID = 325640, isCovenant = true, covenantID = 3, covenantKey = "SoulRot", 				covenantClass = "WARLOCK" 																															}, -- casting 
 	{ Type = "Spell", ID = 328923, isCovenant = true, covenantID = 3, covenantKey = "FaeTransfusion", 		covenantClass = "SHAMAN", 										skipRange = true, covenantArea = true												}, -- ground click, channeling 
 	{ Type = "Spell", ID = 328305, isCovenant = true, covenantID = 3, covenantKey = "Sepsis", 				covenantClass = "ROGUE" 																															}, 
-	{ Type = "Spell", ID = 327694, isCovenant = true, covenantID = 3, covenantKey = "FaeBlessings", 		covenantClass = "PRIEST", 										skipRange = true																	}, -- FIX ME: Isn't 327661 ?!
+	{ Type = "Spell", ID = 327661, isCovenant = true, covenantID = 3, covenantKey = "FaeGuardians", 		covenantClass = "PRIEST", 										skipRange = true											  , Texture = 327694	}, 
 	{ Type = "Spell", ID = 328282, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSpring", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
 	{ Type = "Spell", ID = 328620, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSummer", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
 	{ Type = "Spell", ID = 328622, isCovenant = true, covenantID = 3, covenantKey = "BlessingofAutumn", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
@@ -493,7 +493,23 @@ if Covenant:IsLoaded() then
 								return 
 							end
 							
-							CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName))
+							-- Fix Paladin's NightFae 
+							if obj.covenantClass == "PALADIN" and obj.covenantID == 3 then 
+								local macrotext = CovenantClass:GetAttribute("macrotext") 
+								for _, subObj in ipairs(CovenantActions) do 
+									if subObj.covenantClass == "PALADIN" and subObj.covenantID == 3 then
+										spellName = GetSpellInfo(subObj.ID)								
+										if not spellName then 
+											error("CovenantClass couldn't get spellName from " .. subObj.covenantKey)
+											return 
+										end				
+										
+										CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName) .. (macrotext and ("\n" .. macrotext) or ""))
+									end 
+								end 
+							else 
+								CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName))
+							end 
 						end 
 						
 						CovenantClass.installed = true 
