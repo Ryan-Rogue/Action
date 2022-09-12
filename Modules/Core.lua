@@ -198,7 +198,7 @@ function A.CanUseHealthstoneOrHealingPotion()
 		-- Healthstone | AbyssalHealingPotion
 		local Healthstone = GetToggle(1, "HealthStone") 
 		if Healthstone >= 0 then 
-			if A.HS:IsReady(player) then 					
+			if A.HS:IsReadyByPassCastGCD(player) then 					
 				if Healthstone >= 100 then -- AUTO 
 					if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 then 
 						return A.HS
@@ -207,7 +207,7 @@ function A.CanUseHealthstoneOrHealingPotion()
 					return A.HS							 
 				end
 			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) then 
-				if BuildToC >= 90001 and A.SpiritualHealingPotion:IsReady(player) then 
+				if BuildToC >= 90001 and A.SpiritualHealingPotion:IsReadyByPassCastGCD(player) then 
 					if Healthstone >= 100 then -- AUTO 
 						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.SpiritualHealingPotion:GetItemDescription()[1] then 
 							return A.SpiritualHealingPotion
@@ -215,7 +215,7 @@ function A.CanUseHealthstoneOrHealingPotion()
 					elseif Unit(player):HealthPercent() <= Healthstone then 
 						return A.SpiritualHealingPotion						 
 					end	
-				elseif A.AbyssalHealingPotion:IsReady(player) then 
+				elseif A.AbyssalHealingPotion:IsReadyByPassCastGCD(player) then 
 					if Healthstone >= 100 then -- AUTO 
 						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.AbyssalHealingPotion:GetItemDescription()[1] then 
 							return A.AbyssalHealingPotion
@@ -228,7 +228,7 @@ function A.CanUseHealthstoneOrHealingPotion()
 		end
 		
 		-- PhialofSerenity
-		if BuildToC >= 90001 and A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.PhialofSerenity:IsReady(player) then 
+		if BuildToC >= 90001 and A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.PhialofSerenity:IsReadyByPassCastGCD(player) then 
 			-- Healing 
 			local PhialofSerenityHP, PhialofSerenityOperator, PhialofSerenityTTD = GetToggle(2, "PhialofSerenityHP"), GetToggle(2, "PhialofSerenityOperator"), GetToggle(2, "PhialofSerenityTTD")
 			if PhialofSerenityOperator == "AND" then 
