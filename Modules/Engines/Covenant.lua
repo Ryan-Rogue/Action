@@ -67,8 +67,8 @@ local CovenantActions					= {
 	{ Type = "Spell", ID = 312202, isCovenant = true, covenantID = 1, covenantKey = "ShackletheUnworthy", 	covenantClass = "DEATHKNIGHT" 													 																	}, 
 	-- [[ Venthyr ]] 
 	{ Type = "Spell", ID = 300728, isCovenant = true, covenantID = 2, covenantKey = "DoorofShadows", 																		skipRange = true, covenantArea = true												}, -- ground click 
-	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }					 									}, -- replaced Execute!
-	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }					 																}, -- replaced Execute!
+	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }, Texture = 135358					 					}, -- replaced Execute!
+	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }							 , Texture = 135358										}, -- replaced Execute!
 	{ Type = "Spell", ID = 321792, isCovenant = true, covenantID = 2, covenantKey = "ImpendingCatastrophe", covenantClass = "WARLOCK" 													 																		}, -- casting
 	{ Type = "Spell", ID = 320674, isCovenant = true, covenantID = 2, covenantKey = "ChainHarvest", 		covenantClass = "SHAMAN" 													 																		}, -- casting
 	{ Type = "Spell", ID = 323654, isCovenant = true, covenantID = 2, covenantKey = "Slaughter", 			covenantClass = "ROGUE" 													 																		}, -- stealthed
