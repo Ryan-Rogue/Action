@@ -1,5 +1,6 @@
-local DateTime 														= "12.09.2022"
-
+--- 
+local DateTime 														= "29.10.2022"
+---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
 	
@@ -9222,12 +9223,12 @@ local Cursor; Cursor 		= {
 			Action.GameTooltipClick = nil 	
 		end		
 	end,
-	CURSOR_UPDATE			= function()	
-		Cursor.lastEventTime = TMW.time
-		if Action.GameTooltipClick and not Cursor.lastMouseName then			
-			Action.GameTooltipClick = nil 	 
-		end 
-	end,
+	-- CURSOR_UPDATE			= function()	
+	-- 	Cursor.lastEventTime = TMW.time
+	-- 	if Action.GameTooltipClick and not Cursor.lastMouseName then			
+	-- 		Action.GameTooltipClick = nil 	 
+	-- 	end 
+	-- end,
 	UPDATE_MOUSEOVER_UNIT 	= function()	
 		Cursor.lastEventTime = TMW.time
 		if not Cursor.lastMouseName or Cursor.lastMouseName ~= UnitName("mouseover") then 
@@ -9235,7 +9236,7 @@ local Cursor; Cursor 		= {
 		end 
 	end,	
 	Reset 					= function(self)
-		A_Listener:Remove("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE")
+		--A_Listener:Remove("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE")
 		A_Listener:Remove("ACTION_EVENT_CURSOR_FEATURE", "UPDATE_MOUSEOVER_UNIT")	
 		Action.GameTooltipClick = nil 
 		self.lastMouseName		= nil 	
@@ -9272,7 +9273,7 @@ local Cursor; Cursor 		= {
 					self.lastMouseName		= nil 
 				end
 			end)					
-			A_Listener:Add("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE", 		self.CURSOR_UPDATE) 				-- GameObjects:Remove				
+			--A_Listener:Add("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE", 		self.CURSOR_UPDATE) 				-- GameObjects:Remove				
 			self.GameTooltip:HookScript("OnUpdate", function(this, elapse)											
 				-- Note: UPDATE_MOUSEOVER_UNIT doesn't fires if you move out cursor from unit, so we will use this to simulate same event 
 				if self.Initialized then 
@@ -9303,7 +9304,7 @@ local Cursor; Cursor 		= {
 		self.Initialized = A_GetToggle(6, "UseLeft") or A_GetToggle(6, "UseRight")
 		if wasHooked then 
 			if self.Initialized then
-				A_Listener:Add("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE", 			self.CURSOR_UPDATE)
+				--A_Listener:Add("ACTION_EVENT_CURSOR_FEATURE", "CURSOR_UPDATE", 			self.CURSOR_UPDATE)
 				A_Listener:Add("ACTION_EVENT_CURSOR_FEATURE", "UPDATE_MOUSEOVER_UNIT", 	self.UPDATE_MOUSEOVER_UNIT)	
 			else
 				self:Reset()

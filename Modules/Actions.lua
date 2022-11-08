@@ -61,7 +61,6 @@ Listener:Add("ACTION_EVENT_ACTIONS", "ADDON_LOADED", function(addonName)
 		Listener:Remove("ACTION_EVENT_ACTIONS", "ADDON_LOADED")	
 	end 	
 end)
-
 -------------------------------------------------------------------------------  
 local Azerite 				= LibStub("AzeriteTraits")
 local LegendaryCrafting		= LibStub("LegendaryCrafting")
@@ -245,7 +244,7 @@ function A.GetGCD()
 			return 1
 		else 
 			-- Depended on current haste
-			return 1.5 / (1 + GetHaste() / 100) -- 1.5 / (1 + UnitSpellHaste("player") * 0.01)
+			return 1.5 / (1 + GetHaste() / 100) -- 1.5 / (1 + UnitSpellHaste("player") * 0.01) -- TODO Retest GetHaste vs UnitSpellHaste
 		end 
 	end    
 end
@@ -546,12 +545,15 @@ end
 function A:IsTalentLearned()
 	-- @usage A:IsTalentLearned() or A.IsTalentLearned(spellID)
 	-- @return boolean about selected or not (talent or pvptalent)	
+
 	local Name
+
 	if type(self) == "table" then 
 		Name = self:Info()
 	else 
 		Name = A_GetSpellInfo(self)
 	end	
+
 	local lowerName = strlowerCache[Name]
 	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
 end
