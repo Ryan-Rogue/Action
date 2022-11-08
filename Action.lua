@@ -12832,7 +12832,7 @@ function Action.ToggleMainUI()
 						self.val = text					
 						if self.val > 9999999 then 						
 							self.val = ""
-							self:SetNumber("")							
+							self:SetText("")							
 							Action.Print(L["DEBUG"] .. L["TAB"][tabName]["INTEGERERROR"]) 
 							return 
 						end 
@@ -12860,7 +12860,7 @@ function Action.ToggleMainUI()
 			InputBox:SetScript("OnEscapePressed", function(self)
                 StdUi:ShowTooltip(self, false)
 				self.val = ""
-				self:SetNumber("")
+				self:SetText("")
 				self:ClearFocus() 
             end)			
 			InputBox:HookScript("OnHide", function(self)
@@ -13048,7 +13048,7 @@ function Action.ToggleMainUI()
 
 			local function ClearAllEditBox(clearInput)
 				if clearInput then 
-					InputBox:SetNumber("")
+					InputBox:SetText("")
 				end
 				InputBox:ClearFocus()
 				Duration:ClearFocus()
@@ -13492,7 +13492,7 @@ function Action.ToggleMainUI()
 				canStealOrPurge:SetChecked(false)
 				onlyBear:SetChecked(false)
 				InputBox.val = ""
-				InputBox:SetNumber("")					
+				InputBox:SetText("")					
 				ClearAllEditBox()
 			end)
 			StdUi:GlueTop(ResetConfigPanel, ConfigPanel, 0, 0, "LEFT")
@@ -13875,7 +13875,7 @@ function Action.ToggleMainUI()
 				LuaEditor.EditBox:SetText("")
 				LuaButton.FontStringLUA:SetText(themeOFF)
 				isTotem:SetChecked(false)
-				InputBox:SetNumber("")					
+				InputBox:SetText("")					
 				InputBox:ClearFocus()
 			end)
 			StdUi:GlueTop(ResetConfigPanel, ConfigPanel, 0, 0, "LEFT")
