@@ -133,13 +133,13 @@ function StdUi:ColorPicker(parent, alphaSliderTexture)
 	cpf.alphaThumbTexture = self:Texture(cpf.alphaSlider, barWidth, thumbWidth,
 		[[Interface\Buttons\UI-ColorPicker-Buttons]]);
 	cpf.alphaThumbTexture:SetTexCoord(0.275, 1, 0.875, 0);
-	cpf.alphaThumbTexture:SetDrawLayer('ARTWORK', 2);
+	cpf.alphaThumbTexture:SetDrawLayer('OVERLAY', 2);
 	cpf.alphaSlider:SetThumbTexture(cpf.alphaThumbTexture);
 
 	cpf.newTexture = self:Texture(cpf, 32, 32, [[Interface\Buttons\WHITE8X8]]);
 	cpf.oldTexture = self:Texture(cpf, 32, 32, [[Interface\Buttons\WHITE8X8]]);
-	cpf.newTexture:SetDrawLayer('ARTWORK', 5);
-	cpf.oldTexture:SetDrawLayer('ARTWORK', 4);
+	cpf.newTexture:SetDrawLayer('OVERLAY', 5);
+	cpf.oldTexture:SetDrawLayer('OVERLAY', 4);
 
 	self:GlueTop(cpf.newTexture, cpf, -30, -30, 'RIGHT');
 	self:GlueBelow(cpf.oldTexture, cpf.newTexture, 20, 45);

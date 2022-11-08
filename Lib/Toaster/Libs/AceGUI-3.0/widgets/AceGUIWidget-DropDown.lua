@@ -721,7 +721,7 @@ do
 		text:SetPoint("RIGHT", right, "RIGHT" ,-43, 2)
 		text:SetPoint("LEFT", left, "LEFT", 25, 2)
 
-		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontNormalSmall")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
 		label:SetJustifyH("LEFT")

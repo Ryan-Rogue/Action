@@ -324,7 +324,7 @@ local methods = {
 		local button = CreateFrame("Button", ("AceGUI30TreeButton%d"):format(num), self.treeframe, "OptionsListButtonTemplate")
 		button.obj = self
 
-		local icon = button:CreateTexture(nil, "OVERLAY")
+		local icon = button:CreateTexture(nil, "BACKGROUND")
 		icon:SetWidth(14)
 		icon:SetHeight(14)
 		button.icon = icon

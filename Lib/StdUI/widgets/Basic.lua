@@ -46,7 +46,7 @@ end
 
 --- @return Texture
 function StdUi:Texture(parent, width, height, texture)
-	local tex = parent:CreateTexture(nil, 'ARTWORK');
+	local tex = parent:CreateTexture(nil, 'OVERLAY');
 
 	self:SetObjSize(tex, width, height);
 	if texture then

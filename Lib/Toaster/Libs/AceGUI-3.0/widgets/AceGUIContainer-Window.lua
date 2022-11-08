@@ -262,7 +262,7 @@ do
 		self.closebutton = close
 		close.obj = self
 
-		local titletext = frame:CreateFontString(nil, "ARTWORK")
+		local titletext = frame:CreateFontString(nil, "BACKGROUND")
 		titletext:SetFontObject(GameFontNormal)
 		titletext:SetPoint("TOPLEFT", 12, -8)
 		titletext:SetPoint("TOPRIGHT", -32, -8)

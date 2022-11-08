@@ -578,7 +578,7 @@ do
 			border:SetAllPoints(frame)
 		end
 
-		local text = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+		local text = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
 		text:SetSize(290, 0)
 		text:SetPoint("TOP", 0, -16)
 		frame.text = text

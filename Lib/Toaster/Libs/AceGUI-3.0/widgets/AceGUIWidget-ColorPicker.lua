@@ -137,7 +137,7 @@ local function Constructor()
 	frame:SetScript("OnLeave", Control_OnLeave)
 	frame:SetScript("OnClick", ColorSwatch_OnClick)
 
-	local colorSwatch = frame:CreateTexture(nil, "OVERLAY")
+	local colorSwatch = frame:CreateTexture(nil, "BACKGROUND")
 	colorSwatch:SetWidth(19)
 	colorSwatch:SetHeight(19)
 	colorSwatch:SetTexture(130939) -- Interface\\ChatFrame\\ChatFrameColorSwatch
@@ -162,7 +162,7 @@ local function Constructor()
 	checkers:SetPoint("CENTER", colorSwatch)
 	checkers:Show()
 
-	local text = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+	local text = frame:CreateFontString(nil,"BACKGROUND","GameFontHighlight")
 	text:SetHeight(24)
 	text:SetJustifyH("LEFT")
 	text:SetTextColor(1, 1, 1)

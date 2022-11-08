@@ -111,7 +111,7 @@ local function Constructor()
 	frame:SetWidth(100)
 	frame:SetFrameStrata("FULLSCREEN_DIALOG")
 
-	local titletext = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	local titletext = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 	titletext:SetPoint("TOPLEFT", 4, -5)
 	titletext:SetPoint("TOPRIGHT", -4, -5)
 	titletext:SetJustifyH("LEFT")

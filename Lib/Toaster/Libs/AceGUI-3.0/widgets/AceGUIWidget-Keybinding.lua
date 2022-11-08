@@ -208,7 +208,7 @@ local function Constructor()
 	text:SetPoint("LEFT", 7, 0)
 	text:SetPoint("RIGHT", -7, 0)
 
-	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
 	label:SetPoint("TOPLEFT")
 	label:SetPoint("TOPRIGHT")
 	label:SetJustifyH("CENTER")
@@ -222,7 +222,7 @@ local function Constructor()
 	msgframe:SetFrameLevel(1000)
 	msgframe:SetToplevel(true)
 
-	local msg = msgframe:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	local msg = msgframe:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 	msg:SetText("Press a key to bind, ESC to clear the binding or click the button again to cancel.")
 	msgframe.msg = msg
 	msg:SetPoint("TOPLEFT", 5, -5)

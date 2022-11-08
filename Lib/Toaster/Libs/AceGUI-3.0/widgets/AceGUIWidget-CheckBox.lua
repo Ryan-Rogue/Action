@@ -199,7 +199,7 @@ local methods = {
 	["SetDescription"] = function(self, desc)
 		if desc then
 			if not self.desc then
-				local desc = self.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+				local desc = self.frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 				desc:ClearAllPoints()
 				desc:SetPoint("TOPLEFT", self.checkbg, "TOPRIGHT", 5, -21)
 				desc:SetWidth(self.frame.width - 30)
@@ -251,17 +251,17 @@ local function Constructor()
 	frame:SetScript("OnMouseDown", CheckBox_OnMouseDown)
 	frame:SetScript("OnMouseUp", CheckBox_OnMouseUp)
 
-	local checkbg = frame:CreateTexture(nil, "ARTWORK")
+	local checkbg = frame:CreateTexture(nil, "BACKGROUND")
 	checkbg:SetWidth(24)
 	checkbg:SetHeight(24)
 	checkbg:SetPoint("TOPLEFT")
 	checkbg:SetTexture(130755) -- Interface\\Buttons\\UI-CheckBox-Up
 
-	local check = frame:CreateTexture(nil, "OVERLAY")
+	local check = frame:CreateTexture(nil, "BACKGROUND")
 	check:SetAllPoints(checkbg)
 	check:SetTexture(130751) -- Interface\\Buttons\\UI-CheckBox-Check
 
-	local text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	local text = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
 	text:SetJustifyH("LEFT")
 	text:SetHeight(18)
 	text:SetPoint("LEFT", checkbg, "RIGHT")
@@ -272,7 +272,7 @@ local function Constructor()
 	highlight:SetBlendMode("ADD")
 	highlight:SetAllPoints(checkbg)
 
-	local image = frame:CreateTexture(nil, "OVERLAY")
+	local image = frame:CreateTexture(nil, "BACKGROUND")
 	image:SetHeight(16)
 	image:SetWidth(16)
 	image:SetPoint("LEFT", checkbg, "RIGHT", 1, 0)

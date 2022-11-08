@@ -111,7 +111,7 @@ local function Constructor()
 	frame:SetScript("OnHide", OnHide)
 	frame:SetScript("OnShow", OnShow)
 
-	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalLarge")
 	label:SetPoint("TOPLEFT", 10, -15)
 	label:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", 10, -45)
 	label:SetJustifyH("LEFT")

@@ -161,14 +161,14 @@ function ItemBase.Create(type)
 	frame:SetHeight(17)
 	frame:SetFrameStrata("FULLSCREEN_DIALOG")
 
-	local text = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+	local text = frame:CreateFontString(nil,"BACKGROUND","GameFontNormalSmall")
 	text:SetTextColor(1,1,1)
 	text:SetJustifyH("LEFT")
 	text:SetPoint("TOPLEFT",frame,"TOPLEFT",18,0)
 	text:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-8,0)
 	self.text = text
 
-	local highlight = frame:CreateTexture(nil, "OVERLAY")
+	local highlight = frame:CreateTexture(nil, "BACKGROUND")
 	highlight:SetTexture(136810) -- Interface\\QuestFrame\\UI-QuestTitleHighlight
 	highlight:SetBlendMode("ADD")
 	highlight:SetHeight(14)
@@ -178,7 +178,7 @@ function ItemBase.Create(type)
 	highlight:Hide()
 	self.highlight = highlight
 
-	local check = frame:CreateTexture("OVERLAY")
+	local check = frame:CreateTexture("BACKGROUND")
 	check:SetWidth(16)
 	check:SetHeight(16)
 	check:SetPoint("LEFT",frame,"LEFT",3,-1)
@@ -186,7 +186,7 @@ function ItemBase.Create(type)
 	check:Hide()
 	self.check = check
 
-	local sub = frame:CreateTexture("OVERLAY")
+	local sub = frame:CreateTexture("BACKGROUND")
 	sub:SetWidth(16)
 	sub:SetHeight(16)
 	sub:SetPoint("RIGHT",frame,"RIGHT",-3,-1)
@@ -453,7 +453,7 @@ do
 
 		self.SetDisabled = SetDisabled
 
-		local line = self.frame:CreateTexture(nil, "OVERLAY")
+		local line = self.frame:CreateTexture(nil, "BACKGROUND")
 		line:SetHeight(1)
 		line:SetColorTexture(.5, .5, .5)
 		line:SetPoint("LEFT", self.frame, "LEFT", 10, 0)

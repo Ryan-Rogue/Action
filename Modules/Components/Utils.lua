@@ -128,6 +128,17 @@ hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 -------------------------------------------------------------------------------
 CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
 CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_COND_INFO_CHANGED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_CONFIG_DELETED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_CONFIG_UPDATED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_TREE_CHANGED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_NODE_CHANGED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_NODE_CHANGED_PARTIAL", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_NODE_ENTRY_UPDATED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("TRAIT_CONFIG_LIST_UPDATED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
+CNDT:RegisterEvent("ACTIVE_COMBAT_CONFIG_CHANGED", "PLAYER_TALENT_UPDATE")
 --CNDT:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
 --CNDT:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_TALENT_UPDATE")
 if BuildToC >= 90001 then 
@@ -389,7 +400,7 @@ BlackBackground:SetSize(273, 30)
 BlackBackground:SetPoint("TOPLEFT", 0, 12) 
 BlackBackground:SetShown(false)
 BlackBackground.IsEnable = true
-BlackBackground.texture = BlackBackground:CreateTexture(nil, "TOOLTIP")
+BlackBackground.texture = BlackBackground:CreateTexture(nil, "HIGHLIGHT")
 BlackBackground.texture:SetAllPoints(true)
 BlackBackground.texture:SetColorTexture(0, 0, 0, 1)
 
@@ -407,23 +418,23 @@ local function UpdateFrames()
         return 
     end
 	
-	local myheight
-	
-	if GetCVar("gxMaximize") == "1" then 
-		-- Fullscreen
-		myheight = toNum[strmatch(GetScreenResolutions(), "%dx(%d+)")] 		-- toNum[string.match(GetCVar("gxFullscreenResolution"), "%d+x(%d+)")]		
-	else 
-		-- Windowed 														-- toNum[strmatch(GetScreenResolutions(), "%dx(%d+)")]
-		myheight = select(2, GetPhysicalScreenSize())						-- toNum[string.match(GetCVar("gxWindowedResolution"), "%d+x(%d+)")]
-		
-		-- Regarding Windows DPI
-		-- Note: Full HD 1920x1080 offsets (100% X8 Y31 / 125% X9 Y38)
-		-- You might need specific thing to get truth relative graphic area, so just contact me if you see this and can't find fix for DPI > 1 e.g. 100%
-		if not isShownOnce and GetScreenDPIScale() ~= 1 then 
-			message("100% Windows DPI isn't supported by routines in Windowed mode. Make game in Fullscreen or set X and Y offsets in source.")
-			isShownOnce = true
-		end 
-	end 
+	local myheight = select(2, GetPhysicalScreenSize())
+	-- The code below is a workout for BFA and less expansions because GetPhysicalScreenSize was broken
+	--if GetCVar("gxMaximize") == "1" then 
+	--	-- Fullscreen	
+	--	myheight = toNum[strmatch(GetScreenResolutions(), "%dx(%d+)")] 		-- toNum[string.match(GetCVar("gxFullscreenResolution"), "%d+x(%d+)")]	
+	--else 
+	--	-- Windowed 														-- toNum[strmatch(GetScreenResolutions(), "%dx(%d+)")]
+	--	myheight = select(2, GetPhysicalScreenSize())						-- toNum[string.match(GetCVar("gxWindowedResolution"), "%d+x(%d+)")]
+	--	
+	--	-- Regarding Windows DPI
+	--	-- Note: Full HD 1920x1080 offsets (100% X8 Y31 / 125% X9 Y38)
+	--	-- You might need specific thing to get truth relative graphic area, so just contact me if you see this and can't find fix for DPI > 1 e.g. 100%
+	--	if not isShownOnce and GetScreenDPIScale() ~= 1 then 
+	--		message("100% Windows DPI isn't supported by routines in Windowed mode. Make game in Fullscreen or set X and Y offsets in source.")
+	--		isShownOnce = true
+	--	end 
+	--end 
 	
     local myscale1 = 0.42666670680046 * (1080 / myheight)   
     local group1 = TellMeWhen_Group1:GetEffectiveScale()
@@ -545,8 +556,9 @@ local function TrueScaleInit()
 	Listener:Add("ACTION_EVENT_UTILS", "UI_SCALE_CHANGED", 			ConsoleUpdate	)
 	--Listener:Add("ACTION_EVENT_UTILS", "PLAYER_ENTERING_WORLD", 	ConsoleUpdate	)
 	--Listener:Add("ACTION_EVENT_UTILS", "CVAR_UPDATE",				UpdateCVAR		)
-	VideoOptionsFrame:HookScript("OnHide", 							ConsoleUpdate	)
-	InterfaceOptionsFrame:HookScript("OnHide", 						UpdateCVAR		)
+	--VideoOptionsFrame:HookScript("OnHide", 						ConsoleUpdate	) -- ONLY CLASSIC
+	--InterfaceOptionsFrame:HookScript("OnHide", 					UpdateCVAR		) -- ONLY CLASSIC
+	SettingsPanel:HookScript("OnHide", 								ConsoleUpdate	) -- ONLY RETAIL >= DF
 	--TMW:RegisterCallback("TMW_ACTION_IS_INITIALIZED", 			UpdateCVAR		) -- ONLY CLASSIC: For GetToggle things we have to make post call
     ConsoleUpdate()
 	

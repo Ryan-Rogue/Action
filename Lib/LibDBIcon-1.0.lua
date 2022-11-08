@@ -223,7 +223,7 @@ local function createButton(name, object, db)
 	button:RegisterForClicks("anyUp")
 	button:RegisterForDrag("LeftButton")
 	button:SetHighlightTexture(136477) --"Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
-	local overlay = button:CreateTexture(nil, "OVERLAY")
+	local overlay = button:CreateTexture(nil, "ARTWORK")
 	overlay:SetSize(53, 53)
 	overlay:SetTexture(136430) --"Interface\\Minimap\\MiniMap-TrackingBorder"
 	overlay:SetPoint("TOPLEFT")

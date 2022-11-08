@@ -276,7 +276,7 @@ local function Constructor()
 
 	local widgetNum = AceGUI:GetNextWidgetNum(Type)
 
-	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
 	label:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -4)
 	label:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, -4)
 	label:SetJustifyH("LEFT")

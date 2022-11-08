@@ -219,7 +219,7 @@ local function Constructor()
 	frame:EnableMouse(true)
 	frame:SetScript("OnMouseDown", Frame_OnMouseDown)
 
-	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
 	label:SetPoint("TOPLEFT")
 	label:SetPoint("TOPRIGHT")
 	label:SetJustifyH("CENTER")
@@ -241,10 +241,10 @@ local function Constructor()
 	slider:SetScript("OnMouseUp", Slider_OnMouseUp)
 	slider:SetScript("OnMouseWheel", Slider_OnMouseWheel)
 
-	local lowtext = slider:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	local lowtext = slider:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	lowtext:SetPoint("TOPLEFT", slider, "BOTTOMLEFT", 2, 3)
 
-	local hightext = slider:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	local hightext = slider:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
 	hightext:SetPoint("TOPRIGHT", slider, "BOTTOMRIGHT", -2, 3)
 
 	local editbox = CreateFrame("EditBox", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
