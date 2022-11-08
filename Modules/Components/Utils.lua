@@ -400,7 +400,7 @@ BlackBackground:SetSize(273, 30)
 BlackBackground:SetPoint("TOPLEFT", 0, 12) 
 BlackBackground:SetShown(false)
 BlackBackground.IsEnable = true
-BlackBackground.texture = BlackBackground:CreateTexture(nil, "HIGHLIGHT")
+BlackBackground.texture = BlackBackground:CreateTexture(nil, "OVERLAY")
 BlackBackground.texture:SetAllPoints(true)
 BlackBackground.texture:SetColorTexture(0, 0, 0, 1)
 
