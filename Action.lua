@@ -4396,7 +4396,6 @@ local Factory = {
 				[33076] = "Prayer of Mending",
 				[64843] = "Divine Hymn",
 				[120517] = "Halo",
-				[186263] = "Shadow Mend",
 				[194509] = "Power Word: Radiance",
 				[265202] = "Holy Word: Salvation",
 				[289666] = "Greater Heal",
@@ -5005,8 +5004,6 @@ local GlobalFactory = {
 				[48438] = { dur = 0, onlyBear = true },
 				-- Druid: Regrow
 				[8936] = { dur = 0, onlyBear = true },
-				-- Druid: Mark of the Wild
-				[289318] = { dur = 0, onlyBear = true },
 			},
 			Poison = {
 				-- Hunter: Wyvern Sting
@@ -5396,6 +5393,15 @@ local Upgrade 					= {
 				},
 			}, "pActionDB[4]")
 		end,
+		[4]						= function()
+			tEraseKeys(pActionDB[4], { 
+				Heal = {
+					["GameLocale"] = {
+						[186263] = true,
+					},
+				},
+			}, "pActionDB[4]")
+		end,
 	},
 	gUpgrades					= {
 		[1]						= function()
@@ -5477,6 +5483,14 @@ local Upgrade 					= {
 					},
 				},
 			}, "gActionDB[5]")
+		end,
+		[4] 					= function()
+			tEraseKeys(gActionDB[5].PvP, { 
+				PurgeLow = {
+					-- Druid: Mark of the Wild
+					[289318] = true,
+				},
+			}, "gActionDB[5].PvP")
 		end,
 	},
 	pUpgradesForProfile			= {},
