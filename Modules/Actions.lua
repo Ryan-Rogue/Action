@@ -555,7 +555,9 @@ function A:IsTalentLearned()
 	end	
 
 	local lowerName = strlowerCache[Name]
-	return TalentMap[lowerName] or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
+	local tMap 		= TalentMap[lowerName]
+	
+	return (tMap and tMap > 0) or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
 end
 
 -- Remap to keep old code working for it 
