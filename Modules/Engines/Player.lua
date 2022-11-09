@@ -43,7 +43,6 @@ local InsanityPowerType 		= PowerType.Insanity
 local ArcaneChargesPowerType 	= PowerType.ArcaneCharges
 local FuryPowerType 			= PowerType.Fury
 local PainPowerType				= PowerType.Pain
-local WarlockPowerBar_UnitPower = _G.WarlockPowerBar_UnitPower
 
 local GetSpellInfo				= _G.GetSpellInfo
 local InCombatLockdown			= _G.InCombatLockdown  
@@ -1592,12 +1591,12 @@ end
 
 -- soul_shard
 function Player:SoulShards()
-	return WarlockPowerBar_UnitPower(self.UnitID)
+	return UnitPower(self.UnitID, SoulShardsPowerType)
 end
 
 -- soul shards predicted, customize in spec overrides
 function Player:SoulShardsP()
-	return WarlockPowerBar_UnitPower(self.UnitID)
+	return UnitPower(self.UnitID, SoulShardsPowerType)
 end
 
 -- soul_shard.deficit
