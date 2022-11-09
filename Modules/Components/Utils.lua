@@ -126,26 +126,50 @@ hooksecurefunc(TMW, "InitializeDatabase", ClearTrash)
 -------------------------------------------------------------------------------
 -- CNDT: TalentMap  
 -------------------------------------------------------------------------------
-CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_COND_INFO_CHANGED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_CONFIG_DELETED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_CONFIG_UPDATED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_TREE_CHANGED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_TREE_CURRENCY_INFO_UPDATED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_NODE_CHANGED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_NODE_CHANGED_PARTIAL", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_NODE_ENTRY_UPDATED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("TRAIT_CONFIG_LIST_UPDATED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
-CNDT:RegisterEvent("ACTIVE_COMBAT_CONFIG_CHANGED", "PLAYER_TALENT_UPDATE")
---CNDT:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", "PLAYER_TALENT_UPDATE")
---CNDT:RegisterEvent("PLAYER_ENTERING_WORLD", "PLAYER_TALENT_UPDATE")
-if BuildToC >= 90001 then 
-	-- Registers events for Torghast 
-	CNDT:RegisterEvent("ANIMA_DIVERSION_TALENT_UPDATED", "PLAYER_TALENT_UPDATE")	
+if BuildToC >= 20000 then 
+	-- Retail 
+	if BuildToC >= 100000 then 
+		-- DF+
+		Listener:Add("ACTION_EVENT_UTILS_TALENTS", "TRAIT_CONFIG_LIST_UPDATED", function()
+			CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
+			CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
+			-- DF: Registers events for Traits
+			CNDT:RegisterEvent("TRAIT_CONFIG_UPDATED", "PLAYER_TALENT_UPDATE")
+			-- SL: Registers events for Torghast
+			CNDT:RegisterEvent("ANIMA_DIVERSION_TALENT_UPDATED", "PLAYER_TALENT_UPDATE")			
+			CNDT:PLAYER_TALENT_UPDATE()
+			Listener:Remove("ACTION_EVENT_UTILS_TALENTS", "TRAIT_CONFIG_LIST_UPDATED")
+		end)
+	else 
+		-- TBC -> SL
+		CNDT:RegisterEvent("PLAYER_TALENT_UPDATE")
+		CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
+		-- SL: Registers events for Torghast 
+		if BuildToC >= 90000 then 
+			CNDT:RegisterEvent("ANIMA_DIVERSION_TALENT_UPDATED", "PLAYER_TALENT_UPDATE")	
+		end 		
+		CNDT:PLAYER_TALENT_UPDATE()
+	end 	
+else
+	-- Classic 
+	local TalentMap = {}; A.TalentMap = TalentMap
+	local GetNumTalentTabs, GetNumTalents, GetTalentInfo = _G.GetNumTalentTabs, _G.GetNumTalents, _G.GetTalentInfo
+	local function TalentMapUpdate()
+		wipe(A.TalentMap)
+		for tab = 1, GetNumTalentTabs() do
+			for talent = 1, GetNumTalents(tab) do
+				local name, _, _, _, rank = GetTalentInfo(tab, talent)
+				if name then
+					TalentMap[name] = rank or 0
+				end
+			end
+		end
+		TMW:Fire("TMW_ACTION_TALENT_MAP_UPDATED")
+	end
+
+	Listener:Add("ACTION_EVENT_TOOLS", "PLAYER_ENTERING_WORLD", 	TalentMapUpdate)
+	Listener:Add("ACTION_EVENT_TOOLS", "CHARACTER_POINTS_CHANGED", 	TalentMapUpdate)
 end 
-CNDT:PLAYER_TALENT_UPDATE()
 
 -------------------------------------------------------------------------------
 -- CNDT: UnitSpecs  
