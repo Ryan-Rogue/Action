@@ -135,6 +135,12 @@ if BuildToC >= 20000 then
 			CNDT:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED", "PLAYER_TALENT_UPDATE")
 			-- DF: Registers events for Traits
 			CNDT:RegisterEvent("TRAIT_CONFIG_UPDATED", "PLAYER_TALENT_UPDATE")
+			local C_TimerAfter = _G.C_Timer.After
+			CNDT:RegisterEvent("TRAIT_TREE_CHANGED", function() 
+				C_TimerAfter(0.5, function()
+					CNDT:PLAYER_TALENT_UPDATE()
+				end)
+			end)
 			-- SL: Registers events for Torghast
 			CNDT:RegisterEvent("ANIMA_DIVERSION_TALENT_UPDATED", "PLAYER_TALENT_UPDATE")			
 			CNDT:PLAYER_TALENT_UPDATE()
