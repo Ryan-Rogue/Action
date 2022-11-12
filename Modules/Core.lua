@@ -10,6 +10,7 @@ local CONST 										= A.Const
 local A_Hide 										= A.Hide
 local Create 										= A.Create
 local GetToggle										= A.GetToggle
+local DetermineUsableObject							= A.DetermineUsableObject
 local AuraIsValidByPhialofSerenity					= A.AuraIsValidByPhialofSerenity
 local IsExplosivesExists							= A.IsExplosivesExists
 local IsCondemnedDemonsExists						= A.IsCondemnedDemonsExists
@@ -180,16 +181,23 @@ local Medallion 			= LoC_GetExtra["GladiatorMedallion"] -- BFA, Legion, WoD
 -------------------------------------------------------------------------------
 -- API
 -------------------------------------------------------------------------------
-A.Trinket1 						= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET1,	 				BlockForbidden = true, Desc = "Upper Trinket (/use 13)" 													})
-A.Trinket2 						= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET2, 					BlockForbidden = true, Desc = "Lower Trinket (/use 14)"														})
-A.HS							= Create({ Type = "Item", 			ID = 5512, 										QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true						})
-A.AbyssalHealingPotion			= Create({ Type = "Item", 			ID = 169451, 									QueueForbidden = true, Desc = "[6] HealingPotion", 					skipRange = true						})
-if BuildToC < 90001 then 
-	A.GladiatorMedallion		= Create({ Type = "Spell", 			ID = CONST.SPELLID_GLADIATORS_MEDALLION, 		QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isTalent = true 		})
-	A.HonorMedallion			= Create({ Type = "Spell", 			ID = CONST.SPELLID_HONOR_MEDALLION, 			QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isReplacement = true	})
+A.Trinket1 							= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET1,	 				BlockForbidden = true, Desc = "Upper Trinket (/use 13)" 													})
+A.Trinket2 							= Create({ Type = "TrinketBySlot", 	ID = CONST.INVSLOT_TRINKET2, 					BlockForbidden = true, Desc = "Lower Trinket (/use 14)"														})
+A.HS								= Create({ Type = "Item", 			ID = 5512, 										QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true						})
+A.AbyssalHealingPotion				= Create({ Type = "Item", 			ID = 169451, 									QueueForbidden = true, Desc = "[6] HealingPotion", 					skipRange = true						})
+if BuildToC < 90000 then 
+	A.GladiatorMedallion			= Create({ Type = "Spell", 			ID = CONST.SPELLID_GLADIATORS_MEDALLION, 		QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isTalent = true 		})
+	A.HonorMedallion				= Create({ Type = "Spell", 			ID = CONST.SPELLID_HONOR_MEDALLION, 			QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isReplacement = true	})
 else 	
-	A.PhialofSerenity			= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
-	A.SpiritualHealingPotion	= Create({ Type = "Item",  			ID = 171267,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	-- SL
+	A.PhialofSerenity				= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
+	A.SpiritualHealingPotion		= Create({ Type = "Item",  			ID = 171267,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	-- DF
+	if BuildToC >= 100000 then 
+		A.RefreshingHealingPotion1	= Create({ Type = "Item",  			ID = 191378,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+		A.RefreshingHealingPotion2	= Create({ Type = "Item",  			ID = 191379,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+		A.RefreshingHealingPotion3	= Create({ Type = "Item",  			ID = 191380,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	end 
 end 
 
 function A.CanUseHealthstoneOrHealingPotion()
@@ -207,28 +215,25 @@ function A.CanUseHealthstoneOrHealingPotion()
 					return A.HS							 
 				end
 			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) then 
-				if BuildToC >= 90001 and A.SpiritualHealingPotion:IsReadyByPassCastGCD(player) then 
+				local RefreshingHealingPotion = BuildToC >= 100000 and DetermineUsableObject(player, nil, nil, true, nil, A.RefreshingHealingPotion3, A.RefreshingHealingPotion2, A.RefreshingHealingPotion1)
+				local HealingPotion = (RefreshingHealingPotion  and RefreshingHealingPotion:IsReadyByPassCastGCD(player)  and RefreshingHealingPotion)  or  -- DF
+									  (A.SpiritualHealingPotion and A.SpiritualHealingPotion:IsReadyByPassCastGCD(player) and A.SpiritualHealingPotion) or  -- SL
+									  (A.AbyssalHealingPotion   and A.AbyssalHealingPotion:IsReadyByPassCastGCD(player)	  and A.AbyssalHealingPotion)		-- BFA
+				
+				if HealingPotion then 
 					if Healthstone >= 100 then -- AUTO 
-						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.SpiritualHealingPotion:GetItemDescription()[1] then 
-							return A.SpiritualHealingPotion
+						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= HealingPotion:GetItemDescription()[1] then 
+							return HealingPotion
 						end 
 					elseif Unit(player):HealthPercent() <= Healthstone then 
-						return A.SpiritualHealingPotion						 
-					end	
-				elseif A.AbyssalHealingPotion:IsReadyByPassCastGCD(player) then 
-					if Healthstone >= 100 then -- AUTO 
-						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= A.AbyssalHealingPotion:GetItemDescription()[1] then 
-							return A.AbyssalHealingPotion
-						end 
-					elseif Unit(player):HealthPercent() <= Healthstone then 
-						return A.AbyssalHealingPotion						 
-					end	
+						return HealingPotion						 
+					end			  
 				end 
 			end 
 		end
 		
 		-- PhialofSerenity
-		if BuildToC >= 90001 and A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.PhialofSerenity:IsReadyByPassCastGCD(player) then 
+		if BuildToC >= 90000 and A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) and A.PhialofSerenity:IsReadyByPassCastGCD(player) then 
 			-- Healing 
 			local PhialofSerenityHP, PhialofSerenityOperator, PhialofSerenityTTD = GetToggle(2, "PhialofSerenityHP"), GetToggle(2, "PhialofSerenityOperator"), GetToggle(2, "PhialofSerenityTTD")
 			if PhialofSerenityOperator == "AND" then 
@@ -293,7 +298,7 @@ function A.Rotation(icon)
 
 		-- Use (H)G.Medallion
 		-- Note: Shadowlands no longer have it
-		if BuildToC < 90001 and Medallion.isValid() and LoC:IsValid(Medallion.Applied) then 			
+		if BuildToC < 90000 and Medallion.isValid() and LoC:IsValid(Medallion.Applied) then 			
 			return A.GladiatorMedallion:Show(icon)	
 		end 
 		
