@@ -560,6 +560,21 @@ function A:IsTalentLearned()
 	return (tMap and tMap > 0) or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
 end
 
+function A:GetTalentTraits()
+	-- @usage A:GetTalentTraits() or A.GetTalentTraits(spellID)
+	-- @return number of selected traits, 0 if none 
+	local Name
+
+	if type(self) == "table" then 
+		Name = self:Info()
+	else 
+		Name = A_GetSpellInfo(self)
+	end	
+
+	local lowerName = strlowerCache[Name]
+	return TalentMap[lowerName]	or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName] and 1)
+end
+
 -- Remap to keep old code working for it 
 -- TODO: Remove in the future
 A.IsSpellLearned = A.IsTalentLearned
