@@ -29,6 +29,13 @@ local function sortByHighest(x, y)
 	return x > y
 end
 
+local getUnitTarget = setmetatable({}, { 
+	__index = function(t, k)
+		t[k] = k .. "target"
+		return t[k]
+	end,
+})
+
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -55,6 +62,7 @@ local MultiUnits 									= {
 	--activeUnitPlatesGUID 							= {},
 	activeExplosives								= {},
 	activeCondemnedDemons							= {},
+	activeVoidTendrils								= {},
 	activeUnitCLEU 									= {},
 	tempEnemies										= {},
 	timeStampCLEU									= 0,
@@ -72,6 +80,7 @@ local MultiUnitsActiveUnitPlatesAny					= MultiUnits.activeUnitPlatesAny 	-- Ene
 --local MultiUnitsActiveUnitPlatesGUID				= MultiUnits.activeUnitPlatesGUID
 local MultiUnitsActiveExplosives					= MultiUnits.activeExplosives
 local MultiUnitsActiveCondemnedDemons				= MultiUnits.activeCondemnedDemons
+local MultiUnitsActiveVoidTendrils					= MultiUnits.activeVoidTendrils
 local MultiUnitsActiveUnitCLEU						= MultiUnits.activeUnitCLEU
 local MultiUnitsTempEnemies							= MultiUnits.tempEnemies
 local MultiUnitsOnEventWipeCLEU						= MultiUnits.onEventWipeCLEU
@@ -82,22 +91,28 @@ MultiUnits.AddNameplate								= function(unitID)
 		-- Patch 8.2
 		-- 1519 is The Eternal Palace: Precipice of Dreams
 		if A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup() then
-			MultiUnitsActiveUnitPlates[unitID] 		= unitID
-			MultiUnitsActiveUnitPlatesAny[unitID] 	= unitID
+			MultiUnitsActiveUnitPlates[unitID] 		= getUnitTarget[unitID]
+			MultiUnitsActiveUnitPlatesAny[unitID] 	= getUnitTarget[unitID]
 			if A_Unit(unitID):IsExplosives() then 
-				MultiUnitsActiveExplosives[unitID] = unitID
+				MultiUnitsActiveExplosives[unitID] = getUnitTarget[unitID]
 			end 
 			
+			-- SL
 			if A_Unit(unitID):IsCondemnedDemon() then 
-				MultiUnitsActiveCondemnedDemons[unitID] = unitID
+				MultiUnitsActiveCondemnedDemons[unitID] = getUnitTarget[unitID]
+			end 
+			
+			-- DF
+			if A_Unit(unitID):IsVoidTendril() then 
+				MultiUnitsActiveVoidTendrils[unitID] = getUnitTarget[unitID]
 			end 
 			--local GUID 								= UnitGUID(unitID)
 			--if GUID then 
-				--MultiUnitsActiveUnitPlatesGUID[GUID] 	= unitID
+				--MultiUnitsActiveUnitPlatesGUID[GUID] 	= getUnitTarget[unitID]
 			--end 		
 		end 
 	else 
-		MultiUnitsActiveUnitPlatesAny[unitID] = unitID
+		MultiUnitsActiveUnitPlatesAny[unitID] = getUnitTarget[unitID]
 	end
 end
 
@@ -106,6 +121,7 @@ MultiUnits.RemoveNameplate							= function(unitID)
     MultiUnitsActiveUnitPlatesAny[unitID] 			= nil
 	MultiUnitsActiveExplosives[unitID] 				= nil 
 	MultiUnitsActiveCondemnedDemons[unitID] 		= nil 
+	MultiUnitsActiveVoidTendrils[unitID] 			= nil 
 	--local GUID 									= UnitGUID(unitID)
 	--if GUID then 
 		--MultiUnitsActiveUnitPlatesGUID[GUID] 		= nil
@@ -115,6 +131,7 @@ end
 MultiUnits.OnResetSpecificUnits						= function()
 	wipe(MultiUnitsActiveExplosives)
 	wipe(MultiUnitsActiveCondemnedDemons)
+	wipe(MultiUnitsActiveVoidTendrils)
 end 
 
 MultiUnits.OnResetNameplates						= function()
@@ -122,6 +139,7 @@ MultiUnits.OnResetNameplates						= function()
 	wipe(MultiUnitsActiveUnitPlatesAny)
 	wipe(MultiUnitsActiveExplosives)
 	wipe(MultiUnitsActiveCondemnedDemons)
+	wipe(MultiUnitsActiveVoidTendrils)
 	--wipe(MultiUnitsActiveUnitPlatesGUID)
 end 
 
@@ -529,19 +547,19 @@ A.MultiUnits.GetActiveEnemies = A.MakeFunctionCachedDynamic(A.MultiUnits.GetActi
 -- Explosives
 function A.IsExplosivesExists()
 	-- @return boolean
-	if BuildToC >= 90001 or (GameBuild < 33237 or GameBuild >= 33369) then 
+	if BuildToC >= 90000 or (GameBuild < 33237 or GameBuild >= 33369) then 
 		if not A.IamMelee then 
 			return next(MultiUnitsActiveExplosives)
 		elseif next(MultiUnitsActiveExplosives) then 
 			for unitID in pairs(MultiUnitsActiveExplosives) do 
-				if A_Unit(unitID):GetRange() <= 10 then 
+				if A_Unit(unitID):GetRange() <= 10 and not A_Unit(unitID):InLOS() then 
 					return true 
 				end 
 			end 
 		end 
 	elseif next(MultiUnitsActiveExplosives) then 
 		for unitID in pairs(MultiUnitsActiveExplosives) do 
-			if (not A.IamMelee or A_Unit(unitID):GetRange() <= 10) and (A_Unit(unitID):CombatTime() > 0 or A_Unit(unitID):HealthPercent() < 100) then 
+			if (not A.IamMelee or A_Unit(unitID):GetRange() <= 10) and (A_Unit(unitID):CombatTime() > 0 or A_Unit(unitID):HealthPercent() < 100) and not A_Unit(unitID):InLOS() then 
 				return true 
 			end 
 		end 
@@ -551,14 +569,28 @@ end
 -- CondemnedDemons
 function A.IsCondemnedDemonsExists()
 	-- @return boolean
-	if BuildToC >= 90001 then 
+	if BuildToC >= 90000 then 
 		if not A.IamMelee then 
 			return next(MultiUnitsActiveCondemnedDemons)
 		elseif next(MultiUnitsActiveCondemnedDemons) then 
 			for unitID in pairs(MultiUnitsActiveCondemnedDemons) do 
-				if A_Unit(unitID):GetRange() <= 10 then 
+				if A_Unit(unitID):GetRange() <= 10 and not A_Unit(unitID):InLOS() then 
 					return true 
 				end 
+			end 
+		end 
+	end 
+end 
+
+-- VoidTendrils
+function A.IsVoidTendrilsExists(isAffectedMe)
+	-- @return boolean
+	if BuildToC >= 100000 and A.IsInPvP next(MultiUnitsActiveVoidTendrils) then 
+		local range 
+		for unitID, unitIDtarget in pairs(MultiUnitsActiveVoidTendrils) do 
+			range = A_Unit(unitID):GetRange()
+			if (range <= 10 or (not A.IamMelee and range <= 40)) and (not isAffectedMe or (UnitIsUnit(unitIDtarget, player) and A_Unit(player):HasDeBuffs(114404) > 0)) and not A_Unit(unitID):InLOS() then 
+				return true 
 			end 
 		end 
 	end 

@@ -2483,6 +2483,9 @@ local Info = {
 		[169425]				= "Felhound",
 		[169430]				= "Ur'zul",
 	},
+	IsVoidTendril				= {
+		[65282]					= "Void Tendril",
+	},
 	ExplosivesName				= {
 		[GameLocale] 			= "Explosives",
 		ruRU					= "Взрывчатка",
@@ -2587,6 +2590,7 @@ local InfoCreatureType 						= Info.CreatureType
 local InfoCreatureFamily					= Info.CreatureFamily
 local InfoIsDummy							= Info.IsDummy
 local InfoIsDummyPvP						= Info.IsDummyPvP
+local InfoIsVoidTendriln					= Info.IsVoidTendril
 local InfoIsCondemnedDemon					= Info.IsCondemnedDemon
 local InfoExplosivesName 					= Info.ExplosivesName
 
@@ -3305,11 +3309,23 @@ A.Unit = PseudoClass({
 		local _, _, _, _, _, npc_id 		= self(unitID):InfoGUID()
 		return npc_id and InfoIsDummyPvP[npc_id]
 	end, "UnitID"),
+	IsVoidTendril							= Cache:Pass(function(self)	
+		-- @return string 
+		-- Returns english name of the Void Tendril
+		-- Note: DF+ Priest's talent Void Tendrils
+		if BuildToC >= 100000 then 
+			local unitID 					= self.UnitID
+			if self(unitID):IsNPC() and self(unitID):CreatureType() == "Not specified" then 
+				local npc_id				= select(6, self(unitID):InfoGUID())
+				return npc_id and InfoIsVoidTendriln[npc_id]
+			end 
+		end 
+	end, "UnitID"),
 	IsCondemnedDemon						= Cache:Pass(function(self)	
 		-- @return string 
 		-- Returns english name of the Condemned Demon 
 		-- Note: Shadowlands+ "Fodder to the Flame" summoned NPC by Demon Hunter's Necrolord Covenant
-		if BuildToC >= 90001 then 
+		if BuildToC >= 90000 then 
 			local unitID 					= self.UnitID
 			if self(unitID):IsNPC() and self(unitID):IsDemon() then 
 				local npc_id				= select(6, self(unitID):InfoGUID())

@@ -14,6 +14,7 @@ local DetermineUsableObject							= A.DetermineUsableObject
 local AuraIsValidByPhialofSerenity					= A.AuraIsValidByPhialofSerenity
 local IsExplosivesExists							= A.IsExplosivesExists
 local IsCondemnedDemonsExists						= A.IsCondemnedDemonsExists
+local IsVoidTendrilsExists							= A.IsVoidTendrilsExists
 local IsQueueReady									= A.IsQueueReady
 local QueueData										= A.Data.Q
 local GetPing										= A.GetPing
@@ -368,15 +369,15 @@ function A.Rotation(icon)
 			end
 		end 
 		
-		-- Healthstone | AbyssalHealingPotion | PhialofSerenity
+		-- Healthstone | RefreshingHealingPotion | SpiritualHealingPotion | AbyssalHealingPotion | PhialofSerenity
 		local HealingObject = CanUseHealthstoneOrHealingPotion() 
 		if HealingObject then 
 			return HealingObject:Show(icon)
 		end 		
 		
 		-- AutoTarget 
-		if GetToggle(1, "AutoTarget") and Unit(player):CombatTime() > 0 and not Unit(target):IsExplosives() and not Unit(target):IsCondemnedDemon() and (not A.IamHealer or not Unit(target):IsExists() or Unit(target):IsEnemy()) then 
-			if IsExplosivesExists() or IsCondemnedDemonsExists() then
+		if GetToggle(1, "AutoTarget") and Unit(player):CombatTime() > 0 and not Unit(target):IsExplosives() and not Unit(target):IsCondemnedDemon() and not Unit(target):IsVoidTendril() and (not A.IamHealer or not Unit(target):IsExists() or Unit(target):IsEnemy()) then 
+			if IsExplosivesExists() or IsCondemnedDemonsExists() or IsVoidTendrilsExists(true) then
 				return A:Show(icon, CONST_AUTOTARGET)			  				 
 			end 
 			
