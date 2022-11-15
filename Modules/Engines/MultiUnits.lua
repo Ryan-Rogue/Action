@@ -585,7 +585,7 @@ end
 -- VoidTendrils
 function A.IsVoidTendrilsExists(isAffectedMe)
 	-- @return boolean
-	if BuildToC >= 100000 and A.IsInPvP next(MultiUnitsActiveVoidTendrils) then 
+	if BuildToC >= 100000 and A.IsInPvP and next(MultiUnitsActiveVoidTendrils) then 
 		local range 
 		for unitID, unitIDtarget in pairs(MultiUnitsActiveVoidTendrils) do 
 			range = A_Unit(unitID):GetRange()
