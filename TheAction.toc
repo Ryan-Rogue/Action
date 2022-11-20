@@ -73,5 +73,6 @@ Modules\Retired\MessageEvents.lua
 Modules\Retired\PetLibrary.lua
 
 # Test
+# Modules\TestDev\FindG.lua
 # Modules\TestDev\StressTests.lua
 # Modules\TestDev\UpdateTriggerGCD.lua

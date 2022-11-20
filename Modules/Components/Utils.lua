@@ -19,6 +19,8 @@ local Print 					= A.Print
 local ActionDataColor			= A.Data.C
 local BuildToC					= A.BuildToC
 
+local isClassic					= A.StdUi.isClassic
+
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -553,6 +555,14 @@ local function UpdateCVAR()
 		SetCVar("nameplateMaxDistance", CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE) 
 		Print("nameplateMaxDistance " .. nameplateMaxDistance .. " => " .. CONST.CACHE_DEFAULT_NAMEPLATE_MAX_DISTANCE)	
 	end		
+	
+	if isClassic and toNum[GetCVar("nameplateNotSelectedAlpha") or 0] >= 0 then 
+		SetCVar("nameplateNotSelectedAlpha", -1)
+	end 
+	
+	if toNum[GetCVar("nameplateOccludedAlphaMult") or 0] > 0.4 then 
+		SetCVar("nameplateOccludedAlphaMult", 0.4)
+	end 
 	
     -- WM removal
     if GetCVar("screenshotQuality") ~= "10" then 
