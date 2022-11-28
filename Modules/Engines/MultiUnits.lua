@@ -247,14 +247,16 @@ function A.MultiUnits.GetBySpell(self, spell, count)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if type(spell) == "table" then 
-			if spell:IsInRange(namePlateUnitID) then 
-				total = total + 1
+		if not A_Unit(namePlateUnitID):IsTotem() then 
+			if type(spell) == "table" then 
+				if spell:IsInRange(namePlateUnitID) then 
+					total = total + 1
+				end 
+			else
+				if A_IsInRange(spell, namePlateUnitID) then 
+					total = total + 1
+				end 				
 			end 
-		else
-			if A_IsInRange(spell, namePlateUnitID) then 
-				total = total + 1
-			end 				
 		end 
 		
 		if count and total >= count then 
@@ -279,7 +281,7 @@ function A.MultiUnits.GetBySpellIsFocused(self, unitID, spell, count)
 			inRange = A_IsInRange(spell, namePlateUnitID)
 		end 
 		
-		if inRange and UnitIsUnit(namePlateUnitID .. "target", unitID) then 
+		if inRange and UnitIsUnit(namePlateUnitID .. "target", unitID) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 			unitNamePlateID = namePlateUnitID
 		end 
@@ -298,7 +300,7 @@ function A.MultiUnits.GetByRange(self, range, count)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if not range or A_Unit(namePlateUnitID):CanInterract(range) then 
+		if (not range or A_Unit(namePlateUnitID):CanInterract(range)) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 		end 
 		
@@ -318,7 +320,7 @@ function A.MultiUnits.GetByRangeInCombat(self, range, count, upTTD)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) then 
+		if A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 		end 
 		
@@ -339,7 +341,7 @@ function A.MultiUnits.GetByRangeCasting(self, range, count, kickAble, spells)
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
 		local castName, castStartTime, castEndTime, notInterruptable, spellID = A_Unit(namePlateUnitID):IsCasting()
-		if castName and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not kickAble or not notInterruptable) then 
+		if castName and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not kickAble or not notInterruptable) then -- totems can casting
 			if spells then 
 				if type(spells) == "table" then 
 					for i = 1, #spells do 
@@ -385,7 +387,7 @@ function A.MultiUnits.GetByRangeTaunting(self, range, count, upTTD)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if A_Unit(namePlateUnitID):CombatTime() > 0 and not A_Unit(namePlateUnitID):IsPlayer() and not A_Unit(namePlateUnitID .. "target"):IsTank() and not A_Unit(namePlateUnitID):IsBoss() and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) then 
+		if A_Unit(namePlateUnitID):CombatTime() > 0 and not A_Unit(namePlateUnitID):IsPlayer() and not A_Unit(namePlateUnitID .. "target"):IsTank() and not A_Unit(namePlateUnitID):IsBoss() and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 		end 
 		
@@ -405,7 +407,7 @@ function A.MultiUnits.GetByRangeMissedDoTs(self, range, count, deBuffs, upTTD)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if (not A.IsInPvP or A_Unit(namePlateUnitID):IsPlayer()) and A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and A_Unit(namePlateUnitID):HasDeBuffs(deBuffs, true) == 0 then 
+		if (not A.IsInPvP or A_Unit(namePlateUnitID):IsPlayer()) and A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and A_Unit(namePlateUnitID):HasDeBuffs(deBuffs, true) == 0 and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 		end 
 		
@@ -425,7 +427,7 @@ function A.MultiUnits.GetByRangeAppliedDoTs(self, range, count, deBuffs, upTTD)
 	local total = 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and A_Unit(namePlateUnitID):HasDeBuffs(deBuffs, true) > 0 then 
+		if A_Unit(namePlateUnitID):CombatTime() > 0 and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and (not upTTD or A_Unit(namePlateUnitID):TimeToDie() >= upTTD) and A_Unit(namePlateUnitID):HasDeBuffs(deBuffs, true) > 0 and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 		end 
 		
@@ -446,7 +448,7 @@ function A.MultiUnits.GetByRangeIsFocused(self, unitID, range, count)
 	local unitNamePlateID
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if UnitIsUnit(namePlateUnitID .. "target", unitID) and (not range or A_Unit(namePlateUnitID):CanInterract(range)) then 
+		if UnitIsUnit(namePlateUnitID .. "target", unitID) and (not range or A_Unit(namePlateUnitID):CanInterract(range)) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 			unitNamePlateID = namePlateUnitID
 		end 
@@ -466,7 +468,7 @@ function A.MultiUnits.GetByRangeAreaTTD(self, range)
 	local total, ttds = 0, 0
 
 	for namePlateUnitID in pairs(MultiUnitsActiveUnitPlates) do 
-		if not range or A_Unit(namePlateUnitID):CanInterract(range) then 
+		if (not range or A_Unit(namePlateUnitID):CanInterract(range)) and not A_Unit(namePlateUnitID):IsTotem() then 
 			total = total + 1
 			ttds = ttds + A_Unit(namePlateUnitID):TimeToDie()
 		end 
