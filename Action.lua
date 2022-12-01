@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "29.11.2022"
+local DateTime 														= "01.12.2022"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -15885,6 +15885,7 @@ local HealerSpecs 						= {
 	[ActionConst.PRIEST_DISCIPLINE] 	= true, 
 	[ActionConst.PRIEST_HOLY] 			= true, 
 	[ActionConst.SHAMAN_RESTORATION] 	= true, 
+	[ActionConst.EVOKER_PRESERVATION] 	= true, 
 }; ActionData.HealerSpecs = HealerSpecs
 local RangerSpecs 						= {
 	--[ActionConst.PALADIN_HOLY] 		= true,
@@ -15904,6 +15905,7 @@ local RangerSpecs 						= {
 	--[ActionConst.MONK_MISTWEAVER]		= true,	
 	[ActionConst.DRUID_BALANCE]			= true,	
 	--[ActionConst.DRUID_RESTORATION]	= true,	
+	[ActionConst.EVOKER_DEVASTATION] 	= true,
 }; ActionData.RangerSpecs = RangerSpecs
 function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
 	local specID, specName = GetSpecializationInfo(GetSpecialization() or 0) 
