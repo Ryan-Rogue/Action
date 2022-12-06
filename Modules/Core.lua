@@ -66,6 +66,7 @@ local ClassPortaits 								= {
 	["MONK"] 										= CONST.PORTRAIT_MONK,
 	["DRUID"] 										= CONST.PORTRAIT_DRUID,
 	["DEMONHUNTER"] 								= CONST.PORTRAIT_DEMONHUNTER,
+	["EVOKER"] 										= CONST.PORTRAIT_EVOKER,
 }
 
 local GetKeyByRace 									= {

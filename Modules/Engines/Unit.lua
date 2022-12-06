@@ -1214,6 +1214,7 @@ local Info = {
 		["SHAMAN"] 				= true,
 		["DRUID"] 				= true,	
 		["MONK"]				= true,
+		["EVOKER"]				= true,
 	},
 	ClassCanBeTank				= {
         ["WARRIOR"] 			= true,
