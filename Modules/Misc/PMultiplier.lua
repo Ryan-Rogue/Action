@@ -9,7 +9,7 @@ local Player 						= A.Player
 local Unit							= A.Unit 
 	  
 local tremove						= table.remove	 
-local isClassic						= _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
+local isClassic						= A.StdUi.isClassic
 local CombatLogGetCurrentEventInfo 	= _G.CombatLogGetCurrentEventInfo
 local 	 UnitGUID, 	  GetSpellInfo 	= 
 	  _G.UnitGUID, _G.GetSpellInfo
