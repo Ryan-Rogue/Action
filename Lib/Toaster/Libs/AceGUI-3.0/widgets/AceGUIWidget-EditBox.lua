@@ -14,10 +14,6 @@ local GetCursorInfo, ClearCursor, GetSpellInfo = GetCursorInfo, ClearCursor, Get
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = _G
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: AceGUIEditBoxInsertLink, ChatFontNormal, OKAY
-
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
@@ -230,7 +226,7 @@ local function Constructor()
 	editbox:SetPoint("BOTTOMRIGHT")
 	editbox:SetHeight(19)
 
-	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontNormalSmall")
+	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	label:SetPoint("TOPLEFT", 0, -2)
 	label:SetPoint("TOPRIGHT", 0, -2)
 	label:SetJustifyH("LEFT")

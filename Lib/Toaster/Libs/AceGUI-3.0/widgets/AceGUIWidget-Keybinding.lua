@@ -13,10 +13,6 @@ local pairs = pairs
 local IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown = IsShiftKeyDown, IsControlKeyDown, IsAltKeyDown
 local CreateFrame, UIParent = CreateFrame, UIParent
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: NOT_BOUND
-
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
@@ -208,13 +204,13 @@ local function Constructor()
 	text:SetPoint("LEFT", 7, 0)
 	text:SetPoint("RIGHT", -7, 0)
 
-	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
+	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	label:SetPoint("TOPLEFT")
 	label:SetPoint("TOPRIGHT")
 	label:SetJustifyH("CENTER")
 	label:SetHeight(18)
 
-	local msgframe = CreateFrame("Frame", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+	local msgframe = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
 	msgframe:SetHeight(30)
 	msgframe:SetBackdrop(ControlBackdrop)
 	msgframe:SetBackdropColor(0,0,0)
@@ -222,7 +218,7 @@ local function Constructor()
 	msgframe:SetFrameLevel(1000)
 	msgframe:SetToplevel(true)
 
-	local msg = msgframe:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+	local msg = msgframe:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	msg:SetText("Press a key to bind, ESC to clear the binding or click the button again to cancel.")
 	msgframe.msg = msg
 	msg:SetPoint("TOPLEFT", 5, -5)

@@ -12,10 +12,6 @@ local select, pairs = select, pairs
 local PlaySound = PlaySound
 local CreateFrame, UIParent = CreateFrame, UIParent
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: SetDesaturation, GameFontHighlight
-
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
@@ -199,14 +195,14 @@ local methods = {
 	["SetDescription"] = function(self, desc)
 		if desc then
 			if not self.desc then
-				local desc = self.frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlightSmall")
-				desc:ClearAllPoints()
-				desc:SetPoint("TOPLEFT", self.checkbg, "TOPRIGHT", 5, -21)
-				desc:SetWidth(self.frame.width - 30)
-				desc:SetPoint("RIGHT", self.frame, "RIGHT", -30, 0)
-				desc:SetJustifyH("LEFT")
-				desc:SetJustifyV("TOP")
-				self.desc = desc
+				local f = self.frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+				f:ClearAllPoints()
+				f:SetPoint("TOPLEFT", self.checkbg, "TOPRIGHT", 5, -21)
+				f:SetWidth(self.frame.width - 30)
+				f:SetPoint("RIGHT", self.frame, "RIGHT", -30, 0)
+				f:SetJustifyH("LEFT")
+				f:SetJustifyV("TOP")
+				self.desc = f
 			end
 			self.desc:Show()
 			--self.text:SetFontObject(GameFontNormal)
@@ -251,17 +247,17 @@ local function Constructor()
 	frame:SetScript("OnMouseDown", CheckBox_OnMouseDown)
 	frame:SetScript("OnMouseUp", CheckBox_OnMouseUp)
 
-	local checkbg = frame:CreateTexture(nil, "BACKGROUND")
+	local checkbg = frame:CreateTexture(nil, "ARTWORK")
 	checkbg:SetWidth(24)
 	checkbg:SetHeight(24)
 	checkbg:SetPoint("TOPLEFT")
 	checkbg:SetTexture(130755) -- Interface\\Buttons\\UI-CheckBox-Up
 
-	local check = frame:CreateTexture(nil, "BACKGROUND")
+	local check = frame:CreateTexture(nil, "OVERLAY")
 	check:SetAllPoints(checkbg)
 	check:SetTexture(130751) -- Interface\\Buttons\\UI-CheckBox-Check
 
-	local text = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
+	local text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	text:SetJustifyH("LEFT")
 	text:SetHeight(18)
 	text:SetPoint("LEFT", checkbg, "RIGHT")
@@ -272,7 +268,7 @@ local function Constructor()
 	highlight:SetBlendMode("ADD")
 	highlight:SetAllPoints(checkbg)
 
-	local image = frame:CreateTexture(nil, "BACKGROUND")
+	local image = frame:CreateTexture(nil, "OVERLAY")
 	image:SetHeight(16)
 	image:SetWidth(16)
 	image:SetPoint("LEFT", checkbg, "RIGHT", 1, 0)

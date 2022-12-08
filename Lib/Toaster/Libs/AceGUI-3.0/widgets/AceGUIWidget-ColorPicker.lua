@@ -11,10 +11,6 @@ local pairs = pairs
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: ColorPickerFrame, OpacitySliderFrame
-
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
@@ -137,7 +133,7 @@ local function Constructor()
 	frame:SetScript("OnLeave", Control_OnLeave)
 	frame:SetScript("OnClick", ColorSwatch_OnClick)
 
-	local colorSwatch = frame:CreateTexture(nil, "BACKGROUND")
+	local colorSwatch = frame:CreateTexture(nil, "OVERLAY")
 	colorSwatch:SetWidth(19)
 	colorSwatch:SetHeight(19)
 	colorSwatch:SetTexture(130939) -- Interface\\ChatFrame\\ChatFrameColorSwatch
@@ -162,7 +158,7 @@ local function Constructor()
 	checkers:SetPoint("CENTER", colorSwatch)
 	checkers:Show()
 
-	local text = frame:CreateFontString(nil,"BACKGROUND","GameFontHighlight")
+	local text = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
 	text:SetHeight(24)
 	text:SetJustifyH("LEFT")
 	text:SetTextColor(1, 1, 1)
