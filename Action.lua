@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "08.12.2022"
+local DateTime 														= "11.12.2022"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -11430,7 +11430,7 @@ function Action.ToggleMainUI()
 			StdUi:EasyLayout(anchor, options or { padding = { top = 35, right = 10 + 20 } })	
 			
 			-- Shadowlands Covenant
-			if Action.BuildToC >= 90001 and (not TabProfileUI.HasCovenantUI or not TabProfileUI.HasCovenantUI[spec]) then 
+			if Action.BuildToC >= 90001 and Action.BuildToC < 100000 and (not TabProfileUI.HasCovenantUI or not TabProfileUI.HasCovenantUI[spec]) then 
 				local CovenantUI = {
 					{ -- [1] 
 						{

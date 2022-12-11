@@ -714,7 +714,7 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 			end 
 		end 		
 		
-		OpenCalendar() --> request access to loaded CalendarAPI for furure interal usage 
+		OpenCalendar() --> request access to loaded CalendarAPI for future interal usage 
 		private.start = debugprofilestop()
 		checker:SetScript("OnUpdate", OnUpdate)	
 		
