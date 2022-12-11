@@ -10686,7 +10686,7 @@ function Action.ToggleMainUI()
 				if Action.BuildToC < 80200 then 
 					HeartOfAzeroth:Disable()
 				end 
-			else 
+			elseif Action.BuildToC < 100000 then 
 				Covenant = StdUi:Checkbox(anchor, L["TAB"][tabName]["COVENANT"])		
 				Covenant:SetChecked(specDB.Covenant)
 				Covenant:RegisterForClicks("LeftButtonUp", "RightButtonUp")
