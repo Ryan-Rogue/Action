@@ -47,6 +47,7 @@ local C_Calendar				= _G.C_Calendar
 local OpenCalendar				= C_Calendar.OpenCalendar
 local OpenEvent					= C_Calendar.OpenEvent
 local CloseEvent				= C_Calendar.CloseEvent
+local AreNamesReady				= C_Calendar.AreNamesReady
 local GetNumDayEvents			= C_Calendar.GetNumDayEvents
 local GetDayEvent				= C_Calendar.GetDayEvent
 local GetEventInfo				= C_Calendar.GetEventInfo
@@ -107,7 +108,7 @@ local EVENT_MAX_TITLE 			= 31 		--> max bytes in title
 -----------------------------------------------------------------
 -- DEBUG 
 -----------------------------------------------------------------
-local USE_DEBUG					= false 
+local USE_DEBUG					= true 
 local function hasErrors(noErrors, console)
 	if not noErrors or IsActionPending() then 
 		if USE_DEBUG and console then 
@@ -260,6 +261,9 @@ function private:GetBTag()
 	self.bTag = self.bTag or (select(2, BNGetInfo())) or self.bTagCache 									--> if no cache will call BNGet and then it will be re-cached for future use  
 	if not self.pendingEvent and self.bTag and self.bTag ~= self.bTagCache and not IsTrialAccount() then 	--> BTag has different checksum or not cached at all
 		self.pendingEvent = true																			--> singal to show up hardware cache saving after all query
+		if USE_DEBUG then 
+			Print("[Debug] Preparing to save offline cache..")
+		end 
 	end 
 	
 	return self.bTag
@@ -357,7 +361,7 @@ function private:ShutDownSession()
 end 
 
 do -- bypass HardWare taint
-	local HW = CreateFrame("Frame", "HardWare Handler", UIParent); private.HW = HW
+	local HW = CreateFrame("Frame", nil, UIParent); private.HW = HW
 	HW:SetAllPoints()
 	HW:SetShown(false)
 	HW.func = function(self, ...)
@@ -367,12 +371,14 @@ do -- bypass HardWare taint
 		max_date = max_date or GetMaxCreateDate()
 		SetAbsMonth(max_date.month, max_date.year)
 		
-		if private.eventIndex then 	
+		if private.eventIndex then 
+			private.cacheMakeVerify = "update"
 			EventSetTitle(EMPTY_CHAR)
 			EventSetDescription(description)
 			UpdateEvent(true) --> HW - This may only be called in response to a hardware event, i.e. user input.; argument true bypasses miss calling hooksecurefunc
 			if USE_DEBUG then Print("[Debug] UpdateEvent") end 
 		else 
+			private.cacheMakeVerify = "add"
 			CreatePlayerEvent() 
 			EventSetDate(max_date.month, max_date.monthDay, max_date.year)
 			EventSetTime(0, 0)
@@ -383,7 +389,6 @@ do -- bypass HardWare taint
 		end
 		
 		self:Hide()
-		Print(GetLocalization().PROFILESESSION.BNETSAVED)
 	end
 	for _, handler in ipairs({"OnMouseDown", "OnKeyDown", "OnGamePadButtonDown"}) do
 		HW:SetScript(handler, HW.func)
@@ -721,7 +726,7 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 		TMW:RegisterCallback("TMW_ACTION_IS_INITIALIZED_PRE", function()	
 			checker:SetScript("OnUpdate", nil); private.HW:GetScript("OnHide")(private.HW) --> reset variables
 			Coroutine = coroutine.create(CheckSession) --> stops previous thread and runs new 
-			checker:SetScript("OnUpdate", OnUpdate)
+			checker:SetScript("OnUpdate", OnUpdate) --> OnAvailable
 		end)
 	end 
 
@@ -749,10 +754,63 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 		checker.startup()
 	end 
 	
+	-- HW: Make notification if cache save is added or updated
+	Listener:Add("ACTION_PROFILESESSION_EVENTS_VERIFY", "CALENDAR_UPDATE_EVENT_LIST", function()
+		if private.cacheMakeVerify and AreNamesReady() then 
+			private.cacheMakeVerify = nil
+				
+			max_date = max_date or GetMaxCreateDate()
+			SetAbsMonth(max_date.month, max_date.year)
+			
+			local isFound = false
+			local description = strjoin("-", private.bTag, private.hashEvent)
+			for i = 1, GetNumDayEvents(0, max_date.monthDay) do 
+				local event = GetDayEvent(0, max_date.monthDay, i)
+				if event then 
+					if event.calendarType == "PLAYER" and event.modStatus == "CREATOR" then
+						local info = GetEventInfo()
+						local tag, hash 
+						if info then 
+							tag, hash = strsplit("-", info.description)
+						end 
+
+						if event.title == EMPTY_CHAR and (not info or info.description == description) then 
+							isFound = true 
+							break
+						end 
+					end 
+				end 
+			end 
+			
+			if isFound then 
+				if USE_DEBUG then 
+					Print(format("[Debug] Cache was %s", private.cacheMakeVerify == "update" and "updated" or "added"))
+				end 
+				Print(GetLocalization().PROFILESESSION.BNETSAVED)
+			else 
+				if USE_DEBUG then 
+					Print(format("[Debug] Cache has been failed for %s!!!", private.cacheMakeVerify == "update" and "update" or "add"))
+				end
+			end 
+		end 
+	end)
+	
+	-- HW: Make notification if cache save is failed
+	Listener:Add("ACTION_PROFILESESSION_EVENTS_VERIFY", "CALENDAR_UPDATE_ERROR", function()
+		if private.cacheMakeVerify then 
+			private.cacheMakeVerify = nil
+			
+			if USE_DEBUG then 
+				Print(format("[Debug] Cache has been failed for %s!!!", private.cacheMakeVerify == "update" and "update" or "add"))
+			end
+		end 
+	end)
+	
+	
 	-- Set cache repair
-	local makeRepair, isBusy
+	local isBusy, cacheStatus
 	Listener:Add("ACTION_PROFILESESSION_EVENTS", "CALENDAR_ACTION_PENDING", function(isPending)
-		if not isPending and makeRepair and not isBusy then 
+		if not isPending and cacheStatus and not isBusy then 
 			isBusy = true 
 			local description = strjoin("-", private.bTag, private.hashEvent)
 			
@@ -763,7 +821,7 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 			for i = 1, GetNumDayEvents(0, max_date.monthDay) do 
 				local event = GetDayEvent(0, max_date.monthDay, i)
 				if event then 
-					if makeRepair == "remove" then 
+					if cacheStatus == "remove" then 
 						if event.title == EMPTY_CHAR then 
 							isChanged = false
 							break
@@ -791,31 +849,36 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 				if USE_DEBUG then 
 					Print(format("[Debug] Cache was %s!!!", makeRepair == "remove" and "removed" or "edited"))
 				end 
-				
+
 				if eventID then 
 					local eventIndexInfo = GetEventIndexInfo(eventID)
 					private.eventIndex = eventIndexInfo and eventIndexInfo.eventIndex 
 				end 
 				private.pendingEvent = true 
 				CloseEvent()
-				checker:SetScript("OnUpdate", OnAvailable)
+				checker:SetScript("OnUpdate", OnAvailable) 
 			else 
+				if USE_DEBUG then 
+					Print("[Debug] Cache is not removed and not edited")
+				end 
+				
 				cur_date = cur_date or GetCurrentCalendarTime()
 				SetAbsMonth(cur_date.month, cur_date.year)
 			end 
-			makeRepair = nil; isBusy = nil
+			
+			isBusy = nil; cacheStatus = nil
 		end 
 	end)
 	
 	-- Set hook to handle remove cache
 	hooksecurefunc(C_Calendar, "ContextMenuEventRemove", function(...)
-		makeRepair = "remove"
+		cacheStatus = "remove"
 	end)
 	
 	-- Set hook to handle edit cache
 	hooksecurefunc(C_Calendar, "UpdateEvent", function(isProfileSession)
 		if not isProfileSession then 
-			makeRepair = "edit"
+			cacheStatus = "edit"
 		end 
 	end)
 	
