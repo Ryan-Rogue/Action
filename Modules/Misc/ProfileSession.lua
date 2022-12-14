@@ -65,11 +65,16 @@ local EventCanEdit				= C_Calendar.EventCanEdit
 local IsEventOpen				= C_Calendar.IsEventOpen
 local IsActionPending			= C_Calendar.IsActionPending
 local GetMaxCreateDate			= C_Calendar.GetMaxCreateDate
+local GetMinDate				= C_Calendar.GetMinDate
+local GetMonthInfo				= C_Calendar.GetMonthInfo
+local ContextMenuEventCanRemove	= C_Calendar.ContextMenuEventCanRemove
+local ContextMenuSelectEvent	= C_Calendar.ContextMenuSelectEvent
+local ContextMenuEventRemove	= C_Calendar.ContextMenuEventRemove
 local GetCurrentCalendarTime 	= _G.C_DateAndTime.GetCurrentCalendarTime
 
 local time 						= _G.time 
 local date 						= _G.date
-local max_date, cur_date						
+local max_date, min_date, cur_date						
 
 local math 		 				= _G.math 
 local math_max					= math.max
@@ -103,12 +108,14 @@ local blake3					= Utils.blake3
 local EMPTY_CHAR				= " " 		--> invisible and read able space
 local EVENT_MAX_DESCRIPTION 	= 255 		--> max bytes in description 
 local EVENT_MAX_TITLE 			= 31 		--> max bytes in title 
+local MAX_EVENTS				= 30
+local CUR_EVENTS				= 0
 
 
 -----------------------------------------------------------------
 -- DEBUG 
 -----------------------------------------------------------------
-local USE_DEBUG					= true 
+local USE_DEBUG					= false 
 local function hasErrors(noErrors, console)
 	if not noErrors or IsActionPending() then 
 		if USE_DEBUG and console then 
@@ -169,14 +176,14 @@ function private:ReadBTag()
 	if not self.isBTagRead then 
 		self.isBTagRead = true 
 		
-		max_date = max_date or GetMaxCreateDate()
-		SetAbsMonth(max_date.month, max_date.year)
-
 		if coroutine.running() then 									--> [coroutine optional]
 			while IsActionPending() do  
-				coroutine.yield("[Debug] IsActionPending")
+				coroutine.yield("[Debug] ReadBTag: IsActionPending")
 			end 
 		end 
+
+		max_date = max_date or GetMaxCreateDate()
+		SetAbsMonth(max_date.month, max_date.year)
 
 		local n = GetNumDayEvents(0, max_date.monthDay)
 		for i = 1, n do 												--> parsing events in max date
@@ -649,10 +656,76 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 	-- Create thread that we can safely reuse when remote server (calendar host) is not answering
 	local Coroutine = coroutine.create(CheckSession)
 	
+	-- Perform old cache remove 
+	local isCleaned
+	local function ClearCalendar()
+		-- This function using coroutine because when IsActionPending it will not allow to delete events 
+		min_date = min_date or GetMinDate()
+		max_date = max_date or GetMaxCreateDate()
+
+		if USE_DEBUG then 
+			Print("[Debug] Cleaner: Started cleaning..")
+		end 
+
+		local dateTable = {year = min_date.year, month = min_date.month, day = min_date.monthDay}
+		while dateTable.year <= max_date.year do
+			while dateTable.month <= 12 do
+				SetAbsMonth(dateTable.month, dateTable.year)
+				local numDays = GetMonthInfo(0).numDays
+				while dateTable.day <= numDays do
+					-- Throttling check 
+					if coroutine.running() then while IsActionPending() do coroutine.yield() end end 
+					
+					for i = 1, GetNumDayEvents(0, dateTable.day) do 
+						-- Throttling check 
+						if coroutine.running() then while IsActionPending() do coroutine.yield() end end 						
+					
+						local event = GetDayEvent(0, dateTable.day, i)
+						if event then 
+							if event.calendarType == "PLAYER" and event.modStatus == "CREATOR" then 
+								ContextMenuSelectEvent(0, dateTable.day, i)
+								
+								if event.title == EMPTY_CHAR and ContextMenuEventCanRemove(0, dateTable.day, i) then
+									-- Throttling check 
+									if coroutine.running() then while IsActionPending() do coroutine.yield() end end
+									ContextMenuEventRemove()
+									
+									if USE_DEBUG then 
+										Print(format("[Debug] Cleaner: Removed #%s event at %s-%s-%s", i, dateTable.year, dateTable.month, dateTable.day))
+									end 
+								else 
+									CUR_EVENTS = CUR_EVENTS + 1
+								end 
+							end 
+						end 
+					end 
+					
+					if dateTable.year == max_date.year and dateTable.month == max_date.month and dateTable.day + 1 >= numDays then 
+						-- Break the loop before max date
+						break 
+					else 
+						dateTable.day = dateTable.day + 1
+					end 
+				end
+				dateTable.month = dateTable.month + 1
+				dateTable.day = 1
+			end
+			dateTable.year = dateTable.year + 1
+			dateTable.month = 1
+		end
+		
+		if USE_DEBUG then 
+			Print(format("[Debug] Cleaner: You have %s custom made events. Time taken: %s", CUR_EVENTS, format("%0.2f", (debugprofilestop() - private.start))))
+		end 
+		
+		isCleaned = true
+	end
+	local Coroutine_ClearCalendar = coroutine.create(ClearCalendar)
+	
 	-- Perform cache save
 	local function OnAvailable(self, elapsed)
 		self.elapsed = (self.elapsed or 1) + elapsed
-		if self.elapsed > 0.5 then 
+		if self.elapsed > 1.5 then 
 			self.elapsed = 0 
 			
 			if private.pendingEvent then  
@@ -673,7 +746,13 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 					end			
 				end 
 				
-				private.HW:Show()
+				if CUR_EVENTS < MAX_EVENTS then 
+					private.HW:Show()
+				else 
+					if USE_DEBUG then 
+						Print("[Debug] Calendar has reached maximum events!!!")
+					end 
+				end 
 			else 
 				private.HW:GetScript("OnHide")(private.HW)
 			end 
@@ -682,23 +761,41 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 		end 
 	end
 	
-	-- Perform CheckSession > Read cache > Create pending cache save
+	-- Perform CheckSession > Read cache > HW: Preparing
+	local knownDebug = {}
 	local function OnUpdate(self)
 		if coroutine.status(Coroutine) == "dead" then
 			max_date = max_date or GetMaxCreateDate()
 			self:SetScript("OnUpdate", OnAvailable)
 		elseif private.isCalendarLoaded then 
+			if coroutine.status(Coroutine_ClearCalendar) ~= "dead" and not isCleaned then 
+				local bool, debug = coroutine.resume(Coroutine_ClearCalendar)
+				if USE_DEBUG and debug and not knownDebug[debug] then 
+					knownDebug[debug] = true
+					Print(debug)
+				end
+			end 
+			
 			local bool, debug = coroutine.resume(Coroutine)
-			if USE_DEBUG and debug then 
+			
+			-- In case if user or something else trying to use calendar before work done
+			-- This prevents to create duplicated events
+			if debug then 
+				max_date = max_date or GetMaxCreateDate()
+				SetAbsMonth(max_date.month, max_date.year)
+			end
+			
+			if USE_DEBUG and debug and not knownDebug[debug] then 
+				knownDebug[debug] = true
 				Print(debug)
 			end
 			assert(bool)
 		end 
 	end
-	
-	-- Perform CalendarAPI
+
+	-- Request data from Calendar and then launch HW if need to create cache
 	local checker = CreateFrame("Frame")
-	checker.elapsed = 0
+	checker.elapsed = 0 
 	checker.startup = function()
 		if not private.isCalendarLoaded then 
 			Listener:Add("ACTION_PROFILESESSION_EVENTS", "CALENDAR_UPDATE_EVENT_LIST", function()
@@ -724,6 +821,9 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 		checker:SetScript("OnUpdate", OnUpdate)	
 		
 		TMW:RegisterCallback("TMW_ACTION_IS_INITIALIZED_PRE", function()	
+			if USE_DEBUG then 
+				Print("TMW_ACTION_IS_INITIALIZED_PRE2")
+			end 
 			checker:SetScript("OnUpdate", nil); private.HW:GetScript("OnHide")(private.HW) --> reset variables
 			Coroutine = coroutine.create(CheckSession) --> stops previous thread and runs new 
 			checker:SetScript("OnUpdate", OnUpdate) --> OnAvailable
@@ -796,16 +896,17 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 	end)
 	
 	-- HW: Make notification if cache save is failed
-	Listener:Add("ACTION_PROFILESESSION_EVENTS_VERIFY", "CALENDAR_UPDATE_ERROR", function()
+	local function VerifyErrors()
 		if private.cacheMakeVerify then 
 			private.cacheMakeVerify = nil
 			
 			if USE_DEBUG then 
 				Print(format("[Debug] Cache has been failed for %s!!!", private.cacheMakeVerify == "update" and "update" or "add"))
 			end
-		end 
-	end)
-	
+		end 	
+	end 
+	Listener:Add("ACTION_PROFILESESSION_EVENTS_VERIFY", "CALENDAR_UPDATE_ERROR", VerifyErrors)
+	Listener:Add("ACTION_PROFILESESSION_EVENTS_VERIFY", "CALENDAR_UPDATE_ERROR_WITH_COUNT", VerifyErrors) --> happens when few events throtling
 	
 	-- Set cache repair
 	local isBusy, cacheStatus
