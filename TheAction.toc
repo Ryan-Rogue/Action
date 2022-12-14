@@ -78,3 +78,4 @@ Modules\Retired\PetLibrary.lua
 # Modules\TestDev\FindG.lua
 # Modules\TestDev\StressTests.lua
 # Modules\TestDev\UpdateTriggerGCD.lua
+# Modules\TestDev\MachineLearning.lua
