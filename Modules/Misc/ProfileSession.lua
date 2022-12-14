@@ -17,7 +17,6 @@
 -- 	  - Supports multiple ProfileSession:Setup() call even from different snippets, therefore it's unnecessary to hold it in globals
 --	  - Supports error handlers for devs on attempt to incorrectly use public API
 --	  - Supports offline BNet if character is not trial (not related to trial session) and previously cached it
---		* Classic versions (Vanilla and TBC) have no options to cache user key!
 --
 --	  --[[ UI ]]--
 --	  - Displays visual information: 
@@ -93,7 +92,6 @@ local Env						= TMW.CNDT.Env
 local A 						= _G.Action
 local Listener					= A.Listener
 local StdUi						= A.StdUi
-local isClassic					= StdUi.isClassic and Action.BuildToC < 30000 -- WOTLK has calendar API
 local GetLocalization 			= A.GetLocalization
 local GetCL			 			= A.GetCL
 local Hide 						= A.Hide
@@ -831,7 +829,7 @@ TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED_PRE", function(ca
 	end 
 
 	-- Initialize cache startup
-	if not IsAddOnLoaded("Blizzard_Calendar") and not isClassic then 
+	if not IsAddOnLoaded("Blizzard_Calendar") then 
 		Listener:Add("ACTION_PROFILESESSION_EVENTS", "ADDON_LOADED", function(addonName)
 			if addonName == "Blizzard_Calendar" then 
 				if USE_DEBUG then 
