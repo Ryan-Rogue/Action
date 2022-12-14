@@ -31,6 +31,7 @@ local GetToggle								= A.GetToggle
 local MouseHasFrame							= A.MouseHasFrame
 local UnitInLOS								= A.UnitInLOS
 local BuildToC								= A.BuildToC
+local PlayerClass							= A.PlayerClass
 
 local LibStub								= _G.LibStub
 local LibRangeCheck  						= LibStub("LibRangeCheck-2.0")
@@ -2641,7 +2642,7 @@ A.Unit = PseudoClass({
 		-- @return string 
 		local unitID 						= self.UnitID
 		if UnitIsUnit(unitID, "player") then 
-			return A.PlayerClass 
+			return PlayerClass 
 		end 
 		
 		return select(2, UnitClass(unitID)) or str_none
@@ -3339,7 +3340,7 @@ A.Unit = PseudoClass({
 		-- @return string 
 		-- Returns english name of the Condemned Demon 
 		-- Note: Shadowlands+ "Fodder to the Flame" summoned NPC by Demon Hunter's Necrolord Covenant
-		if BuildToC >= 90000 then 
+		if BuildToC >= 90000 and PlayerClass == "DEMONHUNTER" then 
 			local unitID 					= self.UnitID
 			if self(unitID):IsNPC() and self(unitID):IsDemon() then 
 				local npc_id				= select(6, self(unitID):InfoGUID())

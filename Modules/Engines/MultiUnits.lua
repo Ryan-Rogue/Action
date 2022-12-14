@@ -16,6 +16,7 @@ local isEnemy										= A.Bit.isEnemy
 local TeamCacheFriendly								= A.TeamCache.Friendly
 local TeamCacheFriendlyUNITs						= TeamCacheFriendly.UNITs
 local BuildToC										= A.BuildToC
+local PlayerClass									= A.PlayerClass
 	  
 local CombatLogGetCurrentEventInfo					= _G.CombatLogGetCurrentEventInfo	  
 	  
@@ -98,7 +99,7 @@ MultiUnits.AddNameplate								= function(unitID)
 			end 
 			
 			-- SL
-			if A_Unit(unitID):IsCondemnedDemon() then 
+			if PlayerClass == "DEMONHUNTER" and A_Unit(unitID):IsCondemnedDemon() then 
 				MultiUnitsActiveCondemnedDemons[unitID] = getUnitTarget[unitID]
 			end 
 			
@@ -571,12 +572,12 @@ end
 -- CondemnedDemons
 function A.IsCondemnedDemonsExists()
 	-- @return boolean
-	if BuildToC >= 90000 then 
+	if BuildToC >= 90000 and PlayerClass == "DEMONHUNTER" then 
 		if not A.IamMelee then 
 			return next(MultiUnitsActiveCondemnedDemons)
 		elseif next(MultiUnitsActiveCondemnedDemons) then 
 			for unitID in pairs(MultiUnitsActiveCondemnedDemons) do 
-				if A_Unit(unitID):GetRange() <= 10 and not A_Unit(unitID):InLOS() then 
+				if A_Unit(unitID):GetRange() <= 5 and not A_Unit(unitID):InLOS() then 
 					return true 
 				end 
 			end 
