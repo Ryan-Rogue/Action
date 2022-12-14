@@ -15922,7 +15922,7 @@ local specs = {
 
 	[102]	= {"Balance", 136096, "DAMAGER"},
 	[103]	= {"Feral", 132115, "DAMAGER"},
-	[104]	= {"Guardian", 132115, "TANK"}, -- Retail version
+	[104]	= {"Guardian", 132276, "TANK"}, -- Retail version
 	[105]	= {"Restoration", 136041, "HEALER"},
 
 	[262]	= {"Elemental", 136048, "DAMAGER"},
@@ -15937,11 +15937,15 @@ local specs = {
 	[251]	= {"Frost", 135773, "DAMAGER"},
 	[252]	= {"Unholy", 135775, "DAMAGER"},
 	
-	[577]	= {"Havoc", 135770, "DAMAGER"},
-	[581]	= {"Vengeance", 135773, "TANK"},
+	[268]	= {"Brewmaster", 608951, "TANK"},
+	[270]	= {"Mistweaver", 608952, "DAMAGER"},
+	[269]	= {"Windwalker", 608953, "DAMAGER"},
 	
-	[1467]	= {"Devastation", 135770, "DAMAGER"},
-	[1468]	= {"Preservation", 135773, "HEALER"},
+	[577]	= {"Havoc", 1247264, "DAMAGER"},
+	[581]	= {"Vengeance", 1247265, "TANK"},
+	
+	[1467]	= {"Devastation", 4511811, "DAMAGER"},
+	[1468]	= {"Preservation", 4511812, "HEALER"},
 }; ActionData.specs = specs
 
 function Action.GetCurrentSpecializationInfo() 
