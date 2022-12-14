@@ -15876,6 +15876,90 @@ function Action.PrintHelpToggle()
 end 
 
 -------------------------------------------------------------------------------
+-- Specializations
+-------------------------------------------------------------------------------
+-- TODO: Just temporary fix for low level characters until v2 release, have to make it better
+local classSpecIds = {
+	DRUID 				= {102,103,104,105}, -- Retail version
+	HUNTER 				= {253,254,255},
+	MAGE 				= {62,63,64},
+	PALADIN 			= {65,66,70},
+	PRIEST 				= {256,257,258},
+	ROGUE 				= {259,260,261},
+	SHAMAN 				= {262,263,264},
+	WARLOCK 			= {265,266,267},
+	WARRIOR 			= {71,72,73},
+	DEATHKNIGHT 		= {250,251,252},
+	MONK				= {268,270,269},
+	DEMONHUNTER			= {577,581},
+	EVOKER 				= {1467,1468},
+}; ActionData.classSpecIds = classSpecIds
+local specs = {
+	-- 4th index is localizedName of the specialization 
+	[253]	= {"Beast Mastery", 461112, "DAMAGER"},
+	[254]	= {"Marksmanship", 236179, "DAMAGER"},
+	[255]	= {"Survival", 461113, "DAMAGER"},
+
+	[71]	= {"Arms", 132355, "DAMAGER"},
+	[72]	= {"Fury", 132347, "DAMAGER"},
+	[73]	= {"Protection", 132341, "TANK"},
+
+	[65]	= {"Holy", 135920, "HEALER"},
+	[66]	= {"Protection", 236264, "TANK"},
+	[70]	= {"Retribution", 135873, "DAMAGER"},
+
+	[62]	= {"Arcane", 135932, "DAMAGER"},
+	[63]	= {"Fire", 135810, "DAMAGER"},
+	[64]	= {"Frost", 135846, "DAMAGER"},
+
+	[256]	= {"Discipline", 135940, "HEALER"},
+	[257]	= {"Holy", 237542, "HEALER"},
+	[258]	= {"Shadow", 136207, "DAMAGER"},
+
+	[265]	= {"Affliction", 136145, "DAMAGER"},
+	[266]	= {"Demonology", 136172, "DAMAGER"},
+	[267]	= {"Destruction", 136186, "DAMAGER"},
+
+	[102]	= {"Balance", 136096, "DAMAGER"},
+	[103]	= {"Feral", 132115, "DAMAGER"},
+	[104]	= {"Guardian", 132115, "TANK"}, -- Retail version
+	[105]	= {"Restoration", 136041, "HEALER"},
+
+	[262]	= {"Elemental", 136048, "DAMAGER"},
+	[263]	= {"Enhancement", 237581, "DAMAGER"},
+	[264]	= {"Restoration", 136052, "HEALER"},
+
+	[259]	= {"Assassination", 236270, "DAMAGER"},
+	[260]	= {"Outlaw", 236286, "DAMAGER"},
+	[261]	= {"Subtlety", 132320, "DAMAGER"},
+	
+	[250]	= {"Blood", 135770, "TANK"},
+	[251]	= {"Frost", 135773, "DAMAGER"},
+	[252]	= {"Unholy", 135775, "DAMAGER"},
+	
+	[577]	= {"Havoc", 135770, "DAMAGER"},
+	[581]	= {"Vengeance", 135773, "TANK"},
+	
+	[1467]	= {"Devastation", 135770, "DAMAGER"},
+	[1468]	= {"Preservation", 135773, "HEALER"},
+}; ActionData.specs = specs
+
+function Action.GetCurrentSpecializationInfo() 
+	-- @return specID, specName
+	local specIDs = classSpecIds[Action.PlayerClass]
+	
+	local specID, specName
+	for i = 1, #specIDs do
+		if specs[specIDs[i]][3] == "DAMAGER" then 
+			specID = specIDs[i]
+			specName = specs[specIDs[i]][1]
+		end
+	end
+
+	return specID, specName -- TODO: Localize specName
+end
+
+-------------------------------------------------------------------------------
 -- Initialization
 -------------------------------------------------------------------------------
 local HealerSpecs 						= {
@@ -15908,11 +15992,20 @@ local RangerSpecs 						= {
 	[ActionConst.EVOKER_DEVASTATION] 	= true,
 }; ActionData.RangerSpecs = RangerSpecs
 function Action:PLAYER_SPECIALIZATION_CHANGED(event, unit)
-	local specID, specName = GetSpecializationInfo(GetSpecialization() or 0) 
+	Action.PlayerLevel = Action.PlayerLevel or UnitLevel("player")
+	local PlayerLevel = Action.PlayerLevel
+	
+	local specID, specName
+	if PlayerLevel >= 10 then 
+		specID, specName = GetSpecializationInfo(GetSpecialization() or 0) 
+	else
+		specID, specName = Action.GetCurrentSpecializationInfo()
+	end 
+	
 	if not specID or not specName then 
 		-- This data can be nil if fired without receive information from server, so we will keep previous data saved if we have
 		return 
-	end 
+	end 	
 	
 	local oldSpec	 = Action.PlayerSpec
 	Action.PlayerSpec, Action.PlayerSpecName = specID, specName
