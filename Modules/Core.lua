@@ -114,6 +114,9 @@ local FoodAndDrink 									= {
 	[GetSpellInfo(257427)] 							= true, -- FoodDrink
 	[GetSpellInfo(167152)] 							= true, -- Mage's eat
 }
+local FoodAndDrinkBlacklist 						= {
+	[GetSpellInfo(396092) or ""]					= true, -- Well Fed
+}
 local function IsDrinkingOrEating()
 	-- @return boolean 
 	local auraName
@@ -121,7 +124,7 @@ local function IsDrinkingOrEating()
 		auraName = UnitBuff(player, i, "HELPFUL PLAYER")
 		if not auraName then 
 			break 
-		elseif FoodAndDrink[auraName] then 
+		elseif FoodAndDrink[auraName] and not FoodAndDrinkBlacklist[auraName] then 
 			return true 
 		end 
 	end 
