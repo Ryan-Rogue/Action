@@ -951,8 +951,10 @@ local function OnUpdate()
     end 
 	
 	-- Focus 
-	if not isClassic and not A_Unit(focus):IsEnemy() then 
-		-- Replaces party/raid unit by self 
+	if not isClassic and not TeamCacheFriendlyGUIDs[focus] and not A_Unit(focus):IsEnemy() then 
+		-- Replaces party/raid unit by self
+		-- We have to replace member by focus only in case if focus is not member of the group
+		-- This need for /focus macros otherwise toggles will not work through specific unit (e.g. raid1, party1) if its equal to focus unit
 		member 							= focus
 		memberGUID						= UnitGUID(member)		
 		if memberGUID and memberGUID ~= playerGUID then 
