@@ -883,6 +883,12 @@ local AuraList = {
         80353, -- Time Warp
         160452, -- Netherwinds
         32182, -- Heroism
+        230935, -- Drums of the Mountain
+        256740, -- Drums of the Maelstrom
+        264667, -- Primal Rage
+        390386, -- Fury of the Aspects
+        386540, -- Temporal Warp
+        381301, -- Feral Hide Drums
     },
     -- SOME SPECIAL
     DamageDeBuffs = {
