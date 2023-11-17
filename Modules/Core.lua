@@ -227,7 +227,10 @@ function A.CanUseHealthstoneOrHealingPotion()
 				
 				if HealingPotion then 
 					if Healthstone >= 100 then -- AUTO 
-						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= HealingPotion:GetItemDescription()[1] then 
+						if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 and Unit(player):HealthDeficit() >= (HealingPotion:GetItemDescription()[1] or 0) then 
+							if HealingPotion:GetItemDescription()[1]  == nil then
+								error("HealingPotion is nil, wrong itemID? " .. HealingPotion.ID)
+							end 
 							return HealingPotion
 						end 
 					elseif Unit(player):HealthPercent() <= Healthstone then 

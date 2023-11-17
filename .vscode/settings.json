@@ -1,11 +1,12 @@
 {
     "editor.unicodeHighlight.nonBasicASCII": false,
-    "Lua.runtime.version": "Lua 5.1",
-    "Lua.completion.autoRequire": false,
     "editor.fontFamily": "'Courier New', Consolas, monospace",
     "editor.renderWhitespace": "none",
     "diffEditor.ignoreTrimWhitespace": false,
     "diffEditor.renderSideBySide": false,
+    "Lua.runtime.version": "Lua 5.1",
+    "Lua.completion.autoRequire": false,
+    "Lua.completion.keywordSnippet": "Disable",
     "Lua.hint.await": false,
     "Lua.diagnostics.disableScheme": [
         "git",
