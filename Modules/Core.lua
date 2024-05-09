@@ -43,7 +43,7 @@ local CONST_LEFT 									= CONST.LEFT
 local CONST_RIGHT									= CONST.RIGHT
 local CONST_SPELLID_COUNTER_SHOT					= CONST.SPELLID_COUNTER_SHOT
 
-local UnitBuff										= _G.UnitBuff
+local C_UnitAuras									= _G.C_UnitAuras
 local UnitIsFriend									= _G.UnitIsFriend
 
 local GetSpellInfo									= _G.GetSpellInfo
@@ -119,12 +119,12 @@ local FoodAndDrinkBlacklist 						= {
 }
 local function IsDrinkingOrEating()
 	-- @return boolean 
-	local auraName
+	local auraData
 	for i = 1, huge do 
-		auraName = UnitBuff(player, i, "HELPFUL PLAYER")
-		if not auraName then 
+		auraData = C_UnitAuras.GetAuraDataByIndex(player, i, "HELPFUL PLAYER")
+		if not auraData then 
 			break 
-		elseif FoodAndDrink[auraName] and not FoodAndDrinkBlacklist[auraName] then 
+		elseif FoodAndDrink[auraData.name] and not FoodAndDrinkBlacklist[auraData.name] then 
 			return true 
 		end 
 	end 

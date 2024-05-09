@@ -178,8 +178,8 @@ local     TalentMap,     PvpTalentMap =
 	  Env.TalentMap, Env.PvpTalentMap
 
 -- Unit 	  
-local  UnitAura, 	UnitIsUnit = 
-	_G.UnitAura, _G.UnitIsUnit
+local  UnitIsUnit = 
+	_G.UnitIsUnit
 	
 -- Debug 	
 local  GetNumSpecializationsForClassID,    GetSpecializationInfo =

@@ -36,8 +36,8 @@ local owner															= isClassic and "PlayerClass" or "PlayerSpec"
 local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    GetBindingFromClick,    GetSpellInfo,    GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
 	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus, _G.GetBindingFromClick, _G.GetSpellInfo, _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
 	  
-local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    UnitAura,    UnitPower = 
-	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.UnitAura, _G.UnitPower	  
+local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    C_UnitAuras,    UnitPower = 
+	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras, _G.UnitPower	  
 	    
 local GameLocale 													= _G.GetLocale()
 local BOOKTYPE_SPELL												= _G.BOOKTYPE_SPELL
@@ -9134,14 +9134,14 @@ function Action.AuraIsBlackListed(unitID)
 	-- @return boolean 
 	local Aura, Filter = A_AuraGetCategory("BlackList")
 	if Aura and next(Aura) then 
-		local _, AuraData, Dur, Name, count, duration, expirationTime, canStealOrPurge, id
+		local _, AuraData, Dur, auraData
 		for i = 1, huge do 
-			Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
-			if Name then
-				AuraData = Aura[Name]
-				if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or id == AuraData.ID) then 
-					Dur = expirationTime == 0 and huge or expirationTime - TMW.time
-					if Dur > AuraData.Dur and (AuraData.Stack == 0 or count >= AuraData.Stack) and (not AuraData.canStealOrPurge or canStealOrPurge == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)
+			if auraData then
+				AuraData = Aura[auraData.name]
+				if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 
+					Dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
+					if Dur > AuraData.Dur and (AuraData.Stack == 0 or auraData.applications >= AuraData.Stack) and (not AuraData.canStealOrPurge or auraData.isStealable == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
 						return true
 					end 
 				end 
@@ -9157,14 +9157,14 @@ function Action.AuraIsValid(unitID, Toggle, Category)
 	if Category ~= "BlackList" and A_AuraIsON(Toggle) then 
 		local Aura, Filter = A_AuraGetCategory(Category)
 		if Aura and not A_AuraIsBlackListed(unitID) then 
-			local _, AuraData, Dur, Name, count, duration, expirationTime, canStealOrPurge, id
-			for i = 1, huge do			
-				Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
-				if Name then	
-					AuraData = Aura[Name]
-					if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or id == AuraData.ID) then 					
-						Dur = expirationTime == 0 and huge or expirationTime - TMW.time
-						if Dur > AuraData.Dur and (AuraData.Stack == 0 or count >= AuraData.Stack) and (not AuraData.canStealOrPurge or canStealOrPurge == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
+			local _, AuraData, Dur, auraData
+			for i = 1, huge do	
+				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)		
+				if auraData then	
+					AuraData = Aura[auraData.name]
+					if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 					
+						Dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
+						if Dur > AuraData.Dur and (AuraData.Stack == 0 or auraData.applications >= AuraData.Stack) and (not AuraData.canStealOrPurge or auraData.isStealable == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
 							return true
 						end 
 					end 
