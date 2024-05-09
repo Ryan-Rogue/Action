@@ -10959,7 +10959,7 @@ function Action.ToggleMainUI()
 			}				
 			
 			Color.Title:SetAllPoints()			
-			Color.Title:SetJustifyH("MIDDLE")
+			Color.Title:SetJustifyH("CENTER")
 			Color.Title:SetFontSize(14)
 
 			Color.UseColor = StdUi:Checkbox(anchor, L["TAB"][tabName]["COLORUSE"], 250)
@@ -11265,7 +11265,7 @@ function Action.ToggleMainUI()
 			
 			local Misc = StdUi:Header(PauseChecksPanel, L["TAB"][tabName]["MISC"])
 			Misc:SetAllPoints()			
-			Misc:SetJustifyH("MIDDLE")
+			Misc:SetJustifyH("CENTER")
 			Misc:SetFontSize(14)
 			
 			local DisableRotationDisplay = StdUi:Checkbox(anchor, L["TAB"][tabName]["DISABLEROTATIONDISPLAY"])
@@ -11543,7 +11543,7 @@ function Action.ToggleMainUI()
 					if config.E == "Header" then 
 						obj = StdUi:Header(anchor, config.L.ANY or config.L[cL])
 						obj:SetAllPoints()			
-						obj:SetJustifyH("MIDDLE")						
+						obj:SetJustifyH("CENTER")						
 						obj:SetFontSize(config.S or 14)	
 					end 
 					
@@ -14421,7 +14421,7 @@ function Action.ToggleMainUI()
 					TMW:Fire("TMW_ACTION_HEALING_ENGINE_UI_PROFILE", "Changed", "")
 				end								
 				slider.FontStringTitle = StdUi:Subtitle(PanelOptions, "")
-				slider.FontStringTitle:SetJustifyH("MIDDLE")
+				slider.FontStringTitle:SetJustifyH("CENTER")
 				slider:MakeTextUpdate(specDB[db])				
 				StdUi:GlueAbove(slider.FontStringTitle, slider)
 				if tooltipText then 
@@ -15451,7 +15451,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelPriority - Multipliers (title)
 			Multipliers = StdUi:Header(PanelPriority, L["TAB"][tabName]["MULTIPLIERS"])
 			Multipliers:SetAllPoints()			
-			Multipliers:SetJustifyH("MIDDLE")
+			Multipliers:SetJustifyH("CENTER")
 			Multipliers:SetFontSize(15)	
 			-- UI: PanelPriority - MultiplierIncomingDamageLimit
 			MultiplierIncomingDamageLimit 	= CreateSliderMultiplier("MultiplierIncomingDamageLimit")			
@@ -15465,7 +15465,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelPriority - Offsets (title)
 			Offsets = StdUi:Header(PanelPriority, L["TAB"][tabName]["OFFSETS"])
 			Offsets:SetAllPoints()			
-			Offsets:SetJustifyH("MIDDLE")
+			Offsets:SetJustifyH("CENTER")
 			Offsets:SetFontSize(15)
 			
 			-- UI: PanelPriority - OffsetMode 
@@ -15620,7 +15620,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelManaManagement - OR 
 			OR = StdUi:Header(PanelManaManagement, L["TAB"][tabName]["OR"])
 			OR:SetAllPoints()			
-			OR:SetJustifyH("MIDDLE")
+			OR:SetJustifyH("CENTER")
 			OR:SetFontSize(14)
 			
 			-- UI: PanelManaManagement - ManaManagementStopAtTTD
@@ -15692,7 +15692,7 @@ function Action.ToggleMainUI()
 				end 
 			end 			
 			HelpWindow.HelpText = StdUi:Label(HelpWindow, "")	
-			HelpWindow.HelpText:SetJustifyH("MIDDLE")
+			HelpWindow.HelpText:SetJustifyH("CENTER")
 			HelpWindow.HelpText:SetFontSize(13)
 			StdUi:GlueAcross(HelpWindow.HelpText, HelpWindow, 10, -30, -10, 30)
 			HelpWindow.ButtonOK = StdUi:Button(HelpWindow, HelpWindow:GetWidth() - 30, 35, L["TAB"][tabName]["HELPOK"])		
