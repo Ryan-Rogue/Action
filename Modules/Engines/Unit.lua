@@ -68,9 +68,9 @@ local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo
 local GetUnitSpeed							= _G.GetUnitSpeed
 local GetSpellInfo							= _G.GetSpellInfo
 local UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs =
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, C_UnitAuras =
 	  UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, _G.C_UnitAuras
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -3881,13 +3881,13 @@ A.Unit = PseudoClass({
 		local unitGUID 						= customGUID or UnitGUID(unitID)
 		
 		if InfoCycloneGUIDs[unitGUID] then 
-			local _, spellName, spellExpirationTime		
+			local _, auraData	
 			for i = 1, huge do 
-				spellName, _, _, _, _, spellExpirationTime = UnitAura(unitID, i, "HARMFUL")
-				if not spellName then 
+				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, "HARMFUL")
+				if not auraData then 
 					break 			
-				elseif InfoCycloneSpellName[spellName] then 
-					return spellExpirationTime == 0 and huge or spellExpirationTime - TMW.time
+				elseif InfoCycloneSpellName[auraData.name] then 
+					return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
 				end 
 			end 
 		end 
@@ -3916,18 +3916,17 @@ A.Unit = PseudoClass({
 		local remain_dur, total_dur 		= 0, 0
 		
 		local c = 0
-		local _, spellName, spellID, spellDuration, spellExpirationTime		
+		local _, auraData		
 		for i = 1, huge do 
-			spellName, _, _, _, spellDuration, spellExpirationTime, _, _, _, spellID = UnitAura(unitID, i, filter)
-			
-			if not spellName then 
-				break 			
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				local current_dur = spellExpirationTime == 0 and huge or spellExpirationTime - TMW.time
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+		
+			if not auraData then break 			
+			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
+				local current_dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
 				if current_dur > remain_dur then 
 					c = c + 1
 					remain_dur = current_dur
-					total_dur = spellDuration				
+					total_dur = auraData.duration				
 				
 					if remain_dur == huge or c >= (type(spell) == "table" and 3 or 1) then 
 						break 
@@ -3949,18 +3948,18 @@ A.Unit = PseudoClass({
 			filter = "HARMFUL"
 		end 
 		
-		local _, spellName, spellID, spellCount		
+		local _, auraData
 		for i = 1, huge do 
-			spellName, _, spellCount, _, _, _, _, _, _, spellID = UnitAura(unitID, i, filter)
-			if not spellName then 
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			if not auraData then 
 				break 			
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				return spellCount == 0 and 1 or spellCount			
+			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
+				return auraData.applications == 0 and 1 or auraData.applications			
 			end 
 		end 
 		
 		return 0
-    end, "UnitGUID"),
+	end, "UnitGUID"),
 	-- Pandemic Threshold
 	PT										= Cache:Wrap(function(self, spell, debuff, byID)    
 		-- @return boolean 
@@ -3975,13 +3974,13 @@ A.Unit = PseudoClass({
 		end 
 		
 		local duration = 0
-		local _, spellName, spellID, spellDuration, spellExpirationTime		
+		local _, auraData	
 		for i = 1, huge do 
-			spellName, _, _, _, spellDuration, spellExpirationTime, _, _, _, spellID = UnitAura(unitID, i, filter)
-			if not spellName then 
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			if not auraData then 
 				break 			
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				duration = spellExpirationTime == 0 and 1 or ((spellExpirationTime - TMW.time) / spellDuration)
+			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
+				duration = auraData.expirationTime == 0 and 1 or ((auraData.expirationTime - TMW.time) / auraData.duration)
 				if duration <= 0.3 then 
 					return true 
 				end 
@@ -3989,27 +3988,24 @@ A.Unit = PseudoClass({
 		end 
 		
 		return duration <= 0.3
-    end, "UnitGUID"),
+	end, "UnitGUID"),
 	HasBuffs 								= Cache:Wrap(function(self, spell, caster, byID)
-		-- @return number, number 
+		-- @return number, number
 		-- current remain, total applied duration	
 		-- Nill-able: caster, byID
 		local unitID 						= self.UnitID	
 		local filter -- default "HELPFUL"
-		if caster then 
+		if caster then
 			filter = "HELPFUL PLAYER"
-		end 
-		
-		local _, spellName, spellID, spellDuration, spellExpirationTime		
-		for i = 1, huge do 
-			spellName, _, _, _, spellDuration, spellExpirationTime, _, _, _, spellID = UnitAura(unitID, i, filter)
-			if not spellName then 
-				break  
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				return spellExpirationTime == 0 and huge or spellExpirationTime - TMW.time, spellDuration
-			end 
-		end 
-		
+		end
+		local _, auraData	
+		for i = 1, huge do
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			if not auraData then break end
+			if IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then
+				return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration
+			end
+		end
 		return 0, 0
 	end, "UnitGUID"),
 	SortBuffs 								= Cache:Wrap(function(self, spell, caster, byID)
@@ -4023,22 +4019,21 @@ A.Unit = PseudoClass({
 		end 
 		local remain_dur, total_dur 		= 0, 0
 		
-		local _, spellName, spellID, spellDuration, spellExpirationTime		
+		local _, auraData	
 		for i = 1, huge do 
-			spellName, _, _, _, spellDuration, spellExpirationTime, _, _, _, spellID = UnitAura(unitID, i, filter)
-			if not spellName then 
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			if not auraData then 
 				break 			
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				local current_dur = spellExpirationTime == 0 and huge or spellExpirationTime - TMW.time
+			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
+				local current_dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
 				if current_dur > remain_dur then 
-					remain_dur, total_dur = current_dur, spellDuration
+					remain_dur, total_dur = current_dur, auraData.duration
 					if remain_dur == huge then 
 						break 
 					end 
 				end				
 			end 
 		end 
-		
 		return remain_dur, total_dur		
 	end, "UnitGUID"),
 	HasBuffsStacks 							= Cache:Wrap(function(self, spell, caster, byID)
@@ -4050,16 +4045,15 @@ A.Unit = PseudoClass({
 			filter = "HELPFUL PLAYER"
 		end 
 		
-		local _, spellName, spellID, spellCount		
+		local _, auraData	
 		for i = 1, huge do 
-			spellName, _, spellCount, _, _, _, _, _, _, spellID = UnitAura(unitID, i, filter)
-			if not spellName then 
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			if not auraData then 
 				break 			
-			elseif IsAuraEqual(spellName, spellID, AssociativeTables[spell], byID) then 
-				return spellCount == 0 and 1 or spellCount			
+			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
+				return auraData.applications == 0 and 1 or auraData.applications			
 			end 
 		end 
-		
 		return 0
 	end, "UnitGUID"),
 	WithOutKarmed 							= Cache:Wrap(function(self)

@@ -49,8 +49,8 @@ local GetSpellInfo				= _G.GetSpellInfo
 local InCombatLockdown			= _G.InCombatLockdown  
 local issecure					= _G.issecure
 
-local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage, 	  UnitAura =
-	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.UnitAura
+local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage=
+	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage
 
 local	 GetPowerRegen,    GetRuneCooldown,    GetShapeshiftForm, 	 GetCritChance,    GetHaste, 	GetMasteryEffect, 	 GetVersatilityBonus, 	 GetCombatRatingBonus =
 	  _G.GetPowerRegen, _G.GetRuneCooldown, _G.GetShapeshiftForm, _G.GetCritChance, _G.GetHaste, _G.GetMasteryEffect, _G.GetVersatilityBonus, _G.GetCombatRatingBonus

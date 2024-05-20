@@ -404,7 +404,6 @@ local GetSpellBookItemName = GetSpellBookItemName
 local GetNumSpellTabs = GetNumSpellTabs
 local GetSpellTabInfo = GetSpellTabInfo
 local GetItemInfo = GetItemInfo
-local UnitAura = UnitAura
 local UnitCanAttack = UnitCanAttack
 local UnitCanAssist = UnitCanAssist
 local UnitExists = UnitExists
