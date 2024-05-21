@@ -49,8 +49,8 @@ local GetSpellInfo				= _G.GetSpellInfo
 local InCombatLockdown			= _G.InCombatLockdown  
 local issecure					= _G.issecure
 
-local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage=
-	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage
+local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage,    C_UnitAuras=
+	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.C_UnitAuras
 
 local	 GetPowerRegen,    GetRuneCooldown,    GetShapeshiftForm, 	 GetCritChance,    GetHaste, 	GetMasteryEffect, 	 GetVersatilityBonus, 	 GetCombatRatingBonus =
 	  _G.GetPowerRegen, _G.GetRuneCooldown, _G.GetShapeshiftForm, _G.GetCritChance, _G.GetHaste, _G.GetMasteryEffect, _G.GetVersatilityBonus, _G.GetCombatRatingBonus
@@ -654,6 +654,51 @@ function Player:GetDeBuffsUnitCount(...)
 	
 	return units, counter
 end 
+
+function Player:HasAuraBySpellID(spellID, caster)
+	-- @return number, number, number
+ 	-- current remaing, duration, current elapsed
+	-- Returns First found spell in table
+	-- Nill-able: own
+	local auraData = {}
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData and (not caster or auraData.sourceUnit == "player") then
+                return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+            end
+        end
+        return 0, 0, 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData and (not caster or auraData.sourceUnit == "player") then
+            return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+        end
+        return 0, 0, 0
+    end
+end
+
+function Player:HasAuraStacksBySpellID(spellID)
+	-- @return number
+ 	-- Stacks
+	local auraData
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData then
+                return auraData.applications == 0 and 1 or auraData.applications
+            end
+        end
+        return 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData then
+            return auraData.applications == 0 and 1 or auraData.applications
+        end
+        return 0
+    end
+end
+
 
 -- Retail: Totems 
 function Player:GetTotemInfo(i)
