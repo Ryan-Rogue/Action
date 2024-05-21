@@ -178,8 +178,8 @@ local     TalentMap,     PvpTalentMap =
 	  Env.TalentMap, Env.PvpTalentMap
 
 -- Unit 	  
-local  UnitIsUnit = 
-	_G.UnitIsUnit
+local  UnitIsUnit,    C_UnitAuras = 
+	_G.UnitIsUnit, _G.C_UnitAuras
 	
 -- Debug 	
 local  GetNumSpecializationsForClassID,    GetSpecializationInfo =
@@ -1300,13 +1300,13 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 		if Unit(unitID):DeBuffCyclone() > MinDur or (isEnemy and (not A.IsInitialized or GetToggle(1, "StopAtBreakAble")) and Unit(unitID):HasDeBuffs(IsBreakAbleDeBuff) > MinDur) then 
 			return false 
 			--[[
-			local debuffName, expirationTime, remainTime, _
+			local remainTime, auraData
 			for i = 1, huge do			
-				debuffName, _, _, _, _, expirationTime = UnitAura(unitID, i, "HARMFUL")
-				if not debuffName then
+				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, "HARMFUL")
+				if not auraData then
 					break 
-				elseif IsCycloneDeBuff[debuffName] or (isStopAtBreakAble and isEnemy and IsBreakAbleDeBuff[debuffName]) then 
-					remainTime = expirationTime == 0 and huge or expirationTime - TMW.time
+				elseif IsCycloneDeBuff[auraData.name] or (isStopAtBreakAble and isEnemy and IsBreakAbleDeBuff[auraData.name]) then 
+					remainTime = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
 					if remainTime > MinDur then 
 						return false 
 					end 
