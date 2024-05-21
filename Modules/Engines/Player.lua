@@ -659,7 +659,7 @@ function Player:HasAuraBySpellID(spellID, caster)
 	-- @return number, number, number
  	-- current remaing, duration, current elapsed
 	-- Returns First found spell in table
-	-- Nill-able: own
+	-- Nill-able: caster
 	local auraData = {}
     if type(spellID) == "table" then
         for _, id in pairs(spellID) do
