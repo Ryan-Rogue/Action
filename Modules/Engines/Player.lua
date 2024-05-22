@@ -655,6 +655,51 @@ function Player:GetDeBuffsUnitCount(...)
 	return units, counter
 end 
 
+function Player:HasAuraBySpellID(spellID, caster)
+	-- @return number, number, number
+ 	-- current remaing, duration, current elapsed
+	-- Returns First found spell in table
+	-- Nill-able: caster
+	local auraData = {}
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData and (not caster or auraData.sourceUnit == "player") then
+                return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+            end
+        end
+        return 0, 0, 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData and (not caster or auraData.sourceUnit == "player") then
+            return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+        end
+        return 0, 0, 0
+    end
+end
+
+function Player:HasAuraStacksBySpellID(spellID)
+	-- @return number
+ 	-- Stacks
+	local auraData
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData then
+                return auraData.applications == 0 and 1 or auraData.applications
+            end
+        end
+        return 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData then
+            return auraData.applications == 0 and 1 or auraData.applications
+        end
+        return 0
+    end
+end
+
+
 -- Retail: Totems 
 function Player:GetTotemInfo(i)
 	-- @return: haveTotem, totemName, startTime, duration, icon
