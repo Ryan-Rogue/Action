@@ -585,9 +585,9 @@ function Player:CancelBuff(buffName)
 		CancelSpellByName(buffName)	
 		--[[
 		for i = 1, huge do			
-			local Name = UnitAura("player", i, "HELPFUL PLAYER")
-			if Name then	
-				if Name == buffName then 
+			local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL PLAYER")
+			if auraData then	
+				if auraData.name == buffName then 
 					CancelUnitBuff("player", i, "HELPFUL PLAYER")								
 				end 
 			else 

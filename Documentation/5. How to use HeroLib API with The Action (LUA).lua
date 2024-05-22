@@ -96,7 +96,9 @@ local TMW = TMW
 local CNDT = TMW.CNDT 
 local Env = CNDT.Env
 local Action = Action
-
+local math = math
+local huge = math.huge
+local C_UnitAuras = _G.C_UnitAuras
 Action[ACTION_CONST_MONK_BREWMASTER] = {
 	-- Racial
 	ArcaneTorrent                         	= Action.Create({ Type = "Spell", ID = 50613 	}),
@@ -218,21 +220,27 @@ local staggerDebuffs = {
 
 -- UnitAura function from BrewmasterTools
 local function BrMUnitAura(unit, spellID, filter)
-  local i, id = 0, 0
+  local auraData
   if type(spellID) == "number" then
-    while id do
-      i = i + 1
-      id = select(10, UnitAura(unit, i, filter))
-      if spellID == id then
-        return UnitAura(unit, i, filter)
+    for i = 1, huge do
+      auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
+      if auraData then
+          if auraData.spellId == spellID then
+            return auraData
+          end
+      else
+        break
       end
     end
   else
-    while id do
-      i = i + 1
-      id = select(10, UnitAura(unit, i, filter))
-      if spellID[id] then
-        return UnitAura(unit, i, filter)
+    for i = 1, huge do 
+      auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
+      if auraData then
+        if spellID[auraData.spellId] then
+          return auraData
+        end
+      else
+        break
       end
     end
   end
@@ -240,7 +248,8 @@ end
 
 -- GetNextTick function from BrewmasterTools
 local function GetNextTick()
-  return select(16,BrMUnitAura("player", staggerDebuffs, "HARMFUL")) or 0
+  local auraData = BrMUnitAura("player", staggerDebuffs, "HARMFUL")
+  return auraData and auraData.points[1] or 0
 end
 
 -- makeTempAdder function from BrewmasterTools
