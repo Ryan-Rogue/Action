@@ -11,6 +11,7 @@ local wipe 						= _G.wipe
 local SPELL_FAILED_NOT_BEHIND	= _G.SPELL_FAILED_NOT_BEHIND
 local SPELL_FAILED_NOT_INFRONT	= _G.SPELL_FAILED_NOT_INFRONT
 local ERR_PET_SPELL_NOT_BEHIND	= _G.ERR_PET_SPELL_NOT_BEHIND
+local SPELL_FAILED_UNIT_NOT_INFRONT = _G.SPELL_FAILED_UNIT_NOT_INFRONT
 	  
 local TMW 						= _G.TMW
 local CNDT						= TMW.CNDT 
@@ -49,8 +50,8 @@ local GetSpellInfo				= _G.GetSpellInfo
 local InCombatLockdown			= _G.InCombatLockdown  
 local issecure					= _G.issecure
 
-local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage,    C_UnitAuras=
-	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.C_UnitAuras
+local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage,    C_UnitAuras,    UnitGUID=
+	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.C_UnitAuras, _G.UnitGUID
 
 local	 GetPowerRegen,    GetRuneCooldown,    GetShapeshiftForm, 	 GetCritChance,    GetHaste, 	GetMasteryEffect, 	 GetVersatilityBonus, 	 GetCombatRatingBonus =
 	  _G.GetPowerRegen, _G.GetRuneCooldown, _G.GetShapeshiftForm, _G.GetCritChance, _G.GetHaste, _G.GetMasteryEffect, _G.GetVersatilityBonus, _G.GetCombatRatingBonus
@@ -162,6 +163,8 @@ local Data = {
 	-- Behind
 	PlayerBehind = 0,
 	PetBehind = 0,	
+	TargetBehind = 0,
+	TargetBehindGUID = nil,
 	-- Swap 
 	isSwapLocked = false, 
 	-- Items 
@@ -265,6 +268,11 @@ function Data.logBehind(...)
 	
 	if message == ERR_PET_SPELL_NOT_BEHIND then 
 		Data.PetBehind = TMW.time
+	end 
+
+	if message == SPELL_FAILED_UNIT_NOT_INFRONT then
+		Data.TargetBehind = TMW.time
+		Data.TargetBehindGUID = UnitGUID("target") --record target GUID, if target changes it is likely no longer behind
 	end 
 end 
 
@@ -525,6 +533,18 @@ function Player:IsPetBehindTime()
 	-- @return number 
 	-- Note: Returns time since pet behind the target
 	return TMW.time - Data.PetBehind
+end 
+
+function Player:TargetIsBehind(x)
+	-- @return boolean
+	--Note: Returns true if target is behind the player since x seconds taken from the last ui message and its the last target that caused the error
+	return TMW.time <= Data.TargetBehind + (x or 2.5) and UnitGUID("target") == Data.TargetBehindGUID
+end
+
+function Player:TargetIsBehindTime()
+	-- @return boolean
+	--Note: Returns time since target behind the player and its the last target that caused the error
+	return UnitGUID("target") == Data.TargetBehindGUID and TMW.time - Data.TargetBehind or TMW.time
 end 
 
 function Player:IsMounted()
