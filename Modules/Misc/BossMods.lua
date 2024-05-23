@@ -170,11 +170,11 @@ if BigWigsLoader then
 	end
 	
 	BigWigsLoader.RegisterMessage(owner, "BigWigs_StartBar", function(_, module, key, text, time)
-		stop(module, text)			
+		stop(module, text:lower())			
 		tinsert(Timers, {module = module, key = key, text = text:lower(), start = TMW.time, duration = time})
 	end)
 	BigWigsLoader.RegisterMessage(owner, "BigWigs_StopBar", function(_, module, text)
-		stop(module, text)  
+		stop(module, text:lower())  
 	end)
 	BigWigsLoader.RegisterMessage(owner, "BigWigs_StopBars", function(_, module)
 		stop(module)  
