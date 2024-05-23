@@ -229,6 +229,42 @@ if BigWigsLoader then
 end 
 
 -------------------------------------------------------------------------------
+-- Locals Blizz Timers
+-------------------------------------------------------------------------------
+local BlizzTimers = {}
+local function timerEvent(...)
+    local _ , timeRemaining, totalTime = ...
+
+	BlizzTimers.timeRemaining = timeRemaining
+	BlizzTimers.totalTime = totalTime
+	BlizzTimers.start = TMW.time + timeRemaining - totalTime
+	BlizzTimers.expirationTime = TMW.time + timeRemaining
+
+end
+Listener:Add("ACTION_EVENT_TIMER", "START_TIMER", timerEvent)
+
+
+local function Blizz_GetTimeRemaining(timerType)
+
+	local remaining, expirationTime = 0, 0
+	if BlizzTimers.expirationTime then 
+		remaining = BlizzTimers[timerType].expirationTime - TMW.time
+		expirationTime = BlizzTimers[timerType].expirationTime
+	end
+
+	if remaining < 0 then
+		remaining = 0
+		expirationTime = 0
+	end
+
+	return remaining, expirationTime
+
+end
+
+
+
+
+-------------------------------------------------------------------------------
 -- API 
 -------------------------------------------------------------------------------
 -- DBM commands:
@@ -265,6 +301,12 @@ function A.BossMods:GetPullTimer()
 			remaining 		= remaining2
 			expirationTime	= expirationTime2
 		end 
+	else
+
+		remaining, expirationTime = Blizz_GetTimeRemaining(3)
+
+
+
 	end 
 	
 	return remaining, expirationTime
