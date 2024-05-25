@@ -34,7 +34,7 @@ local BuildToC								= A.BuildToC
 local PlayerClass							= A.PlayerClass
 
 local LibStub								= _G.LibStub
-local LibRangeCheck  						= LibStub("LibRangeCheck-2.0")
+local LibRangeCheck  						= LibStub("LibRangeCheck-3.0")
 local LibBossIDs							= LibStub("LibBossIDs-1.0").BossIDs
 
 local TeamCache								= A.TeamCache
