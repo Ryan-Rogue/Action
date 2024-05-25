@@ -15885,7 +15885,7 @@ local classSpecIds = {
 	DEATHKNIGHT 		= {250,251,252},
 	MONK				= {268,270,269},
 	DEMONHUNTER			= {577,581},
-	EVOKER 				= {1467,1468},
+	EVOKER 				= {1467,1468,1473},
 }; ActionData.classSpecIds = classSpecIds
 local specs = {
 	-- 4th index is localizedName of the specialization 
@@ -15939,6 +15939,7 @@ local specs = {
 	
 	[1467]	= {"Devastation", 4511811, "DAMAGER"},
 	[1468]	= {"Preservation", 4511812, "HEALER"},
+	[1473]	= {"Augmentation", 5198700, "HEALER"},
 }; ActionData.specs = specs
 
 function Action.GetCurrentSpecializationInfo() 
@@ -15967,6 +15968,7 @@ local HealerSpecs 						= {
 	[ActionConst.PRIEST_HOLY] 			= true, 
 	[ActionConst.SHAMAN_RESTORATION] 	= true, 
 	[ActionConst.EVOKER_PRESERVATION] 	= true, 
+	[ActionConst.EVOKER_AUGMENTATION] 	= true, 
 }; ActionData.HealerSpecs = HealerSpecs
 local RangerSpecs 						= {
 	--[ActionConst.PALADIN_HOLY] 		= true,
