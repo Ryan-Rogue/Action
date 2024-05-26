@@ -538,13 +538,19 @@ end
 function Player:TargetIsBehind(x)
 	-- @return boolean
 	--Note: Returns true if target is behind the player since x seconds taken from the last ui message and its the last target that caused the error
-	return TMW.time <= Data.TargetBehind + (x or 2.5) and UnitGUID("target") == Data.TargetBehindGUID
+	if UnitGUID("target") ~= Data.TargetBehindGUID then
+		Data.TargetBehind = 0
+	end
+	return TMW.time <= Data.TargetBehind + (x or 2.5)
 end
 
 function Player:TargetIsBehindTime()
 	-- @return boolean
 	--Note: Returns time since target behind the player and its the last target that caused the error
-	return UnitGUID("target") == Data.TargetBehindGUID and TMW.time - Data.TargetBehind or TMW.time
+	if UnitGUID("target") ~= Data.TargetBehindGUID then
+		Data.TargetBehind = 0
+	end
+	return TMW.time - Data.TargetBehind or TMW.time
 end 
 
 function Player:IsMounted()
