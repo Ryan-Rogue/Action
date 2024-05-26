@@ -34,7 +34,7 @@ local BuildToC								= A.BuildToC
 local PlayerClass							= A.PlayerClass
 
 local LibStub								= _G.LibStub
-local LibRangeCheck  						= LibStub("LibRangeCheck-2.0")
+local LibRangeCheck  						= LibStub("LibRangeCheck-3.0")
 local LibBossIDs							= LibStub("LibBossIDs-1.0").BossIDs
 
 local TeamCache								= A.TeamCache
@@ -1197,7 +1197,7 @@ local Info = {
 	SpecIs 						= {
         ["MELEE"] 				= {251, 252, 577, 103, 255, 269, 70, 259, 260, 261, 263, 71, 72, 250, 581, 104, 268, 66, 73},
         ["RANGE"] 				= {102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267},
-        ["HEALER"] 				= {105, 270, 65, 256, 257, 264, 1468},
+        ["HEALER"] 				= {105, 270, 65, 256, 257, 264, 1468, 1473},
         ["TANK"] 				= {250, 581, 104, 268, 66, 73},
         ["DAMAGER"] 			= {251, 252, 577, 103, 255, 269, 70, 259, 260, 261, 263, 71, 72, 102, 253, 254, 62, 63, 64, 258, 262, 265, 266, 267, 1467},
     },
@@ -2269,6 +2269,7 @@ local Info = {
 				["鱗皮"]					= "Scalehide",				-- [156]
 				["玄牛"]					= "Oxen",					-- [157]
 				["羽鬃"]					= "Feathermane",			-- [160]
+				["蜥蜴"]					= "Lizard",					-- [288]
 				["翼手龍"]					= "Pterrordax",				-- [290]
 				["青蛙"]					= "Toad",					-- [291]
 				["葉殼蟲"]					= "Krolusk",				-- [292]
