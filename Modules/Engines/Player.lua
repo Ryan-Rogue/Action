@@ -550,7 +550,7 @@ function Player:TargetIsBehindTime()
 	if UnitGUID("target") ~= Data.TargetBehindGUID then
 		Data.TargetBehind = 0
 	end
-	return TMW.time - Data.TargetBehind or TMW.time
+	return TMW.time - Data.TargetBehind
 end 
 
 function Player:IsMounted()
