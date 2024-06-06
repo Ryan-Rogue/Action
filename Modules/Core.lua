@@ -105,14 +105,10 @@ local arena 										= "arena"
 -- Conditions
 -------------------------------------------------------------------------------
 local FoodAndDrink 									= {
+	[GetSpellInfo(167152)] 							= true, -- Refreshment (Mage's eat) note: can glitch under same name with some other buffs so added check in-combat will avoid it
 	[GetSpellInfo(43180)] 							= true, -- Food 
 	[GetSpellInfo(27089)] 							= true, -- Drink
-	[GetSpellInfo(18233) or ""]						= true,	-- Food
-	[GetSpellInfo(1131) or ""] 						= true,	-- Food
-	[GetSpellInfo(22734) or ""]						= true, -- Drink
-	[GetSpellInfo(34291) or ""]						= true, -- Drink	
-	[GetSpellInfo(257427)] 							= true, -- FoodDrink
-	[GetSpellInfo(167152)] 							= true, -- Mage's eat
+	[GetSpellInfo(257427)] 							= true, -- Food & Drink	
 }
 local FoodAndDrinkBlacklist 						= {
 	[GetSpellInfo(396092) or ""]					= true, -- Well Fed
@@ -124,7 +120,7 @@ local function IsDrinkingOrEating()
 		auraData = C_UnitAuras.GetAuraDataByIndex(player, i, "HELPFUL PLAYER")
 		if not auraData then 
 			break 
-		elseif FoodAndDrink[auraData.name] and not FoodAndDrinkBlacklist[auraData.name] then 
+		elseif FoodAndDrink[auraData.name] and not FoodAndDrinkBlacklist[auraData.name] and (i > 1 or Unit("player"):CombatTime() == 0) then 
 			return true 
 		end 
 	end 
