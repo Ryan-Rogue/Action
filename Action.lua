@@ -36,8 +36,8 @@ local owner															= isClassic and "PlayerClass" or "PlayerSpec"
 local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    GetBindingFromClick,    GetSpellInfo,    GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
 	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus, _G.GetBindingFromClick, _G.GetSpellInfo, _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
 	  
-local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    UnitAura,    UnitPower = 
-	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.UnitAura, _G.UnitPower	  
+local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    C_UnitAuras,    UnitPower = 
+	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras, _G.UnitPower	  
 	    
 local GameLocale 													= _G.GetLocale()
 local BOOKTYPE_SPELL												= _G.BOOKTYPE_SPELL
@@ -9135,14 +9135,14 @@ function Action.AuraIsBlackListed(unitID)
 	-- @return boolean 
 	local Aura, Filter = A_AuraGetCategory("BlackList")
 	if Aura and next(Aura) then 
-		local _, AuraData, Dur, Name, count, duration, expirationTime, canStealOrPurge, id
+		local _, AuraData, Dur, auraData
 		for i = 1, huge do 
-			Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
-			if Name then
-				AuraData = Aura[Name]
-				if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or id == AuraData.ID) then 
-					Dur = expirationTime == 0 and huge or expirationTime - TMW.time
-					if Dur > AuraData.Dur and (AuraData.Stack == 0 or count >= AuraData.Stack) and (not AuraData.canStealOrPurge or canStealOrPurge == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
+			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)
+			if auraData then
+				AuraData = Aura[auraData.name]
+				if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 
+					Dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
+					if Dur > AuraData.Dur and (AuraData.Stack == 0 or auraData.applications >= AuraData.Stack) and (not AuraData.canStealOrPurge or auraData.isStealable == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
 						return true
 					end 
 				end 
@@ -9158,14 +9158,14 @@ function Action.AuraIsValid(unitID, Toggle, Category)
 	if Category ~= "BlackList" and A_AuraIsON(Toggle) then 
 		local Aura, Filter = A_AuraGetCategory(Category)
 		if Aura and not A_AuraIsBlackListed(unitID) then 
-			local _, AuraData, Dur, Name, count, duration, expirationTime, canStealOrPurge, id
-			for i = 1, huge do			
-				Name, _, count, _, duration, expirationTime, _, canStealOrPurge, _, id = UnitAura(unitID, i, Filter)
-				if Name then	
-					AuraData = Aura[Name]
-					if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or id == AuraData.ID) then 					
-						Dur = expirationTime == 0 and huge or expirationTime - TMW.time
-						if Dur > AuraData.Dur and (AuraData.Stack == 0 or count >= AuraData.Stack) and (not AuraData.canStealOrPurge or canStealOrPurge == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
+			local _, AuraData, Dur, auraData
+			for i = 1, huge do	
+				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)		
+				if auraData then	
+					AuraData = Aura[auraData.name]
+					if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 					
+						Dur = auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time
+						if Dur > AuraData.Dur and (AuraData.Stack == 0 or auraData.applications >= AuraData.Stack) and (not AuraData.canStealOrPurge or auraData.isStealable == true) and (not AuraData.onlyBear or A_Unit(unitID):HasBuffs(5487) > 0) and RunLua(AuraData.LUA, unitID) then
 							return true
 						end 
 					end 
@@ -10960,7 +10960,7 @@ function Action.ToggleMainUI()
 			}				
 			
 			Color.Title:SetAllPoints()			
-			Color.Title:SetJustifyH("MIDDLE")
+			Color.Title:SetJustifyH("CENTER")
 			Color.Title:SetFontSize(14)
 
 			Color.UseColor = StdUi:Checkbox(anchor, L["TAB"][tabName]["COLORUSE"], 250)
@@ -11266,7 +11266,7 @@ function Action.ToggleMainUI()
 			
 			local Misc = StdUi:Header(PauseChecksPanel, L["TAB"][tabName]["MISC"])
 			Misc:SetAllPoints()			
-			Misc:SetJustifyH("MIDDLE")
+			Misc:SetJustifyH("CENTER")
 			Misc:SetFontSize(14)
 			
 			local DisableRotationDisplay = StdUi:Checkbox(anchor, L["TAB"][tabName]["DISABLEROTATIONDISPLAY"])
@@ -11544,7 +11544,7 @@ function Action.ToggleMainUI()
 					if config.E == "Header" then 
 						obj = StdUi:Header(anchor, config.L.ANY or config.L[cL])
 						obj:SetAllPoints()			
-						obj:SetJustifyH("MIDDLE")						
+						obj:SetJustifyH("CENTER")						
 						obj:SetFontSize(config.S or 14)	
 					end 
 					
@@ -14422,7 +14422,7 @@ function Action.ToggleMainUI()
 					TMW:Fire("TMW_ACTION_HEALING_ENGINE_UI_PROFILE", "Changed", "")
 				end								
 				slider.FontStringTitle = StdUi:Subtitle(PanelOptions, "")
-				slider.FontStringTitle:SetJustifyH("MIDDLE")
+				slider.FontStringTitle:SetJustifyH("CENTER")
 				slider:MakeTextUpdate(specDB[db])				
 				StdUi:GlueAbove(slider.FontStringTitle, slider)
 				if tooltipText then 
@@ -14905,7 +14905,7 @@ function Action.ToggleMainUI()
 					gname = "",
 					textTT = L["TAB"]["ROWCREATEMACRO"],
                     width = 25,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexIcon",
                     format = "icon",
                     events = {
@@ -14984,7 +14984,7 @@ function Action.ToggleMainUI()
                     name = L["TAB"][tabName]["USEDISPEL"],
 					gname = L["TAB"][tabName]["USEDISPEL"]:gsub("\n", ""),
                     width = 50,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexDispel",
 					db = "useDispel",
                     format = "string",
@@ -15010,7 +15010,7 @@ function Action.ToggleMainUI()
                     name = L["TAB"][tabName]["USESHIELDS"],
 					gname = L["TAB"][tabName]["USESHIELDS"]:gsub("\n", ""),
                     width = 50,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexShields",
 					db = "useShields",
                     format = "string",
@@ -15036,7 +15036,7 @@ function Action.ToggleMainUI()
                     name = L["TAB"][tabName]["USEHOTS"],
 					gname = L["TAB"][tabName]["USEHOTS"]:gsub("\n", ""),
                     width = 50,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexHoTs",
 					db = "useHoTs",
                     format = "string",
@@ -15062,7 +15062,7 @@ function Action.ToggleMainUI()
                     name = L["TAB"][tabName]["USEUTILS"],
 					gname = L["TAB"][tabName]["USEUTILS"]:gsub("\n", ""),
                     width = 50,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexUtils",
 					db = "useUtils",
                     format = "string",
@@ -15088,7 +15088,7 @@ function Action.ToggleMainUI()
                     name = "LUA",
 					gname = "LUA",
                     width = 35,
-                    align = "MIDDLE",
+                    align = "CENTER",
                     index = "IndexLUA",
 					db = "LUA",
                     format = "string",
@@ -15452,7 +15452,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelPriority - Multipliers (title)
 			Multipliers = StdUi:Header(PanelPriority, L["TAB"][tabName]["MULTIPLIERS"])
 			Multipliers:SetAllPoints()			
-			Multipliers:SetJustifyH("MIDDLE")
+			Multipliers:SetJustifyH("CENTER")
 			Multipliers:SetFontSize(15)	
 			-- UI: PanelPriority - MultiplierIncomingDamageLimit
 			MultiplierIncomingDamageLimit 	= CreateSliderMultiplier("MultiplierIncomingDamageLimit")			
@@ -15466,7 +15466,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelPriority - Offsets (title)
 			Offsets = StdUi:Header(PanelPriority, L["TAB"][tabName]["OFFSETS"])
 			Offsets:SetAllPoints()			
-			Offsets:SetJustifyH("MIDDLE")
+			Offsets:SetJustifyH("CENTER")
 			Offsets:SetFontSize(15)
 			
 			-- UI: PanelPriority - OffsetMode 
@@ -15621,7 +15621,7 @@ function Action.ToggleMainUI()
 			-- UI: PanelManaManagement - OR 
 			OR = StdUi:Header(PanelManaManagement, L["TAB"][tabName]["OR"])
 			OR:SetAllPoints()			
-			OR:SetJustifyH("MIDDLE")
+			OR:SetJustifyH("CENTER")
 			OR:SetFontSize(14)
 			
 			-- UI: PanelManaManagement - ManaManagementStopAtTTD
@@ -15693,7 +15693,7 @@ function Action.ToggleMainUI()
 				end 
 			end 			
 			HelpWindow.HelpText = StdUi:Label(HelpWindow, "")	
-			HelpWindow.HelpText:SetJustifyH("MIDDLE")
+			HelpWindow.HelpText:SetJustifyH("CENTER")
 			HelpWindow.HelpText:SetFontSize(13)
 			StdUi:GlueAcross(HelpWindow.HelpText, HelpWindow, 10, -30, -10, 30)
 			HelpWindow.ButtonOK = StdUi:Button(HelpWindow, HelpWindow:GetWidth() - 30, 35, L["TAB"][tabName]["HELPOK"])		
@@ -15886,7 +15886,7 @@ local classSpecIds = {
 	DEATHKNIGHT 		= {250,251,252},
 	MONK				= {268,270,269},
 	DEMONHUNTER			= {577,581},
-	EVOKER 				= {1467,1468},
+	EVOKER 				= {1467,1468,1473},
 }; ActionData.classSpecIds = classSpecIds
 local specs = {
 	-- 4th index is localizedName of the specialization 
@@ -15940,6 +15940,7 @@ local specs = {
 	
 	[1467]	= {"Devastation", 4511811, "DAMAGER"},
 	[1468]	= {"Preservation", 4511812, "HEALER"},
+	[1473]	= {"Augmentation", 5198700, "HEALER"},
 }; ActionData.specs = specs
 
 function Action.GetCurrentSpecializationInfo() 
@@ -15968,6 +15969,7 @@ local HealerSpecs 						= {
 	[ActionConst.PRIEST_HOLY] 			= true, 
 	[ActionConst.SHAMAN_RESTORATION] 	= true, 
 	[ActionConst.EVOKER_PRESERVATION] 	= true, 
+	[ActionConst.EVOKER_AUGMENTATION] 	= true, 
 }; ActionData.HealerSpecs = HealerSpecs
 local RangerSpecs 						= {
 	--[ActionConst.PALADIN_HOLY] 		= true,

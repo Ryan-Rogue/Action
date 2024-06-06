@@ -11,6 +11,7 @@ local wipe 						= _G.wipe
 local SPELL_FAILED_NOT_BEHIND	= _G.SPELL_FAILED_NOT_BEHIND
 local SPELL_FAILED_NOT_INFRONT	= _G.SPELL_FAILED_NOT_INFRONT
 local ERR_PET_SPELL_NOT_BEHIND	= _G.ERR_PET_SPELL_NOT_BEHIND
+local SPELL_FAILED_UNIT_NOT_INFRONT = _G.SPELL_FAILED_UNIT_NOT_INFRONT
 	  
 local TMW 						= _G.TMW
 local CNDT						= TMW.CNDT 
@@ -49,8 +50,8 @@ local GetSpellInfo				= _G.GetSpellInfo
 local InCombatLockdown			= _G.InCombatLockdown  
 local issecure					= _G.issecure
 
-local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage, 	  UnitAura =
-	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.UnitAura
+local 	 UnitLevel,    UnitPower, 	 UnitPowerMax, 	  UnitStagger, 	  UnitAttackSpeed, 	  UnitRangedDamage,    UnitDamage,    C_UnitAuras,    UnitGUID=
+	  _G.UnitLevel, _G.UnitPower, _G.UnitPowerMax, _G.UnitStagger, _G.UnitAttackSpeed, _G.UnitRangedDamage, _G.UnitDamage, _G.C_UnitAuras, _G.UnitGUID
 
 local	 GetPowerRegen,    GetRuneCooldown,    GetShapeshiftForm, 	 GetCritChance,    GetHaste, 	GetMasteryEffect, 	 GetVersatilityBonus, 	 GetCombatRatingBonus =
 	  _G.GetPowerRegen, _G.GetRuneCooldown, _G.GetShapeshiftForm, _G.GetCritChance, _G.GetHaste, _G.GetMasteryEffect, _G.GetVersatilityBonus, _G.GetCombatRatingBonus
@@ -162,6 +163,8 @@ local Data = {
 	-- Behind
 	PlayerBehind = 0,
 	PetBehind = 0,	
+	TargetBehind = 0,
+	TargetBehindGUID = nil,
 	-- Swap 
 	isSwapLocked = false, 
 	-- Items 
@@ -265,6 +268,11 @@ function Data.logBehind(...)
 	
 	if message == ERR_PET_SPELL_NOT_BEHIND then 
 		Data.PetBehind = TMW.time
+	end 
+
+	if message == SPELL_FAILED_UNIT_NOT_INFRONT then
+		Data.TargetBehind = TMW.time
+		Data.TargetBehindGUID = UnitGUID("target") --record target GUID, if target changes it is likely no longer behind
 	end 
 end 
 
@@ -527,6 +535,24 @@ function Player:IsPetBehindTime()
 	return TMW.time - Data.PetBehind
 end 
 
+function Player:TargetIsBehind(x)
+	-- @return boolean
+	--Note: Returns true if target is behind the player since x seconds taken from the last ui message and its the last target that caused the error
+	if UnitGUID("target") ~= Data.TargetBehindGUID then
+		Data.TargetBehind = 0
+	end
+	return TMW.time <= Data.TargetBehind + (x or 2.5)
+end
+
+function Player:TargetIsBehindTime()
+	-- @return boolean
+	--Note: Returns time since target behind the player and its the last target that caused the error
+	if UnitGUID("target") ~= Data.TargetBehindGUID then
+		Data.TargetBehind = 0
+	end
+	return TMW.time - Data.TargetBehind
+end 
+
 function Player:IsMounted()
 	-- @return boolean
 	return IsMounted() and (not DataAuraOnCombatMounted[PlayerClass] or A_Unit(self.UnitID):HasBuffs(DataAuraOnCombatMounted[PlayerClass], true, true) == 0)
@@ -585,9 +611,9 @@ function Player:CancelBuff(buffName)
 		CancelSpellByName(buffName)	
 		--[[
 		for i = 1, huge do			
-			local Name = UnitAura("player", i, "HELPFUL PLAYER")
-			if Name then	
-				if Name == buffName then 
+			local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL PLAYER")
+			if auraData then	
+				if auraData.name == buffName then 
 					CancelUnitBuff("player", i, "HELPFUL PLAYER")								
 				end 
 			else 
@@ -654,6 +680,51 @@ function Player:GetDeBuffsUnitCount(...)
 	
 	return units, counter
 end 
+
+function Player:HasAuraBySpellID(spellID, caster)
+	-- @return number, number, number
+ 	-- current remaing, duration, current elapsed
+	-- Returns First found spell in table
+	-- Nill-able: caster
+	local auraData = {}
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData and (not caster or auraData.sourceUnit == "player") then
+                return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+            end
+        end
+        return 0, 0, 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData and (not caster or auraData.sourceUnit == "player") then
+            return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration, TMW.time - (auraData.expirationTime - auraData.duration)
+        end
+        return 0, 0, 0
+    end
+end
+
+function Player:HasAuraStacksBySpellID(spellID)
+	-- @return number
+ 	-- Stacks
+	local auraData
+    if type(spellID) == "table" then
+        for _, id in pairs(spellID) do
+            auraData = C_UnitAuras.GetPlayerAuraBySpellID(id)
+            if auraData then
+                return auraData.applications == 0 and 1 or auraData.applications
+            end
+        end
+        return 0
+    else
+        auraData = C_UnitAuras.GetPlayerAuraBySpellID(spellID)
+        if auraData then
+            return auraData.applications == 0 and 1 or auraData.applications
+        end
+        return 0
+    end
+end
+
 
 -- Retail: Totems 
 function Player:GetTotemInfo(i)
