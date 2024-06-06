@@ -1,5 +1,5 @@
 --- 0This line must be translated
-local DateTime 														= "17.11.2023"
+local DateTime 														= "06.06.2024"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -8208,7 +8208,7 @@ local LineOfSight = {
 				else
 					UnitFrame = NamePlateFrame.UnitFrame
 					if UnitFrame and UnitFrame.unitExists and UnitIsUnit(UnitFrame.unit, unitID) then
-						return UnitFrame:GetEffectiveAlpha() <= 0.41
+						return UnitFrame:GetEffectiveAlpha() <= 0.400001
 					end		
 				end 
 			end 
