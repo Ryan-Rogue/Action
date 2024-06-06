@@ -1021,6 +1021,13 @@ end
 
 function A:GetItemCooldown()
 	-- @return number
+
+	-- Potion Sickness
+	-- Unable to consume potions until you rest out of combat for a short duration.
+	if self.Type == "Potion" and Unit("player"):HasBuffs(53787) > 0 then 
+		return huge
+	end 	
+	
 	local start, duration, enable = self.Item:GetCooldown()
 	return enable ~= 0 and ((duration == 0 or A_OnGCD(duration)) and 0 or duration - (TMW.time - start)) or huge
 end 
