@@ -8200,12 +8200,13 @@ local LineOfSight = {
 
 		if not UnitIsUnit("target", unitID) and A_Unit(unitID):IsNameplateAny() then 
 			-- Not valid for @target
-			local UnitFrame
+			local UnitFrame, NamePlateFrame
 			for i = 1, huge do 
-				if not self.NamePlateFrame[i] then 
+				NamePlateFrame = self.NamePlateFrame[i]
+				if not NamePlateFrame then 
 					break 
 				else
-					UnitFrame = self.NamePlateFrame[i].UnitFrame
+					UnitFrame = NamePlateFrame.UnitFrame
 					if UnitFrame and UnitFrame.unitExists and UnitIsUnit(UnitFrame.unit, unitID) then
 						return UnitFrame:GetEffectiveAlpha() <= 0.4
 					end		
