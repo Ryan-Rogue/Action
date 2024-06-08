@@ -8036,17 +8036,21 @@ end
 
 -- [1] ReTarget // ReFocus
 local Re; Re = {
-	Units = { "arena1", "arena2", "arena3" },
+	Units = { "arena1", "arena2", "arena3", "arena4", "arena5" },
 	-- Textures 
 	target = {
 		["arena1"] = ActionConst.PVP_TARGET_ARENA1,
 		["arena2"] = ActionConst.PVP_TARGET_ARENA2,
 		["arena3"] = ActionConst.PVP_TARGET_ARENA3,
+		["arena4"] = ActionConst.PVP_TARGET_ARENA4,
+		["arena5"] = ActionConst.PVP_TARGET_ARENA5,
 	},
 	focus = {
 		["arena1"] = ActionConst.PVP_FOCUS_ARENA1,
 		["arena2"] = ActionConst.PVP_FOCUS_ARENA2,
 		["arena3"] = ActionConst.PVP_FOCUS_ARENA3,
+		["arena4"] = ActionConst.PVP_FOCUS_ARENA4,
+		["arena5"] = ActionConst.PVP_FOCUS_ARENA5,
 	},	
 	-- OnEvent 
 	PLAYER_TARGET_CHANGED = function()

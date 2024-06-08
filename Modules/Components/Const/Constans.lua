@@ -37,6 +37,7 @@ _G.ACTION_CONST_LEFT 												= 237586 		-- spell_shaman_spiritlink
 _G.ACTION_CONST_RIGHT 												= 132487 		-- Inv_bannerpvp_03
 _G.ACTION_CONST_STOPCAST 											= 319458		-- spell_magic_polymorphrabbit
 _G.ACTION_CONST_AUTOTARGET 											= 133015 		-- Inv_gizmo_goblingtonkcontroller
+_G.ACTION_CONST_LASTTARGET											= 237290		-- inv_misc_enggizmos_27
 
 -- Class portraits
 _G.ACTION_CONST_PORTRAIT_WARRIOR									= 626008
@@ -95,13 +96,24 @@ _G.ACTION_CONST_ERR_PVP_WARMODE_TOGGLE_OFF							= _G.ERR_PVP_WARMODE_TOGGLE_OFF
 _G.ACTION_CONST_ERR_PVP_WARMODE_TOGGLE_ON							= _G.ERR_PVP_WARMODE_TOGGLE_ON
 
 -- Arena
-_G.ACTION_CONST_PVP_TARGET_ARENA1									= 607512 		-- GetSpellTexture(111771)
-_G.ACTION_CONST_PVP_TARGET_ARENA2									= 136057 		-- GetSpellTexture(45993)
-_G.ACTION_CONST_PVP_TARGET_ARENA3 									= 535593 		-- GetSpellTexture(107141)	
+_G.ACTION_CONST_PVP_TARGET_ARENA1									= 607512 		-- spell_warlock_demonicportal_green
+_G.ACTION_CONST_PVP_TARGET_ARENA2									= 136057 		-- spell_nature_moonglow
+_G.ACTION_CONST_PVP_TARGET_ARENA3 									= 535593 		-- paladin_holy
+_G.ACTION_CONST_PVP_TARGET_ARENA4 									= 133875 		-- inv_misc_enggizmos_17
+_G.ACTION_CONST_PVP_TARGET_ARENA5 									= 133876 		-- inv_misc_enggizmos_18
 
-_G.ACTION_CONST_PVP_FOCUS_ARENA1									= 136243 		-- GetSpellTexture(111)
-_G.ACTION_CONST_PVP_FOCUS_ARENA2									= 135805 		-- GetSpellTexture(22200)
-_G.ACTION_CONST_PVP_FOCUS_ARENA3									= 135848 		-- GetSpellTexture(40875)
+_G.ACTION_CONST_PVP_FOCUS_ARENA1									= 136243 		-- trade_engineering
+_G.ACTION_CONST_PVP_FOCUS_ARENA2									= 135805 		-- spell_fire_fire
+_G.ACTION_CONST_PVP_FOCUS_ARENA3									= 135848 		-- spell_frost_frostnova
+_G.ACTION_CONST_PVP_FOCUS_ARENA4									= 133873 		-- inv_misc_enggizmos_15
+_G.ACTION_CONST_PVP_FOCUS_ARENA5									= 133874 		-- inv_misc_enggizmos_16
+
+-- Focus
+_G.ACTION_CONST_FOCUS_PLAYER										= 134310		-- inv_misc_monsterscales_08
+_G.ACTION_CONST_FOCUS_PARTY1										= 134314		-- inv_misc_monsterscales_12
+_G.ACTION_CONST_FOCUS_PARTY2										= 134316		-- Inv_misc_monsterscales_14
+_G.ACTION_CONST_FOCUS_PARTY3										= 134318		-- Inv_misc_monsterscales_16
+_G.ACTION_CONST_FOCUS_PARTY4										= 134320		-- Inv_misc_monsterscales_18
 
 -- Specialization ID
 _G.ACTION_CONST_WARRIOR_ARMS 										= 71			
