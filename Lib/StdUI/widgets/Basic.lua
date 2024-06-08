@@ -4,7 +4,7 @@ if not StdUi then
 	return
 end
 
-local module, version = 'Basic', 3;
+local module, version = 'Basic', 4;
 if not StdUi:UpgradeNeeded(module, version) then return end;
 
 function StdUi:Frame(parent, width, height, inherits)
@@ -46,7 +46,7 @@ end
 
 --- @return Texture
 function StdUi:Texture(parent, width, height, texture)
-	local tex = parent:CreateTexture(nil, 'OVERLAY');
+	local tex = parent:CreateTexture(nil, 'ARTWORK');
 
 	self:SetObjSize(tex, width, height);
 	if texture then
