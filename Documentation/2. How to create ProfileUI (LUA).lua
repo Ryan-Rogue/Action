@@ -1,21 +1,21 @@
+--[[
 -------------------------------------------------------------------------------
 -- Introduction 
 -------------------------------------------------------------------------------
---[[
 If you plan to build profile without use lua then you can skip this guide
-]]
+
 
 -------------------------------------------------------------------------------
 -- №1: Create snippet 
 -------------------------------------------------------------------------------
---[[
 Write in chat "/tmw options" > LUA Snippets > Profile (left side) > "+" > Write name "ProfileUI" in title of the snippet
-]]
+
 
 -------------------------------------------------------------------------------
 -- №2: Set profile defaults 
 -------------------------------------------------------------------------------
--- Constances (written in Constans.lua)
+Constances (written in Constans.lua)
+--]]
 
 -- Map locals to get faster performance
 local _G, setmetatable					= _G, setmetatable
@@ -28,9 +28,8 @@ A.Data.ProfileEnabled[A.CurrentProfile] = true
 -------------------------------------------------------------------------------
 -- №3: Create UI on 'The Action' for current profile 
 -------------------------------------------------------------------------------
---[[ 
 A.Data.ProfileUI is a table where you have to set UI elements with DB (DataBase) variables and their default presets. This table can be omitted however then [2] and [7] will display 'Profile has no configuration for this tab.' in /action
-]]
+
 -- Structure:
 A.Data.ProfileUI = {	
 	DateTime = "v0 (00.00.0000)", 	-- 'v' is version (Day, Month, Year)
@@ -372,7 +371,7 @@ A.Data.ProfileUI = {
 						ruRU = "ТулТипа ОДИНОЧ.", 
 					}, 
 					M = {
-						Custom = [[/run Toggle()]],
+						Custom = [ [/run Toggle()] ],
 					},
 				},
 			},
@@ -441,7 +440,7 @@ A.Data.ProfileUI = {
 	},
 	[7] = {
 		[ACTION_CONST_MONK_BREWMASTER] = { 
-			["shield"] = { Enabled = true, Key = "POWS", LUAVER = 1, LUA = [[
+			["shield"] = { Enabled = true, Key = "POWS", LUAVER = 1, LUA = [ [
 				-- thisunit is a special thing which will be replaced by string of unitID. Example: some one said phrase "shield party1" then thisunit will be replaced by "party1" and for this MSG will be used meta [7] which is Party1 Rotation which is A[7]()
 				-- More info in Action.lua 
 				-- You have to keep in mind what once written in DataBase this code can't be changed if you made changes in ProfileUI, you have to use 'Reset Settings' and other people too if you failed here with code, so take attention on it. 
@@ -451,7 +450,7 @@ A.Data.ProfileUI = {
 						SpecActions.POWS:AbsentImun(thisunit) and 
 						LossOfControl:IsMissed("SILENCE") and 					-- LossOfControl written like this (not like Action.LossOfControl which is same) because each LUA code has setfenv to Action and then _G if not found in Action
 						LossOfControl:Get("SCHOOL_INTERRUPT", "HOLY") == 0
-			]] },
+			] ] },
 		},
 	},
 }
@@ -466,7 +465,7 @@ A.Data.ProfileUI 									= {
 	},
 	[7] = {
 		[ACTION_CONST_MONK_BREWMASTER] = {
-			["shield"] = { Enabled = true, Key = "POWS", LUAVER = 1, LUA = [[
+			["shield"] = { Enabled = true, Key = "POWS", LUAVER = 1, LUA = [ [
 				-- thisunit is a special thing which will be replaced by string of unitID. Example: some one said phrase "shield party1" then thisunit will be replaced by "party1" and for this MSG will be used meta [7] which is Party1 Rotation which is A[7]()
 				-- More info in Action.lua 
 				-- You have to keep in mind what once written in DataBase this code can't be changed if you made changes in ProfileUI, you have to use 'Reset Settings' and other people too if you failed here with code, so take attention on it. 
@@ -476,7 +475,7 @@ A.Data.ProfileUI 									= {
 						ClassActions.POWS:AbsentImun(thisunit) and 
 						LossOfControl:IsMissed("SILENCE") and 					-- LossOfControl written like this (not like Action.LossOfControl which is same) because each LUA code has setfenv to Action and then _G if not found in Action
 						LossOfControl:Get("SCHOOL_INTERRUPT", "HOLY") == 0
-			]] },
+			] ] },
 		},
 	},
 }

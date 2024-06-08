@@ -1,15 +1,15 @@
+--[[
 -------------------------------------------------------------------------------
 -- Introduction 
 -------------------------------------------------------------------------------
---[[
 If you plan to build profile without use lua then you can skip this guide
-]]
 
 -------------------------------------------------------------------------------
 -- №1: Create snippet 
 -------------------------------------------------------------------------------
--- Write in chat "/tmw options" > LUA Snippets > Profile (left side) > "+" > Write name of specialization in title of the snippet
+Write in chat "/tmw options" > LUA Snippets > Profile (left side) > "+" > Write name of specialization in title of the snippet
 
+--]]
 -------------------------------------------------------------------------------
 -- №2: Set profile defaults 
 -------------------------------------------------------------------------------
@@ -300,12 +300,10 @@ end
 --[[
 You're not limited to use snippets, their fixed names and any lua codes inside them (limit if they are more than 6k+ lines) 
 So you can even use HeroLib API actually, that will be described in another documentation guide
-]]
 
 -------------------------------------------------------------------------------
 -- №4: Apply rotations on TellMeWhen
 -------------------------------------------------------------------------------
---[[
 If you use "[GGL] Template" then you can skip it because it has already preconfigured it 
 
 For "Shown Main" group:
@@ -325,4 +323,4 @@ For "Shown Cast Bars":
 3. At the bottom you will see "Conditions" tab, go there and click "+" to add condition "LUA"
 4. Write shared code which can be stored in ProfileUI snippet 
 5. Don't forget which colors as casting bar icons use (look any [GGL] profile for colors), and also make sure what profile has "Flat" texture (you can check it in /tmw > 'General' > 'Main settings' (or 'Main options')
-]]
+--]]
