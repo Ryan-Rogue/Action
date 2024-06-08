@@ -98,7 +98,7 @@ local Env = CNDT.Env
 local Action = Action
 local math = math
 local huge = math.huge
-local C_UnitAuras = _G.C_UnitAuras
+local UnitAura = _G.C_UnitAuras.GetAuraDataByIndex
 Action[ACTION_CONST_MONK_BREWMASTER] = {
 	-- Racial
 	ArcaneTorrent                         	= Action.Create({ Type = "Spell", ID = 50613 	}),
@@ -223,7 +223,7 @@ local function BrMUnitAura(unit, spellID, filter)
   local auraData
   if type(spellID) == "number" then
     for i = 1, huge do
-      auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
+      auraData = UnitAura(unit, i, filter)
       if auraData then
           if auraData.spellId == spellID then
             return auraData
@@ -234,7 +234,7 @@ local function BrMUnitAura(unit, spellID, filter)
     end
   else
     for i = 1, huge do 
-      auraData = C_UnitAuras.GetAuraDataByIndex(unit, i, filter)
+      auraData = UnitAura(unit, i, filter)
       if auraData then
         if spellID[auraData.spellId] then
           return auraData

@@ -36,8 +36,8 @@ local owner															= isClassic and "PlayerClass" or "PlayerSpec"
 local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    GetBindingFromClick,    GetSpellInfo,    GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
 	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus, _G.GetBindingFromClick, _G.GetSpellInfo, _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
 	  
-local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    C_UnitAuras,    UnitPower = 
-	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras, _G.UnitPower	  
+local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    					  UnitAura,    UnitPower = 
+	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras.GetAuraDataByIndex, _G.UnitPower	  
 	    
 local GameLocale 													= _G.GetLocale()
 local BOOKTYPE_SPELL												= _G.BOOKTYPE_SPELL
@@ -9137,7 +9137,7 @@ function Action.AuraIsBlackListed(unitID)
 	if Aura and next(Aura) then 
 		local _, AuraData, Dur, auraData
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)
+			auraData = UnitAura(unitID, i, Filter)
 			if auraData then
 				AuraData = Aura[auraData.name]
 				if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 
@@ -9160,7 +9160,7 @@ function Action.AuraIsValid(unitID, Toggle, Category)
 		if Aura and not A_AuraIsBlackListed(unitID) then 
 			local _, AuraData, Dur, auraData
 			for i = 1, huge do	
-				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, Filter)		
+				auraData = UnitAura(unitID, i, Filter)		
 				if auraData then	
 					AuraData = Aura[auraData.name]
 					if AuraData and AuraData.Enabled and (AuraData.Role == "ANY" or (AuraData.Role == "HEALER" and Action.IamHealer) or (AuraData.Role == "DAMAGER" and not Action.IamHealer)) and (not AuraData.byID or auraData.spellId == AuraData.ID) then 					

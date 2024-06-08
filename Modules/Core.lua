@@ -43,7 +43,7 @@ local CONST_LEFT 									= CONST.LEFT
 local CONST_RIGHT									= CONST.RIGHT
 local CONST_SPELLID_COUNTER_SHOT					= CONST.SPELLID_COUNTER_SHOT
 
-local C_UnitAuras									= _G.C_UnitAuras
+local UnitAura										= _G.C_UnitAuras.GetAuraDataByIndex
 local UnitIsFriend									= _G.UnitIsFriend
 
 local GetSpellInfo									= _G.GetSpellInfo
@@ -117,7 +117,7 @@ local function IsDrinkingOrEating()
 	-- @return boolean 
 	local auraData
 	for i = 1, huge do 
-		auraData = C_UnitAuras.GetAuraDataByIndex(player, i, "HELPFUL PLAYER")
+		auraData = UnitAura(player, i, "HELPFUL PLAYER")
 		if not auraData then 
 			break 
 		elseif FoodAndDrink[auraData.name] and not FoodAndDrinkBlacklist[auraData.name] and (i > 1 or Unit("player"):CombatTime() == 0) then 

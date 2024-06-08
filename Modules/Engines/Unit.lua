@@ -68,9 +68,9 @@ local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo
 local GetUnitSpeed							= _G.GetUnitSpeed
 local GetSpellInfo							= _G.GetSpellInfo
 local UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, C_UnitAuras =
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, UnitAura =
 	  UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
-	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, _G.C_UnitAuras
+	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, _G.C_UnitAuras.GetAuraDataByIndex
 -------------------------------------------------------------------------------
 -- Remap
 -------------------------------------------------------------------------------
@@ -3884,7 +3884,7 @@ A.Unit = PseudoClass({
 		if InfoCycloneGUIDs[unitGUID] then 
 			local _, auraData	
 			for i = 1, huge do 
-				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, "HARMFUL")
+				auraData = UnitAura(unitID, i, "HARMFUL")
 				if not auraData then 
 					break 			
 				elseif InfoCycloneSpellName[auraData.name] then 
@@ -3919,7 +3919,7 @@ A.Unit = PseudoClass({
 		local c = 0
 		local _, auraData		
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 		
 			if not auraData then break 			
 			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
@@ -3951,7 +3951,7 @@ A.Unit = PseudoClass({
 		
 		local _, auraData
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 			if not auraData then 
 				break 			
 			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
@@ -3977,7 +3977,7 @@ A.Unit = PseudoClass({
 		local duration = 0
 		local _, auraData	
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 			if not auraData then 
 				break 			
 			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
@@ -4001,7 +4001,7 @@ A.Unit = PseudoClass({
 		end
 		local _, auraData	
 		for i = 1, huge do
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 			if not auraData then break end
 			if IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then
 				return auraData.expirationTime == 0 and huge or auraData.expirationTime - TMW.time, auraData.duration
@@ -4022,7 +4022,7 @@ A.Unit = PseudoClass({
 		
 		local _, auraData	
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 			if not auraData then 
 				break 			
 			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 
@@ -4048,7 +4048,7 @@ A.Unit = PseudoClass({
 		
 		local _, auraData	
 		for i = 1, huge do 
-			auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, filter)
+			auraData = UnitAura(unitID, i, filter)
 			if not auraData then 
 				break 			
 			elseif IsAuraEqual(auraData.name, auraData.spellId, AssociativeTables[spell], byID) then 

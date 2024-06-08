@@ -178,8 +178,8 @@ local     TalentMap,     PvpTalentMap =
 	  Env.TalentMap, Env.PvpTalentMap
 
 -- Unit 	  
-local  UnitIsUnit,    C_UnitAuras = 
-	_G.UnitIsUnit, _G.C_UnitAuras
+local  UnitIsUnit,    	UnitAura 								= 
+	_G.UnitIsUnit, _G.C_UnitAuras.GetAuraDataByIndex
 	
 -- Debug 	
 local  GetNumSpecializationsForClassID,    GetSpecializationInfo =
@@ -1309,7 +1309,7 @@ function A:AbsentImun(unitID, imunBuffs, skipKarma)
 			--[[
 			local remainTime, auraData
 			for i = 1, huge do			
-				auraData = C_UnitAuras.GetAuraDataByIndex(unitID, i, "HARMFUL")
+				auraData = UnitAura(unitID, i, "HARMFUL")
 				if not auraData then
 					break 
 				elseif IsCycloneDeBuff[auraData.name] or (isStopAtBreakAble and isEnemy and IsBreakAbleDeBuff[auraData.name]) then 
