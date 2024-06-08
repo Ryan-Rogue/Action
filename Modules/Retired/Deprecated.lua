@@ -47,7 +47,7 @@ local huge 							= math.huge
 
 local OriginalGetSpellInfo 			= _G.GetSpellInfo
 local GetInventoryItemCooldown 		= _G.GetInventoryItemCooldown
-local GetItemCooldown 				= _G.GetItemCooldown
+local GetItemCooldown 				= _G.GetItemCooldown or (_G.C_Container and _G.C_Container.GetItemCooldown)
 local UnitIsUnit 					= _G.UnitIsUnit
 local 	 IsPlayerSpell,    IsUsableSpell 	= 
 	  _G.IsPlayerSpell, _G.IsUsableSpell
