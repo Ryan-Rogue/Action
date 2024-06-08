@@ -8537,6 +8537,39 @@ end
 
 -- [3] SetQueue (Queue System)
 local Queue; Queue 				= {
+	-- These units are used to auto-determine .MetaSlot if its not specified
+	GetMetaByUnitID				= { 
+		arena1					= 6, 	
+		arena2					= 7, 	
+		arena3					= 8, 	
+		arena4					= 9, 	
+		arena5					= 10, 	
+		arenapet1				= 6, 	
+		arenapet2				= 7, 	
+		arenapet3				= 8, 	
+		arenapet4				= 9, 	
+		arenapet5				= 10, 	
+		raid1 					= 6, 
+		raid2 					= 7, 
+		raid3 					= 8, 
+		raid4 					= 9, 
+		raid5 					= 10, 
+		raidpet1 				= 6, 
+		raidpet2 				= 7, 
+		raidpet3 				= 8, 
+		raidpet4 				= 9, 
+		raidpet5 				= 10, 		
+		party1 					= 6, 
+		party2 					= 7, 
+		party3 					= 8,
+		party4 					= 9,
+		-- no player as meta 10 to avoid possible conflicts 
+		partypet1				= 6, 
+		partypet2				= 7, 
+		partypet3				= 8,
+		partypet4				= 9,		
+		-- no pet as meta 10 to avoid possible conflicts 
+	},
 	EmptyArgs					= {},
 	Temp 						= {
 		SilenceON				= { Silence = true },
@@ -8744,7 +8777,7 @@ function Action:SetQueue(args)
 		return 
 	end 
 	
-	local printKey 	= self.Desc .. (self.Color or "") 
+	local printKey 	= self.Desc .. (type(self.Color) == "string" and self.Color or "")	-- type fixes some poorly designed addon that overwrites the .Color key in each global table and its subtables with its own function 
 		  printKey	= (printKey ~= "" and (" " .. L["TAB"][3]["KEY"] .. printKey .. "]")) or ""
 	
 	local args = args or Queue.EmptyArgs	
@@ -8796,7 +8829,7 @@ function Action:SetQueue(args)
 		end 
 		return
 	end 
-    
+    	
 	-- Do nothing if it does in spam with always true as insert to queue list 	
 	if args.Value and #ActionDataQ > 0 then 
 		for i = #ActionDataQ, 1, -1 do
@@ -8805,7 +8838,11 @@ function Action:SetQueue(args)
 			end 
 		end 
 	end
-    tinsert(ActionDataQ, priority, setmetatable({ UnitID = args.UnitID, MetaSlot = args.MetaSlot, Auto = args.Auto, Start = TMW.time, CP = args.CP }, { __index = self })) -- Don't touch creation tables here!
+	
+	-- Since devs expects to make "arena1" running at A[6] without need for .MetaSlot specified 
+	-- This part of code determines .MetaSlot depending on UnitID
+	local meta = args.MetaSlot or Queue.GetMetaByUnitID[args.UnitID]	
+    tinsert(ActionDataQ, priority, setmetatable({ UnitID = args.UnitID, MetaSlot = meta, Auto = args.Auto, Start = TMW.time, CP = args.CP }, { __index = self })) -- Don't touch creation tables here!
 
 	if args.PowerType then 
 		-- Note: we set it as true to use in function Action.IsQueueReady()
@@ -9327,19 +9364,40 @@ local Cursor; Cursor 		= {
 
 -- [7] MSG System (Message) 
 local MSG; MSG 				= {
-	units 					= { "raid%d+", "party%d+", "arena%d+", "player", "target" }, -- "focus", "nameplate", pets and etc haven't API, it will be passed as no unit if specified in phrase!
+	units 					= { "raid%d+", "raidpet%d+", "party%d+", "partypet%d+", "arena%d+", "arenapet%d+", "player", "target" }, -- "focus", "nameplate" and etc haven't API, it will be passed as no unit if specified in phrase!
 	group 					= { 
-		{ u = "raid1", 	meta = 6 	}, 
-		{ u = "raid2", 	meta = 7	}, 
-		{ u = "raid3", 	meta = 8	}, 
-		{ u = "party1", meta = 6 	}, 
-		{ u = "party2", meta = 7	}, 
-		{ u = "party3", meta = 8	},
+		{ u = "raid1", 		meta = 6 	}, 
+		{ u = "raid2", 		meta = 7	}, 
+		{ u = "raid3", 		meta = 8	}, 
+		{ u = "raid4", 		meta = 9	}, 
+		{ u = "raid5", 		meta = 10	}, 
+		{ u = "raidpet1", 	meta = 6 	}, 
+		{ u = "raidpet2", 	meta = 7	}, 
+		{ u = "raidpet3", 	meta = 8	}, 
+		{ u = "raidpet4", 	meta = 9	}, 
+		{ u = "raidpet5", 	meta = 10	}, 		
+		{ u = "party1", 	meta = 6 	}, 
+		{ u = "party2", 	meta = 7	}, 
+		{ u = "party3", 	meta = 8	},
+		{ u = "party4", 	meta = 9	},
+		-- no player as meta 10 to avoid possible conflicts 
+		{ u = "partypet1", 	meta = 6 	}, 
+		{ u = "partypet2", 	meta = 7	}, 
+		{ u = "partypet3", 	meta = 8	},
+		{ u = "partypet4", 	meta = 9	},
+		-- no pet as meta 10 to avoid possible conflicts 
 	}, 
 	arena 					= {
 		arena1				= 6, 	
 		arena2				= 7, 	
 		arena3				= 8, 	
+		arena4				= 9, 	
+		arena5				= 10, 	
+		arenapet1			= 6, 	
+		arenapet2			= 7, 	
+		arenapet3			= 8, 	
+		arenapet4			= 9, 	
+		arenapet5			= 10, 			
 	},
 	set 					= {},
 	SetToggle				= {7, "MSG_Toggle"},
@@ -9370,7 +9428,7 @@ local MSG; MSG 				= {
 							if unit:match("raid") or unit:match("party") then							
 								local group_type = Action.TeamCache.Friendly.Type
 								for j = 1, #MSG.group do 
-									if (j <= 3 and group_type == "raid") or (j > 3 and group_type == "party") then 
+									if (j <= 10 and group_type == "raid") or (j > 10 and group_type == "party") then 
 										if UnitIsUnit(unit, MSG.group[j].u) then 	
 											MSG.set.MetaSlot = MSG.group[j].meta											 
 											MSG.set.UnitID = MSG.group[j].u
