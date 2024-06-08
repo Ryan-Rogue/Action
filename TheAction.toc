@@ -28,9 +28,6 @@ Lib\LibBossIDs-1.0.lua
 Lib\LibDBIcon-1.0.lua
 Lib\StdUI\StdUi.xml
 
-# Temp stub
-Lib\LibRangeCheck-3.0.lua
-
 # First constans!
 Modules\Components\Const\Constans.lua
 
