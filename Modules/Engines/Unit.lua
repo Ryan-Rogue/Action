@@ -2523,6 +2523,22 @@ local Info = {
 		zhCN					= "爆炸物",
 		zhTW					= "爆炸物",
 	},	
+	IncorporealBeingName		= {
+		[GameLocale] 			= "Incorporeal Being",
+		ruRU					= "Бестелесный дух",
+		enGB					= "Incorporeal Being",
+		enUS					= "Incorporeal Being",
+		deDE					= "Körperloses Wesen",
+		esES					= "Ser incorpóreo",
+		esMX					= "Ser incorpóreo",
+		frFR					= "Etre immatériel",
+		itIT					= "Essere Incorporeo",
+		ptPT					= "Ser Incorpóreo",
+		ptBR					= "Ser Incorpóreo",
+		koKR					= "무형의 존재",
+		zhCN					= "虚体生物",
+		zhTW					= "虚体生物",	
+	},
 	IsBoss 						= {
 		-- City (SW, Orgri, ...)
 		[31146] = true, -- Raider's Training Dummy
@@ -2614,6 +2630,7 @@ local InfoIsDummyPvP						= Info.IsDummyPvP
 local InfoIsVoidTendriln					= Info.IsVoidTendril
 local InfoIsCondemnedDemon					= Info.IsCondemnedDemon
 local InfoExplosivesName 					= Info.ExplosivesName
+local InfoIncorporealBeingName				= Info.IncorporealBeingName
 
 local InfoIsBoss 							= Info.IsBoss
 local InfoIsNotBoss 						= Info.IsNotBoss
@@ -3363,6 +3380,15 @@ A.Unit = PseudoClass({
 			return Name and InfoExplosivesName[GameLocale] == Name 
 		end 
 	end, "UnitID"),
+	IsIncorporealBeing						= Cache:Pass(function(self)	
+		-- @return boolean 		
+		-- Note: DF 10.1+
+		if InstanceInfo.KeyStone and InstanceInfo.KeyStone >= 7 then 
+			local unitID 					= self.UnitID
+			local Name 						= UnitName(unitID)
+			return Name and InfoIncorporealBeingName[GameLocale] == Name 
+		end 
+	end, "UnitID"),
 	IsCracklingShard						= Cache:Pass(function(self)	
 		-- @return boolean 				
 		-- Note: 1580 is Ny'alotha - Vision of Destiny, patch 8.3
@@ -3370,7 +3396,7 @@ A.Unit = PseudoClass({
 		if A.ZoneID == 1580 and select(6, self(unitID):InfoGUID()) == 158327 then 
 			return true 
 		end 
-	end, "UnitID"),
+	end, "UnitID"),	
 	IsBoss 									= Cache:Pass(function(self)       
 	    -- @return boolean 
 		local unitID 						= self.UnitID
