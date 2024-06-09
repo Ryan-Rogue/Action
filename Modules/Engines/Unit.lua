@@ -3286,21 +3286,49 @@ A.Unit = PseudoClass({
 		
 		return 0, 0, 0
 	end, "UnitGUID"),
-	IsControlAble 							= Cache:Pass(function(self, drCat, drDiminishing)
-		-- drDiminishing is Tick (number: 100 -> 50 -> 25 -> 0) where 0 is fully imun, 100% no imun - can be fully duration CC'ed 
+	IsControlAble 							= Cache:Pass(function(self, drCat, DR_Tick)
+		-- @return boolean 
+		-- DR_Tick is Tick (number: 100 -> 50 -> 25 -> 0) where 0 is fully imun, 100 is no imun
 		-- "taunt" has unique Tick (number: 100 -> 65 -> 42 -> 27 -> 0)
-		--[[ Taken from Combat Tracker
-			drCat accepts:
-				"root"           
-				"stun"   	-- PvE unlocked       
-				"disorient"      
-				"disarm" 	-- added in DRList	   
-				"silence"        
-				"taunt"     -- PvE unlocked   
-				"incapacitate"   
-				"knockback" 
-		]]	
-		-- Nill-able: drDiminishing
+		-- DR_Remain is remain in seconds time before DR_Application will be reset
+		-- DR_Application is how much DR stacks were applied currently and DR_ApplicationMax is how much by that category can be applied in total 
+		--[[ drCat accepts:
+			"disorient"						-- TBC Retail
+			"incapacitate"					-- Any
+			"silence"						-- WOTLK+ Retail
+			"stun"							-- Any
+			"random_stun"					-- non-Retail 
+			"taunt"							-- Retail 
+			"root"							-- Any 
+			"random_root"					-- non-Retail
+			"disarm"						-- Classic+ Retail
+			"knockback"						-- Retail
+			"counterattack"					-- TBC+ non-Retail
+			"chastise"						-- TBC 
+			"kidney_shot"					-- Classic TBC 
+			"unstable_affliction"			-- TBC 
+			"death_coil"					-- TBC 
+			"fear"							-- Classic+ non-Retail
+			"mind_control"					-- Classic+ non-Retail 
+			"horror"						-- WOTLK+ non-Retail
+			"opener_stun"					-- WOTLK 
+			"scatter"						-- TBC+ non-Retail
+			"cyclone"						-- WOTLK+ non-Retail
+			"charge"						-- WOTLK 
+			"deep_freeze_rof"				-- CATA+ non-Retail
+			"bind_elemental"				-- CATA+ non-Retail
+			"frost_shock"					-- Classic 
+			
+			non-Player unitID considered as PvE spells and accepts only: 
+			"stun", "kidney_shot"						-- Classic 
+			"stun", "random_stun", "kidney_shot"		-- TBC 
+			"stun", "random_stun", "opener_stun"		-- WOTLK 
+			"stun", "random_stun", "cyclone"			-- CATA 
+			"taunt", "stun"								-- Retail 
+			
+			Same note should be kept in Unit(unitID):IsControlAble, Unit(unitID):GetDR(), CombatTracker.GetDR(unitID)
+		]]
+		-- Nill-able: DR_Tick, if its nil function returns true whenever non-imun drCat is apply able
 		local unitID 						= self.UnitID 
 		if not A.IsInPvP then 
 			return not self(unitID):IsBoss() and InfoControlAbleClassification[self(unitID):Classification()] and (not drCat or self(unitID):GetDR(drCat) > (drDiminishing or 0))
@@ -3483,20 +3511,47 @@ A.Unit = PseudoClass({
 	end, "UnitID"),
 	-- Combat: Diminishing
 	GetDR 									= Cache:Pass(function(self, drCat) 
-		-- @return: DR_Tick (@number), DR_Remain (@number), DR_Application (@number), DR_ApplicationMax (@number)
-		-- drDiminishing is Tick (number: 100 -> 50 -> 25 -> 0) where 0 is fully imun, 100% no imun - can be fully duration CC'ed 
+		-- @return: DR_Tick (@number), DR_Remain (@number: 0 -> 18), DR_Application (@number: 0 -> 5), DR_ApplicationMax (@number: 5 <-> 0)
+		-- DR_Tick is Tick (number: 100 -> 50 -> 25 -> 0) where 0 is fully imun, 100 is no imun
 		-- "taunt" has unique Tick (number: 100 -> 65 -> 42 -> 27 -> 0)
-		--[[ Taken from Combat Tracker
-			drCat accepts:
-				"root"           
-				"stun"   	-- PvE unlocked       
-				"disorient"      
-				"disarm" 	-- added in DRList
-				"silence"        
-				"taunt"     -- PvE unlocked   
-				"incapacitate"   
-				"knockback" 
-		]]			
+		-- DR_Remain is remain in seconds time before DR_Application will be reset
+		-- DR_Application is how much DR stacks were applied currently and DR_ApplicationMax is how much by that category can be applied in total 
+		--[[ drCat accepts:
+			"disorient"						-- TBC Retail
+			"incapacitate"					-- Any
+			"silence"						-- WOTLK+ Retail
+			"stun"							-- Any
+			"random_stun"					-- non-Retail 
+			"taunt"							-- Retail 
+			"root"							-- Any 
+			"random_root"					-- non-Retail
+			"disarm"						-- Classic+ Retail
+			"knockback"						-- Retail
+			"counterattack"					-- TBC+ non-Retail
+			"chastise"						-- TBC 
+			"kidney_shot"					-- Classic TBC 
+			"unstable_affliction"			-- TBC 
+			"death_coil"					-- TBC 
+			"fear"							-- Classic+ non-Retail
+			"mind_control"					-- Classic+ non-Retail 
+			"horror"						-- WOTLK+ non-Retail
+			"opener_stun"					-- WOTLK 
+			"scatter"						-- TBC+ non-Retail
+			"cyclone"						-- WOTLK+ non-Retail
+			"charge"						-- WOTLK 
+			"deep_freeze_rof"				-- CATA+ non-Retail
+			"bind_elemental"				-- CATA+ non-Retail
+			"frost_shock"					-- Classic 
+			
+			non-Player unitID considered as PvE spells and accepts only: 
+			"stun", "kidney_shot"						-- Classic 
+			"stun", "random_stun", "kidney_shot"		-- TBC 
+			"stun", "random_stun", "opener_stun"		-- WOTLK 
+			"stun", "random_stun", "cyclone"			-- CATA 
+			"taunt", "stun"								-- Retail 
+			
+			Same note should be kept in Unit(unitID):IsControlAble, Unit(unitID):GetDR(), CombatTracker.GetDR(unitID)
+		]]
 		local unitID 						= self.UnitID
 		return CombatTracker:GetDR(unitID, drCat)
 	end, "UnitID"),
