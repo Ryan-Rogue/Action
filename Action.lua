@@ -16038,7 +16038,6 @@ local HealerSpecs 						= {
 	[ActionConst.PRIEST_HOLY] 			= true, 
 	[ActionConst.SHAMAN_RESTORATION] 	= true, 
 	[ActionConst.EVOKER_PRESERVATION] 	= true, 
-	[ActionConst.EVOKER_AUGMENTATION] 	= true, 
 }; ActionData.HealerSpecs = HealerSpecs
 local RangerSpecs 						= {
 	--[ActionConst.PALADIN_HOLY] 		= true,
