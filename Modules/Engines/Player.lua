@@ -726,15 +726,14 @@ function Player:HasAuraStacksBySpellID(spellID)
 end
 
 
--- Retail: Totems 
+-- totems 
 function Player:GetTotemInfo(i)
 	-- @return: haveTotem, totemName, startTime, duration, icon
 	return GetTotemInfo(i)
 end 
 
 function Player:GetTotemTimeLeft(i)
-	-- @return: number (timeLeft = GetTotemTimeLeft(1 through 4))
-	-- Example: <https://github.com/SwimmingTiger/LibTotemInfo/issues/2>
+	-- @return: number 
 	return GetTotemTimeLeft(i)
 end 
 
