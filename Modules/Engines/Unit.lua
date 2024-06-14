@@ -3741,7 +3741,7 @@ A.Unit = PseudoClass({
 	CanInterract							= Cache:Pass(function(self, range) 
 		-- @return boolean  
 		local unitID 						= self.UnitID
-		local min_range 					= self(unitID):GetRange()
+		local _, min_range 					= self(unitID):GetRange() -- Retail _, min_range | Other min_range 
 		
 		-- Holy Paladin Talent Range buff +50%
 		if self("player"):HasSpec(65) and self("player"):HasBuffs(214202, true) > 0 then 
