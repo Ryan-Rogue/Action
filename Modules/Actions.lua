@@ -21,6 +21,7 @@ local strlowerCache  		= TMW.strlowerCache
 local A   					= _G.Action	
 local CONST 				= A.Const
 local Listener				= A.Listener
+local Print					= A.Print
 local toNum 				= A.toNum
 local UnitCooldown			= A.UnitCooldown
 local CombatTracker			= A.CombatTracker
@@ -134,7 +135,7 @@ local isSpellRangeException = {
 	-- Typhoon
 	[132469]	= true,
 }
-local ItemHasRange 			= ItemHasRange
+local ItemHasRange 			= _G.ItemHasRange or _G.C_Item.ItemHasRange
 local isItemRangeException 	= {}
 local isItemUseException	= {
 	-- Crest of Pa'ku
@@ -158,20 +159,25 @@ local GameLocale 			= _G.GetLocale()
 local GetCVar				= _G.GetCVar or _G.C_CVar.GetCVar
 
 -- Spell 
-local FindSpellBookSlotBySpellID = _G.FindSpellBookSlotBySpellID
+local C_Spell						= _G.C_Spell
+local FindSpellBookSlotBySpellID	= _G.FindSpellBookSlotBySpellID
 
-local 	 IsPlayerSpell,    IsUsableSpell, 	 IsHelpfulSpell, 	IsHarmfulSpell,    IsAttackSpell, 	 IsCurrentSpell =
-	  _G.IsPlayerSpell, _G.IsUsableSpell, _G.IsHelpfulSpell, _G.IsHarmfulSpell, _G.IsAttackSpell, _G.IsCurrentSpell
+local C_SpellBook					= _G.C_SpellBook
+local FindSpellBookSlotForSpell		= C_SpellBook.FindSpellBookSlotForSpell
 
-local 	  GetSpellTexture, 	  GetSpellLink,    GetSpellInfo, 	GetSpellDescription, 	GetSpellCount,	   GetSpellPowerCost, 	  CooldownDuration,    GetSpellCharges,    GetHaste, 	GetShapeshiftFormCooldown, 	  GetSpellBaseCooldown,    GetSpellAutocast = 
-	  TMW.GetSpellTexture, _G.GetSpellLink, _G.GetSpellInfo, _G.GetSpellDescription, _G.GetSpellCount, 	_G.GetSpellPowerCost, Env.CooldownDuration, _G.GetSpellCharges, _G.GetHaste, _G.GetShapeshiftFormCooldown, _G.GetSpellBaseCooldown, _G.GetSpellAutocast
+local 	 IsPlayerSpell,    										IsUsableSpell, 	 									    IsHelpfulSpell, 										 IsHarmfulSpell,    										 IsAttackSpell, 	 									 IsCurrentSpell =
+	  _G.IsPlayerSpell, C_Spell and C_Spell.IsSpellUsable or _G.IsUsableSpell, C_Spell and C_Spell.IsSpellHelpful or _G.IsHelpfulSpell, C_Spell and C_Spell.IsSpellHarmful or _G.IsHarmfulSpell, C_Spell and C_Spell.IsAutoAttackSpell or _G.IsAttackSpell, C_Spell and C_Spell.IsCurrentSpell or _G.IsCurrentSpell
+
+local 	  GetSpellTexture, 	  									  GetSpellLink, 									   GetSpellName,    									GetSpellInfo, 							 					GetSpellDescription, 										 GetSpellCount,	   										    GetSpellPowerCost, 	   CooldownDuration,    									   GetSpellCharges,    GetHaste,    GetShapeshiftFormCooldown, 	  GetSpellBaseCooldown,   										   GetSpellAutocast = 
+	  TMW.GetSpellTexture, C_Spell and C_Spell.GetSpellLink or _G.GetSpellLink, C_Spell and C_Spell.GetSpellName or _G.GetSpellInfo, C_Spell and C_Spell.GetSpellInfo or _G.GetSpellInfo, C_Spell and C_Spell.GetSpellDescription or _G.GetSpellDescription, C_Spell and C_Spell.GetSpellCount or _G.GetSpellCount, C_Spell and C_Spell.GetSpellPowerCost or _G.GetSpellPowerCost, Env.CooldownDuration, C_Spell and C_Spell.GetSpellCharges or _G.GetSpellCharges, _G.GetHaste, _G.GetShapeshiftFormCooldown, _G.GetSpellBaseCooldown, C_Spell and C_Spell.GetSpellAutoCast or _G.GetSpellAutocast
 
 -- Item 	  
-local 	 IsUsableItem, 	  IsHelpfulItem, 	IsHarmfulItem, 	  IsCurrentItem =
-	  _G.IsUsableItem, _G.IsHelpfulItem, _G.IsHarmfulItem, _G.IsCurrentItem
+local C_Item 						= _G.C_Item
+local 	 								   IsUsableItem, 	 								   IsHelpfulItem, 					IsHarmfulItem, 	  														 IsCurrentItem =
+	  C_Item and C_Item.IsUsableItem or _G.IsUsableItem, C_Item and C_Item.IsHelpfulItem or _G.IsHelpfulItem, C_Item and C_Item.IsHarmfulItem or _G.IsHarmfulItem, C_Item and C_Item.IsCurrentItem or _G.IsCurrentItem
   
-local 	 GetItemInfo, 	 GetItemIcon, 	 GetItemInfoInstant, 	GetItemSpell = 
-	  _G.GetItemInfo, _G.GetItemIcon, _G.GetItemInfoInstant, _G.GetItemSpell	  
+local 	 								  GetItemInfo, 	 									   GetItemIcon, 	  									   GetItemInfoInstant, 	 								    GetItemSpell = 
+	  C_Item and C_Item.GetItemInfo or _G.GetItemInfo, C_Item and C_Item.GetItemIconByID or _G.GetItemIcon, C_Item and C_Item.GetItemInfoInstant or _G.GetItemInfoInstant, C_Item and C_Item.GetItemSpell or _G.GetItemSpell	  
 
 -- Talent	  
 local     TalentMap,     PvpTalentMap =
@@ -191,7 +197,7 @@ local nullDescription 		= A.MakeTableReadOnly({ 0, 0, 0, 0, 0, 0, 0, 0 })
 -- Auras
 local IsBreakAbleDeBuff 	= {}
 local IsCycloneDeBuff 		= {
-	[GetSpellInfo(33786)] 	= true,
+	[GetSpellName(33786)] 	= true,
 }
 do 
 	local tempTable = A.GetAuraList("BreakAble")	
@@ -206,8 +212,13 @@ do
 		end 
 		
 		if not isRoots then 
-			IsBreakAbleDeBuff[tempTable[j]] = true
-			IsBreakAbleDeBuff[GetSpellInfo(tempTable[j])] = true 
+			local spellName = GetSpellName(tempTable[j])
+			if spellName then 
+				IsBreakAbleDeBuff[tempTable[j]] = true			
+				IsBreakAbleDeBuff[spellName] = true 
+			else 
+				error("Unit.lua has invalid spellID " .. tempTable[j] .. " in Auras.BreakAble")
+			end 
 		end 
 	end 
 end 
@@ -323,10 +334,16 @@ local spellpowercache = setmetatable(
 	}, 
 	{ 
 		__index = function(t, v)
-			local pwr = GetSpellPowerCost(A.GetSpellInfo(v))
-			if pwr and pwr[1] then
-				t[v] = { pwr[1].cost, pwr[1].type }
-				return t[v]
+			local spellIdentifier = A.GetSpellInfo(v)
+			local pwr = spellIdentifier and GetSpellPowerCost(A.GetSpellInfo(v))
+			if pwr then 
+				if pwr[1] then
+					t[v] = { pwr[1].cost, pwr[1].type }
+					return t[v]
+				else
+					t[v] = { pwr.cost, pwr.type }
+					return t[v]
+				end 
 			end     
 			return t.null
 		end,
@@ -411,7 +428,10 @@ A.GetSpellDescription = A.MakeFunctionCachedDynamic(A.GetSpellDescription)
 
 function A:GetSpellCastTime()
 	-- @return number 
-	local _,_,_, castTime = GetSpellInfo(self.ID)
+	local spellName, _, _, castTime = GetSpellInfo(self.ID)
+	if type(spellName) == "table" then 
+		castTime = spellName.castTime
+	end 
 	return (castTime or 0) / 1000 
 end 
 
@@ -421,7 +441,11 @@ function A:GetSpellCastTimeCache()
 	if type(self) == "table" then 
 		return (select(4, self:Info()) or 0) / 1000 
 	else
-		return (select(4, A_GetSpellInfo(self)) or 0) / 1000
+		local spellName, _, _, castTime = GetSpellInfo(self.ID)
+		if type(spellName) == "table" then 
+			castTime = spellName.castTime
+		end 	
+		return (castTime or 0) / 1000
 	end  
 end 
 
@@ -430,6 +454,8 @@ function A:GetSpellCharges()
 	local charges = GetSpellCharges((self:Info()))
 	if not charges then 
 		charges = 0
+	elseif type(charges) == "table" then 
+		charges = charges.currentCharges
 	end 
 	
 	return charges
@@ -437,7 +463,11 @@ end
 
 function A:GetSpellChargesMax()
 	-- @return number
-	local _, max_charges = GetSpellCharges((self:Info()))
+	local charges, max_charges = GetSpellCharges((self:Info()))
+	if type(charges) == "table" then 
+		max_charges = charges.maxCharges
+	end  
+	
 	if not max_charges then 
 		max_charges = 0
 	end 
@@ -448,6 +478,13 @@ end
 function A:GetSpellChargesFrac()
 	-- @return number	
 	local charges, maxCharges, start, duration = GetSpellCharges((self:Info()))
+	if type(charges) == "table" then 
+		charges = charges.currentCharges
+		maxCharges = charges.maxCharges
+		start = charges.cooldownStartTime
+		duration = charges.cooldownDuration
+	end  
+	
 	if not maxCharges then 
 		return 0
 	end 
@@ -461,7 +498,11 @@ end
 
 function A:GetSpellChargesFullRechargeTime()
 	-- @return number
-	local _, _, _, duration = GetSpellCharges((self:Info()))
+	local charges, _, _, duration = GetSpellCharges((self:Info()))
+	if type(charges) == "table" then 
+		duration = charges.cooldownDuration
+	end  
+	
 	if duration then 
 		return (self:GetSpellChargesMax() - self:GetSpellChargesFrac()) * duration
 	else 
@@ -1171,10 +1212,14 @@ function A:IsExists(replacementByPass)
 	-- @return boolean
 	if self.Type == "Spell" then 
 		-- DON'T USE HERE A.GetSpellInfo COZ IT'S CACHE WHICH WILL WORK WRONG DUE RACE CHANGES
-		local spellName, _, _, _, _, _, spellID = GetSpellInfo((self:Info())) 
+		local spellName, _, _, _, _, _, spellID = GetSpellInfo((self:Info()) or "") 
+		if type(spellName) == "table" then 
+			spellName = spellName.name
+			spellID = spellName.spellID
+		end 		
 		-- spellID will be nil in case of if it's not a player's spell 
 		-- spellName will not be equal to self:Info() if it's replacement spell like "Chi-Torpedo" and "Roll"
-		return (not replacementByPass or spellName == self:Info()) and type(spellID) == "number" and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)) or FindSpellBookSlotBySpellID(spellID, false))
+		return spellName and ((not replacementByPass or spellName == self:Info()) and (type(spellID) == "number" and (IsPlayerSpell(spellID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)) or FindSpellBookSlotBySpellID(spellID, false))) or FindSpellBookSlotForSpell(spellName)) and true -- TODO: Re-do v2
 	end 
 	
 	if self.Type == "SwapEquip" then 
@@ -1190,7 +1235,7 @@ function A:IsUsable(extraCD, skipUsable)
 	
 	if self.Type == "Spell" then 
 		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell((self:Info()))) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
+		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell((self:Info()) or "")) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
 	end 
 	
 	return not isItemUseException[self.ID] and (skipUsable == true or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem((self:Info()))) and self:GetItemCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
@@ -1500,7 +1545,18 @@ end
 
 -- Spell  
 local spellinfocache = setmetatable({}, { __index = function(t, v)
-    local a = { GetSpellInfo(v) }
+    local a
+	if C_Spell and C_Spell.GetSpellInfo then 
+		local s = GetSpellInfo(v)
+		if s then 
+			a = { s.name, s.rank, s.iconID, s.castTime, s.minRange, s.maxRange, s.spellID, s.originalIconID }
+		else 
+			a = { }
+		end 
+	else 
+		a = { GetSpellInfo(v) }
+	end 
+	
     t[v] = a
     return a
 end })

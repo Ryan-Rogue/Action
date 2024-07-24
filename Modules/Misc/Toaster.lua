@@ -1,5 +1,6 @@
 -------------------------------------------------------------------------------------
 -- Toaster as built-in embeds with own stand alone category and db
+-- This version now is different compared with classic versions
 -------------------------------------------------------------------------------------
 local ADDON_NAME, private														= ...
 local _G, unpack, type, math, pairs, error, next, setmetatable, select, rawset	= _G, unpack, type, math, pairs, error, next, setmetatable, select, rawset
@@ -688,7 +689,7 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 		
 		-- Creates function to open options panel
 		local optionsFrame 				= _G.InterfaceOptionsFrame or _G.SettingsPanel
-		local openToCategory 			= _G.InterfaceOptionsFrame_OpenToCategory or _G.SettingsPanel.OpenToCategory
+		local openToCategory 			= _G.InterfaceOptionsFrame_OpenToCategory or _G.Settings.OpenToCategory
 		function Toaster:Toggle() 		
 			if optionsFrame:IsVisible() then
 				optionsFrame:Hide()
@@ -1093,7 +1094,7 @@ function Toaster:PlayDemo(spellID)
 			self:Register("ActionDemo", function(toast, ...)		
 				local msg, urgency, spellID = ...
 				if spellID then 
-					local name, _, icon = _G.GetSpellInfo(spellID)
+					local name, _, icon = A.GetSpellInfo(spellID)
 					toast:SetTitle("The Action - " .. name)
 					toast:SetIconTexture(icon)
 				else
@@ -1113,7 +1114,7 @@ function Toaster:PlayDemo(spellID)
 				self.demoFrame.delay = 0
 				self.demoFrame.expirationTime = TMW.time + 6
 				self.demoFrame.spellID = spellID
-				self.demoFrame.spellName = _G.GetSpellInfo(self.demoFrame.spellID)
+				self.demoFrame.spellName = A.GetSpellInfo(self.demoFrame.spellID)
 			end 
 			self.demoFrame.getCooldown = function()
 				return math_max(self.demoFrame.expirationTime - TMW.time, 0)

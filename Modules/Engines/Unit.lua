@@ -66,7 +66,7 @@ local CACHE_DEFAULT_TIMER_UNIT				= CONST.CACHE_DEFAULT_TIMER_UNIT
 local GameLocale 							= A.FormatGameLocale(_G.GetLocale())
 local CombatLogGetCurrentEventInfo			= _G.CombatLogGetCurrentEventInfo	  
 local GetUnitSpeed							= _G.GetUnitSpeed
-local GetSpellInfo							= _G.GetSpellInfo
+local GetSpellName 							= _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
 local UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
 	  UnitPowerType, UnitPowerMax, UnitPower, UnitName, UnitCanCooperate, UnitCastingInfo, UnitChannelInfo, UnitCreatureType, UnitCreatureFamily, UnitHealth, UnitHealthMax, UnitGetIncomingHeals, UnitGUID, UnitHasIncomingResurrection, UnitIsVisible, UnitGetTotalHealAbsorbs, UnitAura =
 	  UnitIsUnit, UnitPlayerOrPetInRaid, UnitInAnyGroup, UnitPlayerOrPetInParty, UnitInRange, UnitInVehicle, UnitIsQuestBoss, UnitEffectiveLevel, UnitLevel, UnitThreatSituation, UnitRace, UnitClass, UnitGroupRolesAssigned, UnitClassification, UnitExists, UnitIsConnected, UnitIsCharmed, UnitIsGhost, UnitIsDeadOrGhost, UnitIsFeignDeath, UnitIsPlayer, UnitPlayerControlled, UnitCanAttack, UnitIsEnemy, UnitAttackSpeed,
@@ -187,7 +187,6 @@ local AuraList = {
         118905, -- Static Charge
         179057, -- Chaos Nova
         205630, -- Illidan's Grasp (demon hunter)
-        226943, -- Mind Bomb
         209749, -- Faerie Swarm (Moonkin Disarm) 
         204399, -- Earthfury (enhancement shaman pvp talent)
         217832, -- Imprison
@@ -329,7 +328,6 @@ local AuraList = {
         105421, -- Bliding light (Holy)
 		-- Priest
 		8122, -- Psychic Scream
-		226943, -- Mind Bomb
 		-- Rogue 
         2094, -- Blind		
 		-- Warlock
@@ -612,12 +610,11 @@ local AuraList = {
         217832, -- Imprison
         236025, -- Enraged Maim
         207685, -- Sigil of Misery (Havoc Demon hunter)
-        226943, -- Mind Bomb
         -- Rooted CC
-        339, -- Entagle Roots
+        --339, -- Entagle Roots
         212638, -- tracker's net (hunter PvP )
-        102359, -- Mass Entanglement
-        122, -- Frost Nova
+        --102359, -- Mass Entanglement
+        --122, -- Frost Nova
         233395, -- Frozen Center (DK PvP Frost)
         107079, -- Quaking Palm
     },
@@ -967,7 +964,6 @@ local AuraList = {
         82326, -- Holy Light
         116670, -- Vivify
         124682, -- Enveloping Mist
-        191837, -- Essence Font
         209525, -- Soothing Mist
         227344, -- Surging Mist                        (monk, mistweaver)
     },    
@@ -979,7 +975,7 @@ local AssociativeTables = setmetatable({ NullTable = {} }, { -- Only for Auras!
 	-- @return table 
 	-- Returns converted array like table to associative like with key-val as spellName and spellID with true val
 	-- For situations when Action is not initialized and when 'v' is table always return self 'v' to keep working old profiles which use array like table
-	-- Note: GetSpellInfo instead of A_GetSpellInfo because we will use it one time either if GC collected dead links, pointless for performance A_GetSpellInfo anyway
+	-- Note: GetSpellName instead of A_GetSpellInfo because we will use it one time either if GC collected dead links, pointless for performance A_GetSpellInfo anyway
 	if not v then
 		if A.IsInitialized then -- old profiles are funky some times..
 			local error_snippet = debugstack():match("%p%l+%s\"?%u%u%u%s%u%l.*")
@@ -1016,7 +1012,7 @@ local AssociativeTables = setmetatable({ NullTable = {} }, { -- Only for Auras!
 					end 
 				else -- Here is expected id of the spell always 
 					-- Put associatived spellName (@string)
-					local spellName = GetSpellInfo(val) 
+					local spellName = GetSpellName(val) 
 					if spellName then
 						t[v][spellName] = true 
 					end 
@@ -1035,7 +1031,7 @@ local AssociativeTables = setmetatable({ NullTable = {} }, { -- Only for Auras!
 		
 		local spellName
 		for _, spellID in ipairs(AuraList[v]) do 
-			spellName = GetSpellInfo(spellID) 
+			spellName = GetSpellName(spellID) 
 			if spellName then 
 				t[v][spellName] = true 
 			end 
@@ -1045,7 +1041,7 @@ local AssociativeTables = setmetatable({ NullTable = {} }, { -- Only for Auras!
 		-- Otherwise create new table and put spellName with spellID (if possible) for single entrance to keep return @table 
 		t[v] = {}
 				
-		local spellName = GetSpellInfo(v_type == "string" and not v:find("%D") and toNum[v] or v) -- TMW lua code passing through 'thisobj.Name' @string type 
+		local spellName = GetSpellName(v_type == "string" and not v:find("%D") and toNum[v] or v) -- TMW lua code passing through 'thisobj.Name' @string type 
 		if spellName then 
 			t[v][spellName] = true 
 		end 		 
@@ -2588,14 +2584,14 @@ local Info = {
 		[156621] 				= true, 
 		[156618] 				= true, 
 		[34976] 				= true,
-		[GetSpellInfo(156621)] 	= true, 
-		[GetSpellInfo(156618)]	= true, 
-		[GetSpellInfo(34976)] 	= true,
+		[GetSpellName(156621)] 	= true, 
+		[GetSpellName(156618)]	= true, 
+		[GetSpellName(34976)] 	= true,
 	},
 	Cyclone 					= {
 		SpellName 				= {
-			[GetSpellInfo(33786)] = true, 	-- Cyclone 
-			[GetSpellInfo(710)] = true,		-- Banish 
+			[GetSpellName(33786)] = true, 	-- Cyclone 
+			[GetSpellName(710)] = true,		-- Banish 
 		},
 		OnEvent					= {
 			["SPELL_AURA_APPLIED"] = "Add",
@@ -3251,7 +3247,11 @@ A.Unit = PseudoClass({
 
 		local TotalCastTime, CurrentCastTimeSeconds, CurrentCastTimeLeftPercent = 0, 0, 0
 		if unitID == "player" then 
-			TotalCastTime = (select(4, GetSpellInfo(argSpellID or spellID)) or 0) / 1000
+			local s, _, _, castTime = GetSpellInfo(argSpellID or spellID) -- Must be real-time data
+			if type(s) == "table" then 
+				castTime = s.castTime
+			end 		
+			TotalCastTime = (castTime or 0) / 1000
 			CurrentCastTimeSeconds = TotalCastTime
 		end 
 		

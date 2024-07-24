@@ -11,8 +11,8 @@ local Unit							= A.Unit
 local tremove						= table.remove	 
 local isClassic						= A.StdUi.isClassic
 local CombatLogGetCurrentEventInfo 	= _G.CombatLogGetCurrentEventInfo
-local 	 UnitGUID, 	  GetSpellInfo 	= 
-	  _G.UnitGUID, _G.GetSpellInfo
+local 	 UnitGUID, 												GetSpellInfo = 
+	  _G.UnitGUID, _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
 	
 ListenedSpells 				= {}
 local ListenedAuras 				= {}
@@ -95,6 +95,9 @@ end
 
 local function SpellRegisterError(Spell)
     local SpellName = GetSpellInfo(Spell)
+	if type(SpellName) == "table" then 
+		SpellName = SpellName.name
+	end 	
     if SpellName then
         return "You forgot to register the spell: " .. SpellName .. " in PMultiplier handler."
     else

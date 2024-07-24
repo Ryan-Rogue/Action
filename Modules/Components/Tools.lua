@@ -22,8 +22,8 @@ local ActionTimers 				= A.Data.T
 local GetToggle					= A.GetToggle
 	  
 local Timer						= _G.C_Timer 
-local GetMouseFocus				= _G.GetMouseFocus
-local IsAddOnLoaded 			= _G.IsAddOnLoaded
+local GetMouseFocus				= _G.GetMouseFocus or _G.GetMouseFoci
+local IsAddOnLoaded 			= _G.IsAddOnLoaded or _G.C_AddOns.IsAddOnLoaded
 
 local CreateFrame 				= _G.CreateFrame
 local UnitGUID 					= _G.UnitGUID
@@ -611,7 +611,7 @@ A.Utils 						= Utils
 function A.MouseHasFrame()
     local focus = A_Unit("mouseover"):IsExists() and GetMouseFocus()
     if focus then
-        local frame = not focus:IsForbidden() and focus:GetName()
+        local frame = (not focus.IsForbidden or not focus:IsForbidden()) and focus.GetName and focus:GetName()
         return not frame or (frame and frame ~= "WorldFrame")
     end
     return false

@@ -116,8 +116,8 @@ local 	 CreateFrame, 	 GetCVar, 	 				   SetCVar =
 local 	 GetScreenResolutions, 	  GetPhysicalScreenSize, 	GetScreenDPIScale =
 	  _G.GetScreenResolutions, _G.GetPhysicalScreenSize, _G.GetScreenDPIScale
 	  
-local 	 GetNumClasses,    GetClassInfo,  	GetNumSpecializationsForClassID, 	GetSpecializationInfoForClassID, 	GetArenaOpponentSpec, 	 GetBattlefieldScore, 	  GetSpellTexture, 	  GetSpellInfo,    CombatLogGetCurrentEventInfo =
-	  _G.GetNumClasses, _G.GetClassInfo, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfoForClassID, _G.GetArenaOpponentSpec, _G.GetBattlefieldScore, TMW.GetSpellTexture, _G.GetSpellInfo, _G.CombatLogGetCurrentEventInfo
+local 	 GetNumClasses,    GetClassInfo,  	GetNumSpecializationsForClassID, 	GetSpecializationInfoForClassID, 	GetArenaOpponentSpec, 	 GetBattlefieldScore, 	  GetSpellTexture,    CombatLogGetCurrentEventInfo =
+	  _G.GetNumClasses, _G.GetClassInfo, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfoForClassID, _G.GetArenaOpponentSpec, _G.GetBattlefieldScore, TMW.GetSpellTexture, _G.CombatLogGetCurrentEventInfo
 
 local 	 UnitName, 	  UnitGUID =
 	  _G.UnitName, _G.UnitGUID

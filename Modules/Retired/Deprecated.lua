@@ -45,12 +45,14 @@ local _G, type, pairs, ipairs, select, setmetatable, unpack, math =
 local wipe							= _G.wipe
 local huge 							= math.huge	  
 
-local OriginalGetSpellInfo 			= _G.GetSpellInfo
+local C_Spell						= _G.C_Spell
+local OriginalGetSpellInfo 			= C_Spell and C_Spell.GetSpellName or _G.GetSpellInfo
+local GetSpellName 					= C_Spell and C_Spell.GetSpellName or _G.GetSpellInfo
 local GetInventoryItemCooldown 		= _G.GetInventoryItemCooldown
 local GetItemCooldown 				= _G.GetItemCooldown or (_G.C_Container and _G.C_Container.GetItemCooldown)
 local UnitIsUnit 					= _G.UnitIsUnit
-local 	 IsPlayerSpell,    IsUsableSpell 	= 
-	  _G.IsPlayerSpell, _G.IsUsableSpell
+local 	 IsPlayerSpell,    										IsUsableSpell = 
+	  _G.IsPlayerSpell, C_Spell and C_Spell.IsSpellUsable or _G.IsUsableSpell
 	  
 local MACRO							-- nil 
 local BINDPAD 						= _G.BindPadFrame
@@ -306,7 +308,10 @@ end
 
 function Env.SpellExists(spell)   
     if type(spell) ~= "number" then 
-        spell = select(7, OriginalGetSpellInfo(spell)) 
+		local s, _, _, _, _, _, spell = OriginalGetSpellInfo(spell)
+		if type(s) == "table" then 
+			spell = s.spellID
+		end 
     end 
     return spell and (IsPlayerSpell(spell) or (Pet:IsActive() and Pet:IsSpellKnown(spell)))
 end
@@ -322,11 +327,22 @@ function Env.SpellCD(spellID)
 end
 
 function Env.SpellCharges(spellID)
-    return Env.GetSpellCharges(GetSpellInfo(spellID)) or 0
+	local charges = Env.GetSpellCharges(GetSpellInfo(spellID))
+	if type(charges) == "table" then 
+		charges = charges.currentCharges
+	end  
+    return charges or 0
 end
 
 function Env.ChargesFrac(spellID)
     local charges, maxCharges, start, duration = Env.GetSpellCharges(GetSpellInfo(spellID))
+	if type(charges) == "table" then 
+		charges = charges.currentCharges
+		maxCharges = charges.maxCharges
+		start = charges.cooldownStartTime
+		duration = charges.cooldownDuration
+	end  
+	
     if charges == maxCharges then 
         return maxCharges
     end
@@ -341,11 +357,10 @@ local LastCastException = {
 
 local PassCastToTrue = {
 	[293491] = true,  													-- Cyclotronic Blast
-	[OriginalGetSpellInfo(293491)] = true, 								-- Cyclotronic Blast
+	[GetSpellName(293491) or ""] = true, 								-- Cyclotronic Blast
 	[295258] = true,  													-- Focused Azerite Beam Rank1
 	[299336] = true,  													-- Focused Azerite Beam Rank2 
 	[299338] = true,  													-- Focused Azerite Beam Rank3
-	[191837] = true,  													-- Essence Font
 	[300968] = true,  													-- Imbue Power
 }
 

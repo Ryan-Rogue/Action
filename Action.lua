@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "06.07.2024"
+local DateTime 														= "25.07.2024"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -33,8 +33,9 @@ local isClassic														= _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CLASSIC
 StdUi.isClassic 													= isClassic	  
 local owner															= isClassic and "PlayerClass" or "PlayerSpec"
 
-local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    GetBindingFromClick,    GetSpellInfo,    GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
-	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus, _G.GetBindingFromClick, _G.GetSpellInfo, _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
+local C_Spell														= _G.C_Spell
+local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    					GetBindingFromClick,    GetSpellInfo,    					     								 GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
+	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus or _G.GetMouseFoci, _G.GetBindingFromClick, _G.GetSpellInfo or C_Spell.GetSpellInfo, C_Spell.GetSpellLevelLearned or _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
 	  
 local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    					  UnitAura,    UnitPower = 
 	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras.GetAuraDataByIndex, _G.UnitPower	  
@@ -4516,7 +4517,6 @@ local Factory = {
 				-- Monk
 				[116670] = "Vivify",
 				[124682] = "Enveloping Mist",
-				[191837] = "Essence Font",
 				[227344] = "Surging Mist",
 				[115175] = "Soothing Mist",	
 			},			
@@ -5161,8 +5161,6 @@ local GlobalFactory = {
 				[199683] = { dur = 1 },
 				-- Priest: Psychic Horror
 				[64044] = { dur = 0 },
-				-- Priest: Mind Bomb
-				[226943] = { dur = 0 },
 				-- Priest: Holy word: Chastise
 				[200200] = { dur = 0 }, 
 				-- Shaman: Static Charge
@@ -5265,6 +5263,10 @@ local function tMerge(default, new, special, nonexistremove)
 				for ID, IDv in pairs(v) do
 					if type(ID) == "number" then 
 						local spellName = GetSpellInfo(ID)
+						if type(spellName) == "table" then 
+							spellName = spellName.name
+						end 
+						
 						if spellName then 
 							if type(IDv) == "table" then
 								if IDv.Enabled == nil then 
@@ -5501,6 +5503,15 @@ local Upgrade 					= {
 				},
 			}, "pActionDB[4]")
 		end,
+		[5]						= function()
+			tEraseKeys(pActionDB[4], { 
+				Heal = {
+					["GameLocale"] = {
+						[191837] = true,
+					},
+				},
+			}, "pActionDB[4]")
+		end,
 	},
 	gUpgrades					= {
 		[1]						= function()
@@ -5588,6 +5599,13 @@ local Upgrade 					= {
 				PurgeLow = {
 					-- Druid: Mark of the Wild
 					[289318] = true,
+				},
+			}, "gActionDB[5].PvP")
+		end,
+		[5] 					= function()
+			tEraseKeys(gActionDB[5].PvP, { 
+				Magic = {
+					[226943] = true,
 				},
 			}, "gActionDB[5].PvP")
 		end,
@@ -5741,6 +5759,10 @@ local function DispelPurgeEnrageRemap()
 			end 
 			for SpellID, v in pairs(Category_v) do 
 				local Name = GetSpellInfo(SpellID)
+				if type(Name) == "table" then 
+					Name = Name.name
+				end 
+						
 				if Name then 
 					ActionDataAuras[Mode][Category][Name] = { 
 						ID = SpellID, 
@@ -6930,9 +6952,18 @@ end
 
 function Action.ConvertSpellNameToID(spellName)
 	local Name, _, _, _, _, _, ID = GetSpellInfo(spellName)
+	if type(Name) == "table" then 
+		Name = Name.name
+		ID = Name.spellID
+	end 
+				
 	if not Name then 
 		for i = 1, 350000 do 
 			Name, _, _, _, _, _, ID = GetSpellInfo(i)
+			if type(Name) == "table" then 
+				Name = Name.name
+				ID = Name.spellID
+			end 
 			if Name ~= nil and Name ~= "" and Name == spellName then 
 				return ID
 			end 
@@ -8524,7 +8555,7 @@ local SpellLevel; SpellLevel 		= {
 	
 		if self.Initialized then 
 			TMW:UnregisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", self.PLAYER_SPECIALIZATION_CHANGED)
-			A_Listener:Remove("ACTION_EVENT_SPELLLEVEL", "LEARNED_SPELL_IN_TAB")
+			-- A_Listener:Remove("ACTION_EVENT_SPELLLEVEL", "LEARNED_SPELL_IN_TAB") -- Removed since TWW
 			A_Listener:Remove("ACTION_EVENT_SPELLLEVEL", "PLAYER_LEVEL_UP")
 			
 			self.Initialized = nil
@@ -8589,7 +8620,7 @@ local SpellLevel; SpellLevel 		= {
 			if CheckSpellLevel then 
 				if not self.Initialized then 
 					TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", 		self.PLAYER_SPECIALIZATION_CHANGED)
-					A_Listener:Add("ACTION_EVENT_SPELLLEVEL", "LEARNED_SPELL_IN_TAB", 		self.PLAYER_SPECIALIZATION_CHANGED)					
+					-- A_Listener:Add("ACTION_EVENT_SPELLLEVEL", "LEARNED_SPELL_IN_TAB", 		self.PLAYER_SPECIALIZATION_CHANGED)	-- Removed since TWW
 					A_Listener:Add("ACTION_EVENT_SPELLLEVEL", "PLAYER_LEVEL_UP", 			self.PLAYER_LEVEL_UP)					
 					self:Update()
 					self.Initialized = true
@@ -9352,9 +9383,9 @@ local Cursor; Cursor 		= {
 				elseif self:IsVisible() and self:GetEffectiveAlpha() >= 1 then
 					-- GameTooltip 
 					local focus = GetMouseFocus() 					
-					if focus and not focus:IsForbidden() then
+					if focus and (not focus.IsForbidden or not focus:IsForbidden()) then
 						local GameTooltipTable 
-						if focus:GetName() == "WorldFrame" then 
+						if focus.GetName and focus:GetName() == "WorldFrame" then 
 							GameTooltipTable = pActionDB[6][Action.PlayerSpec][M]["GameToolTip"][GameLocale]
 						else 
 							GameTooltipTable = pActionDB[6][Action.PlayerSpec][M]["UI"][GameLocale]

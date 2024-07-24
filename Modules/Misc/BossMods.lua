@@ -18,6 +18,8 @@ local GetToggle						= A.GetToggle
 local DBM_TIMER_PULL				-- nil, will be remap 
 local BIGWIGS_TIMER_PULL			-- nil, will be remap
 local UnitName 						= _G.UnitName
+local IsAddOnLoaded 				= _G.IsAddOnLoaded or _G.C_AddOns.IsAddOnLoaded
+local LoadAddOn		 				= _G.LoadAddOn or _G.C_AddOns.LoadAddOn
 
 A.BossMods 							= { EngagedBosses = {} }
 local EngagedBosses					= A.BossMods.EngagedBosses
@@ -130,7 +132,7 @@ if BigWigsLoader then
 	A.BossMods.HasBigWigs = true 	
 	
 	local BigWigsPluginsName = "BigWigs_Plugins"
-	if  _G.IsAddOnLoaded(BigWigsPluginsName) then 
+	if  IsAddOnLoaded(BigWigsPluginsName) then 
 		BIGWIGS_TIMER_PULL = strlowerCache[_G.BigWigsAPI:GetLocale("BigWigs: Plugins").pull]
 	else 
 		local L = setmetatable({
@@ -153,7 +155,7 @@ if BigWigsLoader then
 				BIGWIGS_TIMER_PULL = strlowerCache[_G.BigWigsAPI:GetLocale("BigWigs: Plugins").pull]
 				A.Listener:Remove("ACTION_BIGWIGS_PLUGINS", "ADDON_LOADED")
 			end 		
-		end); _G.LoadAddOn(BigWigsPluginsName)	
+		end); LoadAddOn(BigWigsPluginsName)	
 	end 
 		
 	local Timers, owner = {}, {}

@@ -44,7 +44,7 @@ local Item								= _G.Item
 local FindSpellOverrideByID 			= _G.FindSpellOverrideByID
 local AzeriteEmpoweredItem 				= _G.C_AzeriteEmpoweredItem
 local AzeriteEssence 					= _G.C_AzeriteEssence
-local GetSpellInfo						= _G.GetSpellInfo
+local GetSpellName						 = _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
 Lib.has_8_3_0							= A.BuildToC > 80205
 
 local Data 								= {
@@ -68,7 +68,7 @@ local A_GetSpellInfo
 local function GetInfoSpell(spellID)
 	if not A_GetSpellInfo then 
 		A_GetSpellInfo = A.GetSpellInfo
-		return (A_GetSpellInfo and A_GetSpellInfo(spellID)) or GetSpellInfo(spellID)
+		return (A_GetSpellInfo and A_GetSpellInfo(spellID)) or GetSpellName(spellID)
 	else
 		return A_GetSpellInfo(spellID)
 	end 
@@ -138,145 +138,145 @@ if AzeriteEssence then
 		-- Taken lowest Azerite Essence ID
 		--[[ Essences Used by All Roles - Passive]] 
 		-- Vision of Perfection
-		[GetSpellInfo(Lib.CONST.VisionofPerfection) or ""] 			= "Vision of Perfection", 
+		[GetSpellName(Lib.CONST.VisionofPerfection) or ""] 			= "Vision of Perfection", 
 		-- Conflict and Strife
-		[GetSpellInfo(Lib.CONST.ConflictandStrife) or ""] 			= "Conflict and Strife", 		
+		[GetSpellName(Lib.CONST.ConflictandStrife) or ""] 			= "Conflict and Strife", 		
 		--[[ Essences Used by All Roles - Active]]
-		[GetSpellInfo(Lib.CONST.ConcentratedFlame) or ""] 			= "Concentrated Flame",
-		[GetSpellInfo(Lib.CONST.WorldveinResonance) or ""] 			= "Worldvein Resonance",
-		[GetSpellInfo(Lib.CONST.RippleinSpace) or ""] 				= "Ripple in Space", 
-		[GetSpellInfo(Lib.CONST.MemoryofLucidDreams) or ""] 		= "Memory of Lucid Dreams",
+		[GetSpellName(Lib.CONST.ConcentratedFlame) or ""] 			= "Concentrated Flame",
+		[GetSpellName(Lib.CONST.WorldveinResonance) or ""] 			= "Worldvein Resonance",
+		[GetSpellName(Lib.CONST.RippleinSpace) or ""] 				= "Ripple in Space", 
+		[GetSpellName(Lib.CONST.MemoryofLucidDreams) or ""] 		= "Memory of Lucid Dreams",
 		--[[ Tank ]]
-		[GetSpellInfo(Lib.CONST.AzerothsUndyingGift) or ""] 		= "Azeroth's Undying Gift",
-		[GetSpellInfo(Lib.CONST.AnimaofDeath) or ""] 				= "Anima of Death",
-		[GetSpellInfo(Lib.CONST.AegisoftheDeep) or ""] 				= "Aegis of the Deep",
-		[GetSpellInfo(Lib.CONST.EmpoweredNullBarrier) or ""] 		= "Empowered Null Barrier",
-		[GetSpellInfo(Lib.CONST.SuppressingPulse) or ""] 			= "Suppressing Pulse", 
+		[GetSpellName(Lib.CONST.AzerothsUndyingGift) or ""] 		= "Azeroth's Undying Gift",
+		[GetSpellName(Lib.CONST.AnimaofDeath) or ""] 				= "Anima of Death",
+		[GetSpellName(Lib.CONST.AegisoftheDeep) or ""] 				= "Aegis of the Deep",
+		[GetSpellName(Lib.CONST.EmpoweredNullBarrier) or ""] 		= "Empowered Null Barrier",
+		[GetSpellName(Lib.CONST.SuppressingPulse) or ""] 			= "Suppressing Pulse", 
 		--[[ Healer ]]
-		[GetSpellInfo(Lib.CONST.Refreshment) or ""] 				= "Refreshment", 
-		[GetSpellInfo(Lib.CONST.Standstill) or ""] 					= "Standstill", 
-		[GetSpellInfo(Lib.CONST.LifeBindersInvocation) or ""] 		= "Life-Binder's Invocation", 
-		[GetSpellInfo(Lib.CONST.OverchargeMana) or ""] 				= "Overcharge Mana", 
-		[GetSpellInfo(Lib.CONST.VitalityConduit) or ""] 			= "Vitality Conduit", 
+		[GetSpellName(Lib.CONST.Refreshment) or ""] 				= "Refreshment", 
+		[GetSpellName(Lib.CONST.Standstill) or ""] 					= "Standstill", 
+		[GetSpellName(Lib.CONST.LifeBindersInvocation) or ""] 		= "Life-Binder's Invocation", 
+		[GetSpellName(Lib.CONST.OverchargeMana) or ""] 				= "Overcharge Mana", 
+		[GetSpellName(Lib.CONST.VitalityConduit) or ""] 			= "Vitality Conduit", 
 		--[[ Damager ]]
-		[GetSpellInfo(Lib.CONST.FocusedAzeriteBeam) or ""] 			= "Focused Azerite Beam", 
-		[GetSpellInfo(Lib.CONST.GuardianofAzeroth) or ""] 			= "Guardian of Azeroth", 
-		[GetSpellInfo(Lib.CONST.BloodoftheEnemy) or ""] 			= "Blood of the Enemy", 
-		[GetSpellInfo(Lib.CONST.PurifyingBlast) or ""] 				= "Purifying Blast", 
-		[GetSpellInfo(Lib.CONST.TheUnboundForce) or ""] 			= "The Unbound Force", 
+		[GetSpellName(Lib.CONST.FocusedAzeriteBeam) or ""] 			= "Focused Azerite Beam", 
+		[GetSpellName(Lib.CONST.GuardianofAzeroth) or ""] 			= "Guardian of Azeroth", 
+		[GetSpellName(Lib.CONST.BloodoftheEnemy) or ""] 			= "Blood of the Enemy", 
+		[GetSpellName(Lib.CONST.PurifyingBlast) or ""] 				= "Purifying Blast", 
+		[GetSpellName(Lib.CONST.TheUnboundForce) or ""] 			= "The Unbound Force", 
 	}
 	DataEssences.IsPassive = {
 		-- Checking by spellID which converts to spellName (it's more stable than ID because ID can be changed by Rank and Spec)
 		-- Vision of Perfection
-		[GetSpellInfo(Lib.CONST.VisionofPerfection) or ""] 			= true, 
+		[GetSpellName(Lib.CONST.VisionofPerfection) or ""] 			= true, 
 		-- Conflict and Strife
-		[GetSpellInfo(Lib.CONST.ConflictandStrife) or ""]	 		= true, 
+		[GetSpellName(Lib.CONST.ConflictandStrife) or ""]	 		= true, 
 	}
 	DataEssences.IsTalentPvP = {
 		-- Death Knight: Unholy Command (Blood)
-		[GetSpellInfo(202727) or ""] 								= true,
+		[GetSpellName(202727) or ""] 								= true,
 		[202727] 													= true,
 		-- Death Knight: Chill Streak (Frost)
-		[GetSpellInfo(204160) or ""] 								= true,
+		[GetSpellName(204160) or ""] 								= true,
 		[204160]													= true,
 		-- Death Knight: Necrotic Strike (Unholy)
-		[GetSpellInfo(223829) or ""] 								= true,
+		[GetSpellName(223829) or ""] 								= true,
 		[223829]													= true,
 		-- Demon Hunter: Demonic Origins (Vengance)
-		[GetSpellInfo(235893) or ""] 								= true,
+		[GetSpellName(235893) or ""] 								= true,
 		[235893]													= true,
 		-- Demon Hunter: Cleansed by Flame (Havoc)
-		[GetSpellInfo(205625) or ""]								= true,
+		[GetSpellName(205625) or ""]								= true,
 		[205625] 													= true,
 		-- Druid: Thorns (Balance / Feral)
-		[GetSpellInfo(236696) or ""]								= true,
+		[GetSpellName(236696) or ""]								= true,
 		[236696] 													= true,
 		-- Druid: Sharpened Claws (Guardian)
-		[GetSpellInfo(202110) or ""]								= true,
+		[GetSpellName(202110) or ""]								= true,
 		[202110] 													= true,
 		-- Druid: Overgrowth (Restoration)
-		[GetSpellInfo(203651) or ""]								= true,
+		[GetSpellName(203651) or ""]								= true,
 		[203651] 													= true,
 		-- Hunter: Hi-Explosive Trap (Beast Mastery / Marksmanship / Survival)
-		[GetSpellInfo(236776) or ""]								= true,
+		[GetSpellName(236776) or ""]								= true,
 		[236776] 													= true,
 		-- Mage: Temporal Shield (Arcane / Frost / Fire)
-		[GetSpellInfo(198111) or ""]								= true,
+		[GetSpellName(198111) or ""]								= true,
 		[198111] 													= true,
 		-- Monk: Hot Trub (Brewmaster)
-		[GetSpellInfo(202126) or ""]								= true,
+		[GetSpellName(202126) or ""]								= true,
 		[202126] 													= true,
 		-- Monk: Way of the Crane (Mistweaver)
-		[GetSpellInfo(216113) or ""]								= true,
+		[GetSpellName(216113) or ""]								= true,
 		[216113] 													= true,
 		-- Monk: Reverse Harm (Windwalker)
-		[GetSpellInfo(287771) or ""]								= true,
+		[GetSpellName(287771) or ""]								= true,
 		[287771] 													= true,
 		-- Paladin: Divine Favor (Holy)
-		[GetSpellInfo(210294) or ""]								= true,
+		[GetSpellName(210294) or ""]								= true,
 		[210294] 													= true,
 		-- Paladin: Steed of Glory (Protection)
-		[GetSpellInfo(199542) or ""]								= true,
+		[GetSpellName(199542) or ""]								= true,
 		[199542] 													= true,
 		-- Paladin: Unbound Freedom (Retribution)
-		[GetSpellInfo(199325) or ""]								= true,
+		[GetSpellName(199325) or ""]								= true,
 		[199325] 													= true,
 		-- Priest: Premonition (Discipline)
-		[GetSpellInfo(209780) or ""]								= true,
+		[GetSpellName(209780) or ""]								= true,
 		[209780] 													= true,
 		-- Priest: Holy Ward (Holy)
-		[GetSpellInfo(213610) or ""]								= true,
+		[GetSpellName(213610) or ""]								= true,
 		[213610] 													= true,
 		-- Priest: Void Shift (Shadow)
-		[GetSpellInfo(108968) or ""]								= true,
+		[GetSpellName(108968) or ""]								= true,
 		[108968] 													= true,
 		-- Rogue: Maneuverability (Assassination / Outlaw / Subtlety)
-		[GetSpellInfo(197000) or ""]								= true,
+		[GetSpellName(197000) or ""]								= true,
 		[197000] 													= true,
 		-- Shaman: Lightning Lasso (Elemental)
-		[GetSpellInfo(204437) or ""]								= true,
+		[GetSpellName(204437) or ""]								= true,
 		[204437] 													= true,
 		-- Shaman: Thundercharge (Enhancement)
-		[GetSpellInfo(204366) or ""]								= true,
+		[GetSpellName(204366) or ""]								= true,
 		[204366] 													= true,
 		-- Shaman: Ancestral Gift (Restoration)
-		[GetSpellInfo(290254) or ""]								= true,
+		[GetSpellName(290254) or ""]								= true,
 		[290254] 													= true,
 		-- Warlock: Endless Affliction (Affliction)
-		[GetSpellInfo(305391) or ""]								= true,
+		[GetSpellName(305391) or ""]								= true,
 		[305391] 													= true,
 		-- Warlock: Nether Ward (Demonology)
-		[GetSpellInfo(212295) or ""]								= true,
+		[GetSpellName(212295) or ""]								= true,
 		[212295] 													= true,
 		-- Warlock: Demon Armor (Destruction)
-		[GetSpellInfo(285933) or ""]								= true,
+		[GetSpellName(285933) or ""]								= true,
 		[285933] 													= true,
 		-- Warrior: Sharpen Blade (Arms)
-		[GetSpellInfo(198817) or ""]								= true,
+		[GetSpellName(198817) or ""]								= true,
 		[198817] 													= true,
 		-- Warrior: Battle Trance (Fury)
-		[GetSpellInfo(213857) or ""]								= true,
+		[GetSpellName(213857) or ""]								= true,
 		[213857] 													= true,
 		-- Warrior: Thunderstruck (Protection)
-		[GetSpellInfo(199045) or ""]								= true,
+		[GetSpellName(199045) or ""]								= true,
 		[199045] 													= true,		
 	}
 
 	if Lib.has_8_3_0 then 
 		-- Expend GetMajorBySpellNameOnENG
 		--[[ Essences Used by All Roles - Active]]
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.ReplicaofKnowledge) or ""] 	= "Replica of Knowledge"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.ReplicaofKnowledge) or ""] 	= "Replica of Knowledge"
 		--[[ Tank ]]
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.VigilantProtector) or ""] 		= "Vigilant Protector"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.VigilantProtector) or ""] 		= "Vigilant Protector"
 		--[[ Healer ]]
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.SpiritofPreservation) or ""] 	= "Spirit of Preservation"
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.GuardianShell) or ""] 			= "Guardian Shell"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.SpiritofPreservation) or ""] 	= "Spirit of Preservation"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.GuardianShell) or ""] 			= "Guardian Shell"
 		--[[ Damager ]]
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.MomentofGlory) or ""] 			= "Moment of Glory"
-		DataEssences.GetMajorBySpellNameOnENG[GetSpellInfo(Lib.CONST.ReapingFlames) or ""] 			= "Reaping Flames"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.MomentofGlory) or ""] 			= "Moment of Glory"
+		DataEssences.GetMajorBySpellNameOnENG[GetSpellName(Lib.CONST.ReapingFlames) or ""] 			= "Reaping Flames"
 		
 		-- Expend IsPassive
-		DataEssences.IsPassive[GetSpellInfo(Lib.CONST.TouchoftheEverlasting) or ""] 				= true
+		DataEssences.IsPassive[GetSpellName(Lib.CONST.TouchoftheEverlasting) or ""] 				= true
 	end 
 end 
 

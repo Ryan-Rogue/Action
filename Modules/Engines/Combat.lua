@@ -61,7 +61,7 @@ local 	 UnitIsUnit, 	UnitGUID, 	 UnitGetTotalAbsorbs, 	 UnitAffectingCombat =
 local 	 InCombatLockdown, 	  CombatLogGetCurrentEventInfo = 
 	  _G.InCombatLockdown, _G.CombatLogGetCurrentEventInfo
 	  	  
-local GetSpellInfo								= _G.GetSpellInfo	  
+local GetSpellName 								= _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo  
 	  
 local cLossOfControl 							= _G.C_LossOfControl
 local GetEventInfo 								= cLossOfControl.GetEventInfo or cLossOfControl.GetActiveLossOfControlData 
@@ -800,11 +800,11 @@ local UnitTracker 								= {
 		["player"] 						= {},
 	},
 	isShrimmer 							= {
-		[GetSpellInfo(212653)] = true,
+		[GetSpellName(212653)] = true,
 		[212653] = true,
 	},
 	isBlink								= {
-		[GetSpellInfo(1953)] = true,
+		[GetSpellName(1953)] = true,
 		[1953] = true, 
 		[119415] = true,
 	},
@@ -812,8 +812,8 @@ local UnitTracker 								= {
 		[212653] = true,
 		[119415] = true,
 		[1953] = true,
-		[GetSpellInfo(212653)] = true,
-		[GetSpellInfo(119415)] = true,
+		[GetSpellName(212653)] = true,
+		[GetSpellName(119415)] = true,
 	},
 	isNotResetFlyingEvent				= {		
 		["SUCCESS"] = true,
@@ -1079,7 +1079,7 @@ local COMBAT_LOG_EVENT_UNFILTERED 				= function(...)
 		local str
 		for i = 1, #te do 			
 			str = tostring(te[i]) 
-			if str == GetSpellInfo(322507) or te[i] == 322507 or str == GetSpellInfo(325092) or te[i] == 325092 then 
+			if str == GetSpellName(322507) or te[i] == 322507 or str == GetSpellName(325092) or te[i] == 325092 then 
 				--print("[" .. i .. "] " .. tostring(te[i]))
 				print(unpack(te))
 				break 

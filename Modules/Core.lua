@@ -46,7 +46,7 @@ local CONST_SPELLID_COUNTER_SHOT					= CONST.SPELLID_COUNTER_SHOT
 local UnitAura										= _G.C_UnitAuras.GetAuraDataByIndex
 local UnitIsFriend									= _G.UnitIsFriend
 
-local GetSpellInfo									= _G.GetSpellInfo
+local GetSpellName 									= _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
 local GetCurrentKeyBoardFocus						= _G.GetCurrentKeyBoardFocus
 local SpellIsTargeting								= _G.SpellIsTargeting
 local IsMouseButtonDown								= _G.IsMouseButtonDown
@@ -105,13 +105,13 @@ local arena 										= "arena"
 -- Conditions
 -------------------------------------------------------------------------------
 local FoodAndDrink 									= {
-	[GetSpellInfo(167152)] 							= true, -- Refreshment (Mage's eat) note: can glitch under same name with some other buffs so added check in-combat will avoid it
-	[GetSpellInfo(43180)] 							= true, -- Food 
-	[GetSpellInfo(27089)] 							= true, -- Drink
-	[GetSpellInfo(257427)] 							= true, -- Food & Drink	
+	[GetSpellName(167152)] 							= true, -- Refreshment (Mage's eat) note: can glitch under same name with some other buffs so added check in-combat will avoid it
+	[GetSpellName(43180)] 							= true, -- Food 
+	[GetSpellName(27089)] 							= true, -- Drink
+	[GetSpellName(257427)] 							= true, -- Food & Drink	
 }
 local FoodAndDrinkBlacklist 						= {
-	[GetSpellInfo(396092) or ""]					= true, -- Well Fed
+	[GetSpellName(396092) or ""]					= true, -- Well Fed
 }
 local function IsDrinkingOrEating()
 	-- @return boolean 

@@ -10,7 +10,7 @@ local IsIndoors							= _G.IsIndoors
 local UnitIsUnit						= _G.UnitIsUnit
 local UIParent							= _G.UIParent
 local CreateFrame						= _G.CreateFrame
---local GetItemInfo						= _G.GetItemInfo
+--local GetItemInfo						= _G.GetItemInfo or _G.C_Item.GetItemInfo
 --local Item							= _G.Item
 
 local CONST 							= A.Const
