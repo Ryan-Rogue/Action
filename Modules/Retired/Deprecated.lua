@@ -336,11 +336,11 @@ end
 
 function Env.ChargesFrac(spellID)
     local charges, maxCharges, start, duration = Env.GetSpellCharges(GetSpellInfo(spellID))
-	if type(charges) == "table" then 
-		charges = charges.currentCharges
+	if type(charges) == "table" then 		
 		maxCharges = charges.maxCharges
 		start = charges.cooldownStartTime
 		duration = charges.cooldownDuration
+		charges = charges.currentCharges
 	end  
 	
     if charges == maxCharges then 

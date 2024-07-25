@@ -478,11 +478,11 @@ end
 function A:GetSpellChargesFrac()
 	-- @return number	
 	local charges, maxCharges, start, duration = GetSpellCharges((self:Info()))
-	if type(charges) == "table" then 
-		charges = charges.currentCharges
+	if type(charges) == "table" then 		
 		maxCharges = charges.maxCharges
 		start = charges.cooldownStartTime
 		duration = charges.cooldownDuration
+		charges = charges.currentCharges
 	end  
 	
 	if not maxCharges then 

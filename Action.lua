@@ -6953,16 +6953,16 @@ end
 function Action.ConvertSpellNameToID(spellName)
 	local Name, _, _, _, _, _, ID = GetSpellInfo(spellName)
 	if type(Name) == "table" then 
-		Name = Name.name
 		ID = Name.spellID
+		Name = Name.name
 	end 
 				
 	if not Name then 
 		for i = 1, 350000 do 
 			Name, _, _, _, _, _, ID = GetSpellInfo(i)
-			if type(Name) == "table" then 
-				Name = Name.name
+			if type(Name) == "table" then 				
 				ID = Name.spellID
+				Name = Name.name
 			end 
 			if Name ~= nil and Name ~= "" and Name == spellName then 
 				return ID
