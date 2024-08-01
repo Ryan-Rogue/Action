@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "25.07.2024"
+local DateTime 														= "01.08.2024"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -5010,6 +5010,14 @@ local GlobalFactory = {
 			MagicMovement = {
 			},
 			Enrage = {
+				-- Unholy Frenzy
+				[320012] = { byID = true },
+				-- Loyal Beasts
+				[326450] = { byID = true },
+				-- Undying Rage
+				[333227] = { byID = true },
+				-- Enrage
+				[334800] = { byID = true },
 				-- Fanatic's Rage
 				[255824] = { dur = 8 },
 				-- Bestial Wrath
