@@ -46,72 +46,75 @@ end)
 
 local CovenantActions					= {
 	-- [[ Kyrian ]]		
-	{ Type = "Spell", ID = 324739, isCovenant = true, covenantID = 1, covenantKey = "SummonSteward", 																		skipRange = true																	},
-	{ Type = "Spell", ID = 307865, isCovenant = true, covenantID = 1, covenantKey = "SpearofBastion", 		covenantClass = "WARRIOR", 										skipRange = true, covenantArea = true												}, -- ground click
-	{ Type = "Spell", ID = 312321, isCovenant = true, covenantID = 1, covenantKey = "ScouringTithe", 		covenantClass = "WARLOCK" 																															}, -- casting 
-	{ Type = "Spell", ID = 324386, isCovenant = true, covenantID = 1, covenantKey = "VesperTotem", 			covenantClass = "SHAMAN", 										skipRange = true, covenantArea = true												}, -- ground click
-	{ Type = "Spell", ID = 323547, isCovenant = true, covenantID = 1, covenantKey = "EchoingReprimand", 	covenantClass = "ROGUE" 																															},
-	{ Type = "Spell", ID = 325013, isCovenant = true, covenantID = 1, covenantKey = "BoonoftheAscended", 	covenantClass = "PRIEST", 										skipRange = true, buffID = 325013, Texture = 325013									}, -- 3min cd - activation spell, texture is BoonoftheAscended 
-	{ Type = "Spell", ID = 325020, isCovenant = true, covenantID = 1, covenantKey = "AscendedNova", 		covenantClass = "PRIEST", 										skipRange = true, buffID = 325013, Texture = 325013									}, -- after activation BoonoftheAscended transforms into AscendedNova, texture is BoonoftheAscended
-	{ Type = "Spell", ID = 325315, isCovenant = true, covenantID = 1, covenantKey = "AscendedBlast", 		covenantClass = "PRIEST", covenantSpecIDs = { CONST.PRIEST_SHADOW }						  , buffID = 325013, Texture = 15407						}, -- after activation BoonoftheAscended, SP will have replaced MindFlay by AscendedBlast, texture is MindFlay
-	{ Type = "Spell", ID = 325315, isCovenant = true, covenantID = 1, covenantKey = "AscendedBlast", 		covenantClass = "PRIEST", covenantSpecIDs = { CONST.PRIEST_DISCIPLINE, CONST.PRIEST_HOLY }, buffID = 325013, Texture = 585							}, -- after activation BoonoftheAscended, Disc/Holy will have replaced Smite by AscendedBlast, texture is Smite
-	{ Type = "Spell", ID = 304971, isCovenant = true, covenantID = 1, covenantKey = "DivineToll", 			covenantClass = "PALADIN" 																															},
-	{ Type = "Spell", ID = 310454, isCovenant = true, covenantID = 1, covenantKey = "WeaponsofOrder", 		covenantClass = "MONK"	 																															},
-	{ Type = "Spell", ID = 307443, isCovenant = true, covenantID = 1, covenantKey = "RadiantSpark", 		covenantClass = "MAGE"	 																															}, -- casting
-	{ Type = "Spell", ID = 308491, isCovenant = true, covenantID = 1, covenantKey = "ResonatingArrow", 		covenantClass = "HUNTER", 										skipRange = true, covenantArea = true												}, -- ground click 
-	{ Type = "Spell", ID = 326434, isCovenant = true, covenantID = 1, covenantKey = "KindredSpirits", 		covenantClass = "DRUID", 										skipRange = true	 , buffID = 326434, Texture = 326434							}, -- casting - activation spell, texture is KindredSpirits
-	{ Type = "Spell", ID = 326446, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_FERAL, CONST.DRUID_BALANCE }, buffID = 326434, Texture = 326434							}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
-	{ Type = "Spell", ID = 326462, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_GUARDIAN }					 , buffID = 326434, Texture = 326434							}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
-	{ Type = "Spell", ID = 326647, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_RESTORATION }				 , buffID = 326434, Texture = 326434							}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
-	{ Type = "Spell", ID = 306830, isCovenant = true, covenantID = 1, covenantKey = "ElysianDecree", 		covenantClass = "DEMONHUNTER", 									skipRange = true, covenantArea = true												}, -- ground click 
-	{ Type = "Spell", ID = 312202, isCovenant = true, covenantID = 1, covenantKey = "ShackletheUnworthy", 	covenantClass = "DEATHKNIGHT" 													 																	}, 
+	{ Type = "Spell", ID = 324739, isCovenant = true, covenantID = 1, covenantKey = "SummonSteward", 																		skipRange = true																												},
+	{ Type = "Spell", ID = 307865, isCovenant = true, covenantID = 1, covenantKey = "SpearofBastion", 		covenantClass = "WARRIOR", 										skipRange = true, covenantArea = true																							}, -- ground click
+	{ Type = "Spell", ID = 312321, isCovenant = true, covenantID = 1, covenantKey = "ScouringTithe", 		covenantClass = "WARLOCK" 																																										}, -- casting 
+	{ Type = "Spell", ID = 324386, isCovenant = true, covenantID = 1, covenantKey = "VesperTotem", 			covenantClass = "SHAMAN", 										skipRange = true, covenantArea = true																							}, -- ground click
+	{ Type = "Spell", ID = 323547, isCovenant = true, covenantID = 1, covenantKey = "EchoingReprimand", 	covenantClass = "ROGUE" 																																										},
+	{ Type = "Spell", ID = 325013, isCovenant = true, covenantID = 1, covenantKey = "BoonoftheAscended", 	covenantClass = "PRIEST", 										skipRange = true, buffID = 325013, Texture = 325013																				}, -- 3min cd - activation spell, texture is BoonoftheAscended 
+	{ Type = "Spell", ID = 325020, isCovenant = true, covenantID = 1, covenantKey = "AscendedNova", 		covenantClass = "PRIEST", 										skipRange = true, buffID = 325013, Texture = 325013																				}, -- after activation BoonoftheAscended transforms into AscendedNova, texture is BoonoftheAscended
+	{ Type = "Spell", ID = 325315, isCovenant = true, covenantID = 1, covenantKey = "AscendedBlast", 		covenantClass = "PRIEST", covenantSpecIDs = { CONST.PRIEST_SHADOW }						  , buffID = 325013, Texture = 15407																	}, -- after activation BoonoftheAscended, SP will have replaced MindFlay by AscendedBlast, texture is MindFlay
+	{ Type = "Spell", ID = 325315, isCovenant = true, covenantID = 1, covenantKey = "AscendedBlast", 		covenantClass = "PRIEST", covenantSpecIDs = { CONST.PRIEST_DISCIPLINE, CONST.PRIEST_HOLY }, buffID = 325013, Texture = 585																		}, -- after activation BoonoftheAscended, Disc/Holy will have replaced Smite by AscendedBlast, texture is Smite
+	{ Type = "Spell", ID = 304971, isCovenant = true, covenantID = 1, covenantKey = "DivineToll", 			covenantClass = "PALADIN", spellBySpecID = { [CONST.PALADIN_HOLY] = 20473, [CONST.PALADIN_PROTECTION] = 31935, [CONST.PALADIN_RETRIBUTION] = 20271 }, FixedTexture = 3565448					},
+	{ Type = "Spell", ID = 310454, isCovenant = true, covenantID = 1, covenantKey = "WeaponsofOrder", 		covenantClass = "MONK"	 																																										},
+	{ Type = "Spell", ID = 307443, isCovenant = true, covenantID = 1, covenantKey = "RadiantSpark", 		covenantClass = "MAGE"	 																																										}, -- casting
+	{ Type = "Spell", ID = 308491, isCovenant = true, covenantID = 1, covenantKey = "ResonatingArrow", 		covenantClass = "HUNTER", 										skipRange = true, covenantArea = true																							}, -- ground click 
+	{ Type = "Spell", ID = 326434, isCovenant = true, covenantID = 1, covenantKey = "KindredSpirits", 		covenantClass = "DRUID", 										skipRange = true	 , buffID = 326434, Texture = 326434																		}, -- casting - activation spell, texture is KindredSpirits
+	{ Type = "Spell", ID = 326446, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_FERAL, CONST.DRUID_BALANCE }, buffID = 326434, Texture = 326434																		}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
+	{ Type = "Spell", ID = 326462, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_GUARDIAN }					 , buffID = 326434, Texture = 326434																		}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
+	{ Type = "Spell", ID = 326647, isCovenant = true, covenantID = 1, covenantKey = "EmpowerBond", 			covenantClass = "DRUID", covenantSpecIDs = { CONST.DRUID_RESTORATION }				 , buffID = 326434, Texture = 326434																		}, -- after activation KindredSpirits transforms into EmpowerBond, texture is KindredSpirits
+	{ Type = "Spell", ID = 306830, isCovenant = true, covenantID = 1, covenantKey = "ElysianDecree", 		covenantClass = "DEMONHUNTER", 									skipRange = true, covenantArea = true																							}, -- ground click 
+	{ Type = "Spell", ID = 312202, isCovenant = true, covenantID = 1, covenantKey = "ShackletheUnworthy", 	covenantClass = "DEATHKNIGHT" 													 																												}, 
 	-- [[ Venthyr ]] 
-	{ Type = "Spell", ID = 300728, isCovenant = true, covenantID = 2, covenantKey = "DoorofShadows", 																		skipRange = true, covenantArea = true												}, -- ground click 
-	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }, Texture = 163201					 					}, -- replaced Execute!
-	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }							 , Texture = 163201										}, -- replaced Execute!
-	{ Type = "Spell", ID = 321792, isCovenant = true, covenantID = 2, covenantKey = "ImpendingCatastrophe", covenantClass = "WARLOCK" 													 																		}, -- casting
-	{ Type = "Spell", ID = 320674, isCovenant = true, covenantID = 2, covenantKey = "ChainHarvest", 		covenantClass = "SHAMAN" 													 																		}, -- casting
-	{ Type = "Spell", ID = 323654, isCovenant = true, covenantID = 2, covenantKey = "Slaughter", 			covenantClass = "ROGUE" 													 																		}, -- stealthed
-	{ Type = "Spell", ID = 323673, isCovenant = true, covenantID = 2, covenantKey = "Mindgames", 			covenantClass = "PRIEST" 													 																		}, -- casting
-	{ Type = "Spell", ID = 316958, isCovenant = true, covenantID = 2, covenantKey = "AshenHallow", 			covenantClass = "PALADIN" 													 																		}, -- casting. Within the Hallow, you may use Hammer of Wrath on any target!
-	{ Type = "Spell", ID = 326860, isCovenant = true, covenantID = 2, covenantKey = "FallenOrder", 			covenantClass = "MONK", 										skipRange = true																	},
-	{ Type = "Spell", ID = 314793, isCovenant = true, covenantID = 2, covenantKey = "MirrorsofTorment", 	covenantClass = "MAGE"																																}, -- casting 
-	{ Type = "Spell", ID = 324149, isCovenant = true, covenantID = 2, covenantKey = "FlayedShot", 			covenantClass = "HUNTER"																															},
-	{ Type = "Spell", ID = 323546, isCovenant = true, covenantID = 2, covenantKey = "RavenousFrenzy", 		covenantClass = "DRUID", 										skipRange = true																	},
-	{ Type = "Spell", ID = 317009, isCovenant = true, covenantID = 2, covenantKey = "SinfulBrand", 			covenantClass = "DEMONHUNTER"																														},
-	{ Type = "Spell", ID = 311648, isCovenant = true, covenantID = 2, covenantKey = "SwarmingMist", 		covenantClass = "DEATHKNIGHT", 									skipRange = true																	},
+	{ Type = "Spell", ID = 300728, isCovenant = true, covenantID = 2, covenantKey = "DoorofShadows", 																		skipRange = true, covenantArea = true																							}, -- ground click 
+	{ Type = "Spell", ID = 317349, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_ARMS, CONST.WARRIOR_PROTECTION }, Texture = 163201					 																}, -- replaced Execute!
+	{ Type = "Spell", ID = 317485, isCovenant = true, covenantID = 2, covenantKey = "Condemn", 				covenantClass = "WARRIOR", covenantSpecIDs = { CONST.WARRIOR_FURY }							 , Texture = 163201																					}, -- replaced Execute!
+	{ Type = "Spell", ID = 321792, isCovenant = true, covenantID = 2, covenantKey = "ImpendingCatastrophe", covenantClass = "WARLOCK" 													 																													}, -- casting
+	{ Type = "Spell", ID = 320674, isCovenant = true, covenantID = 2, covenantKey = "ChainHarvest", 		covenantClass = "SHAMAN" 													 																													}, -- casting
+	{ Type = "Spell", ID = 323654, isCovenant = true, covenantID = 2, covenantKey = "Slaughter", 			covenantClass = "ROGUE" 													 																													}, -- stealthed
+	{ Type = "Spell", ID = 323673, isCovenant = true, covenantID = 2, covenantKey = "Mindgames", 			covenantClass = "PRIEST" 													 																													}, -- casting
+	{ Type = "Spell", ID = 316958, isCovenant = true, covenantID = 2, covenantKey = "AshenHallow", 			covenantClass = "PALADIN" 													 																													}, -- casting. Within the Hallow, you may use Hammer of Wrath on any target!
+	{ Type = "Spell", ID = 326860, isCovenant = true, covenantID = 2, covenantKey = "FallenOrder", 			covenantClass = "MONK", 										skipRange = true																												},
+	{ Type = "Spell", ID = 314793, isCovenant = true, covenantID = 2, covenantKey = "MirrorsofTorment", 	covenantClass = "MAGE"																																											}, -- casting 
+	{ Type = "Spell", ID = 324149, isCovenant = true, covenantID = 2, covenantKey = "FlayedShot", 			covenantClass = "HUNTER"																																										},
+	{ Type = "Spell", ID = 323546, isCovenant = true, covenantID = 2, covenantKey = "RavenousFrenzy", 		covenantClass = "DRUID", 										skipRange = true																												},
+	{ Type = "Spell", ID = 317009, isCovenant = true, covenantID = 2, covenantKey = "SinfulBrand", 			covenantClass = "DEMONHUNTER"																																									},
+	{ Type = "Spell", ID = 311648, isCovenant = true, covenantID = 2, covenantKey = "SwarmingMist", 		covenantClass = "DEATHKNIGHT", 									skipRange = true																												},
 	-- [[ NightFae ]]
-	{ Type = "Spell", ID = 310143, isCovenant = true, covenantID = 3, covenantKey = "Soulshape", 																			skipRange = true, buffID = 310143, Texture = 310143									},
-	{ Type = "Spell", ID = 324701, isCovenant = true, covenantID = 3, covenantKey = "Flicker", 																				skipRange = true, buffID = 310143, Texture = 310143									},
-	{ Type = "Spell", ID = 325886, isCovenant = true, covenantID = 3, covenantKey = "AncientAftershock", 	covenantClass = "WARRIOR", 										skipRange = true																	}, -- can be used as mass interrupt!
-	{ Type = "Spell", ID = 325640, isCovenant = true, covenantID = 3, covenantKey = "SoulRot", 				covenantClass = "WARLOCK" 																															}, -- casting 
-	{ Type = "Spell", ID = 328923, isCovenant = true, covenantID = 3, covenantKey = "FaeTransfusion", 		covenantClass = "SHAMAN", 										skipRange = true, covenantArea = true												}, -- ground click, channeling 
-	{ Type = "Spell", ID = 328305, isCovenant = true, covenantID = 3, covenantKey = "Sepsis", 				covenantClass = "ROGUE" 																															}, 
-	{ Type = "Spell", ID = 327661, isCovenant = true, covenantID = 3, covenantKey = "FaeGuardians", 		covenantClass = "PRIEST", 										skipRange = true											  , Texture = 327694	}, 
-	{ Type = "Spell", ID = 328282, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSpring", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
-	{ Type = "Spell", ID = 328620, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSummer", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
-	{ Type = "Spell", ID = 328622, isCovenant = true, covenantID = 3, covenantKey = "BlessingofAutumn", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
-	{ Type = "Spell", ID = 328281, isCovenant = true, covenantID = 3, covenantKey = "BlessingofWinter", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278	}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
-	{ Type = "Spell", ID = 327104, isCovenant = true, covenantID = 3, covenantKey = "FaelineStomp", 		covenantClass = "MONK", 										skipRange = true																	},
-	{ Type = "Spell", ID = 314791, isCovenant = true, covenantID = 3, covenantKey = "ShiftingPower", 		covenantClass = "MAGE", 										skipRange = true																	}, -- channeling
-	{ Type = "Spell", ID = 328231, isCovenant = true, covenantID = 3, covenantKey = "WildSpirits", 			covenantClass = "HUNTER", 										skipRange = true, covenantArea = true												}, -- ground click -- FIX ME: Does it correct ID ?!
-	{ Type = "Spell", ID = 323764, isCovenant = true, covenantID = 3, covenantKey = "ConvoketheSpirits",	covenantClass = "DRUID", 										skipRange = true																	}, -- channeling
-	{ Type = "Spell", ID = 323639, isCovenant = true, covenantID = 3, covenantKey = "TheHunt",				covenantClass = "DEMONHUNTER"																														}, -- casting
-	{ Type = "Spell", ID = 324128, isCovenant = true, covenantID = 3, covenantKey = "DeathsDue",			covenantClass = "DEATHKNIGHT", 									skipRange = true, covenantArea = true												}, -- ground click, replaced Death and Decay!
+	{ Type = "Spell", ID = 310143, isCovenant = true, covenantID = 3, covenantKey = "Soulshape", 																			skipRange = true, buffID = 310143, Texture = 310143																				},
+	{ Type = "Spell", ID = 324701, isCovenant = true, covenantID = 3, covenantKey = "Flicker", 																				skipRange = true, buffID = 310143, Texture = 310143																				},
+	{ Type = "Spell", ID = 325886, isCovenant = true, covenantID = 3, covenantKey = "AncientAftershock", 	covenantClass = "WARRIOR", 										skipRange = true																												}, -- can be used as mass interrupt!
+	{ Type = "Spell", ID = 325640, isCovenant = true, covenantID = 3, covenantKey = "SoulRot", 				covenantClass = "WARLOCK" 																																										}, -- casting 
+	{ Type = "Spell", ID = 328923, isCovenant = true, covenantID = 3, covenantKey = "FaeTransfusion", 		covenantClass = "SHAMAN", 										skipRange = true, covenantArea = true																							}, -- ground click, channeling 
+	{ Type = "Spell", ID = 328305, isCovenant = true, covenantID = 3, covenantKey = "Sepsis", 				covenantClass = "ROGUE" 																																										}, 
+	{ Type = "Spell", ID = 327661, isCovenant = true, covenantID = 3, covenantKey = "FaeGuardians", 		covenantClass = "PRIEST", 										skipRange = true											  , Texture = 327694												}, 
+	{ Type = "Spell", ID = 342132, isCovenant = true, covenantID = 3, covenantKey = "WrathfulFaerie", 		covenantClass = "PRIEST", 										skipRange = true											  , Texture = 327694												}, 
+	{ Type = "Spell", ID = 327694, isCovenant = true, covenantID = 3, covenantKey = "GuardianFaerie", 		covenantClass = "PRIEST", 										skipRange = true											  , Texture = 327694												}, 
+	{ Type = "Spell", ID = 327710, isCovenant = true, covenantID = 3, covenantKey = "BenevolentFaerie", 	covenantClass = "PRIEST", 										skipRange = true										  	  , Texture = 327694												}, 
+	{ Type = "Spell", ID = 328282, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSpring", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278												}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
+	{ Type = "Spell", ID = 328620, isCovenant = true, covenantID = 3, covenantKey = "BlessingofSummer", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278												}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
+	{ Type = "Spell", ID = 328622, isCovenant = true, covenantID = 3, covenantKey = "BlessingofAutumn", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278												}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
+	{ Type = "Spell", ID = 328281, isCovenant = true, covenantID = 3, covenantKey = "BlessingofWinter", 	covenantClass = "PALADIN", 										skipRange = true, buffIDs = { 328282, 328620, 328622, 328281 }, Texture = 328278												}, -- Blessing of Spring -> Blessing of Summer -> Blessing of Autumn -> Blessing of Winter
+	{ Type = "Spell", ID = 327104, isCovenant = true, covenantID = 3, covenantKey = "FaelineStomp", 		covenantClass = "MONK", 										skipRange = true																												},
+	{ Type = "Spell", ID = 314791, isCovenant = true, covenantID = 3, covenantKey = "ShiftingPower", 		covenantClass = "MAGE", 										skipRange = true																												}, -- channeling
+	{ Type = "Spell", ID = 328231, isCovenant = true, covenantID = 3, covenantKey = "WildSpirits", 			covenantClass = "HUNTER", 										skipRange = true, covenantArea = true																							}, -- ground click -- FIX ME: Does it correct ID ?!
+	{ Type = "Spell", ID = 323764, isCovenant = true, covenantID = 3, covenantKey = "ConvoketheSpirits",	covenantClass = "DRUID", 										skipRange = true																												}, -- channeling
+	{ Type = "Spell", ID = 323639, isCovenant = true, covenantID = 3, covenantKey = "TheHunt",				covenantClass = "DEMONHUNTER"																																									}, -- casting
+	{ Type = "Spell", ID = 324128, isCovenant = true, covenantID = 3, covenantKey = "DeathsDue",			covenantClass = "DEATHKNIGHT", 									skipRange = true, covenantArea = true																							}, -- ground click, replaced Death and Decay!
 	-- [[ Necrolord ]] 
-	{ Type = "Spell", ID = 324631, isCovenant = true, covenantID = 4, covenantKey = "Fleshcraft", 																			skipRange = true																	}, -- channeling
-	{ Type = "Spell", ID = 324143, isCovenant = true, covenantID = 4, covenantKey = "ConquerorsBanner", 	covenantClass = "WARRIOR", 										skipRange = true, buffID = 325787													},
-	{ Type = "Spell", ID = 325289, isCovenant = true, covenantID = 4, covenantKey = "DecimatingBolt", 		covenantClass = "WARLOCK"																															}, -- casting
-	{ Type = "Spell", ID = 326059, isCovenant = true, covenantID = 4, covenantKey = "PrimordialWave", 		covenantClass = "SHAMAN"																															}, -- casting
-	{ Type = "Spell", ID = 328547, isCovenant = true, covenantID = 4, covenantKey = "SerratedBoneSpike", 	covenantClass = "ROGUE"																																}, 
-	{ Type = "Spell", ID = 324724, isCovenant = true, covenantID = 4, covenantKey = "UnholyNova", 			covenantClass = "PRIEST", 										skipRange = true																	}, 
-	{ Type = "Spell", ID = 328204, isCovenant = true, covenantID = 4, covenantKey = "VanquishersHammer", 	covenantClass = "PALADIN"																															}, 
-	{ Type = "Spell", ID = 325216, isCovenant = true, covenantID = 4, covenantKey = "BonedustBrew", 		covenantClass = "MONK", 										skipRange = true, covenantArea = true												}, -- ground click
-	{ Type = "Spell", ID = 324220, isCovenant = true, covenantID = 4, covenantKey = "Deathborne", 			covenantClass = "MAGE", 										skipRange = true																	}, -- casting
-	{ Type = "Spell", ID = 325028, isCovenant = true, covenantID = 4, covenantKey = "DeathChakram", 		covenantClass = "HUNTER"																															}, 
-	{ Type = "Spell", ID = 325727, isCovenant = true, covenantID = 4, covenantKey = "AdaptiveSwarm", 		covenantClass = "DRUID"																																}, 
-	{ Type = "Spell", ID = 329554, isCovenant = true, covenantID = 4, covenantKey = "FoddertotheFlame", 	covenantClass = "DEMONHUNTER", 									skipRange = true																	}, -- AutoTarget feature will force to target summoned demon
-	{ Type = "Spell", ID = 315443, isCovenant = true, covenantID = 4, covenantKey = "AbominationLimb", 		covenantClass = "DEATHKNIGHT", 									skipRange = true																	}, 
+	{ Type = "Spell", ID = 324631, isCovenant = true, covenantID = 4, covenantKey = "Fleshcraft", 																			skipRange = true																												}, -- channeling
+	{ Type = "Spell", ID = 324143, isCovenant = true, covenantID = 4, covenantKey = "ConquerorsBanner", 	covenantClass = "WARRIOR", 										skipRange = true, buffID = 325787																								},
+	{ Type = "Spell", ID = 325289, isCovenant = true, covenantID = 4, covenantKey = "DecimatingBolt", 		covenantClass = "WARLOCK"																																										}, -- casting
+	{ Type = "Spell", ID = 326059, isCovenant = true, covenantID = 4, covenantKey = "PrimordialWave", 		covenantClass = "SHAMAN"																																										}, -- casting
+	{ Type = "Spell", ID = 328547, isCovenant = true, covenantID = 4, covenantKey = "SerratedBoneSpike", 	covenantClass = "ROGUE"																																											}, 
+	{ Type = "Spell", ID = 324724, isCovenant = true, covenantID = 4, covenantKey = "UnholyNova", 			covenantClass = "PRIEST", 										skipRange = true																												}, 
+	{ Type = "Spell", ID = 328204, isCovenant = true, covenantID = 4, covenantKey = "VanquishersHammer", 	covenantClass = "PALADIN"																																										}, 
+	{ Type = "Spell", ID = 325216, isCovenant = true, covenantID = 4, covenantKey = "BonedustBrew", 		covenantClass = "MONK", 										skipRange = true, covenantArea = true																							}, -- ground click
+	{ Type = "Spell", ID = 324220, isCovenant = true, covenantID = 4, covenantKey = "Deathborne", 			covenantClass = "MAGE", 										skipRange = true																												}, -- casting
+	{ Type = "Spell", ID = 325028, isCovenant = true, covenantID = 4, covenantKey = "DeathChakram", 		covenantClass = "HUNTER"																																										}, 
+	{ Type = "Spell", ID = 325727, isCovenant = true, covenantID = 4, covenantKey = "AdaptiveSwarm", 		covenantClass = "DRUID"																																											}, 
+	{ Type = "Spell", ID = 329554, isCovenant = true, covenantID = 4, covenantKey = "FoddertotheFlame", 	covenantClass = "DEMONHUNTER", 									skipRange = true																												}, -- AutoTarget feature will force to target summoned demon
+	{ Type = "Spell", ID = 315443, isCovenant = true, covenantID = 4, covenantKey = "AbominationLimb", 		covenantClass = "DEATHKNIGHT", 									skipRange = true																												}, 
 }; A.CovenantActions = CovenantActions
 
 local Auras 							= {
@@ -407,63 +410,15 @@ if Covenant:IsLoaded() then
 				if obj.covenantID == Covenant.covenantID then 
 					if obj.covenantClass == nil then 
 						-- CovenantSignature
-						if not CovenantSignature.installed then 
-							if obj.covenantID == 1 then 
-								--[[	
-								-- If unblock this commentary then need to make changes in CovenantFunctions[1].SummonSteward, header locals for Item, RunAutoCovenants function, Core.lua, launcher and texture
-								local spellName = GetSpellInfo(IDs.SummonSteward)																
-								local itemName  = GetItemInfo(IDs.PhialofSerenity)
-								if not spellName then 
-									error("CovenantSignature couldn't get spellName from SummonSteward")
-									return 
-								elseif not itemName then 										
-									if not itemPhialofSerenity then 
-										itemPhialofSerenity = Item:CreateFromItemID(IDs.PhialofSerenity)
-										itemPhialofSerenity:ContinueOnItemLoad(function()
-											local itemName = itemPhialofSerenity:GetItemName()
-											if not itemName then 
-												error("CovenantSignature couldn't get itemName from PhialofSerenity")
-												return 
-											end 
-											if CovenantSignature:CanChangeAttribute() then 
-												CovenantSignature:SetAttribute("macrotext", "/cast [nocombat] " .. spellName .. "\n/use [combat] " .. itemName)
-												CovenantSignature.installed = true
-											else 
-												if useDebug then 
-													Print("[Covenant] Macro 'CovenantSignature' failed in func 'ContinueOnItemLoad' because 'CanChangeAttribute' is false")
-												end 
-											end 
-											
-											if IsButtonsInstalled() then 
-												return 
-											end 
-										end)
-									end 									
-								else  								
-									CovenantSignature:SetAttribute("macrotext", "/cast [nocombat] " .. spellName .. "\n/use [combat] " .. itemName)
-									CovenantSignature.installed = true
-								end 
-								]]
-								-- It seems what we will use SummonSteward even in combat depends on daily bonus,
-								-- so PhialofSerenity must be on stand alone button since it doesn't share cooldown with Potions as confirmed 18-08-2020 on beta 
-								local spellName = GetSpellInfo(obj.ID)								
-								if not spellName then 
-									error("CovenantSignature couldn't get spellName from " .. obj.covenantKey)
-									return 
-								end
-								
-								CovenantSignature:SetAttribute("macrotext", CovenantSignature.pattern:format(spellName))
-								CovenantSignature.installed = true
-							else 
-								local spellName = GetSpellInfo(obj.ID)								
-								if not spellName then 
-									error("CovenantSignature couldn't get spellName from " .. obj.covenantKey)
-									return 
-								end
-								
-								CovenantSignature:SetAttribute("macrotext", CovenantSignature.pattern:format(spellName))
-								CovenantSignature.installed = true
-							end 														
+						if not CovenantSignature.installed then  
+							local spellName = GetSpellInfo(obj.ID)								
+							if not spellName then 
+								error("CovenantSignature couldn't get spellName from " .. obj.covenantKey)
+								return 
+							end
+							
+							CovenantSignature:SetAttribute("macrotext", CovenantSignature.pattern:format(spellName))
+							CovenantSignature.installed = true													
 						end 
 					elseif obj.covenantClass == playerClass then 
 						-- CovenantClass
@@ -506,7 +461,25 @@ if Covenant:IsLoaded() then
 										
 										CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName) .. (macrotext and ("\n" .. macrotext) or ""))
 									end 
-								end 
+								end
+							-- Fix Paladin's DivineToll
+							elseif obj.covenantClass == "PALADIN" and obj.covenantID == 1 and obj.spellBySpecID and obj.spellBySpecID[A.PlayerSpec] then 
+								spellName = GetSpellInfo(obj.spellBySpecID[A.PlayerSpec])
+								CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName))
+							-- Fix Priest's Fae Guardians
+							elseif obj.covenantClass == "PRIEST" and obj.covenantID == 3 then 
+								local macrotext = CovenantClass:GetAttribute("macrotext") 
+								for _, subObj in ipairs(CovenantActions) do 
+									if subObj.covenantClass == "PRIEST" and subObj.covenantID == 3 then
+										spellName = GetSpellInfo(subObj.ID)								
+										if not spellName then 
+											error("CovenantClass couldn't get spellName from " .. subObj.covenantKey)
+											return 
+										end				
+										
+										CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName) .. (macrotext and ("\n" .. macrotext) or ""))
+									end 
+								end
 							else 
 								CovenantClass:SetAttribute("macrotext", CovenantClass.pattern:format(spellName, spellName))
 							end 

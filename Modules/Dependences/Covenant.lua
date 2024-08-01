@@ -15,7 +15,7 @@ local Print								= A.Print
 local Listener							= A.Listener
 local TimerSetRefreshAble				= A.TimerSetRefreshAble
 
-local Lib 								= _G.LibStub:NewLibrary("Covenant", 2)
+local Lib 								= _G.LibStub:NewLibrary("Covenant", 3)
 
 if not Lib then 
 	if A.BuildToC >= 90001 then 
@@ -141,7 +141,7 @@ local function OnUpdateSoulbind(isInitial)
 			-- Get learned soulbind contained spell 
 			if SoulbindViewer then 
 				local needClose
-				if not SoulbindViewer:IsVisible() and not SoulbindViewer.Tree.nodeFrames then 
+				if not SoulbindViewer:IsVisible() then -- and not SoulbindViewer.Tree.nodeFrames -- lib v3: Supposed to fix issue when nodeTree didn't update on second follower				
 					SoulbindViewer:Open()
 					needClose = true 
 				end 
@@ -241,6 +241,12 @@ if C_Covenants and C_Soulbinds then
 			TimerSetRefreshAble("ACTION_EVENT_SOULBINDS", 0.5, OnUpdate)
 		end)
 		
+		-- Handler on follower chosen
+		-- lib v3: Supposed to fix issue when nodeTree didn't update on second follower
+		Listener:Add("ACTION_EVENT_SOULBINDS", "GARRISON_FOLLOWER_ADDED", function()			
+			TimerSetRefreshAble("ACTION_EVENT_SOULBINDS", 0.5, OnUpdate)
+		end)		
+		
 		-- Initialization login
 		OnUpdateCovenant()
 		OnUpdateSoulbind(true)								-- not necessary to pass the 'true' here but I prefer don't fail with code without enough tests
@@ -303,7 +309,7 @@ Lib.Nodes	 		= Nodes -- [nodeID] = spellID or 0, information of available nodeID
 
 function Lib:IsLoaded()
 	-- @return boolean 
-	return C_Covenants and C_Soulbinds and true 
+	return A.BuildToC >= 90001 and A.BuildToC < 100001 and C_Covenants and C_Soulbinds and true 
 end
 
 function Lib:GetCovenant()
