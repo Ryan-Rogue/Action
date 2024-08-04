@@ -3248,7 +3248,7 @@ A.Unit = PseudoClass({
 		local castName, castStartTime, castEndTime, notInterruptable, spellID, isChannel = self(unitID):IsCasting()
 
 		local TotalCastTime, CurrentCastTimeSeconds, CurrentCastTimeLeftPercent = 0, 0, 0
-		if unitID == "player" then 
+		if unitID == "player" and (argSpellID or spellID) then 
 			local s, _, _, castTime = GetSpellInfo(argSpellID or spellID) -- Must be real-time data
 			if type(s) == "table" then 
 				castTime = s.castTime
