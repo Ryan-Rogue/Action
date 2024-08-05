@@ -3252,7 +3252,6 @@ A.Unit = PseudoClass({
 			local s, _, _, castTime = GetSpellInfo(argSpellID or spellID) -- Must be real-time data
 			if type(s) == "table" then 
 				castTime = s.castTime
-				castName = s.name
 			end 		
 			TotalCastTime = (castTime or 0) / 1000
 			CurrentCastTimeSeconds = TotalCastTime
