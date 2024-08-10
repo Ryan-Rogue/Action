@@ -4477,6 +4477,39 @@ A.FriendlyTeam = PseudoClass({
 		
 		return 0, str_none
 	end, "ROLE"),
+	GetBuffsCount							= Cache:Wrap(function(self, spells, duration, source, byID)
+		-- @return number 	
+		-- Nill-able: duration, source, byID
+		local ROLE = self.ROLE
+		local total = 0
+		local member
+
+		if TeamCacheFriendly.Size <= 1 then 
+			if A_Unit("player"):Role(ROLE) then 
+				if A_Unit("player"):HasBuffs(spells, source, byID) > (duration or 0) then 
+					return 1
+				end  
+			end 
+			return 0			 
+		end 
+ 
+		if ROLE and TeamCacheFriendly[ROLE] then 
+			for member in pairs(TeamCacheFriendly[ROLE]) do
+				if A_Unit(member):HasBuffs(spells, source, byID) > (duration or 0) then
+					total = total + 1
+				end
+			end
+			return total 
+		else
+			for i = 1, TeamCacheFriendly.MaxSize do
+				member = TeamCacheFriendlyIndexToPLAYERs[i]	
+				if A_Unit(member):HasBuffs(spells, source, byID) > (duration or 0) then
+					total = total + 1
+				end
+			end
+			return total
+		end	
+	end, "ROLE"),
 	GetDeBuffs		 						= Cache:Wrap(function(self, spells, range)
 		-- @return number, unitID 
 		-- Nill-able: range
@@ -4522,6 +4555,39 @@ A.FriendlyTeam = PseudoClass({
 		end  		
 		
 		return 0, str_none
+	end, "ROLE"),
+	GetDeBuffsCount							= Cache:Wrap(function(self, spells, duration, source, byID)
+		-- @return number 	
+		-- Nill-able: duration, source, byID
+		local ROLE = self.ROLE
+		local total = 0
+		local member
+
+		if TeamCacheFriendly.Size <= 1 then 
+			if A_Unit("player"):Role(ROLE) then 
+				if A_Unit("player"):HasDeBuffs(spells, source, byID) > (duration or 0) then 
+					return 1
+				end  
+			end 
+			return 0			 
+		end 
+ 
+		if ROLE and TeamCacheFriendly[ROLE] then 
+			for member in pairs(TeamCacheFriendly[ROLE]) do
+				if A_Unit(member):HasDeBuffs(spells, source, byID) > (duration or 0) then
+					total = total + 1
+				end
+			end
+			return total 
+		else
+			for i = 1, TeamCacheFriendly.MaxSize do
+				member = TeamCacheFriendlyIndexToPLAYERs[i]	
+				if A_Unit(member):HasDeBuffs(spells, source, byID) > (duration or 0) then
+					total = total + 1
+				end
+			end
+			return total
+		end	
 	end, "ROLE"),
 	GetTTD 									= Cache:Pass(function(self, count, seconds, range)
 		-- @return boolean, counter, unitID 
