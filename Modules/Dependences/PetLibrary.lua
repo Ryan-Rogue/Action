@@ -95,8 +95,8 @@ local owner								= isClassic and "PlayerClass" or "PlayerSpec"
 	  
 local C_SpellBook						= _G.C_SpellBook	  
 local C_Spell 							= _G.Spell
-local 	 IsActionInRange, 	 GetActionInfo,    PlaceAction,    ClearCursor,    GetCursorInfo, 	 GetPetFoodTypes, 	 													 GetSpellBookItemInfo, 	  									 		 PickupSpellBookItem, 					  		  HasPetSpells,    PetHasSpellbook =
-	  _G.IsActionInRange, _G.GetActionInfo, _G.PlaceAction, _G.ClearCursor, _G.GetCursorInfo, _G.GetPetFoodTypes, C_SpellBook and C_SpellBook.GetSpellBookItemInfo or _G.GetSpellBookItemInfo, C_Spell and C_Spell.PickupSpellBookItem or _G.PickupSpellBookItem, C_SpellBook and C_SpellBook.HasPetSpells, _G.PetHasSpellbook
+local 	 IsActionInRange, 	 GetActionInfo,    PlaceAction,    ClearCursor,    GetCursorInfo, 	 GetPetFoodTypes, 	 													 GetSpellBookItemInfo, 	  									 		 		 PickupSpellBookItem, 					  		  HasPetSpells,    PetHasSpellbook =
+	  _G.IsActionInRange, _G.GetActionInfo, _G.PlaceAction, _G.ClearCursor, _G.GetCursorInfo, _G.GetPetFoodTypes, C_SpellBook and C_SpellBook.GetSpellBookItemInfo or _G.GetSpellBookItemInfo, C_SpellBook and C_SpellBook.PickupSpellBookItem or _G.PickupSpellBookItem, C_SpellBook and C_SpellBook.HasPetSpells, _G.PetHasSpellbook
 
 local GameLocale 						= _G.GetLocale()
 local GetUnitSpeed						= _G.GetUnitSpeed
