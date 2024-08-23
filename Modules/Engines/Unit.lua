@@ -2485,12 +2485,25 @@ local Info = {
 		[197834] = true, -- Healing PvP Training Dummy
 		[194646] = true, -- Healing Training Dummy
 		[193563] = true, -- Azure Span Training Dummy
+		-- The War Within Dornogal
+		[219250] = true, -- PvP Training Dummy <Damage>
+		[225982] = true, -- Cleave Training Dummy <Damage>
+		[225982] = true, -- Cleave Training Dummy <Damage>
+		[225980] = true, -- Training Dummy <Healing>
+		[225976] = true, -- Normal Tank Dummy <Tanking>
+		[225977] = true, -- Dungeoneer's Training Dummy <Tanking>
+		[225978] = true, -- Crystalmaw <Raider's Tanking Dummy>
+		[225983] = true, -- Dungeoneer's Training Dummy <Damage>
+		[225985] = true, -- Kelpfist <Raider's Training Dummy>
+		[225984] = true, -- Training Dummy <Damage>
 	},
 	IsDummyPvP 					= {
 		-- City (SW, Orgri, ...)
 		[114840] = true, -- Raider's Training Dummy
 		[114832] = true,
 		[131997] = true,
+		-- The War Within Dornogal
+		[219250] = true, -- PvP Training Dummy <Damage>
 	},
 	IsCondemnedDemon			= {
 		[169428]				= "Wrathguard",
