@@ -4503,7 +4503,7 @@ A.FriendlyTeam = PseudoClass({
 		else
 			for i = 1, TeamCacheFriendly.MaxSize do
 				member = TeamCacheFriendlyIndexToPLAYERs[i]	
-				if A_Unit(member):HasBuffs(spells, source, byID) > (duration or 0) then
+				if member and A_Unit(member):HasBuffs(spells, source, byID) > (duration or 0) then
 					total = total + 1
 				end
 			end
@@ -4582,7 +4582,7 @@ A.FriendlyTeam = PseudoClass({
 		else
 			for i = 1, TeamCacheFriendly.MaxSize do
 				member = TeamCacheFriendlyIndexToPLAYERs[i]	
-				if A_Unit(member):HasDeBuffs(spells, source, byID) > (duration or 0) then
+				if member and A_Unit(member):HasDeBuffs(spells, source, byID) > (duration or 0) then
 					total = total + 1
 				end
 			end
