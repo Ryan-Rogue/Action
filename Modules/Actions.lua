@@ -1313,7 +1313,7 @@ function A:GetCooldown()
 			
 			return 0
 		else 
-			return CooldownDuration((self:Info()))
+			return CooldownDuration(self.ID) -- Retail TWW now has it through self.ID / Classic still has through :Info()
 		end 
 	end 
 	
