@@ -335,7 +335,7 @@ local spellpowercache = setmetatable(
 	}, 
 	{ 
 		__index = function(t, v)
-			local pwr = GetSpellPowerCost(v)
+			local pwr = v and GetSpellPowerCost(v)
 			if pwr then 
 				if pwr[1] then
 					t[v] = { pwr[1].cost, pwr[1].type }
