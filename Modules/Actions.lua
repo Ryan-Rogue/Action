@@ -1545,7 +1545,11 @@ end
 -- Spell  
 local spellinfocache; spellinfocache = setmetatable({
 		wipe = function()
-			wipe(spellinfocache)
+			for k in pairs(spellinfocache) do 
+				if k ~= "wipe" then 
+					spellinfocache[k] = nil 
+				end 
+			end 
 		end,
 	}, { __index = function(t, v)
     local a
