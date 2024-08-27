@@ -306,13 +306,14 @@ end
 function A.ShouldStop()
 	-- @return boolean 
 	-- By Casting
-	return Unit("player"):IsCasting()
+	return Unit("player"):IsCasting() and true 
 end 
 A.ShouldStop = A.MakeFunctionCachedStatic(A.ShouldStop, 0)
 
 -------------------------------------------------------------------------------
 -- Spell
 -------------------------------------------------------------------------------
+-- Retail TWW now has it through self.ID / Classic still has through :Info()
 local spellbasecache  = setmetatable({}, { __index = function(t, v)
 	local cd = GetSpellBaseCooldown(v)
 	if cd then
@@ -334,8 +335,7 @@ local spellpowercache = setmetatable(
 	}, 
 	{ 
 		__index = function(t, v)
-			local spellIdentifier = A.GetSpellInfo(v)
-			local pwr = spellIdentifier and GetSpellPowerCost(A.GetSpellInfo(v))
+			local pwr = GetSpellPowerCost(v)
 			if pwr then 
 				if pwr[1] then
 					t[v] = { pwr[1].cost, pwr[1].type }
@@ -365,14 +365,14 @@ function A.GetSpellPowerCost(self)
 	-- RealTime with cycle cache
 	-- @usage A:GetSpellPowerCost() or A.GetSpellPowerCost(123)
 	-- @return cost (@number), type (@number)
-	local name 
+	local spellID 
 	if type(self) == "table" then 
-		name = self:Info()
+		spellID = self.ID
 	else 
-		name = A_GetSpellInfo(self)
+		spellID = self
 	end 
 	
-	local pwr = GetSpellPowerCost(name)
+	local pwr = GetSpellPowerCost(spellID)
 	if pwr and pwr[1] then
 		return pwr[1].cost, pwr[1].type
 	end   	
@@ -439,7 +439,7 @@ function A:GetSpellCastTimeCache()
 	-- @usage A:GetSpellCastTimeCache() or A.GetSpellCastTimeCache(116)
 	-- @return number 
 	if type(self) == "table" then 
-		return (select(4, self:Info()) or 0) / 1000 
+		return (select(4, self:Info(true)) or 0) / 1000 
 	else
 		local spellName, _, _, castTime = GetSpellInfo(self.ID)
 		if type(spellName) == "table" then 
@@ -451,7 +451,7 @@ end
 
 function A:GetSpellCharges()
 	-- @return number
-	local charges = GetSpellCharges((self:Info()))
+	local charges = GetSpellCharges(self.ID)
 	if not charges then 
 		charges = 0
 	elseif type(charges) == "table" then 
@@ -463,7 +463,7 @@ end
 
 function A:GetSpellChargesMax()
 	-- @return number
-	local charges, max_charges = GetSpellCharges((self:Info()))
+	local charges, max_charges = GetSpellCharges(self.ID)
 	if type(charges) == "table" then 
 		max_charges = charges.maxCharges
 	end  
@@ -477,7 +477,7 @@ end
 
 function A:GetSpellChargesFrac()
 	-- @return number	
-	local charges, maxCharges, start, duration = GetSpellCharges((self:Info()))
+	local charges, maxCharges, start, duration = GetSpellCharges(self.ID)
 	if type(charges) == "table" then 		
 		maxCharges = charges.maxCharges
 		start = charges.cooldownStartTime
@@ -498,7 +498,7 @@ end
 
 function A:GetSpellChargesFullRechargeTime()
 	-- @return number
-	local charges, _, _, duration = GetSpellCharges((self:Info()))
+	local charges, _, _, duration = GetSpellCharges(self.ID)
 	if type(charges) == "table" then 
 		duration = charges.cooldownDuration
 	end  
@@ -512,33 +512,33 @@ end
 
 function A:GetSpellTimeSinceLastCast()
 	-- @return number (seconds after last time casted - during fight)
-	return CombatTracker:GetSpellLastCast("player", (self:Info()))
+	return CombatTracker:GetSpellLastCast("player", self.ID)
 end 
 
 function A:GetSpellCounter()
 	-- @return number (total count casted of the spell - during fight)
-	return CombatTracker:GetSpellCounter("player", (self:Info()))
+	return CombatTracker:GetSpellCounter("player", self.ID)
 end 
 
 function A:GetSpellAmount(unitID, X)
 	-- @return number (taken summary amount of the spell - during fight)
 	-- X during which lasts seconds 
 	if X then 
-		return CombatTracker:GetSpellAmountX(unitID or "player", (self:Info()), X)
+		return CombatTracker:GetSpellAmountX(unitID or "player", self.ID, X)
 	else 
-		return CombatTracker:GetSpellAmount(unitID or "player", (self:Info()))
+		return CombatTracker:GetSpellAmount(unitID or "player", self.ID)
 	end 
 end 
 
 function A:GetSpellAbsorb(unitID)
 	-- @return number (taken current absort amount of the spell - during fight)
-	return CombatTracker:GetAbsorb(unitID or "player", (self:Info()))
+	return CombatTracker:GetAbsorb(unitID or "player", self.ID)
 end 
 
 function A:GetSpellAutocast()
 	-- @return boolean, boolean 
 	-- Returns autocastable, autostate 
-	return GetSpellAutocast((self:Info()))
+	return GetSpellAutocast(self.ID)
 end 
 
 function A:GetSpellBaseDuration()
@@ -623,17 +623,17 @@ function A:IsSpellInRange(unitID)
 		ID = self 
 		Name = A_GetSpellInfo(ID)
 	end		
-	return Name and (IsSpellInRange(Name, unitID) == 1 or (Pet:IsActive() and Pet:IsInRange(ID, unitID))) 
+	return Name and (IsSpellInRange(ID, unitID) == 1 or (Pet:IsActive() and Pet:IsInRange(ID, unitID))) 
 end 
 
 function A:IsSpellInCasting()
 	-- @return boolean 
-	return Unit("player"):IsCasting() == self:Info()
+	return Unit("player"):IsCasting() == self:Info(true)
 end 
 
 function A:IsSpellCurrent()
 	-- @return boolean
-	return IsCurrentSpell((self:Info()))
+	return IsCurrentSpell(self.ID)
 end 
 
 function A:CanSafetyCastHeal(unitID, offset)
@@ -1115,7 +1115,7 @@ function A:HasLegendaryCraftingPower()
 	-- @return boolean 
 	-- Look description of the returned methods in Player.lua
 	-- Note: Object must be a spell !
-	return Player:HasLegendaryCraftingPower((self:Info()))
+	return Player:HasLegendaryCraftingPower((self:Info())) -- Shadowlands API written on spellName
 end 
 
 -------------------------------------------------------------------------------
@@ -1235,7 +1235,7 @@ function A:IsUsable(extraCD, skipUsable)
 	
 	if self.Type == "Spell" then 
 		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell((self:Info()) or "")) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
+		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self.ID)) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
 	end 
 	
 	return not isItemUseException[self.ID] and (skipUsable == true or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem((self:Info()))) and self:GetItemCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
@@ -1244,7 +1244,7 @@ end
 function A:IsHarmful()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return IsHarmfulSpell((self:Info())) or IsAttackSpell((self:Info()))
+		return IsHarmfulSpell(self.ID) or IsAttackSpell(self.ID)
 	end 
 	
 	return IsHarmfulItem((self:Info()))
@@ -1253,7 +1253,7 @@ end
 function A:IsHelpful()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		return IsHelpfulSpell((self:Info()))
+		return IsHelpfulSpell(self.ID)
 	end 
 	
 	return IsHelpfulItem((self:Info()))
@@ -1287,8 +1287,7 @@ end
 function A:HasRange()
 	-- @return boolean 
 	if self.Type == "Spell" then 
-		local Name = self:Info()
-		return Name and not isSpellRangeException[self.ID] and SpellHasRange(Name)
+		return not isSpellRangeException[self.ID] and SpellHasRange(self.ID)
 	end 
 	
 	if self.Type == "SwapEquip" then
@@ -1313,7 +1312,7 @@ function A:GetCooldown()
 			
 			return 0
 		else 
-			return CooldownDuration(self.ID) -- Retail TWW now has it through self.ID / Classic still has through :Info()
+			return CooldownDuration(self.ID)
 		end 
 	end 
 	
@@ -1544,7 +1543,11 @@ function A:GetKeyName()
 end 
 
 -- Spell  
-local spellinfocache = setmetatable({}, { __index = function(t, v)
+local spellinfocache; spellinfocache = setmetatable({
+		wipe = function()
+			wipe(spellinfocache)
+		end,
+	}, { __index = function(t, v)
     local a
 	if C_Spell and C_Spell.GetSpellInfo then 
 		local s = GetSpellInfo(v)
@@ -1560,15 +1563,28 @@ local spellinfocache = setmetatable({}, { __index = function(t, v)
     t[v] = a
     return a
 end })
+Listener:Add("ACTION_EVENT_ACTIONS", "PLAYER_TALENT_UPDATE", spellinfocache.wipe)
+TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", spellinfocache.wipe)
 
-function A:GetSpellInfo()
+function A:GetSpellInfo(noCache)
 	local ID = self
 	if type(self) == "table" then 
 		ID = self.ID 
 	end
 	
 	if ID then 
-		return unpack(spellinfocache[ID])
+		if noCache then 
+			if C_Spell and C_Spell.GetSpellInfo then 
+				local s = GetSpellInfo(ID)
+				if s then 
+					return s.name, s.rank, s.iconID, s.castTime, s.minRange, s.maxRange, s.spellID, s.originalIconID
+				end 
+			else 
+				return GetSpellInfo(ID)
+			end 
+		else 
+			return unpack(spellinfocache[ID])
+		end 
 	end 
 end
 
