@@ -165,8 +165,8 @@ local FindSpellBookSlotBySpellID	= _G.FindSpellBookSlotBySpellID
 local C_SpellBook					= _G.C_SpellBook
 local FindSpellBookSlotForSpell		= C_SpellBook.FindSpellBookSlotForSpell
 
-local 	 IsPlayerSpell,    										IsUsableSpell, 	 									    IsHelpfulSpell, 										 IsHarmfulSpell,    										 IsAttackSpell, 	 									 IsCurrentSpell =
-	  _G.IsPlayerSpell, C_Spell and C_Spell.IsSpellUsable or _G.IsUsableSpell, C_Spell and C_Spell.IsSpellHelpful or _G.IsHelpfulSpell, C_Spell and C_Spell.IsSpellHarmful or _G.IsHarmfulSpell, C_Spell and C_Spell.IsAutoAttackSpell or _G.IsAttackSpell, C_Spell and C_Spell.IsCurrentSpell or _G.IsCurrentSpell
+local 	 IsSpellKnownOrOverridesKnown,	  IsPlayerSpell,										 IsUsableSpell, 	 									 IsHelpfulSpell, 										  IsHarmfulSpell,    										  IsAttackSpell, 	 									  IsCurrentSpell =
+	  _G.IsSpellKnownOrOverridesKnown, _G.IsPlayerSpell, C_Spell and C_Spell.IsSpellUsable or _G.IsUsableSpell, C_Spell and C_Spell.IsSpellHelpful or _G.IsHelpfulSpell, C_Spell and C_Spell.IsSpellHarmful or _G.IsHarmfulSpell, C_Spell and C_Spell.IsAutoAttackSpell or _G.IsAttackSpell, C_Spell and C_Spell.IsCurrentSpell or _G.IsCurrentSpell
 
 local 	  GetSpellTexture, 	  									  GetSpellLink, 									   GetSpellName,    									GetSpellInfo, 							 					GetSpellDescription, 										 	 GetSpellCount,	   										    GetSpellPowerCost, 	   CooldownDuration,    									   GetSpellCharges,    GetHaste,    GetShapeshiftFormCooldown, 	  GetSpellBaseCooldown,   										   GetSpellAutocast = 
 	  TMW.GetSpellTexture, C_Spell and C_Spell.GetSpellLink or _G.GetSpellLink, C_Spell and C_Spell.GetSpellName or _G.GetSpellInfo, C_Spell and C_Spell.GetSpellInfo or _G.GetSpellInfo, C_Spell and C_Spell.GetSpellDescription or _G.GetSpellDescription, C_Spell and C_Spell.GetSpellCastCount or _G.GetSpellCount, C_Spell and C_Spell.GetSpellPowerCost or _G.GetSpellPowerCost, Env.CooldownDuration, C_Spell and C_Spell.GetSpellCharges or _G.GetSpellCharges, _G.GetHaste, _G.GetShapeshiftFormCooldown, _G.GetSpellBaseCooldown, C_Spell and C_Spell.GetSpellAutoCast or _G.GetSpellAutocast
@@ -441,7 +441,7 @@ function A:GetSpellCastTimeCache()
 	if type(self) == "table" then 
 		return (select(4, self:Info(true)) or 0) / 1000 
 	else
-		local spellName, _, _, castTime = GetSpellInfo(self.ID)
+		local spellName, _, _, castTime = GetSpellInfo(self)
 		if type(spellName) == "table" then 
 			castTime = spellName.castTime
 		end 	
@@ -599,7 +599,7 @@ end
 
 function A:IsSpellLastGCD(byID)
 	-- @return boolean
-	return (byID and self.ID == A.LastPlayerCastID) or (not byID and self:Info() == A.LastPlayerCastName)
+	return (byID and self.ID == A.LastPlayerCastID) or (not byID and self:Info(true) == A.LastPlayerCastName)
 end 
 
 function A:IsSpellLastCastOrGCD(byID)
@@ -628,7 +628,8 @@ end
 
 function A:IsSpellInCasting()
 	-- @return boolean 
-	return Unit("player"):IsCasting() == self:Info(true)
+	local castName, _, _, _, spellID = Unit("player"):IsCasting()
+	return spellID and spellID == self.ID
 end 
 
 function A:IsSpellCurrent()
@@ -1234,8 +1235,8 @@ function A:IsUsable(extraCD, skipUsable)
 	-- skipUsable can be number to check specified power
 	
 	if self.Type == "Spell" then 
-		-- Works for pet spells 01/04/2019
-		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self.ID)) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
+		-- C_Spell.IsSpellUsable returns falsely true through spellID if player hasn't learned the spell 30/08/2024 TWW
+		return (skipUsable or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableSpell(self.ID)) and self:GetCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0) and (IsPlayerSpell(self.ID) or (Pet:IsActive() and Pet:IsSpellKnown(spellID)))
 	end 
 	
 	return not isItemUseException[self.ID] and (skipUsable == true or (type(skipUsable) == "number" and Unit("player"):Power() >= skipUsable) or IsUsableItem((self:Info()))) and self:GetItemCooldown() <= A_GetPing() + CACHE_DEFAULT_TIMER + (self:IsRequiredGCD() and A_GetCurrentGCD() or 0) + (extraCD or 0)
