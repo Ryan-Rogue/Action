@@ -354,9 +354,9 @@ Lib.Data 								= {
 				["Frutta"]				 = "Fruit", 			-- [6]				
 				["과일"]				 	 = "Fruit", 			-- [6] Refference				
 				["Carne Cruda"]			 = "Raw Meat", 			-- [7]				
-				["날고기"]			 		 = "Raw Meat", 			-- [7] Refference				
+				["날고기"]			 	 = "Raw Meat", 			-- [7] Refference				
 				["Pesce Crudo"]			 = "Raw Fish", 			-- [8]
-				["날생선"]			 		= "Raw Fish", 			-- [8] Refference
+				["날생선"]			 	= "Raw Fish", 			-- [8] Refference
 				["Bocconcini Meccanici"] = "Mechanical Bits", 	-- [9] Retail 
 			},
 			koKR				= {
@@ -366,31 +366,31 @@ Lib.Data 								= {
 				["빵"]					= "Bread", 				-- [4]	 			
 				["버섯"]					= "Fungus", 			-- [5] 				
 				["과일"]					= "Fruit", 				-- [6]	 			
-				["날고기"]					= "Raw Meat", 			-- [7]				
-				["날생선"]					= "Raw Fish", 			-- [8] 
-				["기계 부품"]				= "Mechanical Bits", 	-- [9] Retail 
+				["날고기"]				= "Raw Meat", 			-- [7]				
+				["날생선"]				= "Raw Fish", 			-- [8] 
+				["기계 부품"]			= "Mechanical Bits", 	-- [9] Retail 
 			},
 			zhCN				= {
-				["肉"]					= "Meat", 				-- [1] 
-				["鱼"]					= "Fish", 				-- [2] 
+				["肉"]				= "Meat", 				-- [1] 
+				["鱼"]				= "Fish", 				-- [2] 
 				["奶酪"]				= "Cheese", 			-- [3]	 			
 				["面包"]				= "Bread", 				-- [4]	 			
 				["蘑菇"]				= "Fungus", 			-- [5] 				
 				["水果"]				= "Fruit", 				-- [6]				
 				["生肉"]				= "Raw Meat", 			-- [7]	 			
 				["生鱼"]				= "Raw Fish", 			-- [8] 
-				["机械零件"]				= "Mechanical Bits", 	-- [9] Retail 
+				["机械零件"]			= "Mechanical Bits", 	-- [9] Retail 
 			},
 			zhTW				= {
-				["肉"]					= "Meat", 				-- [1] 
-				["魚"]					= "Fish", 				-- [2] 
+				["肉"]				= "Meat", 				-- [1] 
+				["魚"]				= "Fish", 				-- [2] 
 				["乳酪"]				= "Cheese", 			-- [3] 				
 				["麵包"]				= "Bread", 				-- [4] 				
 				["蘑菇"]				= "Fungus", 			-- [5] 				
 				["水果"]				= "Fruit", 				-- [6] 				
 				["生肉"]				= "Raw Meat", 			-- [7] 				
 				["生魚"]				= "Raw Fish", 			-- [8] 
-				["機械零件"]				= "Mechanical Bits", 	-- [9] Retail 
+				["機械零件"]			= "Mechanical Bits", 	-- [9] Retail 
 			},		
 		},
 		{
