@@ -85,7 +85,7 @@ local Listener							= A.Listener
 local Print								= A.Print
 local GetCL								= A.GetCL
 local MacroLibrary						= LibStub("MacroLibrary")
-local Lib 								= LibStub:NewLibrary("PetLibrary", 24)
+local Lib 								= LibStub:NewLibrary("PetLibrary", 25)
 	  	  
 local huge 								= math.huge	  
 local max 								= math.max
@@ -256,7 +256,23 @@ Lib.Data 								= {
 			},
 		},
 		[CONST.WARLOCK_DESTRUCTION or 267] 	= {},
+		[CONST.DEATHKNIGHT_BLOOD or 250] 	= {
+			[26125] = { -- TWW: Ghoul by Raise Dead if not taken override improvement
+				name = "Ghoul",
+				duration = 60,
+			},
+		},
+		[CONST.DEATHKNIGHT_FROST or 251] 	= {
+			[26125] = { -- TWW: Ghoul by Raise Dead if not taken override improvement
+				name = "Ghoul",
+				duration = 60,
+			},
+		},
 		[CONST.DEATHKNIGHT_UNHOLY or 252] 	= {
+			[26125] = { -- TWW: Ghoul by Raise Dead if not taken override improvement
+				name = "Ghoul",
+				duration = 60,
+			},		
 			[99541] = { -- talent All Will Serve
 				name = "Risen Skulker",
 				duration = huge,
@@ -265,7 +281,7 @@ Lib.Data 								= {
 				name = "Zombie",
 				duration = 20,
 			},
-		},
+		},		
 	},
 	FoodTypes							= setmetatable(
 		-- Formats localization to English locale
