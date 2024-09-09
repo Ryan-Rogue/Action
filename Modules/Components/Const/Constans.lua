@@ -41,7 +41,7 @@ _G.ACTION_CONST_LASTTARGET											= 237290		-- inv_misc_enggizmos_27
 
 -- Class portraits
 _G.ACTION_CONST_PORTRAIT_WARRIOR									= 626008
-_G.ACTION_CONST_PORTRAIT_PALADIN									= 626003
+_G.ACTION_CONST_PORTRAIT_PALADIN									= 236260		-- Custom because in TWW it making conflict with Divine Hammer
 _G.ACTION_CONST_PORTRAIT_HUNTER										= 626000
 _G.ACTION_CONST_PORTRAIT_ROGUE										= 626005
 _G.ACTION_CONST_PORTRAIT_PRIEST										= 626004
