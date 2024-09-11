@@ -187,14 +187,14 @@ A.PMultiplier("target", 1822)
 if not isClassic and A.PlayerClass == "DRUID" then 
 	Listener:Add("ACTION_EVENT_PMULTIPLIER", "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
 	PMultiplierLaunch()
-	A.RegisterPMultiplier( -- Rake dot and action
+	A.RegisterPMultiplier(
 		1822,    -- Rake action
 		155722,  -- Rake dot
 		{function ()
-				return Player:IsStealthed() and 2 or 1
+			return Player:IsStealthed() and 2 or 1
 		end},
-		-- BloodtalonsBuff, SavageRoar, TigersFury
-		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}
+		-- BloodtalonsBuff, SavageRoar, TigersFury, Sudden Ambush
+		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}, {384667, 2}
 	)
 	A.RegisterPMultiplier(
 		1079, -- Rip action
