@@ -166,7 +166,7 @@ function Lib:SelectMacro(ID)
 		end 
 		
 		-- Select macro 	
-		MacroFrame_SelectMacro(ID)
+		MacroFrame_SelectMacro(ID) -- ToDo? second argument scrollToSelected is true since 11.0.5
 		
 		-- Refresh frame
 		MacroFrame_Update()
