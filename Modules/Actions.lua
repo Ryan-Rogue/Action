@@ -649,34 +649,71 @@ end
 function A:IsTalentLearned()
 	-- @usage A:IsTalentLearned() or A.IsTalentLearned(spellID)
 	-- @return boolean about selected or not (talent or pvptalent)	
-
-	local Name
-
+	local Name, ID
 	if type(self) == "table" then 
 		Name = self:Info()
+		ID = self.ID
 	else 
 		Name = A_GetSpellInfo(self)
+		ID = self
 	end	
 
 	local lowerName = strlowerCache[Name]
-	local tMap 		= TalentMap[lowerName]
 	
-	return (tMap and tMap > 0) or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName]) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
+	-- PvE --
+	-- Check by spellID
+	local tMap 		= TalentMap[ID]
+	-- Fallback to check by spellName 
+	--- TWW+ may have idential spells such as Shadow Crash for SPriest (205385, 457042)
+	--- Both will be true if we will check my spellName which may apply issues to determine correct one
+	--if tMap == 0 then 
+	--	tMap		= TalentMap[lowerName]
+	--end 
+	
+	-- PvP --
+	-- Check by spellID
+	local pvptMap 	= PvpTalentMap[ID]
+	-- Fallback to check by spellName 
+	if not pvptMap then 
+		pvptMap		= PvpTalentMap[lowerName]
+	end 
+	
+	return (tMap and tMap > 0) or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and pvptMap) or (BuildToC < 90000 and Azerite:IsLearnedByConflictandStrife(Name))
 end
 
 function A:GetTalentTraits()
 	-- @usage A:GetTalentTraits() or A.GetTalentTraits(spellID)
 	-- @return number of selected traits, 0 if none 
-	local Name
-
+	local Name, ID
 	if type(self) == "table" then 
 		Name = self:Info()
+		ID = self.ID
 	else 
 		Name = A_GetSpellInfo(self)
+		ID = self
 	end	
 
 	local lowerName = strlowerCache[Name]
-	return TalentMap[lowerName]	or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap[lowerName] and 1)
+	
+	-- PvE --
+	-- Check by spellID
+	local tMap 		= TalentMap[ID]
+	-- Fallback to check by spellName 
+	--- TWW+ may have idential spells such as Shadow Crash for SPriest (205385, 457042)
+	--- Both will be true if we will check my spellName which may apply issues to determine correct one
+	--if tMap == 0 then 
+	--	tMap		= TalentMap[lowerName]
+	--end 
+	
+	-- PvP --
+	-- Check by spellID
+	local pvptMap 	= PvpTalentMap[ID]
+	-- Fallback to check by spellName 
+	if not pvptMap then 
+		pvptMap		= PvpTalentMap[lowerName]
+	end 
+
+	return tMap	or (A.IsInPvP and (not A.IsInDuel or A.IsInWarMode) and PvpTalentMap and 1) or 0
 end
 
 -- Remap to keep old code working for it 
