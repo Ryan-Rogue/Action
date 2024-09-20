@@ -191,13 +191,26 @@ if BuildToC < 90000 then
 	A.HonorMedallion				= Create({ Type = "Spell", 			ID = CONST.SPELLID_HONOR_MEDALLION, 			QueueForbidden = true, Desc = "[5] Trinket", BlockForbidden = true, skipRange = true, isReplacement = true	})
 else 	
 	-- SL
-	A.PhialofSerenity				= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
-	A.SpiritualHealingPotion		= Create({ Type = "Item",  			ID = 171267,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	if BuildToC >= 90000 then 
+		A.PhialofSerenity			= Create({ Type = "Item",  			ID = 177278,									QueueForbidden = true, Desc = "[6] HealingPotion|Dispel",			skipRange = true						})
+		A.SpiritualHealingPotion	= Create({ Type = "Item",  			ID = 171267,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	end 
 	-- DF
 	if BuildToC >= 100000 then 
 		A.RefreshingHealingPotion1	= Create({ Type = "Item",  			ID = 191378,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
 		A.RefreshingHealingPotion2	= Create({ Type = "Item",  			ID = 191379,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
 		A.RefreshingHealingPotion3	= Create({ Type = "Item",  			ID = 191380,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		})
+	end 
+	-- TWW 
+	if BuildToC >= 110000 then 
+		A.DemonicHS					= Create({ Type = "Item", 			ID = 224464,									QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true						}) -- Demonic Healthstone
+		A.AlgariHealingPotion1		= Create({ Type = "Item",  			ID = 211878,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Algari Healing Potion
+		A.AlgariHealingPotion2		= Create({ Type = "Item",  			ID = 212942,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Fleeting Algari Healing Potion
+		A.AlgariHealingPotion3		= Create({ Type = "Item",  			ID = 211879,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Algari Healing Potion
+		A.AlgariHealingPotion4		= Create({ Type = "Item",  			ID = 212943,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Fleeting Algari Healing Potion
+		A.AlgariHealingPotion5		= Create({ Type = "Item",  			ID = 212944,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Fleeting Algari Healing Potion
+		A.AlgariHealingPotion6		= Create({ Type = "Item",  			ID = 211880,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- Algari Healing Potion
+		A.AlgariHealingPotion7		= Create({ Type = "Item",  			ID = 212318,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451		}) -- QA Algari Healing Potion
 	end 
 end 
 
@@ -207,19 +220,23 @@ function A.CanUseHealthstoneOrHealingPotion()
 		-- Healthstone | AbyssalHealingPotion
 		local Healthstone = GetToggle(1, "HealthStone") 
 		if Healthstone >= 0 then 
-			if A.HS:IsReadyByPassCastGCD(player) then 					
+			local HS = A.HS:IsReadyByPassCastGCD(player) and A.HS or (BuildToC >= 110000 and A.DemonicHS:IsReadyByPassCastGCD(player) and A.DemonicHS)
+			if HS then 					
 				if Healthstone >= 100 then -- AUTO 
 					if Unit(player):TimeToDie() <= 9 and Unit(player):HealthPercent() <= 40 then 
-						return A.HS
+						return HS
 					end 
 				elseif Unit(player):HealthPercent() <= Healthstone then 
-					return A.HS							 
+					return HS							 
 				end
 			elseif A.Zone ~= "arena" and (A.Zone ~= "pvp" or not InstanceInfo.isRated) then 
+				local AlgariHealingPotion = BuildToC >= 110000 and DetermineUsableObject(player, nil, nil, true, nil, A.AlgariHealingPotion7, A.AlgariHealingPotion6, A.AlgariHealingPotion5, A.AlgariHealingPotion4, A.AlgariHealingPotion3, A.AlgariHealingPotion2, A.AlgariHealingPotion1)
 				local RefreshingHealingPotion = BuildToC >= 100000 and DetermineUsableObject(player, nil, nil, true, nil, A.RefreshingHealingPotion3, A.RefreshingHealingPotion2, A.RefreshingHealingPotion1)
-				local HealingPotion = (RefreshingHealingPotion  and RefreshingHealingPotion:IsReadyByPassCastGCD(player)  and RefreshingHealingPotion)  or  -- DF
+				local HealingPotion = (AlgariHealingPotion  	and AlgariHealingPotion:IsReadyByPassCastGCD(player)  	  and AlgariHealingPotion)  	or  -- TWW
+									  (RefreshingHealingPotion  and RefreshingHealingPotion:IsReadyByPassCastGCD(player)  and RefreshingHealingPotion)  or  -- DF
 									  (A.SpiritualHealingPotion and A.SpiritualHealingPotion:IsReadyByPassCastGCD(player) and A.SpiritualHealingPotion) or  -- SL
 									  (A.AbyssalHealingPotion   and A.AbyssalHealingPotion:IsReadyByPassCastGCD(player)	  and A.AbyssalHealingPotion)		-- BFA
+									  
 				
 				if HealingPotion then 
 					if Healthstone >= 100 then -- AUTO 
