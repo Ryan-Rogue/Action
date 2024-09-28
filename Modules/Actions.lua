@@ -1581,15 +1581,7 @@ function A:GetKeyName()
 end 
 
 -- Spell  
-local spellinfocache; spellinfocache = setmetatable({
-		wipe = function()
-			for k in pairs(spellinfocache) do 
-				if k ~= "wipe" then 
-					spellinfocache[k] = nil 
-				end 
-			end 
-		end,
-	}, { __index = function(t, v)
+local spellinfocache = setmetatable({}, { __index = function(t, v)
     local a
 	if C_Spell and C_Spell.GetSpellInfo then 
 		local s = GetSpellInfo(v)
@@ -1605,8 +1597,6 @@ local spellinfocache; spellinfocache = setmetatable({
     t[v] = a
     return a
 end })
-Listener:Add("ACTION_EVENT_ACTIONS", "PLAYER_TALENT_UPDATE", spellinfocache.wipe)
-TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", spellinfocache.wipe)
 
 function A:GetSpellInfo(noCache)
 	local ID = self
@@ -1715,6 +1705,39 @@ end
 -- Item Colored Texture
 function A:GetColoredItemTexture(custom)
     return "state; texture", {Color = A.Data.C[self.Color] or self.Color, Alpha = 1, Texture = ""}, (custom and GetItemIcon(custom)) or self:GetItemIcon()
+end 
+
+-------------------------------------------------------------------------------
+-- Cache Manager
+-------------------------------------------------------------------------------
+do 
+	if BuildToC >= 100000 then 
+		local function WipeCache()
+			wipe(TMW.GetSpellTexture)
+			
+			wipe(spellbasecache)	
+			wipe(spellinfocache)
+			
+			wipe(spellpowercache)
+			wipe(descriptioncache)
+			
+			wipe(itemspellcache)
+			wipe(iteminfocache)		
+			
+			-- Update Actions tab in UI if AutoHidden is enabled
+			TMW:Fire("TMW_ACTION_SPELL_BOOK_CHANGED")
+		end 
+
+		-- Post-Init 
+		TMW:RegisterSelfDestructingCallback("TMW_ACTION_IS_INITIALIZED", function()
+			Listener:Add("ACTION_EVENT_ACTIONS", "SPELLS_CHANGED", WipeCache)
+			Listener:Add("ACTION_EVENT_ACTIONS", "PLAYER_TALENT_UPDATE", WipeCache)
+			Listener:Add("ACTION_EVENT_ACTIONS", "ACTIVE_TALENT_GROUP_CHANGED", WipeCache)
+			TMW:RegisterCallback("TMW_ACTION_PLAYER_SPECIALIZATION_CHANGED", WipeCache)
+			TMW:RegisterCallback("TMW_ACTION_MODE_CHANGED", WipeCache)
+			return true -- Signal RegisterSelfDestructingCallback to unregister
+		end)
+	end 
 end 
 
 -------------------------------------------------------------------------------
