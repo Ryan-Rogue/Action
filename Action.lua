@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "26.09.2024"
+local DateTime 														= "28.09.2024"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -36,8 +36,8 @@ StdUi.isClassic 													= isClassic
 local owner															= isClassic and "PlayerClass" or "PlayerSpec"
 
 local C_Spell														= _G.C_Spell
-local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate,    GetMouseFocus,    					GetBindingFromClick,    GetSpellInfo,    					     								 GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
-	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate, _G.GetMouseFocus or _G.GetMouseFoci, _G.GetBindingFromClick, _G.GetSpellInfo or C_Spell.GetSpellInfo, C_Spell.GetSpellLevelLearned or _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion
+local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate, 	GetBindingFromClick,    GetSpellInfo,    					     								 GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
+	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate,  _G.GetBindingFromClick, _G.GetSpellInfo or C_Spell.GetSpellInfo, C_Spell.GetSpellLevelLearned or _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion	  
 	  
 local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    					  UnitAura,    UnitPower = 
 	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras.GetAuraDataByIndex, _G.UnitPower	  
@@ -71,6 +71,18 @@ Action.PlayerRace 													= select(2, _G.UnitRace("player"))
 Action.PlayerClassName, Action.PlayerClass, Action.PlayerClassID  	= UnitClass("player")
 
 local BuildToC														= Action.BuildToC
+
+-- Backwards compatibility for GetMouseFocus	  
+local GetMouseFocus = _G.GetMouseFocus
+local GetMouseFoci 	= _G.GetMouseFoci
+function Action.GetMouseFocus()
+    if GetMouseFoci then
+        local frames = GetMouseFoci()
+        return frames and frames[1]
+    else
+        return GetMouseFocus()
+    end
+end 
 
 -- Remap
 local 	MacroLibrary, 
@@ -9392,11 +9404,10 @@ local Cursor; Cursor 		= {
 					end 
 				elseif self:IsVisible() and self:GetEffectiveAlpha() >= 1 then
 					-- GameTooltip 
-					local focus = GetMouseFocus() 	
-					--  !! Code below is written for GetMouseFoci !!
-					if focus and focus[1] then
+					local focus = Action.GetMouseFocus() 	
+					if focus and (not focus.IsForbidden or not focus:IsForbidden()) then
 						local GameTooltipTable 
-						if next(focus[1]) == 0 then -- WorldFrame 
+						if focus.GetName and focus:GetName() == "WorldFrame" then 
 							GameTooltipTable = pActionDB[6][Action.PlayerSpec][M]["GameToolTip"][GameLocale]
 						else 
 							GameTooltipTable = pActionDB[6][Action.PlayerSpec][M]["UI"][GameLocale]
