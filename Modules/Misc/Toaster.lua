@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------------
 -- Toaster as built-in embeds with own stand alone category and db
--- This version now is different compared with classic versions
 -------------------------------------------------------------------------------------
 local ADDON_NAME, private														= ...
 local _G, unpack, type, math, pairs, error, next, setmetatable, select, rawset	= _G, unpack, type, math, pairs, error, next, setmetatable, select, rawset
+local xpcall																	= xpcall
 local tremove																	= table.remove
 local format 																	= string.format
 local math_floor																= math.floor
@@ -285,6 +285,8 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 	
 	-- Active toasts 	
 	if active_toasts then 
+		local function null()
+		end 
 		setmetatable(active_toasts, { 
 			__newindex = function(t, index, toast)
 				-- This is ToastProxy avoid, it's direct object 
@@ -300,14 +302,20 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 				
 				-- Set parent, re-anchor relative to frame 
 				if toast.SetPoint_Original == nil then 
-					toast.tempData = {}
-					for i = 1, toast:GetNumPoints() do 
-						toast.tempData[i] = toast:GetPoint(i)
+					toast.tempData = {}					
+					-- Fixes error "Can't measure restricted regions"
+					if not toast:IsAnchoringRestricted() then
+						for i = 1, toast:GetNumPoints() do 
+							toast.tempData[i] = toast:GetPoint(i)
+						end 
+					else
+						toast.tempData[1] = "TOPLEFT"
 					end 
 					
 					toast.SetPoint_Original = toast.SetPoint
 					function toast:SetPoint(...)
-						self:SetPoint_Original(...)
+						-- Fixes re-anchoring errors but this is not a good way tbh
+						xpcall(self.SetPoint_Original, null, self, ...) -- self:SetPoint_Original(...)						
 						
 						local _, needParent = ... 
 						if needParent == UIParent then 
@@ -315,9 +323,14 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 							local parent = _G[anchor.relative_to]
 							if type(parent) == "table" and parent.GetObjectType and parent ~= UIParent then 							
 								wipe(self.tempData) 
-								for i = 1, self:GetNumPoints() do 
-									self.tempData[i] = self:GetPoint(i)
-								end 							
+								-- Fixes error "Can't measure restricted regions"
+								if not self:IsAnchoringRestricted() then 
+									for i = 1, self:GetNumPoints() do 
+										self.tempData[i] = self:GetPoint(i)
+									end 	
+								else 
+									self.tempData[1] = "TOPLEFT"
+								end 
 								
 								local x, y, s = anchor.x, anchor.y, anchor.scale 
 								x = x/s
@@ -338,8 +351,13 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 						local parent = _G[anchor.relative_to]
 						if type(parent) == "table" and parent.GetObjectType and parent ~= UIParent then 
 							wipe(toast.tempData)
-							for i = 1, toast:GetNumPoints() do 
-								toast.tempData[i] = toast:GetPoint(i)
+							-- Fixes error "Can't measure restricted regions"
+							if not toast:IsAnchoringRestricted() then 
+								for i = 1, toast:GetNumPoints() do 
+									toast.tempData[i] = toast:GetPoint(i)
+								end 
+							else
+								toast.tempData[1] = "TOPLEFT"
 							end 
 							
 							local x, y, s = anchor.x, anchor.y, anchor.scale 
@@ -688,8 +706,8 @@ if Toaster and AceDB and AceConfigRegistry and AceConfigDialog and AceLocale and
 		Toaster.IsInitialized			= true	
 		
 		-- Creates function to open options panel
-		local optionsFrame 				= _G.InterfaceOptionsFrame or _G.SettingsPanel
-		local openToCategory 			= _G.InterfaceOptionsFrame_OpenToCategory or _G.Settings.OpenToCategory
+		local optionsFrame 				= _G.InterfaceOptionsFrame or _G.SettingsPanel or _G.Settings
+		local openToCategory 			= _G.InterfaceOptionsFrame_OpenToCategory or (_G.SettingsPanel and _G.SettingsPanel.OpenToCategory) or _G.Settings.OpenToCategory
 		function Toaster:Toggle() 		
 			if optionsFrame:IsVisible() then
 				optionsFrame:Hide()
