@@ -91,7 +91,7 @@ MultiUnits.AddNameplate								= function(unitID)
 	if UnitCanAttack(player, unitID) then
 		-- Patch 8.2
 		-- 1519 is The Eternal Palace: Precipice of Dreams
-		if (A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup()) and not A_Unit(unitID):IsOrbOfAscendance() then
+		if (A.ZoneID ~= 1519 or not A_Unit(unitID):InGroup()) and not A_Unit(unitID):IsIncorporealBeing() and not A_Unit(unitID):IsOrbOfAscendance() then
 			MultiUnitsActiveUnitPlates[unitID] 		= getUnitTarget[unitID]
 			MultiUnitsActiveUnitPlatesAny[unitID] 	= getUnitTarget[unitID]
 			if A_Unit(unitID):IsExplosives() then
