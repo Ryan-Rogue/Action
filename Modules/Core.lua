@@ -106,9 +106,10 @@ local arena 										= "arena"
 -------------------------------------------------------------------------------
 local FoodAndDrink 									= {
 	[GetSpellName(167152)] 							= true, -- Refreshment (Mage's eat) note: can glitch under same name with some other buffs so added check in-combat will avoid it
-	[GetSpellName(43180)] 							= true, -- Food 
+	[GetSpellName(43180)] 							= true, -- Food
 	[GetSpellName(27089)] 							= true, -- Drink
-	[GetSpellName(257427)] 							= true, -- Food & Drink	
+	[GetSpellName(257427)] 							= true, -- Food & Drink
+	[GetSpellName(462177)] 							= true, -- Food and Drink
 }
 local FoodAndDrinkBlacklist 						= {
 	[GetSpellName(396092) or ""]					= true, -- Well Fed
