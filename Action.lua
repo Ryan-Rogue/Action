@@ -13094,7 +13094,7 @@ function Action.ToggleMainUI()
 						self.val = text					
 						if self.val > 9999999 then 						
 							self.val = ""
-							self:SetText("")							
+							self:SetText(self.val)							
 							Action.Print(L["DEBUG"] .. L["TAB"][tabName]["INTEGERERROR"]) 
 							return 
 						end 
@@ -13632,8 +13632,8 @@ function Action.ToggleMainUI()
 					if type(text) == "number" then 
 						self.val = text					
 						if self.val > 9999999 then 						
-							self.val = ""
-							self:SetNumber(self.val)							
+							self.val = ""						
+							self:SetText(self.val)							
 							Action.Print(L["DEBUG"] .. L["TAB"][4]["INTEGERERROR"]) 
 							return 
 						end 
