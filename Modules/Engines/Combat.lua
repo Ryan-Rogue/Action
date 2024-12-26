@@ -1463,67 +1463,71 @@ A.CombatTracker									= {
 	--[[ Time To Die ]]
 	TimeToDieX									= function(self, unitID, X)
 		local UNIT 								= unitID or "target"
-		local ttd 								= A_Unit(UNIT):Health() - ( A_Unit(UNIT):HealthMax() * (X / 100) )
-		local DMG, Hits 						= self:GetDMG(UNIT)
+		local ttd 								= 500
 
-		if DMG >= 1 and Hits > 1 then
-			ttd = ttd / DMG
-		end
+		-- Training dummy totems exception
+		if A.Zone ~= "none" or not A_Unit(UNIT):IsDummy() then 
+			local health 						= A_Unit(UNIT):Health()
+			local DMG, Hits 					= self:GetDMG(UNIT)
+			
+			-- We need "health > 0" condition to ensure that the unit is still alive
+			if DMG >= 1 and Hits > 1 and health > 0 then		
+				ttd = (health - ( A_Unit(UNIT):HealthMax() * (X / 100) )) / DMG
+			end 
+		end		
 
-		-- Trainer dummy totems exception
-		if A.Zone == "none" and A_Unit(UNIT):IsDummy() then
-			ttd = 500
-		end
-
-		return ttd or 500
+		return ttd
 	end,
 	TimeToDie									= function(self, unitID)
 		local UNIT 								= unitID or "target"
-		local ttd 								= A_Unit(UNIT):HealthMax()
-		local DMG, Hits 						= self:GetDMG(UNIT)
+		local ttd 								= 500		
 
-		if DMG >= 1 and Hits > 1 then
-			ttd = A_Unit(UNIT):Health() / DMG
+		-- Training dummy totems exception
+		if A.Zone ~= "none" or not A_Unit(UNIT):IsDummy() then 
+			local health 						= A_Unit(UNIT):Health()
+			local DMG, Hits 					= self:GetDMG(UNIT)
+			
+			-- We need "health > 0" condition to ensure that the unit is still alive
+			if DMG >= 1 and Hits > 1 and health > 0 then
+				ttd = health / DMG
+			end 
 		end
 
-		-- Trainer dummy totems exception
-		if A.Zone == "none" and A_Unit(UNIT):IsDummy() then
-			ttd = 500
-		end
-
-		return ttd or 500
+		return ttd
 	end,
 	TimeToDieMagicX								= function(self, unitID, X)
 		local UNIT 								= unitID or "target"
-		local ttd 								= A_Unit(UNIT):Health() - ( A_Unit(UNIT):HealthMax() * (X / 100) )
-		local _, Hits, _, DMG 					= self:GetDMG(UNIT)
+		local ttd 								= 500
 
-		if DMG >= 1 and Hits > 1 then
-			ttd = ttd / DMG
-		end
+		-- Training dummy totems exception
+		if A.Zone ~= "none" or not A_Unit(UNIT):IsDummy() then 
+			local health 						= A_Unit(UNIT):Health()			
+			local _, Hits, _, DMG 				= self:GetDMG(UNIT)
+			
+			-- We need "health > 0" condition to ensure that the unit is still alive
+			if DMG >= 1 and Hits > 1 and health > 0 then
+				ttd = (health - ( A_Unit(UNIT):HealthMax() * (X / 100) )) / DMG
+			end 
+		end				
 
-		-- Trainer dummy totems exception
-		if A.Zone == "none" and A_Unit(UNIT):IsDummy() then
-			ttd = 500
-		end
-
-		return ttd or 500
+		return ttd
 	end,
 	TimeToDieMagic								= function(self, unitID)
 		local UNIT 								= unitID or "target"
-		local ttd 								= A_Unit(UNIT):HealthMax()
-		local _, Hits, _, DMG 					= self:GetDMG(UNIT)
-
-		if DMG >= 1 and Hits > 1 then
-			ttd = A_Unit(UNIT):Health() / DMG
+		local ttd 								= 500
+		
+		-- Training dummy totems exception
+		if A.Zone ~= "none" or not A_Unit(UNIT):IsDummy() then 
+			local health 						= A_Unit(UNIT):Health()
+			local _, Hits, _, DMG 				= self:GetDMG(UNIT)
+			
+			-- We need "health > 0" condition to ensure that the unit is still alive
+			if DMG >= 1 and Hits > 1 and health > 0 then
+				ttd = health / DMG
+			end 
 		end
 
-		-- Trainer dummy totems exception
-		if A.Zone == "none" and A_Unit(UNIT):IsDummy() then
-			ttd = 500
-		end
-
-		return ttd or 500
+		return ttd
 	end,
 }
 
