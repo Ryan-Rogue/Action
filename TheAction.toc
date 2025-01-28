@@ -5,6 +5,7 @@
 ## DefaultState: enabled
 ## LoadWith: TellMeWhen
 ## SavedVariables: TheActionSettings
+## Group: TellMeWhen
 
 # Toaster
 Lib\Toaster\embeds.xml
