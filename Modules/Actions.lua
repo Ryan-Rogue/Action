@@ -300,7 +300,18 @@ end
 function A:ShouldStopByGCD()
 	-- @return boolean 
 	-- By Global Cooldown
-	return self:IsRequiredGCD() and A_GetGCD() - A_GetPing() > 0.301 and A_GetCurrentGCD() >= A_GetPing() + 0.65
+	if self:IsRequiredGCD() then  
+		local ping = A_GetPing()
+		local delay = ping + 0.65
+		-- Outlaw Rogue has 200 ms GCD windows between shots with "Fan the hammer" talent after cast "Pistol Shot"
+		if self.LastPlayerCastID == 185763 and self.PlayerSpec == CONST.ROGUE_OUTLAW and self.IsTalentLearned(381846) then 
+			delay = ping + 0.2
+		end 
+		
+		return A_GetGCD() - ping > 0.301 and A_GetCurrentGCD() >= delay
+	end 
+	
+	return false 
 end 
 
 function A.ShouldStop()
