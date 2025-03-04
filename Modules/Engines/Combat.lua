@@ -871,7 +871,7 @@ local UnitTracker 								= {
 			
 			-- We will log CombatTrackerData here because this event fires earlier than CLEU 
 			CombatTracker:AddToData(GUID, timestamp)
-			CombatTracker.logLastCast(timestamp, nil, nil, GUID, nil, nil, nil, nil, nil, nil, nil, nil, spellID, spellName)				
+			CombatTracker.logLastCast(timestamp, nil, nil, GUID, nil, nil, nil, nil, nil, nil, nil, spellID, spellName)			
 		end
 	end,
 	SPELL_CAST_SUCCESS					= function(self, SourceGUID, sourceFlags, spellID)
