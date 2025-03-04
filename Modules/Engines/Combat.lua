@@ -1789,15 +1789,15 @@ A.UnitCooldown 									= {
 		return charges, cooldown, summary_cooldown
 	end,
 	--[[ Is In Flying Spells Tracker ]]
-	IsSpellInFly						= function(self, unit, spellID)
+	IsSpellInFly						= function(self, unit, spell)
 		-- @return boolean
 		if unit == "any" or unit == "enemy" or unit == "friendly" then
 			for _, v in pairs(UnitTrackerData) do
-				if v[spellID] and v[spellID].isFlying and (unit == "any" or (unit == "enemy" and v[spellID].enemy) or (unit == "friendly" and not v[spellID].enemy)) then
-					if TMW.time - v[spellID].start > UnitTrackerMaxResetFlyingTimer then
-						v[spellID].isFlying = false
+				if v[spell] and v[spell].isFlying and (unit == "any" or (unit == "enemy" and v[spell].enemy) or (unit == "friendly" and not v[spell].enemy)) then
+					if TMW.time - v[spell].start > UnitTrackerMaxResetFlyingTimer then
+						v[spell].isFlying = false
 					end
-					return v[spellID].isFlying
+					return v[spell].isFlying
 				end
 			end
 		elseif unit == "arena" or unit == "raid" or unit == "party" then
@@ -1808,20 +1808,20 @@ A.UnitCooldown 									= {
 					if unit == "party" or i >= GetGroupMaxSize(unit) then
 						break
 					end
-				elseif UnitTrackerData[GUID] and UnitTrackerData[GUID][spellID] and UnitTrackerData[GUID][spellID].isFlying then
-					if TMW.time - UnitTrackerData[GUID][spellID].start > UnitTrackerMaxResetFlyingTimer then
-						UnitTrackerData[GUID][spellID].isFlying = false
+				elseif UnitTrackerData[GUID] and UnitTrackerData[GUID][spell] and UnitTrackerData[GUID][spell].isFlying then
+					if TMW.time - UnitTrackerData[GUID][spell].start > UnitTrackerMaxResetFlyingTimer then
+						UnitTrackerData[GUID][spell].isFlying = false
 					end
-					return UnitTrackerData[GUID][spellID].isFlying
+					return UnitTrackerData[GUID][spell].isFlying
 				end
 			end
 		else
 			local GUID = GetGUID(unit)
-			if GUID and UnitTrackerData[GUID] and UnitTrackerData[GUID][spellID] and UnitTrackerData[GUID][spellID].isFlying then
-				if TMW.time - UnitTrackerData[GUID][spellID].start > UnitTrackerMaxResetFlyingTimer then
-					UnitTrackerData[GUID][spellID].isFlying = false
+			if GUID and UnitTrackerData[GUID] and UnitTrackerData[GUID][spell] and UnitTrackerData[GUID][spell].isFlying then
+				if TMW.time - UnitTrackerData[GUID][spell].start > UnitTrackerMaxResetFlyingTimer then
+					UnitTrackerData[GUID][spell].isFlying = false
 				end
-				return UnitTrackerData[GUID][spellID].isFlying
+				return UnitTrackerData[GUID][spell].isFlying
 			end
 		end
 	end,

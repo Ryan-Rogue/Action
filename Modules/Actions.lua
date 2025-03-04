@@ -618,9 +618,11 @@ function A:IsSpellLastCastOrGCD(byID)
 	return self:IsSpellLastGCD(byID) or self:IsSpellInCasting()
 end 
 
-function A:IsSpellInFlight()
+function A:IsSpellInFlight(useName, noCache)
 	-- @return boolean
-	return UnitCooldown:IsSpellInFly("player", self.ID) -- Retail ID
+	-- noCache will retrieve spellName as its currently appear
+	local spell = useName and self:Info(noCache) or self.ID 
+	return UnitCooldown:IsSpellInFly("player", spell)
 end 
 
 function A:IsSpellInRange(unitID)
