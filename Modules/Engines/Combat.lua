@@ -849,25 +849,29 @@ local UnitTracker 								= {
 		end
 	end,
 	UNIT_SPELLCAST_SUCCEEDED_PLAYER		= function(self, unitID, spellID)
-		if unitID == "player" and (not self.InfoByUnitID[unitID][spellID] or not self.InfoByUnitID[unitID][spellID].isFlying) then
-			local GUID = GetGUID(unitID)
+		if unitID == "player" then
+			local GUID 		= GetGUID(unitID)
+			local spellName = A_GetSpellInfo and A_GetSpellInfo(spellID) or GetSpellName(spellID)
+			local timestamp = TMW.time
+			
+			if not self.Data[GUID] then 
+				self.Data[GUID] = {}
+			end 	
 
-			if GUID then
-				local timestamp = TMW.time
-				if not self.Data[GUID] then
-					self.Data[GUID] = {}
-				end
-
-				if not self.Data[GUID][spellID] then
-					self.Data[GUID][spellID] = {}
-				end
-
+			if not self.Data[GUID][spellID] then 
+				self.Data[GUID][spellID] = {}
+			end 				
+			
+			if not self.Data[GUID][spellID].isFlying then 
 				self.Data[GUID][spellID].start 	  = timestamp
-				self.Data[GUID][spellID].isFlying = true
-				-- We will log CombatTrackerData here because this event fires earlier than CLEU
-				CombatTracker:AddToData(GUID, timestamp)
-				CombatTracker.logLastCast(timestamp, nil, nil, GUID, nil, nil, nil, nil, nil, nil, nil, spellID, A_GetSpellInfo(spellID))
-			end
+				self.Data[GUID][spellID].isFlying = true 
+			end 
+			
+			self.Data[GUID][spellName] = self.Data[GUID][spellID]
+			
+			-- We will log CombatTrackerData here because this event fires earlier than CLEU 
+			CombatTracker:AddToData(GUID, timestamp)
+			CombatTracker.logLastCast(timestamp, nil, nil, GUID, nil, nil, nil, nil, nil, nil, nil, nil, spellID, spellName)				
 		end
 	end,
 	SPELL_CAST_SUCCESS					= function(self, SourceGUID, sourceFlags, spellID)
@@ -913,7 +917,7 @@ local UnitTracker 								= {
 				end
 			end
 
-			if not self.Data[SourceGUID][spellID] and self.Data[SourceGUID][spellName] and self.Data[SourceGUID][spellName].isFlying and (not self.Data[SourceGUID][spellName].blackListCLEU or not self.Data[SourceGUID][spellName].blackListCLEU[EVENT]) then
+			if self.Data[SourceGUID][spellName] and self.Data[SourceGUID][spellName].isFlying and (not self.Data[SourceGUID][spellName].blackListCLEU or not self.Data[SourceGUID][spellName].blackListCLEU[EVENT]) then
 				local lastSeven = strsub(EVENT, -7)
 				if not self.isNotResetFlyingEvent[lastSeven] then
 					self.Data[SourceGUID][spellName].isFlying = false
