@@ -218,9 +218,9 @@ end
 function A.CanUseHealthstoneOrHealingPotion()
 	-- @return object 
 	if not Player:IsStealthed() then 	
-		-- Healthstone | AbyssalHealingPotion
+		-- Healthstone | HealingPotion
 		local Healthstone = GetToggle(1, "HealthStone") 
-		if Healthstone >= 0 then 
+		if Healthstone >= 0 and (BuildToC < 110000 or A.ZoneID ~= 12841 or Unit(player):HasDeBuffs(320102) == 0) then -- Retail: Theater of Pain zone excluding "Blood and Glory" debuff
 			local HS = A.HS:IsReadyByPassCastGCD(player) and A.HS or (BuildToC >= 110000 and A.DemonicHS:IsReadyByPassCastGCD(player) and A.DemonicHS)
 			if HS then 					
 				if Healthstone >= 100 then -- AUTO 
