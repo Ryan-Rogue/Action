@@ -143,7 +143,9 @@
 		"GetInventoryItemLink",
 		"GetSpecialization",
 		"GetSpecializationInfo",
-		"GetInventorySlotInfo"
+		"GetInventorySlotInfo",
+		"AddonCompartmentFrame",
+		"CreateColor"
 	],
     "Lua.workspace.library": [
         "c:\\Program Files (x86)\\World of Warcraft\\_retail_\\Interface\\AddOns\\TellMeWhen",
