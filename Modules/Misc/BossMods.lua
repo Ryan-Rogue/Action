@@ -160,7 +160,6 @@ if BigWigsLoader then
 	end
 
 	local Timers, owner = {}, {}
-	RYANTEST = Timers
 	local function stop(module, text, guid, key)
 		local t
 		for k = #Timers, 1, -1 do
