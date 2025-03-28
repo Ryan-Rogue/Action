@@ -134,7 +134,8 @@ if BigWigsLoader then
 
 	local BigWigsPluginsName = "BigWigs_Plugins"
 	if  IsAddOnLoaded(BigWigsPluginsName) then
-		BIGWIGS_TIMER_PULL = strlowerCache[_G.BigWigsAPI:GetLocale("BigWigs: Plugins").pull]
+		local locale = _G.BigWigsAPI:GetLocale("BigWigs: Plugins") or _G.BigWigsAPI:GetLocale("BigWigs")
+		BIGWIGS_TIMER_PULL = strlowerCache[locale.pull]
 	else
 		local L = setmetatable({
 			enUS = "Pull",
@@ -153,7 +154,8 @@ if BigWigsLoader then
 
 		A.Listener:Add("ACTION_BIGWIGS_PLUGINS", "ADDON_LOADED", function(addonName)
 			if addonName == BigWigsPluginsName then
-				BIGWIGS_TIMER_PULL = strlowerCache[_G.BigWigsAPI:GetLocale("BigWigs: Plugins").pull]
+				local locale = _G.BigWigsAPI:GetLocale("BigWigs: Plugins") or _G.BigWigsAPI:GetLocale("BigWigs")
+				BIGWIGS_TIMER_PULL = strlowerCache[locale.pull]
 				A.Listener:Remove("ACTION_BIGWIGS_PLUGINS", "ADDON_LOADED")
 			end
 		end); LoadAddOn(BigWigsPluginsName)
