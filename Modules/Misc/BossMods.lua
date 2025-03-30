@@ -84,7 +84,7 @@ if DBM then
 			error("Bad argument 'text' (nil value) for function DBM_GetTimeRemaining")
 		end
 
-		return 0, 0
+		return math.huge, math.huge
 	end
 
 	DBM_GetTimeRemainingBySpellID = function(spellID)
@@ -98,7 +98,7 @@ if DBM then
 			return remaining, expirationTime
 		end
 
-		return 0, 0
+		return math.huge, math.huge
 	end
 
 	hooksecurefunc(DBM, "StartCombat", function(DBM, mod, delay, event)
@@ -247,7 +247,7 @@ if BigWigsLoader then
 			error("Bad argument 'text' (nil value) for function BigWigs_GetTimeRemaining")
 		end
 
-		return 0, 0
+		return math.huge, math.huge
 	end
 	BigWigs_GetNameplateTimeRemaining = function(key)
 		local t
