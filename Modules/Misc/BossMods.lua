@@ -223,7 +223,7 @@ if BigWigsLoader then
 	BigWigsLoader.RegisterMessage(owner, "BigWigs_StopNameplate", function(_, module, guid, key)
 		stop(module, nil, guid, key)
 	end)
-	BigWigsLoader.RegisterMessage(owner, "BigWigs_StopUnitNameplate", function(_, module, guid)
+	BigWigsLoader.RegisterMessage(owner, "BigWigs_ClearNameplate", function(_, module, guid)
 		stop(module, nil, guid)
 	end)
 
