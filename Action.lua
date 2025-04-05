@@ -301,6 +301,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Hide class portrait",
 				DISABLEROTATIONMODES = "Hide rotation modes",
 				DISABLESOUNDS = "Disable sounds",
+				DISABLEADDONSCHECK = "Disable addons check",
 				HIDEONSCREENSHOT = "Hide on screenshot",
 				HIDEONSCREENSHOTTOOLTIP = "During the screenshot hides all TellMeWhen\nand Action frames, and then shows them back",
 			},
@@ -867,6 +868,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Скрыть классовый портрет",
 				DISABLEROTATIONMODES = "Скрыть режимы ротации",
 				DISABLESOUNDS = "Отключить звуки",
+				DISABLEADDONSCHECK = "Отключить проверку аддонов",
 				HIDEONSCREENSHOT = "Скрывать на скриншоте",
 				HIDEONSCREENSHOTTOOLTIP = "Во время скриншота прячет все фреймы TellMeWhen\nи Action, а после показывает их обратно",
 			},			
@@ -1435,6 +1437,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Klassenporträt ausblenden",
 				DISABLEROTATIONMODES = "Drehmodi ausblenden",
 				DISABLESOUNDS = "Sounds deaktivieren",
+				DISABLEADDONSCHECK = "Add-Ons-Prüfung deaktivieren",
 				HIDEONSCREENSHOT = "Auf dem Screenshot verstecken",
 				HIDEONSCREENSHOTTOOLTIP = "Während des Screenshots werden alle TellMeWhen\nund Action frames ausgeblendet und anschließend wieder angezeigt",
 			},
@@ -2004,6 +2007,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Masquer le portrait de classe",
 				DISABLEROTATIONMODES = "Masquer les modes de rotation",
 				DISABLESOUNDS = "Désactiver les sons",
+				DISABLEADDONSCHECK = "Désactiver la vérification des addons",
 				HIDEONSCREENSHOT = "Masquer sur la capture d'écran",
 				HIDEONSCREENSHOTTOOLTIP = "Pendant la capture d'écran, tous les cadres TellMeWhen\net Action sont masqués, puis rediffusés",
 			},
@@ -2570,6 +2574,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Nascondi ritratto di classe",
 				DISABLEROTATIONMODES = "Nascondi le modalità di rotazione",
 				DISABLESOUNDS = "Disabilita i suoni",
+				DISABLEADDONSCHECK = "Disattivare i componenti aggiuntivi",
 				HIDEONSCREENSHOT = "Nascondi sullo screenshot",
 				HIDEONSCREENSHOTTOOLTIP = "Durante lo screenshot nasconde tutti i frame TellMeWhen\ne Action, quindi li mostra di nuovo",
 			},
@@ -3138,6 +3143,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Ocultar retrato de clase",
 				DISABLEROTATIONMODES = "Ocultar modos de rotación",
 				DISABLESOUNDS = "Desactivar sonidos",
+				DISABLEADDONSCHECK = "Desactivar la comprobación de complementos",
 				HIDEONSCREENSHOT = "Ocultar en captura de pantalla",
 				HIDEONSCREENSHOTTOOLTIP = "Durante la captura de pantalla, se ocultan todos los cuadros de TellMeWhen\ny Action, y luego se muestran de nuevo",
 			},
@@ -3712,6 +3718,7 @@ local Localization = {
 				DISABLEPORTRAITS = "Esconder retrato da classe",
 				DISABLEROTATIONMODES = "Esconder modos da rotação",
 				DISABLESOUNDS = "Desabilitar sons",
+				DISABLEADDONSCHECK = "Desabilitar verificação de complementos",
 				HIDEONSCREENSHOT = "Esconder em capturas de tela",
 				HIDEONSCREENSHOTTOOLTIP = "Durante a captura de tela esconda todos os quadros de Action do TellMeWhen,\n e então os mostra de volta",
 			},
@@ -4397,6 +4404,7 @@ local Factory = {
 		DisableClassPortraits = false,
 		DisableRotationModes = false,
 		DisableSounds = true,
+		DisableAddonsCheck = false,
 		HideOnScreenshot = true,		
 		ColorPickerUse = false,
 		ColorPickerElement = "backdrop",
@@ -11600,6 +11608,14 @@ function Action.ToggleMainUI()
 			HideOnScreenshot.Identify = { Type = "Checkbox", Toggle = "HideOnScreenshot" }
 			StdUi:FrameTooltip(HideOnScreenshot, L["TAB"][tabName]["HIDEONSCREENSHOTTOOLTIP"], nil, "BOTTOMLEFT", true)	
 			
+			local DisableAddonsCheck = StdUi:Checkbox(anchor, L["TAB"][tabName]["DISABLEADDONSCHECK"])
+			DisableAddonsCheck:SetChecked(tabDB.DisableAddonsCheck)
+			function DisableAddonsCheck:OnValueChanged(self, state, value)
+				tabDB.DisableAddonsCheck = not tabDB.DisableAddonsCheck		
+				Action.Print(L["TAB"][tabName]["DISABLEADDONSCHECK"] .. ": ", tabDB.DisableAddonsCheck)
+			end				
+			DisableAddonsCheck.Identify = { Type = "Checkbox", Toggle = "DisableAddonsCheck" }			
+			
 			local GlobalOverlay = anchor:AddRow()					
 			GlobalOverlay:AddElement(PvEPvPToggle, { column = 5.35 })			
 			GlobalOverlay:AddElement(StdUi:LayoutSpace(anchor), { column = 0.65 })			
@@ -11630,6 +11646,7 @@ function Action.ToggleMainUI()
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisablePrint, DisableMinimap, { column = "even" })			
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableClassPortraits, DisableRotationModes, { column = "even" })		
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableSounds, HideOnScreenshot, { column = "even" })	
+			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(DisableAddonsCheck, StdUi:LayoutSpace(anchor), { column = "even" })	
 			PauseChecksPanel:DoLayout()		
 			-- Add empty space for scrollframe after all elements 
 			anchor:AddRow():AddElement(StdUi:LayoutSpace(anchor))	
