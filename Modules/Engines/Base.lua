@@ -213,7 +213,7 @@ local function OnEvent(event, ...)
 			InstanceInfo.ID 			= instanceID
 			InstanceInfo.GroupSize		= instanceGroupSize
 			InstanceInfo.isRated		= IsRatedMap() or (select(2, IsActiveBattlefieldArena()))
-			InstanceInfo.KeyStone		= GetActiveKeystoneInfo() or 0
+			InstanceInfo.KeyStone		= GetActiveKeystoneInfo()
 			if eventInfo ~= "CHALLENGE" then 
 				A.TimeStampZone 		= TMW.time
 			end 
