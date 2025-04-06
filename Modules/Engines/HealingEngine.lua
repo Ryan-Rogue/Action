@@ -369,8 +369,7 @@ local QueueOrder						= Data.QueueOrder
 local BossIDs							= Data.BossIDs
 
 local function PerformByProfileHP(self)
-	-- Enable specific instructions by profile 
-	-- Note: Here is only players! This function doesn't perform pets anyhow!
+	--[[ This is BFA code. Used here for refference on callback.
 	if not A.IsBasicProfile and A.IsGGLprofile and A.CurrentProfile ~= "[GGL] Template" then 
 		local HP			= self.HP
 		local MHP			= self.MHP
@@ -714,6 +713,7 @@ local function PerformByProfileHP(self)
 			end						 
 		end 
 	end 
+	--]]
 end
 
 -- Setup in UnitIDs table for each unitID his own methods 
