@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "06.04.2025"
+local DateTime 														= "07.04.2025"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -277,6 +277,9 @@ local Localization = {
 				BLOODYBLUE = "Bloody Blue",
 				ICE = "Ice",
 				PAUSECHECKS = "[All specs]\nRotation doesn't work if:",
+				ANTIFAKEPAUSES = "AntiFake Pauses",
+				ANTIFAKEPAUSESSUBTITLE = "While the hotkey is held down",
+				ANTIFAKEPAUSESTT = "Depending on the hotkey you select,\nonly the code assigned to it will work when you hold it down",
 				VEHICLE = "InVehicle",
 				VEHICLETOOLTIP = "Example: Catapult, Firing gun",
 				DEADOFGHOSTPLAYER = "You're dead",
@@ -846,6 +849,9 @@ local Localization = {
 				BLOODYBLUE = "Кроваво-Синий",
 				ICE = "Ледяной",
 				PAUSECHECKS = "[Все спеки]\nРотация не работает если:",
+				ANTIFAKEPAUSES = "Паузы AntiFake",
+				ANTIFAKEPAUSESSUBTITLE = "Пока горячая клавиша удерживается",
+				ANTIFAKEPAUSESTT = "В зависимости от выбора горячей клавиши,\nпри ее удержании будет работать только предназначенный для нее код",
 				VEHICLE = "В спец.транспорте",
 				VEHICLETOOLTIP = "Например: Катапульта, Обстреливающая пушка",
 				DEADOFGHOSTPLAYER = "Вы мертвы",
@@ -1417,6 +1423,9 @@ local Localization = {
 				BLOODYBLUE = "Blutiges Blau",
 				ICE = "Eis",
 				PAUSECHECKS = "[Jede Klasse]\nRota funktioniert nicht wenn:",
+				ANTIFAKEPAUSES = "AntiFake-Pausen",
+				ANTIFAKEPAUSESSUBTITLE = "Während der Hotkey gedrückt gehalten wird",
+				ANTIFAKEPAUSESTT = "Je nachdem, welchen Hotkey Sie auswählen,\nfunktioniert nur der ihm zugewiesene Code, wenn Sie ihn gedrückt halten",
 				VEHICLE = "Im Fahrzeug",
 				VEHICLETOOLTIP = "Beispiel: Katapult, Pistole abfeuern",
 				DEADOFGHOSTPLAYER = "Wenn du Tot bist",
@@ -1989,6 +1998,9 @@ local Localization = {
 				BLOODYBLUE = "Sanglant Bleu",
 				ICE = "La glace",
 				PAUSECHECKS = "[All specs]\nLa rotation ne fonction pas, si:",
+				ANTIFAKEPAUSES = "AntiFake Pauses",
+				ANTIFAKEPAUSESSUBTITLE = "Pendant que la touche de raccourci est maintenue enfoncée",
+				ANTIFAKEPAUSESTT = "Selon le raccourci clavier que vous sélectionnez,\nseul le code qui lui est attribué fonctionnera lorsque vous le maintenez enfoncé",
 				VEHICLE = "EnVéhicule",
 				VEHICLETOOLTIP = "Exemple: Catapulte, ...",
 				DEADOFGHOSTPLAYER = "Vous êtes mort!",
@@ -2558,6 +2570,9 @@ local Localization = {
 				BLOODYBLUE = "Sanguinoso Blu",
 				ICE = "Ghiaccio",
 				PAUSECHECKS = "[All specs]\nLa rotazione non funziona, se:",
+				ANTIFAKEPAUSES = "AntiFake si ferma",
+				ANTIFAKEPAUSESSUBTITLE = "Mentre il tasto di scelta rapida è tenuto premuto",
+				ANTIFAKEPAUSESTT = "A seconda del tasto di scelta rapida selezionato,\nquando lo si tiene premuto funzionerà solo il codice ad esso assegnato",
 				VEHICLE = "NelVeicolo",
 				VEHICLETOOLTIP = "Esempio: Catapulta, Cannone",
 				DEADOFGHOSTPLAYER = "Sei Morto",
@@ -3129,6 +3144,9 @@ local Localization = {
 				BLOODYBLUE = "Sangriento Azul",
 				ICE = "Hielo",
 				PAUSECHECKS = "[All specs]\nLa rotación no funciona si:",
+				ANTIFAKEPAUSES = "Pausas de AntiFake",
+				ANTIFAKEPAUSESSUBTITLE = "Mientras se mantiene presionada la tecla de acceso rápido",
+				ANTIFAKEPAUSESTT = "Dependiendo de la tecla de acceso rápido que selecciones,\nsolo el código asignado a ella funcionará cuando la mantengas presionada",
 				VEHICLE = "En Vehículo",
 				VEHICLETOOLTIP = "Ejemplo: Catapulta, arma de fuego",
 				DEADOFGHOSTPLAYER = "Estás muerto",
@@ -3706,6 +3724,9 @@ local Localization = {
 				BLOODYBLUE = "Bloody Blue",
 				ICE = "Gelo",
 				PAUSECHECKS = "[All specs]\nRotação não funciona se:",
+				ANTIFAKEPAUSES = "Pausas AntiFake",
+				ANTIFAKEPAUSESSUBTITLE = "Enquanto a tecla de atalho é mantida pressionada",
+				ANTIFAKEPAUSESTT = "Dependendo da tecla de atalho selecionada,\nsomente o código atribuído a ela funcionará quando você a mantiver pressionada",
 				VEHICLE = "InVehicle",
 				VEHICLETOOLTIP = "Example: Catapulta, Atirando",
 				DEADOFGHOSTPLAYER = "Você está morto",
@@ -4402,7 +4423,15 @@ local Factory = {
 	-- PLAYERSPEC 		will convert to available spec on character 
 	-- ISINTERRUPT 		will swap ID to locale Name as key and create formated table 
 	-- ISCURSOR 		will swap key localized Name from Localization table and create formated table 
-	[1] = {
+	[1] = {		
+		AntiFakePauses = {
+			[1] = false,
+			[2] = false,
+			[3] = false,
+			[4] = false,
+			[5] = false,
+			[6] = false,
+		},		
 		CheckVehicle = true, 
 		CheckDeadOrGhost = true, 
 		CheckDeadOrGhostTarget = false,
@@ -4451,7 +4480,7 @@ local Factory = {
 				blank = {},
 			},
 		},					
-		PLAYERSPEC = {
+		PLAYERSPEC = {			
 			AutoTarget = true, 
 			Potion = true, 
 			HeartOfAzeroth = true, 	-- Leave it just for work on old expansion (8.2-8.3.7)
@@ -11506,9 +11535,40 @@ function Action.ToggleMainUI()
 			Color:SetupStates()
 			Color:SetupPicker()						
 
-			local PauseChecksPanel = StdUi:PanelWithTitle(anchor, tab.frame:GetWidth() - 30, 260, L["TAB"][tabName]["PAUSECHECKS"])
+			local PauseChecksPanel = StdUi:PanelWithTitle(anchor, tab.frame:GetWidth() - 30, 340, L["TAB"][tabName]["PAUSECHECKS"])
 			PauseChecksPanel.titlePanel.label:SetFontSize(14)
 			StdUi:EasyLayout(PauseChecksPanel, { padding = { top = 10 } })	
+			
+			local AntiFakeItems = {
+				{ text = "START AntiFake CC", value = 1 },
+				{ text = "START AntiFake Interrupt", value = 2 },
+			}
+			if Action.BuildToC >= 20000 then 
+				AntiFakeItems[#AntiFakeItems + 1] = { text = "START AntiFake CC Focus", value = 3 }
+				AntiFakeItems[#AntiFakeItems + 1] = { text = "START AntiFake Interrupt Focus", value = 4 }
+				AntiFakeItems[#AntiFakeItems + 1] = { text = "START AntiFake CC2", value = 5 }
+				AntiFakeItems[#AntiFakeItems + 1] = { text = "START AntiFake CC2 Focus", value = 6 }									
+			end 
+			local AntiFakePauses = StdUi:Dropdown(anchor, StdUi:GetWidthByColumn(anchor, 6), themeHeight, AntiFakeItems, nil, true, true)
+			AntiFakePauses:SetPlaceholder(" -- " .. L["TAB"][tabName]["ANTIFAKEPAUSES"] .. " -- ") 	
+			for i, v in ipairs(AntiFakePauses.optsFrame.scrollChild.items) do 
+				v:SetChecked(tabDB.AntiFakePauses[i])
+			end			
+			AntiFakePauses.OnValueChanged = function(self, value)			
+				for i, v in ipairs(self.optsFrame.scrollChild.items) do 					
+					if tabDB.AntiFakePauses[i] ~= v:GetChecked() then
+						tabDB.AntiFakePauses[i] = v:GetChecked()
+						Action.Print(L["TAB"][tabName]["ANTIFAKEPAUSES"] .. " - " .. AntiFakeItems[i].text .. ": ", tabDB.AntiFakePauses[i])
+					end 				
+				end 				
+			end				
+			AntiFakePauses:RegisterForClicks("LeftButtonUp")
+			AntiFakePauses:SetScript("OnClick", AntiFakePauses.ToggleOptions) 
+			AntiFakePauses.Identify = { Type = "Dropdown", Toggle = "AntiFakePauses" }			
+			AntiFakePauses.FontStringTitle = StdUi:Subtitle(AntiFakePauses, L["TAB"][tabName]["ANTIFAKEPAUSESSUBTITLE"])
+			StdUi:FrameTooltip(AntiFakePauses, L["TAB"][tabName]["ANTIFAKEPAUSESTT"], nil, "TOP", true)
+			StdUi:GlueAbove(AntiFakePauses.FontStringTitle, AntiFakePauses)
+			AntiFakePauses.text:SetJustifyH("CENTER")			
 
 			local CheckVehicle = StdUi:Checkbox(anchor, L["TAB"][tabName]["VEHICLE"])			
 			CheckVehicle:SetChecked(tabDB.CheckVehicle)
@@ -11681,6 +11741,7 @@ function Action.ToggleMainUI()
 			ThemeRow:AddElement(Color.ThemeApplyButton, { column = 3 })
 			anchor:AddRow():AddElement(PauseChecksPanel)
 			PauseChecksPanel:AddRow():AddElement(PauseChecksPanel.titlePanel.label, { column = 12 })
+			PauseChecksPanel:AddRow({ margin = { top = 10 } }):AddElement(AntiFakePauses, { column = 12 })
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckSpellIsTargeting, CheckLootFrame, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckVehicle, CheckDeadOrGhost, { column = "even" })	
 			PauseChecksPanel:AddRow({ margin = { top = -10 } }):AddElements(CheckMount, CheckDeadOrGhostTarget, { column = "even" })	
