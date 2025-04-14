@@ -2913,7 +2913,7 @@ A.Unit = PseudoClass({
 		-- Nill-able: isPlayer
 		local unitID 						= self.UnitID
 		return unitID and (UnitCanAttack("player", unitID) or UnitIsEnemy("player", unitID)) and (not isPlayer or UnitIsPlayer(unitID))
-	end, "UnitID"),
+	end, "UnitGUID"),
 	IsHealer 								= Cache:Pass(function(self)
 		-- @return boolean
 		local unitID 						= self.UnitID
@@ -4239,7 +4239,7 @@ A.Unit = PseudoClass({
 		end
 
 		return true
-	end, "UnitID"),
+	end, "UnitGUID"),
 	IsFocused 								= Cache:Wrap(function(self, specs, burst, deffensive, range)
 		-- @return boolean
 		-- Nill-able: specs, burst, deffensive, range
