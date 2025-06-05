@@ -137,6 +137,7 @@ local healingTarget						= none
 local healingTargetGUID					= none 
 local healingTargetDelay 				= 0	  
 local healingTargetDelayByEvent			= false 
+local isFocusHealing					= false
 
 local frame 							= _G.CreateFrame("Frame", "TargetColor", _G.UIParent)
 if _G.BackdropTemplateMixin == nil and frame.SetBackdrop then -- Only expac less than Shadowlands
@@ -250,9 +251,11 @@ frame.Colors 							= {
 }
 function frame:SetColor(unitID)
 	local unit = unitID or none
-	if self.unit ~= unit and self.Colors[unit] then 
+	if (self.unit ~= unit or self.mode ~= isFocusHealing) and self.Colors[unit] then 	
 		self.texture:SetColorTexture(unpack(self.Colors[unit]))
-		self.unit = unit 
+		self.unit = unit
+		self.mode = isFocusHealing
+		TMW:Fire("TMW_ACTION_METAENGINE_UPDATE", "HealingEngine", isFocusHealing and "focus" or "target", unit)
 	end 	
 end; frame:SetColor()
 
@@ -959,7 +962,7 @@ local function OnUpdate()
 	if BuildToC >= 20000 then 
 		-- Replaces party/raid unit by self
 		-- We have to replace member by focus only in case if focus is not member of the group
-		-- This need for /focus macros otherwise toggles will not work through specific unit (e.g. raid1, party1) if its equal to focus unit
+		-- This need for /focus macros otherwise toggles will not work through specific unit (e.g. raid1, party1) if its equal to focus unit like you can't /focus focus
 		member 							= focus
 		memberGUID						= UnitGUID(member)		
 		if memberGUID and memberGUID ~= playerGUID and memberGUID ~= petGUID and not TeamCacheFriendlyGUIDs[memberGUID] and not A_Unit(focus):IsEnemy() then 
@@ -1099,10 +1102,13 @@ local function SetHealingTarget()
 end
 
 local function SetColorTarget()
-	-- If we have no one to heal or we have already selected unit that need to heal
-	if 	healingTarget == none or healingTargetGUID == none or healingTargetGUID == UnitGUID(target) or 
-		-- TBC+ if user playing through /focus binds
-		(BuildToC >= 20000 and healingTargetGUID == UnitGUID(focus) and (not A_Unit(target):IsExists() or A_Unit(target):IsEnemy() or (not SelectStopOptions[1] and not SelectStopOptions[2] and not SelectStopOptions[3] and not SelectStopOptions[4] and not SelectStopOptions[5] and not SelectStopOptions[6]))) 		
+	isFocusHealing = (BuildToC >= 20000 and not SelectStopOptions[1] and not SelectStopOptions[2] and not SelectStopOptions[3] and not SelectStopOptions[4] and not SelectStopOptions[5] and not SelectStopOptions[6])
+	-- If we have no one to heal or we have already selected unit that need to heal	
+	if 	healingTarget == none or healingTargetGUID == none or 
+		-- /target mode
+		(not isFocusHealing and healingTargetGUID == UnitGUID(target)) or 
+		-- /focus mode
+		(isFocusHealing and healingTargetGUID == UnitGUID(focus))
 	then			
 		return frame:SetColor(none)
 	end	
@@ -1146,22 +1152,22 @@ local function SetColorTarget()
 	end 
 	
 	-- Mistweaver Monk
-	if A.CurrentProfile:match("[GGL] Monk") then 
-		local HealingEnginePreventSuggestHP = GetToggle(2, "HealingEnginePreventSuggestHP")
-		if HealingEnginePreventSuggestHP and HealingEnginePreventSuggestHP >= 0 then 		
-			local MK = A[CONST.MONK_MISTWEAVER]
-			local unitID, spellName = MK.GetStopCastInfo()
-			if spellName == MK.SoothingMist:Info() then 
-				if not unitID then 
-					unitID = A_IsUnitFriendly(mouseover) and mouseover or A_IsUnitFriendly(target) and target 				
-				end 
-				
-				if unitID and A_Unit(unitID):HasBuffs(MK.SoothingMist.ID, true, true) > 0 and (UnitIsUnit(unitID, healingTarget) or (not UnitIDs[healingTarget].modHP and UnitIDs[healingTarget].realHP - A_Unit(unitID):HealthPercent() < HealingEnginePreventSuggestHP)) then 					
-					return frame:SetColor(none)
-				end 		
-			end 
-		end 
-	end  
+	--if A.CurrentProfile:match("[GGL] Monk") then 
+	--	local HealingEnginePreventSuggestHP = GetToggle(2, "HealingEnginePreventSuggestHP")
+	--	if HealingEnginePreventSuggestHP and HealingEnginePreventSuggestHP >= 0 then 		
+	--		local MK = A[CONST.MONK_MISTWEAVER]
+	--		local unitID, spellName = MK.GetStopCastInfo()
+	--		if spellName == MK.SoothingMist:Info() then 
+	--			if not unitID then 
+	--				unitID = A_IsUnitFriendly(mouseover) and mouseover or A_IsUnitFriendly(target) and target 				
+	--			end 
+	--			
+	--			if unitID and A_Unit(unitID):HasBuffs(MK.SoothingMist.ID, true, true) > 0 and (UnitIsUnit(unitID, healingTarget) or (not UnitIDs[healingTarget].modHP and UnitIDs[healingTarget].realHP - A_Unit(unitID):HealthPercent() < HealingEnginePreventSuggestHP)) then 					
+	--				return frame:SetColor(none)
+	--			end 		
+	--		end 
+	--	end 
+	--end  
 	
 	return frame:SetColor(healingTarget)
 end
@@ -1345,6 +1351,7 @@ TMW:RegisterCallback("TMW_ACTION_DB_UPDATED",									function(callbackEvent, pA
 	if db.ManaManagementManaBoss < 0 then 
 		BossIDs:Wipe()
 	end 
+	
 end)
 TMW:RegisterCallback("TMW_ACTION_GROUP_UPDATE",									function()
 	inGroup 	 = TeamCacheFriendly.Type
@@ -1352,6 +1359,10 @@ TMW:RegisterCallback("TMW_ACTION_GROUP_UPDATE",									function()
 	if Data.IsRunning then 
 		BossIDs:Wipe()
 	end 
+end)
+TMW:RegisterCallback("TMW_ACTION_METAENGINE_AUTH",								function()
+	-- This callback resets frame allowing initial unit to be set correctly
+	frame.unit, frame.mode = nil, nil
 end)
 Listener:Add("ACTION_EVENT_HEALINGENGINE", "PLAYER_REGEN_ENABLED", 				function()
 	inCombat = false 

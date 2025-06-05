@@ -51,6 +51,7 @@ Modules\Engines\Combat.lua
 Modules\Engines\Covenant.lua
 Modules\Engines\HealingEngine.lua
 Modules\Engines\HeartofAzeroth.lua
+Modules\Engines\MetaEngine.lua
 Modules\Engines\MultiUnits.lua
 Modules\Engines\Player.lua
 Modules\Engines\Unit.lua
