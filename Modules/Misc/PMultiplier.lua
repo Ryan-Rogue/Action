@@ -1,103 +1,70 @@
--- https://github.com/herotc/hero-lib/blob/HeroLib/Events/PMultiplier.lua
+-- https://github.com/herotc/hero-lib/blob/thewarwithin/HeroLib/Events/PMultiplier.lua
 local _G, error, table, pairs, type = 
 	  _G, error, table, pairs, type
 	
 local TMW 							= _G.TMW
 local A 							= _G.Action 
+local CONST							= A.Const
 local Listener						= A.Listener
 local Player 						= A.Player
 local Unit							= A.Unit 
-	  
-local tremove						= table.remove	 
-local isClassic						= A.StdUi.isClassic
+local Class 						= A.PlayerClass	  
+
+local tremove						= table.remove
 local CombatLogGetCurrentEventInfo 	= _G.CombatLogGetCurrentEventInfo
-local 	 UnitGUID, 												GetSpellInfo = 
-	  _G.UnitGUID, _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
+local UnitGUID 						= _G.UnitGUID
 	
-ListenedSpells 				= {}
+local ListenedSpells 				= {}
 local ListenedAuras 				= {}
-local ListenedLastCast 				= {}	
+local TimeSinceLastRemovedOnPlayer	= {}	
+local CLEU
 
--------------------------------------------------------------------------------
--- Locals 
--------------------------------------------------------------------------------	
--- PMultiplier Calculator
-local function ComputePMultiplier(ListenedSpell)
-    local PMultiplier = 1
-    for j = 1, #ListenedSpell.Buffs do
-        local Buff = ListenedSpell.Buffs[j]
-        local Spell = Buff[1]
-        local Modifier = Buff[2]
-        -- Check if we did registered a Buff to check + a modifier (as a number or through a function).
-        if Modifier then
-            if Unit("player"):HasBuffs(Spell, true) > 0 or (ListenedLastCast[SpellID] and TMW.time - ListenedLastCast[SpellID] < 0.1)  then
-                local ModifierType = type(Modifier)
-                if ModifierType == "number" then
-                    PMultiplier = PMultiplier * Modifier
-                elseif ModifierType == "function" then
-                    PMultiplier = PMultiplier * Modifier()
-                end
-            end
-        else
-            -- If there is only one element, then check if it's an AIO function and call it.
-            if type(Spell) == "function" then
-                PMultiplier = PMultiplier * Spell()
-            end
-        end
-    end
-    return PMultiplier
-end
+--- ============================ CONTENT ============================
+-- Register a spell to watch and his multipliers.
+-- Examples:
+--
+--- Buff + Modifier as a function
+-- A.Nightblade:RegisterPMultiplier(
+--   {
+--     A.FinalityNightblade,
+--     function ()
+--       if Unit("player"):HasBuffs(A.FinalityNightblade.ID, true) == 0 then return 1 end
+--       local Multiplier = select(17, Player:BuffInfo(A.FinalityNightblade, nil, true)) -- not present in The Action API
+--
+--       return 1 + Multiplier/100
+--     end
+--   }
+-- )
+--
+--- 3x Buffs & Modifier as a number
+-- A.Rip:RegisterPMultiplier({A.BloodtalonsBuff, 1.2}, {A.SavageRoar, 1.15}, {A.TigersFury, 1.15})
+-- A.Thrash:RegisterPMultiplier({A.BloodtalonsBuff, 1.2}, {A.SavageRoar, 1.15}, {A.TigersFury, 1.15})
+--
+--- Different SpellCast & SpellAura + AIO function + 3x Buffs & Modifier as a number
+-- A.Rake:RegisterPMultiplier(
+--   A.RakeDebuff,
+--   function () return Player:IsStealthed() and 2 or 1 end,
+--   {A.BloodtalonsBuff, 1.2}, {A.SavageRoar, 1.15}, {A.TigersFury, 1.15}
+-- )
+function A:RegisterPMultiplier(...)
+	local Args = { ... }
 
-local function PMultiplierLaunch(...)
-	-- Feral or Assassination
-	if Unit("player"):HasSpec(103) or Unit("player"):HasSpec(259) then 
-		Listener:Add("ACTION_EVENT_PMULTIPLIER", "COMBAT_LOG_EVENT_UNFILTERED", function(...)
-			local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _, _, _, SpellID  = CombatLogGetCurrentEventInfo()
-			
-			-- PMultiplier OnCast Listener
-			if EVENT == "SPELL_CAST_SUCCESS" then 
-				local ListenedSpell = ListenedSpells[SpellID]
-				if ListenedSpell then
-					local PMultiplier = ComputePMultiplier(ListenedSpell)
-					ListenedSpell.PMultiplier[DestGUID] = { PMultiplier = PMultiplier, Time = TMW.time, Applied = false }					
-				end    
-			-- PMultiplier OnApply/OnRefresh Listener
-			elseif EVENT == "SPELL_AURA_APPLIED" or EVENT == "SPELL_AURA_REFRESH" then 
-				local ListenedAura = ListenedAuras[SpellID]
-				if ListenedAura then
-					local ListenedSpell = ListenedSpells[ListenedAura]
-					if ListenedSpell and ListenedSpell.PMultiplier[DestGUID] then
-						ListenedSpell.PMultiplier[DestGUID].Applied = true
-					end
-				end    
-			elseif EVENT == "SPELL_AURA_REMOVED" then 
-				local ListenedAura = ListenedAuras[SpellID]				
-				if ListenedAura then					
-					local ListenedSpell = ListenedSpells[ListenedAura]
-					if ListenedSpell and ListenedSpell.PMultiplier[DestGUID] then
-						ListenedLastCast[SpellID] = TMW.time
-						ListenedSpell.PMultiplier[DestGUID].Applied = false
-					end
-				end    
-			-- PMultiplier OnRemove & OnUnitDeath Listener    
-			elseif EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" then         
-				for SpellID, Spell in pairs(ListenedSpells) do
-					if Spell.PMultiplier[DestGUID] then
-						Spell.PMultiplier[DestGUID] = nil
-					end
-				end            
-			end 		
-		end)
-	else 
-		Listener:Remove("ACTION_EVENT_PMULTIPLIER", "COMBAT_LOG_EVENT_UNFILTERED")
+	-- Get the SpellID to check on AURA_APPLIED/AURA_REFRESH, should be specified as first arg or it'll take the current spell object.
+	local SpellAura = self.ID
+	local FirstArg = Args[1]
+	if type(FirstArg) == "table" and FirstArg.ID then
+		SpellAura = tremove(Args, 1).ID
 	end
+
+	ListenedAuras[SpellAura] = self.ID
+	ListenedSpells[self.ID] = { Buffs = Args, Units = {} }
+
+	-- Custom Bridge
+	Listener:Add("ACTION_EVENT_PMULTIPLIER", "COMBAT_LOG_EVENT_UNFILTERED", CLEU)
 end
 
 local function SpellRegisterError(Spell)
-    local SpellName = GetSpellInfo(Spell)
-	if type(SpellName) == "table" then 
-		SpellName = SpellName.name
-	end 	
+    local SpellName = Spell:Info()	
     if SpellName then
         return "You forgot to register the spell: " .. SpellName .. " in PMultiplier handler."
     else
@@ -105,104 +72,132 @@ local function SpellRegisterError(Spell)
     end
 end
 
--------------------------------------------------------------------------------
--- API
--------------------------------------------------------------------------------	
-function A.RegisterPMultiplier(...)
-    local Args = { ... }
-    local SelfSpellID = Args[1]
-    -- Get the SpellID to check on AURA_APPLIED/AURA_REFRESH, should be specified as first arg or it'll take the current spell object.
-    local SpellAura = SelfSpellID
-    if type(Args[2]) == "number" then
-        SpellAura = Args[2]
-        tremove(Args, 2)
-    end
-    tremove(Args, 1)
-    
-    ListenedAuras[SpellAura] = SelfSpellID
-    ListenedSpells[SelfSpellID] = { Buffs = Args, PMultiplier = {} }
-    --[[
-    for k,v in pairs(Args) do
-        if type(v) == "table" then
-            for _, v1 in pairs(v) do
-                if type(v1) == "function" then
-                    print(k .. " and " .. v1())
-                else
-                    print(k .. " and " .. v1)
-                end
-            end
-        elseif type(v) == "function" then
-            print(k .. " and " .. v())
-        else
-            print(k .. " and " .. v)           
-        end
-    end
-    print(Args[1])
-]]
+-- PMultiplier Calculator
+local function ComputePMultiplier(ListenedSpell)
+	local PMultiplier = 1
+	for j = 1, #ListenedSpell.Buffs do
+		local Buff = ListenedSpell.Buffs[j]
+		-- Check if it's an AIO function and call it.
+		if type(Buff) == "function" then
+			PMultiplier = PMultiplier * Buff()
+		else
+			-- Check if we did registered a Buff to check + a modifier (as a number or through a function).
+			local ThisSpell = Buff[1]
+			local Modifier = Buff[2]
+
+			if Unit("player"):HasBuffs(ThisSpell.ID, true) > 0 or (TimeSinceLastRemovedOnPlayer[ThisSpell.ID] and TMW.time - TimeSinceLastRemovedOnPlayer[ThisSpell.ID] < 0.1) then
+				local ModifierType = type(Modifier)
+
+				if ModifierType == "number" then
+					PMultiplier = PMultiplier * Modifier
+				elseif ModifierType == "function" then
+					PMultiplier = PMultiplier * Modifier()
+				end
+			end
+		end
+	end
+
+	return PMultiplier
+end
+
+CLEU = function(...)
+	local _, EVENT, _, SourceGUID, _,_,_, DestGUID, _, _, _, SpellID = CombatLogGetCurrentEventInfo()
+	
+	-- PMultiplier OnCast Listener
+	if EVENT == "SPELL_CAST_SUCCESS" then 
+		local ListenedSpell = ListenedSpells[SpellID]
+		if not ListenedSpell then return end
+			
+		local PMultiplier = ComputePMultiplier(ListenedSpell)		
+		local Units = ListenedSpell.Units
+		local Dot = Units[DestGUID]
+		if Dot then
+			Dot.PMultiplier = PMultiplier
+			Dot.Time = TMW.time
+		else
+			Units[DestGUID] = Units[DestGUID] or {}
+			local t = Units[DestGUID]
+			t.PMultiplier = PMultiplier
+			t.Time = TMW.time
+			t.Applied = false
+		end   
+	-- PMultiplier OnApply/OnRefresh Listener
+	elseif EVENT == "SPELL_AURA_APPLIED" or EVENT == "SPELL_AURA_REFRESH" then 
+		local ListenedAura = ListenedAuras[SpellID]
+		if not ListenedAura then return end
+
+		local ListenedSpell = ListenedSpells[ListenedAura]
+		if not ListenedSpell then return end
+
+		local Units = ListenedSpell.Units
+		local Dot = Units[DestGUID]
+		if Dot then
+			Dot.Applied = true
+		else
+			-- Hardcoded PMultiplier for Improved Garrote with Indiscriminate Carnage
+			-- Indiscriminate Carnage applies Garrote to off-targets before the primary target
+			-- SPELL_CAST_SUCCESS is also called after the off-targets receive the Garrote effect,
+			-- so we can't just check the ListenedSpell table.
+			local PMult = 1
+			-- Custom Bridge
+			if Class == "ROGUE" then
+				local S = A[CONST.ROGUE_ASSASSINATION]
+				if S and S.ImprovedGarrote and S.Garrote and S.ImprovedGarroteAura and S.ImprovedGarroteBuff
+				and S.ImprovedGarrote:IsExists() and SpellID == S.Garrote.ID 
+				and (Unit("player"):HasBuffs(S.ImprovedGarroteAura.ID, true) > 0 or Unit("player"):HasBuffs(S.ImprovedGarroteBuff.ID, true) > 0) then
+					PMult = 1.5
+				else
+					PMult = ComputePMultiplier(ListenedSpell)
+				end
+			else
+				PMult = ComputePMultiplier(ListenedSpell)
+			end		
+			Units[DestGUID] = Units[DestGUID] or {}
+			local t = Units[DestGUID]
+			t.PMultiplier = PMult
+			t.Time = TMW.time
+			t.Applied = true		
+		end 
+	elseif EVENT == "SPELL_AURA_REMOVED" then 
+		-- Player Aura Removed Listener
+		TimeSinceLastRemovedOnPlayer[SpellID] = TMW.time
+		
+		local ListenedAura = ListenedAuras[SpellID]
+		if not ListenedAura then return end
+
+		local ListenedSpell = ListenedSpells[ListenedAura]
+		if not ListenedSpell then return end
+
+		local Dot = ListenedSpell.Units[DestGUID]
+		if Dot then
+			Dot.Applied = false
+		end
+	-- PMultiplier OnRemove & OnUnitDeath Listener    
+	elseif EVENT == "UNIT_DIED" or EVENT == "UNIT_DESTROYED" then
+		local Units = ListenedSpell.Units
+		for _, ListenedSpell in pairs(ListenedSpells) do
+			if Units[DestGUID] then
+				Units[DestGUID] = nil
+			end
+		end	            
+	end 
 end
 
 -- dot.foo.pmultiplier
-function A.PMultiplier(unitID, SpellID)
-    if ListenedSpells[SpellID].PMultiplier then
-        local UnitDot = ListenedSpells[SpellID].PMultiplier[UnitGUID(unitID)]
-        return UnitDot and UnitDot.Applied and UnitDot.PMultiplier or 0
-    else
-        error(SpellRegisterError(SpellID))
-    end
+function Unit:PMultiplier(ThisSpell)
+	local ListenedSpell = ListenedSpells[ThisSpell.ID]
+	if not ListenedSpell then error(SpellRegisterError(ThisSpell)) end
+
+	local Units = ListenedSpell.Units
+	local Dot = Units[UnitGUID(self.UnitID)]
+
+	return (Dot and Dot.Applied and Dot.PMultiplier) or 0
 end
 
 -- action.foo.persistent_multiplier
--- Player:PMultiplier
-function A.Persistent_PMultiplier(SpellID)
-    local ListenedSpell = ListenedSpells[SpellID]
-    if ListenedSpell then
-        return ComputePMultiplier(ListenedSpell)
-    else
-        error(SpellRegisterError(SpellID))
-    end
-end
+function Player:PMultiplier(ThisSpell)
+	local ListenedSpell = ListenedSpells[ThisSpell.ID]
+	if not ListenedSpell then error(SpellRegisterError(ThisSpell)) end
 
---[[
-A.RegisterPMultiplier( -- Rake dot and action
-    1822,
-    155722, 
-    {function ()
-            return Player:IsStealthed() and 2 or 1
-    end},
-    {145152, 1.2}, {52610, 1.15}, {5217, 1.15}
-)
-A.RegisterPMultiplier(
-    1079, -- Rip action
-    -- BloodtalonsBuff, SavageRoar, TigersFury
-    {145152, 1.2}, {52610, 1.15}, {5217, 1.15}
-)
--- Usage
-A.Persistent_PMultiplier(1822)
-A.PMultiplier("target", 1822)
-]]
-
--------------------------------------------------------------------------------
--- Register  
--------------------------------------------------------------------------------	
-if not isClassic and A.PlayerClass == "DRUID" then 
-	Listener:Add("ACTION_EVENT_PMULTIPLIER", "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
-	PMultiplierLaunch()
-	A.RegisterPMultiplier(
-		1822,    -- Rake action
-		155722,  -- Rake dot
-		{function ()
-			return Player:IsStealthed() and 2 or 1
-		end},
-		-- BloodtalonsBuff, SavageRoar, TigersFury, Sudden Ambush
-		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}, {384667, 2}
-	)
-	A.RegisterPMultiplier(
-		1079, -- Rip action
-		-- BloodtalonsBuff, SavageRoar, TigersFury
-		{145152, 1.2}, {52610, 1.15}, {5217, 1.15}
-	)
-end 
-if not isClassic and A.PlayerClass == "ROGUE" then 
-	Listener:Add("ACTION_EVENT_PMULTIPLIER", "PLAYER_SPECIALIZATION_CHANGED", PMultiplierLaunch)
-	PMultiplierLaunch()
+	return ComputePMultiplier(ListenedSpell)
 end
