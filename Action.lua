@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "05.06.2025"
+local DateTime 														= "06.06.2025"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -560,6 +560,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Supported: 'Healing Engine'\n\nDelay (in seconds) before select next target after select an enemy or boss in @target\n\nOnly works if 'Target Stop Options' has '@target enemy' or '@target boss' turned off\n\nDelay is updated every time when conditions are successful or is reset otherwise\n\nRight click: Create macro",
 				AFTERMOUSEOVERENEMYDELAY = "Target Delay\nAfter @mouseover enemy",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Supported: 'Healing Engine'\n\nDelay (in seconds) before select next target after select an enemy in @mouseover\n\nOnly works if 'Target Stop Options' has '@mouseover enemy' turned off\n\nDelay is updated every time when conditions are successful or is reset otherwise\n\nRight click: Create macro",
+				HEALINGENGINEAPI = "Enable Healing Engine API",
+				HEALINGENGINEAPITOOLTIP = "When enabled, all supported 'Healing Engine' options and settings will work",
 				SELECTPETS = "Enable Pets",
 				SELECTPETSTOOLTIP = "Supported: 'Healing Engine'\n\nSwitches pets to handle them by all API in 'Healing Engine'\n\nRight click: Create macro",
 				SELECTRESURRECTS = "Enable Resurrects",
@@ -1155,6 +1157,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Поддерживает: 'Healing Engine'\n\nЗадержка (в секундах) прежде чем выбрать следующую цель после выбора противника или босса в @target\n\nРаботает только если 'Цель Стоп Опции' имеет '@target противник' или '@target босс' выключенным\n\nЗадержка обновляется каждый раз когда условия являются успешными или сбрасывается в ином случае\n\nПравая кнопка мышки: Создать макрос",
 				AFTERMOUSEOVERENEMYDELAY = "Задержка Цели\nПосле @mouseover противника",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Поддерживает: 'Healing Engine'\n\nЗадержка (в секундах) прежде чем выбрать следующую цель после выбора противника в @mouseover\n\nРаботает только если 'Цель Стоп Опции' имеет '@mouseover противник' выключен\n\nЗадержка обновляется каждый раз когда условия являются успешными или сбрасывается в ином случае\n\nПравая кнопка мышки: Создать макрос",
+				HEALINGENGINEAPI = "Включить API Healing Engine",
+				HEALINGENGINEAPITOOLTIP = "Когда включено, все поддерживаемые опции и настройки 'Healing Engine' будут работать",
 				SELECTPETS = "Включить Питомцев",
 				SELECTPETSTOOLTIP = "Поддерживает: 'Healing Engine'\n\nПереключает питомцев, чтобы обрабатывать их всему API в 'Healing Engine'\n\nПравая кнопка мышки: Создать макрос",
 				SELECTRESURRECTS = "Включить Воскрешения",
@@ -1752,6 +1756,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Unterstützt: 'Healing Engine'\n\nVerzögern (in Sekunden) bevor Auswahl nächstes Ziel nach Auswahl des Gegners oder Boss in @target\n\nNur funktioniert wenn 'Ziel Stop Options' hat '@target gegner' oder '@target boss' ausschalten\n\nVerzögerung wird jedes Mal aktualisiert, wenn die Bedingungen erfolgreich sind oder anderweitig zurückgesetzt werden\n\nRechts klick: Erstelle Makro",
 				AFTERMOUSEOVERENEMYDELAY = "Ziel Verzögerung\nNach @mouseover gegner",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Unterstützt: 'Healing Engine'\n\nVerzögerung (in Sekunden) vor der Auswahl des nächsten Ziels nach der Auswahl eines Feindes in @mouseover\n\nFunkioniert nur wenn 'Ziel Stop Options' hat '@mouseover gegner' ausschlaten\n\nDie Verzögerung wird jedes Mal aktualisiert, wenn die Bedingungen erfolgreich sind oder anderweitig zurückgesetzt werden\n\nRechts klick: Erstelle Makro",
+				HEALINGENGINEAPI = "Healing Engine API aktivieren",
+				HEALINGENGINEAPITOOLTIP = "Wenn aktiviert, funktionieren alle unterstützten 'Healing Engine'-Optionen und -Einstellungen",
 				SELECTPETS = "Aktiviere Begleiter",
 				SELECTPETSTOOLTIP = "Unterstützt: 'Healing Engine'\n\nWechselt Begleiter, um sie von allen API in 'Healing Engine'\n\nRechts klick: Erstelle Makro",
 				SELECTRESURRECTS = "Aktiviert Wiederbelebung",
@@ -2350,6 +2356,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Supporté: 'Healing Engine'\n\nDélai (en secondes) avant de sélectionner la cible suivante après avoir ciblé un ennemi ou un boss @target\n\nFonctionne uniquement si 'Options de stopcast des cibles' a '@target ennemi' ou '@target boss' désactivé\n\nLe délai est mis à jour à chaque fois que les conditions sont réussies ou est réinitialisé autrement\n\nClic droit: Créer la macro",
 				AFTERMOUSEOVERENEMYDELAY = "Délai cible\nAprès un @mouseover ennemi",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Supporté: 'Healing Engine'\n\nDélai (en secondes) avant de sélectionner la cible suivante après avoir ciblé un ennemi avec @mouseover\n\nFonctionne uniquement si 'Options de stopcast des cibles' a '@mouseover ennemi' désactivé\n\nLe délai est mis à jour à chaque fois que les conditions sont réussies ou est réinitialisé autrement\n\nClic droit: Créer la macro",
+				HEALINGENGINEAPI = "Activer l'API Healing Engine",
+				HEALINGENGINEAPITOOLTIP = "Lorsque activé, toutes les options et paramètres 'Healing Engine' pris en charge fonctionneront",
 				SELECTPETS = "Activer les familiers",
 				SELECTPETSTOOLTIP = "Supported: 'Healing Engine'\n\nChange les animaux de compagnie pour les gérer par toutes les API 'Healing Engine'\n\nClic droit: Créer la macro", 
 				SELECTRESURRECTS = "Activer les résurrections",
@@ -2945,6 +2953,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Supportato: 'Healing Engine'\n\nRitarda (in secondi) prima di selezionare il bersaglio successivo dopo aver selezionato un nemico o un boss in @target\n\nFunziona solo se 'Opzioni lo stop target' ha '@target nemico' o '@target boss' disattivato\n\nIl ritardo viene aggiornato ogni volta che le condizioni hanno esito positivo o viene reimpostato in altro modo\n\nPulsanmte destro: Crea macro",
 				AFTERMOUSEOVERENEMYDELAY = "Ritardo target\nDopo il nemico @mouseover",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Supportato: 'Healing Engine'\n\nRitarda (in secondi) prima di selezionare il bersaglio successivo dopo aver selezionato un nemico in @mouseover\n\nFunziona solo se 'Opzioni lo stop target' ha disattivato '@mouseover nemico'\n\nIl ritardo viene aggiornato ogni volta che le condizioni hanno esito positivo o viene reimpostato in altro modo\n\nPulsanmte destro: Crea macro",
+				HEALINGENGINEAPI = "Abilita API del Healing Engine",
+				HEALINGENGINEAPITOOLTIP = "Quando abilitato, tutte le opzioni e impostazioni supportate di 'Healing Engine' funzioneranno",
 				SELECTPETS = "Abilita Famigli",
 				SELECTPETSTOOLTIP = "Supportato: 'Healing Engine'\n\nCambia animali domestici per gestirli da tutte le API in 'Healing Engine'\n\nPulsanmte destro: Crea macro",
 				SELECTRESURRECTS = "Abilita Resurrezioni",
@@ -3542,6 +3552,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Soportado: 'Healing Engine'\n\nRetraso (en segundos) antes de seleccionar el siguiente target después de seleccionar un enemigo o boss en @target\n\nSolo funciona si la opción 'Opciones de para Target' tiene '@target enemigo' o '@target boss' deshabilitada\n\nEl retraso se actualiza cada vez cuando las condiciones se realizan satisfactoriamente o se reinician\n\nBotón derecho: Crear macro",
 				AFTERMOUSEOVERENEMYDELAY = "Target Retraso\nAdelanto @mouseover enemigo",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Soportado: 'Healing Engine'\n\nRetraso (en segundos) antes de seleccionar el siguiente target después de seleccionar un enemy en @mouseover\n\nSolo funciona si la opción 'Opciones de para Target' tiene '@mouseover enemigo' deshabilitada\n\nEl retraso se actualiza cada vez cuando las condiciones se realizan satisfactoriamente o se reinician\n\nBotón derecho: Crear macro",
+				HEALINGENGINEAPI = "Habilitar API de Healing Engine",
+				HEALINGENGINEAPITOOLTIP = "Al habilitarse, todas las opciones y configuraciones compatibles con 'Healing Engine' funcionarán",
 				SELECTPETS = "Habilitar Mascotas",
 				SELECTPETSTOOLTIP = "Soportado: 'Healing Engine'\n\nCambia mascotas para manejarlas por todas las API en 'Healing Engine'\n\nBotón derecho: Crear macro",
 				SELECTRESURRECTS = "Enable Resurrects",
@@ -4145,6 +4157,8 @@ local Localization = {
 				AFTERTARGETENEMYORBOSSDELAYTOOLTIP = "Suportados: 'Healing Engine'\n\nAtraso (em segundos) antes de selecionar o próximo alvo após selecionar um inimigo ou boss ser selecionado @target\n\nFunciona apenas se 'Opções de parar o alvo' contém'@target inimigo' ou '@target boss' desligado\n\nAtraso é atualizado toda vez que as condições são bem-sucedidas, do contrário são resetadas\n\nClique direito: Criar macro",
 				AFTERMOUSEOVERENEMYDELAY = "Atraso do Alvo\nApós @mouseover inimigo",
 				AFTERMOUSEOVERENEMYDELAYTOOLTIP = "Suportados: 'Healing Engine'\n\nAtraso (em segundos) antes de selecionar o próximo alvo após selecionar um inimigo com @mouseover\n\nFunciona apenas se 'Opções de parar o alvo' contém '@mouseover inimigo' desligado\n\nAtraso é atualizado toda vez que as condições são bem-sucedidas, do contrário são resetadas\n\nClique direito: Criar macro",
+				HEALINGENGINEAPI = "Ativar API do Healing Engine",
+				HEALINGENGINEAPITOOLTIP = "Quando ativado, todas as opções e configurações suportadas do 'Healing Engine' funcionarão",
 				SELECTPETS = "Ativar Familiares",
 				SELECTPETSTOOLTIP = "Suportados: 'Healing Engine'\n\nTroca os pets para lidar com toda a API em 'Healing Engine'\n\nClique direito: Criar macro",  
 				SELECTRESURRECTS = "Ativar Resurrects",
@@ -4888,6 +4902,7 @@ local Factory = {
 			SelectSortMethod = "HP",	
 			AfterTargetEnemyOrBossDelay = 0,	-- SelectStopOptions must be off for: [3] @target enemy or [4] @target boss
 			AfterMouseoverEnemyDelay = 0,		-- SelectStopOptions must be off for: [2] @mouseover enemy 
+			HealingEngineAPI = true,
 			SelectPets = true,
 			SelectResurrects = true, 			-- Classic Druids haven't it.. 
 			UnitIDs = StdUi:tGenerateHealingEngineUnitIDs({ Enabled = true, Role = "AUTO", useDispel = true, useShields = true, useHoTs = true, useUtils = true, LUA = "" }), 
@@ -5776,6 +5791,14 @@ local Upgrade 					= {
 					},
 				},
 			}, "pActionDB[4]")
+		end,
+		[6]						= function()
+			-- Defaults to /focus mode healing or /target if Classic is Vanilla
+			local SelectStopOptions = pActionDB[8].SelectStopOptions or pActionDB[8][Action.PlayerSpec].SelectStopOptions 
+			local value = Action.BuildToC < 20000
+			for i = 1, 5 do 
+				SelectStopOptions[i] = value
+			end
 		end,
 	},
 	gUpgrades					= {
@@ -10823,6 +10846,9 @@ local OnToggleHandler		= {
 			TMW:Fire("TMW_ACTION_HEALING_ENGINE_UI_UPDATE") 
 			TMW:Fire("TMW_ACTION_HEALING_ENGINE_UI_PROFILE", "Changed", "") 
 		end,
+		HealingEngineAPI	= function()
+			TMW:Fire("TMW_ACTION_HEALINGENGINE_INITIALIZE") 
+		end,
 	},
 	[9]						= {
 		MetaEngine			= function()
@@ -15657,26 +15683,21 @@ function Action.ToggleMainUI()
 		end
 		
 		if tabName == 8 then 
-			local hasHealerSpells = Action.Unit("player"):IsHealerClass()
 			-- Fix StdUi 
 			-- Lib has missed scrollframe as widget (need to have function GetChildrenWidgets)
 			StdUi:InitWidget(anchor)		
-			if not hasHealerSpells then 
-				UI_Title:SetText(L["TAB"]["NOTHING"])
-				return 
-			end 
 			
 			UI_Title:Hide()					
 			StdUi:EasyLayout(anchor, { padding = { top = 2, left = 8, right = 8 + 20 } })
 			
-			local isHealer = (not StdUi.isClassic and Action.IamHealer) or (StdUi.isClassic and hasHealerSpells) -- By this depends which elements we need to use
+			local isHealer = true -- Since release of MetaEngine, all classes and specializations have HealingEngine API
 			local 	isDemo = false -- Hides player name for demonstration 
 			local 	PanelOptions,
 						ResetOptions, HelpOptions,	-- Other roles available
 						PredictOptions,				-- Other roles available
 						SelectStopOptions, SelectSortMethod,
 						AfterTargetEnemyOrBossDelay, AfterMouseoverEnemyDelay,
-						SelectPets, SelectResurrects,
+						HealingEngineAPI, SelectPets, SelectResurrects,
 					PanelUnitIDs,
 						UnitIDs, 
 						AutoHide,
@@ -15796,6 +15817,9 @@ function Action.ToggleMainUI()
 						if button == "LeftButton" then 
 							specDB[db] = not specDB[db]	
 							self:SetChecked(specDB[db])	
+							if OnToggleHandler[tabName][db] then 
+								OnToggleHandler[tabName][db](specDB)
+							end
 							Action.Print(titleText .. ": ", specDB[db])			
 						elseif button == "RightButton" and useMacro then 
 							Action.CraftMacro(titleText, [[/run Action.SetToggle({]] .. tabName .. [[, "]] .. db .. [[", "]] .. titleText .. [[: "})]], true)	
@@ -15962,6 +15986,14 @@ function Action.ToggleMainUI()
 						end 
 					end 
 					
+					if k == "HealingEngineAPI" and HealingEngineAPI then 
+						if HealingEngineAPI:GetChecked() ~= v then 
+							HealingEngineAPI:SetChecked(v)
+							specDB[k] = v 
+							Action.Print(L["TAB"][tabName][k:upper()] .. ": ", specDB[k])	
+						end 
+					end 
+					
 					if k == "SelectPets" and SelectPets then 
 						if SelectPets:GetChecked() ~= v then 
 							SelectPets:SetChecked(v)
@@ -16104,6 +16136,9 @@ function Action.ToggleMainUI()
 			
 			-- UI: PanelOptions - AfterMouseoverEnemyDelay
 			AfterMouseoverEnemyDelay = CreateSliderAfter("AfterMouseoverEnemyDelay")
+			
+			-- UI: PanelOptions - HealingEngineAPI
+			HealingEngineAPI = CreateCheckbox(PanelOptions, "HealingEngineAPI", true) -- yes macro, no callback
 			
 			-- UI: PanelOptions - SelectPets
 			SelectPets = CreateCheckbox(PanelOptions, "SelectPets", true, true) -- yes macro, yes callback
@@ -17125,7 +17160,7 @@ function Action.ToggleMainUI()
 		if isHealer then 
 			PanelOptions:AddRow({ margin = { top = 0  } }):AddElements(SelectStopOptions, 				SelectSortMethod, 												columnEven)
 			PanelOptions:AddRow({ margin = { top = 10 } }):AddElements(AfterTargetEnemyOrBossDelay, 	AfterMouseoverEnemyDelay, 										columnEven)
-			PanelOptions:AddRow({ margin = { top = -10, bottom = 5 } }):AddElements(SelectPets, 		SelectResurrects, 												columnEven)
+			PanelOptions:AddRow({ margin = { top = -10, bottom = 5 } }):AddElements(HealingEngineAPI, 	SelectPets, 				SelectResurrects, 					columnFour)
 		end 
 			PanelOptions:DoLayout()
 			anchor:AddRow({ margin = { left = -15, right = -15 } }):AddElement(PanelOptions)	
