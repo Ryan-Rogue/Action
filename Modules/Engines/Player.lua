@@ -98,7 +98,6 @@ Listener:Add("ACTION_EVENT_PLAYER", "ADDON_LOADED", function(addonName)
 end)
 -------------------------------------------------------------------------------
 
--- [[ Retail ]]
 local function sortByLowest(a, b) 
 	return a < b	  
 end
