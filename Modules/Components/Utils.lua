@@ -1055,8 +1055,8 @@ function A.Hide(icon)
 		error("A.Hide tried to hide nil 'icon'", 2)
 	else 
 		if icon.attributes.state ~= CONST.TMW_DEFAULT_STATE_HIDE then 
-			icon:SetInfo("state; texture", CONST.TMW_DEFAULT_STATE_HIDE, "")
 			TMW:Fire("TMW_ACTION_METAENGINE_UPDATE", icon.ID, A)
+			icon:SetInfo("state; texture", CONST.TMW_DEFAULT_STATE_HIDE, "")			
 		end 
 	end 
 end 
@@ -1066,14 +1066,15 @@ function A:Show(icon, texture)
 	if not icon then 
 		error((not texture and self:GetKeyName() or tostring(texture)) .. " tried to use Show() method with nil 'icon'", 2)
 	else 
+		-- Only fire for pure action object, moved here for performance
+		TMW:Fire("TMW_ACTION_METAENGINE_UPDATE", icon.ID, self.Start and self:IsQueued() and getmetatable(self).__index or self, texture)		
+		
 		if texture then 
 			TMWAPI(icon, "texture", texture)
 		else 
 			TMWAPI(icon, self:Texture())
 		end 
 		
-		-- Only fire for pure action object		
-		TMW:Fire("TMW_ACTION_METAENGINE_UPDATE", icon.ID, self.Start and self:IsQueued() and getmetatable(self).__index or self, texture)
 		return true 
 	end 
 end 
