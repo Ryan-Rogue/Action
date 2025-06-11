@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "10.06.2025"
+local DateTime 														= "11.06.2025"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -40,7 +40,7 @@ local C_Spell														= _G.C_Spell
 local 	 GetRealmName, 	  GetNumSpecializationsForClassID, 	  GetSpecializationInfo, 	GetSpecialization,    GetFramerate, 	GetBindingFromClick,    GetBindingText,	   GetSpellInfo,    					     								GetSpellAvailableLevel,    GetMaxLevelForPlayerExpansion = 
 	  _G.GetRealmName, _G.GetNumSpecializationsForClassID, _G.GetSpecializationInfo, _G.GetSpecialization, _G.GetFramerate,  _G.GetBindingFromClick, _G.GetBindingText, _G.GetSpellInfo or C_Spell.GetSpellInfo, C_Spell.GetSpellLevelLearned or _G.GetSpellAvailableLevel, _G.GetMaxLevelForPlayerExpansion	  
 	  
-local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    					  UnitAura,    UnitPower = 
+local 	 UnitName,    UnitClass,    UnitLevel,    UnitExists, 	 UnitIsUnit,    UnitGUID,    					  UnitAura,     UnitPower = 
 	  _G.UnitName, _G.UnitClass, _G.UnitLevel, _G.UnitExists, _G.UnitIsUnit, _G.UnitGUID, _G.C_UnitAuras.GetAuraDataByIndex, _G.UnitPower	  
 	    
 local GameLocale 													= _G.GetLocale()
