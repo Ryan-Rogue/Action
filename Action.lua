@@ -5807,6 +5807,20 @@ local Upgrade 					= {
 			Hotkeys[9].action = "AntiFake CC2"
 			Hotkeys[10].action = "AntiFake CC2 Focus"
 		end,
+		[8]						= function()
+			-- Just Retail ugrade to fix missing 6-7 upgrades on other specs
+			local value = Action.BuildToC < 20000
+			for spec, specDB in pairs(pActionDB[8]) do 
+				for i = 1, 5 do
+					specDB.SelectStopOptions[i] = value
+				end
+			end
+			
+			for spec, specDB in pairs(pActionDB[9]) do 
+				specDB.MetaEngine.Hotkeys[9].action = "AntiFake CC2"
+				specDB.MetaEngine.Hotkeys[10].action = "AntiFake CC2 Focus"
+			end
+		end,
 	},
 	gUpgrades					= {
 		[1]						= function()
