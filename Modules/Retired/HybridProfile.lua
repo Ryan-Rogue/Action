@@ -311,6 +311,13 @@ function LocalToggles()
     end
 end
 
+local DeprecatedGroups = {
+	["[GGL] Chat trigger"] = true,
+	["[GGL] Anchor TOGGLES"] = true,
+	["[GGL] System TOGGLES"] = true,
+	["[GGL] Basic features"] = true,
+	["[GGL] Hidden PvP Healer's Taunt"] = true,
+}
 local function UpdateChesderGroups()   
     local current 		= TMW.db:GetCurrentProfile() 
 	local isOldProfile 	= ProfileToggle[current] and true 
@@ -335,8 +342,11 @@ local function UpdateChesderGroups()
 		end
 	else 
 		for i = 1, 5 do
-			DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global " .. i)
-			ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+			local group = _G["TellMeWhen_GlobalGroup" .. i]			
+			if group and DeprecatedGroups[group.Name] then
+				DEFAULT_CHAT_FRAME.editBox:SetText("/tmw disable global " .. i)
+				ChatEdit_SendText(DEFAULT_CHAT_FRAME.editBox, 0)
+			end
 		end   
 	end        
     

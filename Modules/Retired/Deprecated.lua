@@ -221,9 +221,6 @@ local TalentMap, PvpTalentMap		= Env.TalentMap, Env.PvpTalentMap
 -- Super Globals
 Listener 							= A.Listener
 UnitCooldown						= A.UnitCooldown
-PMultiplier 						= A.PMultiplier
-Persistent_PMultiplier 				= A.Persistent_PMultiplier
-RegisterPMultiplier  				= A.RegisterPMultiplier
 MouseHasFrame						= A.MouseHasFrame
 
 -- Env
