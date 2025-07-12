@@ -39,6 +39,9 @@ _G.ACTION_CONST_STOPCAST 											= 319458		-- spell_magic_polymorphrabbit
 _G.ACTION_CONST_AUTOTARGET 											= 133015 		-- Inv_gizmo_goblingtonkcontroller
 _G.ACTION_CONST_LASTTARGET											= 237290		-- inv_misc_enggizmos_27
 
+_G.ACTION_CONST_AUTOSHOOT											= dir .. [[ABILITY_SHOOTWAND]] -- 132317 -- spellID: 5019
+_G.ACTION_CONST_AUTOATTACK											= dir .. [[INV_Sword_04]] -- spellID: 7038
+
 -- Class portraits
 _G.ACTION_CONST_PORTRAIT_WARRIOR									= 626008
 _G.ACTION_CONST_PORTRAIT_PALADIN									= 236260		-- Custom because in TWW it making conflict with Divine Hammer

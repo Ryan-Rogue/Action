@@ -17,12 +17,15 @@ local IsCondemnedDemonsExists						= A.IsCondemnedDemonsExists
 local IsVoidTendrilsExists							= A.IsVoidTendrilsExists
 local IsQueueReady									= A.IsQueueReady
 local QueueData										= A.Data.Q
+local ShouldStop									= A.ShouldStop
+local GetCurrentGCD									= A.GetCurrentGCD
 local GetPing										= A.GetPing
 local BuildToC										= A.BuildToC
 
 local Re 											= A.Re
 local BossMods										= A.BossMods
 local InstanceInfo									= A.InstanceInfo
+local IsUnitEnemy									= A.IsUnitEnemy
 local UnitCooldown									= A.UnitCooldown
 local Unit											= A.Unit 
 local Player										= A.Player 
@@ -38,18 +41,22 @@ local CONST_PAUSECHECKS_SPELL_IS_TARGETING			= CONST.PAUSECHECKS_SPELL_IS_TARGET
 local CONST_PAUSECHECKS_LOOTFRAME 					= CONST.PAUSECHECKS_LOOTFRAME
 local CONST_PAUSECHECKS_IS_EAT_OR_DRINK 			= CONST.PAUSECHECKS_IS_EAT_OR_DRINK
 local CONST_AUTOTARGET 								= CONST.AUTOTARGET
+local CONST_AUTOATTACK 								= CONST.AUTOATTACK
 local CONST_STOPCAST 								= CONST.STOPCAST
 local CONST_LEFT 									= CONST.LEFT
 local CONST_RIGHT									= CONST.RIGHT
 local CONST_SPELLID_COUNTER_SHOT					= CONST.SPELLID_COUNTER_SHOT
 
 local UnitAura										= _G.C_UnitAuras.GetAuraDataByIndex
+local UnitIsUnit  									= _G.UnitIsUnit
 local UnitIsFriend									= _G.UnitIsFriend
 
 local GetSpellName 									= _G.C_Spell and _G.C_Spell.GetSpellName or _G.GetSpellInfo
 local GetCurrentKeyBoardFocus						= _G.GetCurrentKeyBoardFocus
 local SpellIsTargeting								= _G.SpellIsTargeting
 local IsMouseButtonDown								= _G.IsMouseButtonDown
+local HasWandEquipped								= _G.HasWandEquipped
+local HasFullControl								= _G.HasFullControl
 
 local BINDPAD 										= _G.BindPadFrame
 
@@ -186,6 +193,8 @@ local Medallion 			= LoC_GetExtra["GladiatorMedallion"] -- BFA, Legion, WoD
 A.AntiFakeWhite					 	= Create({ Type = "SpellSingleColor", 	ID = 1,		Color = "WHITE",     															  Hidden = true         		   												})
 A.Trinket1 							= Create({ Type = "TrinketBySlot", 		ID = CONST.INVSLOT_TRINKET1,	 				BlockForbidden = true, Desc = "Upper Trinket (/use 13)" 																	})
 A.Trinket2 							= Create({ Type = "TrinketBySlot", 		ID = CONST.INVSLOT_TRINKET2, 					BlockForbidden = true, Desc = "Lower Trinket (/use 14)"																		})
+A.Shoot								= Create({ Type = "Spell", 				ID = 5019, 										QueueForbidden = true, BlockForbidden = true, Hidden = true,  Desc = "Wand" 												})
+A.AutoShot							= Create({ Type = "Spell", 				ID = 75, 										QueueForbidden = true, BlockForbidden = true, Hidden = true,  Desc = "Hunter's shoot" 										})
 A.HS								= Create({ Type = "Item", 				ID = 5512, 										QueueForbidden = true, Desc = "[6] HealthStone", 					skipRange = true										})
 A.AbyssalHealingPotion				= Create({ Type = "Item", 				ID = 169451, 									QueueForbidden = true, Desc = "[6] HealingPotion", 					skipRange = true										})
 if BuildToC < 90000 then 
@@ -217,6 +226,15 @@ else
 		A.AlgariHealingPotion7		= Create({ Type = "Item",  				ID = 212318,									QueueForbidden = true, Desc = "[6] HealingPotion",					skipRange = true, Texture = 169451						}) -- QA Algari Healing Potion
 	end 
 end
+
+local function IsShoot(unit)
+	return 	playerClass ~= "WARRIOR" and playerClass ~= "ROGUE" and 		-- their shot must be in profile 
+			GetToggle(1, "AutoShoot") and not Player:IsShooting() and  
+			(
+				(playerClass == "HUNTER" and A.AutoShot:IsReadyP(unit)) or 	-- :IsReady also checks ammo amount by :IsUsable method
+				(playerClass ~= "HUNTER" and HasWandEquipped() and A.Shoot:IsInRange(unit) and GetCurrentGCD() <= GetPing() and (not GetToggle(1, "AutoAttack") or not Player:IsAttacking() or Unit(unit):GetRange() > 6))
+			)
+end 
 
 
 function A.CanUseHealthstoneOrHealingPotion()
@@ -434,6 +452,31 @@ function A.Rotation(icon)
 	-- Hide frames which are not used by profile
 	if metatype ~= "function" then 
 		return A_Hide(icon)
+	end 	
+	
+	-- Save unit for AutoAttack, AutoShoot
+	local unit, useShoot
+	if IsUnitEnemy(mouseover) then 
+		unit = mouseover
+	elseif IsUnitEnemy(target) then 
+		unit = target
+	elseif IsUnitEnemy(targettarget) then 
+		unit = targettarget
+	end 	
+	
+	-- [3] Single / [4] AoE: AutoAttack
+	if unit and (meta == 3 or meta == 4) and not Player:IsStealthed() and Unit(player):IsCastingRemains() == 0 and HasFullControl() then 
+		if not IsShoot(unit) and unit ~= targettarget and GetToggle(1, "AutoAttack") and not Player:IsAttacking() then 
+				-- Use AutoAttack only if not a hunter or it's is out of range by AutoShot 
+			if 	(playerClass ~= "HUNTER" or not GetToggle(1, "AutoShoot") or not Player:IsShooting() or not A.AutoShot:IsInRange(unit)) and 
+				-- ByPass Rogue's mechanic
+				(playerClass ~= "ROGUE" or ((unit ~= mouseover or UnitIsUnit(unit, target)) and Unit(unit):HasDeBuffs("BreakAble") == 0)) and 
+				-- ByPass Warlock's mechanic 
+				(playerClass ~= "WARLOCK" or Unit(unit):GetRange() <= 5)
+			then 
+				return A:Show(icon, CONST_AUTOATTACK)
+			end 
+		end 
 	end 	
 	
 	-- [3] Single / [4] AoE / [6-8] Passive: @player-party1-3, @raid1-3, @arena1-3 + Active: other AntiFakes

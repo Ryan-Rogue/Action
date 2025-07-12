@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "05.07.2025"
+local DateTime 														= "12.07.2025"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -244,8 +244,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Increases frames per second by increasing the dynamic dependency\nframes of the refresh cycle (call) of the rotation cycle\n\nYou can also manually set the interval following a simple rule:\nThe larger slider then more FPS, but worse rotation update\nToo high value can cause unpredictable behavior!\n\nRightClick: Create macro",					
 				PVPSECTION = "PvP Section",
-				REFOCUS = "Return previous saved @focus\n(arena1-3 units only)\nIt recommended against invisibility classes\n\nRightClick: Create macro",
-				RETARGET = "Return previous saved @target\n(arena1-3 units only)\nIt recommended against hunters with 'Feign Death' and any unforeseen target drops\n\nRightClick: Create macro",
+				REFOCUS = "Return previous saved @focus\n(arena1-5 units only)\nIt recommended against invisibility classes\n\nRightClick: Create macro",
+				RETARGET = "Return previous saved @target\n(arena1-5 units only)\nIt recommended against hunters with 'Feign Death' and any unforeseen target drops\n\nRightClick: Create macro",
 				TRINKETS = "Trinkets",
 				TRINKET = "Trinket",
 				BURST = "Burst Mode",
@@ -281,6 +281,8 @@ local Localization = {
 				THEMEHOLDER = "choose theme",
 				BLOODYBLUE = "Bloody Blue",
 				ICE = "Ice",
+				AUTOATTACK = "Auto Attack",
+				AUTOSHOOT = "Auto Shoot",				
 				PAUSECHECKS = "[All specs]\nRotation doesn't work if:",
 				ANTIFAKEPAUSES = "AntiFake Pauses",
 				ANTIFAKEPAUSESSUBTITLE = "While the hotkey is held down",
@@ -841,8 +843,8 @@ local Localization = {
 				FPSSEC = " (сек)",
 				FPSTOOLTIP = "AUTO: Повышение кадров в секунду за счет увеличения в динамической зависимости\nкадров интервала обновления (вызова) цикла ротации\n\nВы также можете вручную задать интервал следуя простому правилу:\nЧем больше ползунок, тем больше кадров, но хуже обновление ротации\nСлишком высокое значение может вызвать непредсказуемое поведение!\n\nПравая кнопка мышки: Создать макрос",					
 				PVPSECTION = "Секция PvP",
-				REFOCUS = "Возвращать предыдущий сохраненный @focus (arena1-3 юниты только)\nРекомендуется против классов с невидимостью\n\nПравая кнопка мышки: Создать макрос",
-				RETARGET = "Возвращать предыдущий сохраненный @target (arena1-3 юниты только)\nРекомендуется против Охотников с 'Притвориться мертвым'\nи(или) при любых непредвиденных сбросов цели\n\nПравая кнопка мышки: Создать макрос",
+				REFOCUS = "Возвращать предыдущий сохраненный @focus (arena1-5 юниты только)\nРекомендуется против классов с невидимостью\n\nПравая кнопка мышки: Создать макрос",
+				RETARGET = "Возвращать предыдущий сохраненный @target (arena1-5 юниты только)\nРекомендуется против Охотников с 'Притвориться мертвым'\nи(или) при любых непредвиденных сбросов цели\n\nПравая кнопка мышки: Создать макрос",
 				TRINKETS = "Аксессуары",
 				TRINKET = "Аксессуар",
 				BURST = "Режим Бурстов",
@@ -878,6 +880,8 @@ local Localization = {
 				THEMEHOLDER = "выбрать тему",
 				BLOODYBLUE = "Кроваво-Синий",
 				ICE = "Ледяной",
+				AUTOATTACK = "Авто Атака",
+				AUTOSHOOT = "Авто Выстрел",	
 				PAUSECHECKS = "[Все спеки]\nРотация не работает если:",
 				ANTIFAKEPAUSES = "Паузы AntiFake",
 				ANTIFAKEPAUSESSUBTITLE = "Пока горячая клавиша удерживается",
@@ -1440,8 +1444,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Erhöht die Frames pro Sekunde durch Erhöhen der dynamischen Abhängigkeit.\nFrames des Aktualisierungszyklus (Aufruf) des Rotationszyklus\n\nSie können das Intervall auch nach einer einfachen Regel manuell einstellen:\nDer größere Schieberegler als mehr FPS, aber schlechtere Rotation Update\nZu hoher Wert kann zu unvorhersehbarem Verhalten führen!\n\nRechtsklick: Makro erstellen",					
 				PVPSECTION = "PvP Einstellungen",
-				REFOCUS = "Vorheriges gespeichertes @focus zurückgeben\n(nur Arena1-3-Einheiten)\nEs wird für Unsichtbarkeitsklassen empfohlen\n\nRechtsklick: Makro erstellen",
-				RETARGET = "Vorheriges gespeichertes @Ziel zurückgeben\n(nur Arena1-3-Einheiten)\nEs wird gegen Jäger mit 'Totstellen' und unvorhergesehenen Zielabwürfen empfohlen\n\nRechtsklick: Makro erstellen",
+				REFOCUS = "Vorheriges gespeichertes @focus zurückgeben\n(nur Arena1-5-Einheiten)\nEs wird für Unsichtbarkeitsklassen empfohlen\n\nRechtsklick: Makro erstellen",
+				RETARGET = "Vorheriges gespeichertes @Ziel zurückgeben\n(nur Arena1-5-Einheiten)\nEs wird gegen Jäger mit 'Totstellen' und unvorhergesehenen Zielabwürfen empfohlen\n\nRechtsklick: Makro erstellen",
 				TRINKETS = "Schmuckstücke",
 				TRINKET = "Schmuck",
 				BURST = "Burst Modus",
@@ -1477,6 +1481,8 @@ local Localization = {
 				THEMEHOLDER = "Thema wählen",
 				BLOODYBLUE = "Blutiges Blau",
 				ICE = "Eis",
+				AUTOATTACK = "Automatischer Angriff",
+				AUTOSHOOT = "Automatisches Schießen",	
 				PAUSECHECKS = "[Jede Klasse]\nRota funktioniert nicht wenn:",
 				ANTIFAKEPAUSES = "AntiFake-Pausen",
 				ANTIFAKEPAUSESSUBTITLE = "Während der Hotkey gedrückt gehalten wird",
@@ -2040,8 +2046,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO:  Augmente les images par seconde en augmentant la dépendance dynamique\nimage du cycle de rafraichisement (call) du cycle de rotation\n\nVous pouvez régler manuellement l'intervalle en suivant cette règle simple:\nPlus le slider est grand plus vous avez de FPS, mais pire sera la mise à jour de la rotation\nUne valeur trop élevée peut entraîner un comportement imprévisible!\n\nClique droit : Créer la macro",
 				PVPSECTION = "Section PvP",
-				REFOCUS = "Remet le @focus sauvé précédemment\n(Uniquement pour les cibles arena1-3)\nCela est recommandé pour les cible qui ont un sort d'invicibilité\n\nClique droit : Créer la macro",
-				RETARGET = "Remet le @target sauvé précédemment\n(Uniquement pour les cibles arena1-3)\nCela est recommander contre les chasseurs avec 'Feindre la mort' et les perte de cible imprévu\n\nClique droit : Créer la macro",
+				REFOCUS = "Remet le @focus sauvé précédemment\n(Uniquement pour les cibles arena1-5)\nCela est recommandé pour les cible qui ont un sort d'invicibilité\n\nClique droit : Créer la macro",
+				RETARGET = "Remet le @target sauvé précédemment\n(Uniquement pour les cibles arena1-5)\nCela est recommander contre les chasseurs avec 'Feindre la mort' et les perte de cible imprévu\n\nClique droit : Créer la macro",
 				TRINKETS = "Bijoux",
 				TRINKET = "Bijou",
 				BURST = "Mode Burst",
@@ -2077,6 +2083,8 @@ local Localization = {
 				THEMEHOLDER = "choisissez le thème",
 				BLOODYBLUE = "Sanglant Bleu",
 				ICE = "La glace",
+				AUTOATTACK = "Attaque automatique",
+				AUTOSHOOT = "Tir automatique",	
 				PAUSECHECKS = "[All specs]\nLa rotation ne fonction pas, si:",
 				ANTIFAKEPAUSES = "AntiFake Pauses",
 				ANTIFAKEPAUSESSUBTITLE = "Pendant que la touche de raccourci est maintenue enfoncée",
@@ -2637,8 +2645,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Aumenta i frames per second incrementando la dipendenza dinamica\ndei frames del ciclo di refresh (call) della rotazione\n\nPuoi settare manualmente l'intervallo seguendo questa semplice regola:\nPiú é altop lo slider piú é l'FPS, ma peggiore sará l'update della rotazione\nValori troppo alti possono portare a risultati imprevedibili!\n\nTastodestro: Crea macro",					
 				PVPSECTION = "Sezione PvP",
-				REFOCUS = "Identifica il focus precedente @focus\n(solo arena unitá 1-3)\nraccomandato contro le classi con capacitá di invisibilitá\n\nTastodestro: Crea macro",
-				RETARGET = "Identifica il bersaglio precedente @target\n(solo arena unitá 1-3)\nraccomandato contro cacciatori con capacitá 'Morte Fasulla' e altre abilitá che deselezionano il bersaglio\n\nTastodestro: Crea macro",
+				REFOCUS = "Identifica il focus precedente @focus\n(solo arena unitá 1-5)\nraccomandato contro le classi con capacitá di invisibilitá\n\nTastodestro: Crea macro",
+				RETARGET = "Identifica il bersaglio precedente @target\n(solo arena unitá 1-5)\nraccomandato contro cacciatori con capacitá 'Morte Fasulla' e altre abilitá che deselezionano il bersaglio\n\nTastodestro: Crea macro",
 				TRINKETS = "Ninnolo",
 				TRINKET = "Ninnoli",
 				BURST = "Modalitá raffica",
@@ -2674,6 +2682,8 @@ local Localization = {
 				THEMEHOLDER = "scegli il tema",
 				BLOODYBLUE = "Sanguinoso Blu",
 				ICE = "Ghiaccio",
+				AUTOATTACK = "Attacco automatico",
+				AUTOSHOOT = "Scatto automatico",	
 				PAUSECHECKS = "[All specs]\nLa rotazione non funziona, se:",
 				ANTIFAKEPAUSES = "AntiFake si ferma",
 				ANTIFAKEPAUSESSUBTITLE = "Mentre il tasto di scelta rapida è tenuto premuto",
@@ -3236,8 +3246,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Incrementa los frames por segundo aumentando la dependencia dinámica\nframes del ciclo de recarga (llamada) del ciclo de rotación\n\nTambién puedes establecer manualmente el intervalo siguiendo una regla simple:\nCuanto mayor sea el desplazamiento, mayor las FPS, pero peor actualización de rotación\nUn valor demasiado alto puede causar un comportamiento impredecible!\n\nClickDerecho: Crear macro",					
 				PVPSECTION = "Sección PvP",
-				REFOCUS = "Devuelve el guardado anterior @focus\n(arena1-3 unidades solamente)\nEs recomendable contra clases con invisibilidad\n\nClickDerecho: Crear macro",
-				RETARGET = "Devuelve el guardado anterior @target\n(arena1-3 unidades solamente)\nEs recomendable contra cazadores con 'Feign Death' and cualquier objetivo imprevisto cae\n\nClickDerecho: Crear macro",
+				REFOCUS = "Devuelve el guardado anterior @focus\n(arena1-5 unidades solamente)\nEs recomendable contra clases con invisibilidad\n\nClickDerecho: Crear macro",
+				RETARGET = "Devuelve el guardado anterior @target\n(arena1-5 unidades solamente)\nEs recomendable contra cazadores con 'Feign Death' and cualquier objetivo imprevisto cae\n\nClickDerecho: Crear macro",
 				TRINKETS = "Trinkets",
 				TRINKET = "Trinket",
 				BURST = "Modo Bursteo",
@@ -3273,6 +3283,8 @@ local Localization = {
 				THEMEHOLDER = "escoge un tema",
 				BLOODYBLUE = "Sangriento Azul",
 				ICE = "Hielo",
+				AUTOATTACK = "Auto ataque",
+				AUTOSHOOT = "Disparo automático",	
 				PAUSECHECKS = "[All specs]\nLa rotación no funciona si:",
 				ANTIFAKEPAUSES = "Pausas de AntiFake",
 				ANTIFAKEPAUSESSUBTITLE = "Mientras se mantiene presionada la tecla de acceso rápido",
@@ -3841,8 +3853,8 @@ local Localization = {
 				FPSSEC = " (sec)",
 				FPSTOOLTIP = "AUTO: Aumenta os quadros por segundo por meio de aumento na depêndencia dinâmica \nquadros do ciclo de atualização (call) do ciclo de rotação\n\nVocê pode setar o intervalo manualmente seguindo uma simples regra:\nQuanto maior o slider maior o FPS, mas pior será a atualização da rotação\nValores muito altos podem causar comportamento imprevisível!\n\nRightClick: Criar macro",					
 				PVPSECTION = "Seção PVP",
-				REFOCUS = "Retorna @focus anterior\n(arena1-3 units only)\nRecomendado contra classes com invisibilidade\n\nRightClick: Criar macro",
-				RETARGET = "Retorna @target anterior\n(arena1-3 units only)\nRecomendado contra caçadores usando 'Fingir de Morto' e outras perdas de alvo não previstas\n\nRightClick: Criar macro",
+				REFOCUS = "Retorna @focus anterior\n(arena1-5 units only)\nRecomendado contra classes com invisibilidade\n\nRightClick: Criar macro",
+				RETARGET = "Retorna @target anterior\n(arena1-5 units only)\nRecomendado contra caçadores usando 'Fingir de Morto' e outras perdas de alvo não previstas\n\nRightClick: Criar macro",
 				TRINKETS = "Berloques",
 				TRINKET = "Berloque",
 				BURST = "Modo Explosão",
@@ -3878,6 +3890,8 @@ local Localization = {
 				THEMEHOLDER = "escolher tema",
 				BLOODYBLUE = "Bloody Blue",
 				ICE = "Gelo",
+				AUTOATTACK = "Auto Attack",
+				AUTOSHOOT = "Auto Shoot",
 				PAUSECHECKS = "[All specs]\nRotação não funciona se:",
 				ANTIFAKEPAUSES = "Pausas AntiFake",
 				ANTIFAKEPAUSESSUBTITLE = "Enquanto a tecla de atalho é mantida pressionada",
@@ -4664,6 +4678,8 @@ local Factory = {
 			Covenant = true,		-- Shadowlands 
 			Racial = true,	
 			StopCast = true,
+			AutoShoot = true,
+			AutoAttack = true, 			
 			BossMods = true,
 			LOSCheck = true, 
 			StopAtBreakAble = false,			
@@ -5535,7 +5551,18 @@ local function tMerge(default, new, special, nonexistremove)
 			if special and k == "PLAYERSPEC" then
 				local classID = Action.PlayerClassID or select(3, UnitClass("player"))
 				for i = 1, GetNumSpecializationsForClassID(classID) do 
-					result[GetSpecializationInfo(i)] = tMerge(v, v, special, nonexistremove) 
+					local specID = GetSpecializationInfo(i)
+					result[specID] = tMerge(v, v, special, nonexistremove)
+					
+					-- Set default false on AutoAttack for non-melee and AutoShoot for healers
+					if result[specID].AutoAttack or result[specID].AutoShoot then
+						if ActionData.HealerSpecs[specID] then
+							result[specID].AutoShoot = false
+							result[specID].AutoAttack = false
+						elseif ActionData.RangerSpecs[specID] then
+							result[specID].AutoAttack = false
+						end
+					end
 				end	
 			elseif special and v.ISINTERRUPT then 
 				result[k] = {}
@@ -5593,7 +5620,7 @@ local function tMerge(default, new, special, nonexistremove)
 			else
 				result[k] = tMerge(v, v, special, nonexistremove)
 			end 
-		elseif new[k] ~= nil then 
+		elseif new[k] ~= nil then 	
 			result[k] = new[k]
 		elseif not nonexistremove then  	
 			result[k] = v				
@@ -12053,7 +12080,7 @@ function Action.ToggleMainUI()
 				end 
 			end)
 			ReFocus.Identify = { Type = "Checkbox", Toggle = "ReFocus" }
-			StdUi:FrameTooltip(ReFocus, L["TAB"][tabName]["REFOCUS"], nil, "TOPRIGHT", true)				
+			StdUi:FrameTooltip(ReFocus, L["TAB"][tabName]["REFOCUS"], nil, "TOPRIGHT", true)
 			
 			local LosSystem = StdUi:Checkbox(anchor, L["TAB"][tabName]["LOSSYSTEM"])
 			LosSystem:SetChecked(specDB.LOSCheck)
@@ -12211,6 +12238,55 @@ function Action.ToggleMainUI()
 			StdUi:FrameTooltip(HealthStone, L["TAB"][tabName]["HEALTHSTONETOOLTIP"], nil, "TOPLEFT", true)	
 			HealthStone.FontStringTitle = StdUi:Subtitle(anchor, L["TAB"][tabName]["HEALTHSTONE"] .. ": |cff00ff00" .. (specDB.HealthStone < 0 and "|cffff0000OFF|r" or specDB.HealthStone >= 100 and "|cff00ff00AUTO|r" or specDB.HealthStone))
 			StdUi:GlueAbove(HealthStone.FontStringTitle, HealthStone)
+			
+			local AutoAttack = StdUi:Checkbox(anchor, L["TAB"][tabName]["AUTOATTACK"])			
+			AutoAttack:SetChecked(specDB.AutoAttack)
+			AutoAttack:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+			AutoAttack:SetScript("OnClick", function(self, button, down)	
+				if button == "LeftButton" then 
+					specDB.AutoAttack = not specDB.AutoAttack
+					self:SetChecked(specDB.AutoAttack)	
+					Action.Print(L["TAB"][tabName]["AUTOATTACK"] .. ": ", specDB.AutoAttack)	
+				elseif button == "RightButton" then 
+					Action.CraftMacro(L["TAB"][tabName]["AUTOATTACK"], [[/run Action.SetToggle({]] .. tabName .. [[, "AutoAttack", "]] .. L["TAB"][tabName]["AUTOATTACK"] .. [[: "})]])	
+				end 
+			end)
+			AutoAttack.Identify = { Type = "Checkbox", Toggle = "AutoAttack" }
+			StdUi:FrameTooltip(AutoAttack, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)	
+			
+			local AutoShoot = StdUi:Checkbox(anchor, L["TAB"][tabName]["AUTOSHOOT"])			
+			AutoShoot:SetChecked(specDB.AutoShoot)
+			AutoShoot:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+			AutoShoot:SetScript("OnClick", function(self, button, down)	
+				if not self.isDisabled then 
+					if button == "LeftButton" then 
+						specDB.AutoShoot = not specDB.AutoShoot
+						self:SetChecked(specDB.AutoShoot)	
+						Action.Print(L["TAB"][tabName]["AUTOSHOOT"] .. ": ", specDB.AutoShoot)	
+					elseif button == "RightButton" then 
+						Action.CraftMacro(L["TAB"][tabName]["AUTOSHOOT"], [[/run Action.SetToggle({]] .. tabName .. [[, "AutoShoot", "]] .. L["TAB"][tabName]["AUTOSHOOT"] .. [[: "})]])	
+					end 
+				end
+			end)
+			AutoShoot.Identify = { Type = "Checkbox", Toggle = "AutoShoot" }
+			AutoShoot.MakeUpdate = function()
+				if Action.PlayerClass ~= "WARRIOR" and Action.PlayerClass ~= "ROGUE" and Action.PlayerClass ~= "HUNTER" and not HasWandEquipped() then 
+					if not AutoShoot.isDisabled then 
+						AutoShoot:Disable()
+					end 
+				elseif AutoShoot.isDisabled then  
+					AutoShoot:Enable()
+				end 				
+			end 
+			AutoShoot:SetScript("OnShow", AutoShoot.MakeUpdate) 
+			AutoShoot:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+			AutoShoot:SetScript("OnEvent", function(self, event)
+				if event == "PLAYER_EQUIPMENT_CHANGED" then 
+					AutoShoot.MakeUpdate()
+				end 
+			end)
+			AutoShoot:GetScript("OnShow")()
+			StdUi:FrameTooltip(AutoShoot, L["TAB"]["RIGHTCLICKCREATEMACRO"], nil, "TOPRIGHT", true)
 			
 			local ColorPicker	= Action.ColorPicker
 			local Color 		= { 
@@ -12681,7 +12757,8 @@ function Action.ToggleMainUI()
 			anchor:AddRow({ margin = { top = 10 } }):AddElements(AutoTarget, LosSystem, 											{ column = "even" })
 			anchor:AddRow({ margin = { top = -5 } }):AddElements(Potion, BossMods, 													{ column = "even" })						
 			anchor:AddRow({ margin = { top = -5 } }):AddElements(Racial, StopAtBreakAble, 											{ column = "even" })	
-			anchor:AddRow({ margin = { top = -5 } }):AddElements(HeartOfAzeroth or Covenant or StdUi:LayoutSpace(anchor), StopCast, { column = "even" })
+			anchor:AddRow({ margin = { top = -5 } }):AddElements(HeartOfAzeroth or Covenant or AutoAttack, StopCast, 				{ column = "even" })
+			anchor:AddRow({ margin = { top = -5 } }):AddElements(AutoShoot, StdUi:LayoutSpace(anchor), 								{ column = "even" })
 			anchor:AddRow():AddElements(Color.Title, { column = "even" })	
 			anchor:AddRow({ margin = { top = -10 } }):AddElements(Color.UseColor, Color.Picker, { column = "even" })	
 			anchor:AddRow():AddElements(Color.Element, Color.Option, { column = "even" })	
