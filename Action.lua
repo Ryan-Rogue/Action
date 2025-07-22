@@ -1,5 +1,5 @@
 --- 
-local DateTime 														= "13.07.2025"
+local DateTime 														= "22.07.2025"
 ---
 local pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string =
 	  pcall, ipairs, pairs, type, assert, error, setfenv, getmetatable, setmetatable, loadstring, next, unpack, select, _G, coroutine, table, math, string
@@ -5550,8 +5550,9 @@ local function tMerge(default, new, special, nonexistremove)
 		if type(v) == "table" then 
 			if special and k == "PLAYERSPEC" then
 				local classID = Action.PlayerClassID or select(3, UnitClass("player"))
-				for i = 1, GetNumSpecializationsForClassID(classID) do 
-					local specID = GetSpecializationInfo(i)
+				local n = GetNumSpecializationsForClassID(classID)
+                for i = 1, n + 1 do 
+                    local specID = i <= n and GetSpecializationInfo(i) or 1453
 					result[specID] = tMerge(v, v, special, nonexistremove)
 					
 					-- Set default false on AutoAttack for non-melee and AutoShoot for healers
