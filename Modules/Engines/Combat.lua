@@ -1475,7 +1475,8 @@ A.CombatTracker									= {
 			local DMG, Hits 					= self:GetDMG(UNIT)
 			
 			-- We need "health > 0" condition to ensure that the unit is still alive
-			if DMG >= 1 and Hits > 1 and health > 0 then		
+			if health <= 0 then return 0 end
+			if DMG >= 1 and Hits > 1 then		
 				ttd = (health - ( A_Unit(UNIT):HealthMax() * (X / 100) )) / DMG
 			end 
 		end		
@@ -1492,7 +1493,8 @@ A.CombatTracker									= {
 			local DMG, Hits 					= self:GetDMG(UNIT)
 			
 			-- We need "health > 0" condition to ensure that the unit is still alive
-			if DMG >= 1 and Hits > 1 and health > 0 then
+			if health <= 0 then return 0 end
+			if DMG >= 1 and Hits > 1 then
 				ttd = health / DMG
 			end 
 		end
@@ -1509,7 +1511,8 @@ A.CombatTracker									= {
 			local _, Hits, _, DMG 				= self:GetDMG(UNIT)
 			
 			-- We need "health > 0" condition to ensure that the unit is still alive
-			if DMG >= 1 and Hits > 1 and health > 0 then
+			if health <= 0 then return 0 end
+			if DMG >= 1 and Hits > 1 and then
 				ttd = (health - ( A_Unit(UNIT):HealthMax() * (X / 100) )) / DMG
 			end 
 		end				
@@ -1526,7 +1529,8 @@ A.CombatTracker									= {
 			local _, Hits, _, DMG 				= self:GetDMG(UNIT)
 			
 			-- We need "health > 0" condition to ensure that the unit is still alive
-			if DMG >= 1 and Hits > 1 and health > 0 then
+			if health <= 0 then return 0 end
+			if DMG >= 1 and Hits > 1 then
 				ttd = health / DMG
 			end 
 		end
